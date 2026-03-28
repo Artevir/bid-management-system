@@ -133,14 +133,25 @@ export default function BidEditorPage() {
         fullText += chunk;
         setStreamingContent(fullText);
         setStreamProgress(prev => Math.min(prev + 5, 95)); // 模拟进度
+
+        // 增量快照保存 (每 500 字保存一次到本地，防止丢失)
+        if (fullText.length % 500 < chunk.length) {
+          localStorage.setItem(`bid_stream_snapshot_${selectedChapter.id}`, fullText);
+        }
       }
 
       // 生成完成，保存内容
       await handleUpdateChapter({ content: fullText } as any);
       setStreamProgress(100);
+      localStorage.removeItem(`bid_stream_snapshot_${selectedChapter.id}`);
       toast.success('AI 生成内容已同步');
     } catch (error: any) {
       if (error.name === 'AbortError') {
+        // 如果是中途停止，询问是否保留已生成的部分
+        const snapshot = localStorage.getItem(`bid_stream_snapshot_${selectedChapter.id}`) || streamingContent;
+        if (snapshot && confirm('生成已停止，是否保留已生成的内容？')) {
+          await handleUpdateChapter({ content: snapshot } as any);
+        }
         toast.info('AI 生成已停止');
       } else {
         toast.error('AI 生成失败: ' + error.message);

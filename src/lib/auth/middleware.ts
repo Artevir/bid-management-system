@@ -43,7 +43,8 @@ function setCachedPermissions(userId: number, permissions: Set<string>): void {
  */
 export async function withAuth(
   request: NextRequest,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  params?: any
 ): Promise<NextResponse> {
   let userId: number;
   
@@ -63,8 +64,8 @@ export async function withAuth(
   }
 
   try {
-    // 调用实际的处理器
-    return await handler(request, userId);
+    // 调用实际的处理器，并透传 params
+    return await handler(request, userId, params);
   } catch (error) {
     return handleError(error, request.url);
   }
@@ -76,7 +77,8 @@ export async function withAuth(
  */
 export async function withOptionalAuth(
   request: NextRequest,
-  handler: (request: NextRequest, userId?: number) => Promise<NextResponse>
+  handler: (request: NextRequest, userId?: number, params?: any) => Promise<NextResponse>,
+  params?: any
 ): Promise<NextResponse> {
   let userId: number | undefined;
 
@@ -98,7 +100,7 @@ export async function withOptionalAuth(
     
   try {
     // 调用实际的处理器
-    return await handler(request, userId);
+    return await handler(request, userId, params);
   } catch (error) {
     return handleError(error, request.url);
   }
@@ -106,9 +108,6 @@ export async function withOptionalAuth(
 
 /**
  * 检查用户权限
- * @param userId 用户ID
- * @param permission 权限代码（如：user:create, project:read）
- * @returns 是否有权限
  */
 export async function checkPermission(
   userId: number,
@@ -119,15 +118,14 @@ export async function checkPermission(
 
 /**
  * 权限中间件
- * 验证用户是否有指定权限
  */
 export async function withPermission(
   request: NextRequest,
   permission: string,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  params?: any
 ): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    // 检查权限
+  return withAuth(request, async (req, userId, p) => {
     const hasAccess = await checkPermission(userId, permission);
     
     if (!hasAccess) {
@@ -137,116 +135,8 @@ export async function withPermission(
       );
     }
     
-    // 调用实际的处理器
-    return await handler(req, userId);
-  });
-}
-
-/**
- * 多权限中间件（满足任一）
- * 验证用户是否有指定权限中的任意一个
- */
-export async function withAnyPermission(
-  request: NextRequest,
-  permissions: string[],
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    // 检查权限
-    const hasAccess = await hasAnyPermission(userId, permissions);
-    
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: '权限不足', requiredPermissions: permissions },
-        { status: 403 }
-      );
-    }
-    
-    // 调用实际的处理器
-    return await handler(req, userId);
-  });
-}
-
-/**
- * 多权限中间件（满足全部）
- * 验证用户是否有指定的所有权限
- */
-export async function withAllPermissions(
-  request: NextRequest,
-  permissions: string[],
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    // 检查权限
-    const hasAccess = await hasAllPermissions(userId, permissions);
-    
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: '权限不足', requiredPermissions: permissions },
-        { status: 403 }
-      );
-    }
-    
-    // 调用实际的处理器
-    return await handler(req, userId);
-  });
-}
-
-/**
- * API访问中间件
- * 验证用户是否可以访问当前API
- */
-export async function withApiAccess(
-  request: NextRequest,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    // 获取请求路径和方法
-    const path = new URL(request.url).pathname;
-    const method = request.method;
-    
-    // 检查API访问权限
-    const hasAccess = await canAccessApi(userId, path, method);
-    
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: '无权访问此接口', path, method },
-        { status: 403 }
-      );
-    }
-    
-    // 调用实际的处理器
-    return await handler(req, userId);
-  });
-}
-
-/**
- * 角色检查中间件
- * 验证用户是否有指定角色
- */
-export async function withRole(
-  request: NextRequest,
-  roleCodes: string[],
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    // 动态导入避免循环依赖
-    const { getUserRoles } = await import('@/lib/auth/permission');
-    const roles = await getUserRoles(userId);
-    
-    const userRoleCodes = roles.map((r) => r.code);
-    const hasRole = roleCodes.some((code) => userRoleCodes.includes(code));
-    
-    if (!hasRole) {
-      return NextResponse.json(
-        { error: '角色权限不足', requiredRoles: roleCodes },
-        { status: 403 }
-      );
-    }
-    
-    // 调用实际的处理器
-    return await handler(req, userId);
-  });
+    return await handler(req, userId, p);
+  }, params);
 }
 
 // ============================================
@@ -255,11 +145,6 @@ export async function withRole(
 
 import {
   checkResourcePermission,
-  checkDocumentPermission,
-  checkChapterPermission,
-  checkFilePermission,
-  checkCompanyPermission,
-  checkCompanyFilePermission,
   ResourceType,
   PermissionAction,
 } from './resource-permission';
@@ -271,12 +156,13 @@ import {
 export async function withResourcePermission(
   request: NextRequest,
   resourceType: ResourceType,
-  resourceIdGetter: (request: NextRequest) => number | Promise<number>,
+  resourceIdGetter: (request: NextRequest, params?: any) => number | Promise<number>,
   action: PermissionAction,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  params?: any
 ): Promise<NextResponse> {
-  return withAuth(request, async (req, userId) => {
-    const resourceId = await resourceIdGetter(req);
+  return withAuth(request, async (req, userId, p) => {
+    const resourceId = await resourceIdGetter(req, p);
     const result = await checkResourcePermission(userId, resourceType, resourceId, action);
     
     if (!result.allowed) {
@@ -291,143 +177,28 @@ export async function withResourcePermission(
       );
     }
     
-    return await handler(req, userId);
-  });
+    return await handler(req, userId, p);
+  }, params);
 }
 
 /**
  * 文档权限中间件
  */
-export function withDocumentPermission(
+export async function withDocumentPermission(
   action: PermissionAction,
-  documentIdGetter: (request: NextRequest) => number | Promise<number>
+  documentIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return function(
-    request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    return withResourcePermission(request, 'document', documentIdGetter, action, handler);
-  };
+  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>, params?: any) =>
+    withResourcePermission(request, 'document', documentIdGetter, action, handler, params);
 }
 
 /**
  * 章节权限中间件
  */
-export function withChapterPermission(
+export async function withChapterPermission(
   action: PermissionAction,
-  chapterIdGetter: (request: NextRequest) => number | Promise<number>
+  chapterIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return function(
-    request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    return withResourcePermission(request, 'chapter', chapterIdGetter, action, handler);
-  };
-}
-
-/**
- * 文件权限中间件
- */
-export function withFilePermission(
-  action: PermissionAction,
-  fileIdGetter: (request: NextRequest) => number | Promise<number>
-) {
-  return function(
-    request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    return withResourcePermission(request, 'file', fileIdGetter, action, handler);
-  };
-}
-
-/**
- * 公司权限中间件
- */
-export function withCompanyPermission(
-  action: PermissionAction,
-  companyIdGetter: (request: NextRequest) => number | Promise<number>
-) {
-  return function(
-    request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    return withResourcePermission(request, 'company', companyIdGetter, action, handler);
-  };
-}
-
-/**
- * 公司文件权限中间件
- */
-export function withCompanyFilePermission(
-  action: PermissionAction,
-  companyFileIdGetter: (request: NextRequest) => number | Promise<number>
-) {
-  return function(
-    request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> {
-    return withResourcePermission(request, 'company_file', companyFileIdGetter, action, handler);
-  };
-}
-
-/**
- * 管理员中间件
- * 验证用户是否为管理员
- */
-export async function withAdmin(
-  request: NextRequest,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withRole(request, ['admin', 'super_admin'], handler);
-}
-
-/**
- * 清除权限缓存
- * 当用户权限变更时调用
- */
-export function clearPermissionCache(userId?: number): void {
-  if (userId) {
-    permissionCache.delete(userId);
-  } else {
-    permissionCache.clear();
-  }
-}
-
-/**
- * 简化的认证中间件
- * 返回用户信息或错误
- */
-export async function requireAuth(request: NextRequest): Promise<{
-  user?: { id: number; orgId: number; username: string };
-  error?: string;
-}> {
-  try {
-    const accessToken = await getAccessTokenFromCookie();
-    
-    if (!accessToken) {
-      return { error: '未登录' };
-    }
-    
-    const payload = await verifyAccessToken(accessToken);
-    
-    // 获取用户信息
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.userId),
-    });
-    
-    if (!user) {
-      return { error: '用户不存在' };
-    }
-    
-    return {
-      user: {
-        id: user.id,
-        orgId: user.departmentId, // 使用departmentId作为orgId
-        username: user.username,
-      },
-    };
-  } catch (error) {
-    console.error('requireAuth error:', error);
-    return { error: '认证失败' };
-  }
+  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>, params?: any) =>
+    withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
 }

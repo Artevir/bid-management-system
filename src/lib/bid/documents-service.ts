@@ -269,6 +269,15 @@ export async function updateDocumentStatus(
  * 更新文档进度及统计信息 (内部调用，通常在事务中)
  */
 export async function updateDocumentProgress(tx: any, documentId: number): Promise<void> {
+  // 对主文档记录加行级排他锁 (SELECT ... FOR UPDATE)，防止并发计算进度时的脏读
+  const doc = await tx
+    .select({ id: bidDocuments.id })
+    .from(bidDocuments)
+    .where(eq(bidDocuments.id, documentId))
+    .for('update');
+
+  if (doc.length === 0) return;
+
   const chapters = await tx
     .select()
     .from(bidChapters)

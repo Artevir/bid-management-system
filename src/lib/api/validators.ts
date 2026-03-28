@@ -22,9 +22,9 @@ export function parseResourceId(id: string | null | undefined, resourceName: str
 }
 
 /**
- * 从请求URL中提取最后一个路径参数作为ID
+ * 从 Next.js 路由参数中安全获取 ID
  */
-export function parseIdFromPath(request: NextRequest, resourceName: string = '资源'): number {
-  const id = request.url.split('/').slice(-1)[0].split('?')[0];
+export function parseIdFromParams(params: any, key: string = 'id', resourceName: string = '资源'): number {
+  const id = params?.[key];
   return parseResourceId(id, resourceName);
 }

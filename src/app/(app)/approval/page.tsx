@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,135 +22,48 @@ import {
   XCircle,
   FileText,
   ChevronRight,
-  User,
-  MessageSquare,
   AlertCircle,
 } from 'lucide-react';
-
-interface ApprovalItem {
-  id: number;
-  documentId: number;
-  document: {
-    id: number;
-    name: string;
-    project?: { name: string };
-    status: string;
-  };
-  record: {
-    id: number;
-    level: number;
-    status: string;
-    dueDate?: string;
-  };
-  currentLevel: number;
-  status: string;
-  createdAt: string;
-}
-
-interface ReviewResult {
-  score: number;
-  passed: boolean;
-  summary: string;
-  statistics: {
-    total: number;
-    errors: number;
-    warnings: number;
-    infos: number;
-  };
-  issues: Array<{
-    id: string;
-    type: string;
-    message: string;
-    suggestion?: string;
-    location?: {
-      chapterTitle?: string;
-    };
-  }>;
-}
+import { useApprovals, useExecuteApproval } from '@/hooks/use-bid';
+import { APPROVAL_STATUS_MAP } from '@/lib/constants/bid-ui';
 
 export default function ApprovalPage() {
   const router = useRouter();
-  const [pendingApprovals, setPendingApprovals] = useState<ApprovalItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
-  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null);
-  const [reviewLoading, setReviewLoading] = useState(false);
+  
+  // --- 服务端状态 (React Query) ---
+  const { data: approvals = [], isLoading: loadingApprovals } = useApprovals();
+  const executeApprovalMutation = useExecuteApproval();
+
+  // --- 本地交互状态 ---
+  const [selectedApproval, setSelectedApproval] = useState<any | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
 
-  useEffect(() => {
-    fetchPendingApprovals();
-  }, []);
-
-  async function fetchPendingApprovals() {
-    try {
-      const response = await fetch('/api/bid/approval');
-      const data = await response.json();
-      setPendingApprovals(data.approvals || []);
-    } catch (error) {
-      console.error('Failed to fetch approvals:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchReviewResult(documentId: number) {
-    setReviewLoading(true);
-    try {
-      const response = await fetch(`/api/bid/review?documentId=${documentId}`);
-      const data = await response.json();
-      // 获取最新的审校结果
-      if (data.reviews && data.reviews.length > 0) {
-        const latest = data.reviews[0];
-        setReviewResult({
-          score: latest.score,
-          passed: latest.status === 'completed',
-          summary: latest.result?.summary || '',
-          statistics: latest.result?.statistics || { total: 0, errors: 0, warnings: 0, infos: 0 },
-          issues: latest.issues || [],
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch review result:', error);
-    } finally {
-      setReviewLoading(false);
-    }
-  }
-
+  // --- 事件处理 ---
   async function handleApprovalAction() {
     if (!selectedApproval) return;
 
-    try {
-      const response = await fetch('/api/bid/approval?action=execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flowId: selectedApproval.id,
-          action: actionType,
-          comment,
-        }),
-      });
+    await executeApprovalMutation.mutateAsync({
+      documentId: selectedApproval.documentId,
+      level: selectedApproval.level,
+      action: actionType,
+      comment,
+    });
 
-      if (response.ok) {
-        setActionDialogOpen(false);
-        setSelectedApproval(null);
-        setComment('');
-        fetchPendingApprovals();
-      }
-    } catch (error) {
-      console.error('Failed to execute approval:', error);
-    }
+    setActionDialogOpen(false);
+    setSelectedApproval(null);
+    setComment('');
   }
 
-  function openActionDialog(type: 'approve' | 'reject') {
-    setActionType(type);
-    setActionDialogOpen(true);
-  }
-
-  const getLevelLabel = (level: number) => {
-    const labels = ['', '初审', '复审', '终审', '批准'];
-    return labels[level] || `第${level}级`;
+  const getLevelLabel = (level: string) => {
+    const labels: Record<string, string> = {
+      first: '初审',
+      second: '复审',
+      third: '终审',
+      final: '批准',
+    };
+    return labels[level] || level;
   };
 
   return (
@@ -163,19 +76,19 @@ export default function ApprovalPage() {
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pending">
-            待审核 ({pendingApprovals.length})
+            待审核 ({approvals.length})
           </TabsTrigger>
           <TabsTrigger value="history">审核历史</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4">
-          {loading ? (
+          {loadingApprovals ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-24 w-full" />
               ))}
             </div>
-          ) : pendingApprovals.length === 0 ? (
+          ) : approvals.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -184,33 +97,30 @@ export default function ApprovalPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {pendingApprovals.map((approval) => (
+              {approvals.map((approval: any) => (
                 <Card
                   key={approval.id}
                   className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => {
-                    setSelectedApproval(approval);
-                    fetchReviewResult(approval.documentId);
-                  }}
+                  onClick={() => setSelectedApproval(approval)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <FileText className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{approval.document.name}</span>
+                          <span className="font-medium">{approval.documentName}</span>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{approval.document.project?.name || '未关联项目'}</span>
+                          <span>{approval.projectName || '未关联项目'}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            {new Date(approval.createdAt).toLocaleDateString()}
+                            {new Date(approval.assignedAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">
-                          {getLevelLabel(approval.record.level)}
+                          {getLevelLabel(approval.level)}
                         </Badge>
                         <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       </div>
@@ -235,10 +145,7 @@ export default function ApprovalPage() {
       <Dialog
         open={!!selectedApproval}
         onOpenChange={(open) => {
-          if (!open) {
-            setSelectedApproval(null);
-            setReviewResult(null);
-          }
+          if (!open) setSelectedApproval(null);
         }}
       >
         <DialogContent className="max-w-2xl">
@@ -251,160 +158,75 @@ export default function ApprovalPage() {
 
           {selectedApproval && (
             <div className="space-y-4">
-              {/* 文档信息 */}
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-10 w-10 text-primary" />
                     <div>
-                      <h3 className="font-medium">{selectedApproval.document.name}</h3>
+                      <h3 className="font-medium">{selectedApproval.documentName}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {selectedApproval.document.project?.name}
+                        {selectedApproval.projectName}
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* 审校结果 */}
-              {reviewLoading ? (
-                <Skeleton className="h-40 w-full" />
-              ) : reviewResult ? (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">智能审校结果</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {reviewResult.passed ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-yellow-500" />
-                        )}
-                        <span className="font-medium">
-                          评分: {reviewResult.score}/100
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="text-red-500">
-                          {reviewResult.statistics.errors} 错误
-                        </span>
-                        <span className="text-yellow-500">
-                          {reviewResult.statistics.warnings} 警告
-                        </span>
-                        <span className="text-blue-500">
-                          {reviewResult.statistics.infos} 提示
-                        </span>
-                      </div>
-                    </div>
-                    {reviewResult.summary && (
-                      <p className="text-sm text-muted-foreground">
-                        {reviewResult.summary}
-                      </p>
-                    )}
-                    {reviewResult.issues.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto space-y-2">
-                        {reviewResult.issues.slice(0, 5).map((issue) => (
-                          <div
-                            key={issue.id}
-                            className="flex items-start gap-2 text-sm"
-                          >
-                            <Badge
-                              variant={
-                                issue.type === 'error'
-                                  ? 'destructive'
-                                  : issue.type === 'warning'
-                                  ? 'default'
-                                  : 'secondary'
-                              }
-                            >
-                              {issue.type}
-                            </Badge>
-                            <span>
-                              {issue.location?.chapterTitle && (
-                                <span className="text-muted-foreground">
-                                  [{issue.location.chapterTitle}]{' '}
-                                </span>
-                              )}
-                              {issue.message}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center text-muted-foreground">
-                    <p>暂无审校结果</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* 审核意见 */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">审核意见</label>
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="请输入审核意见（可选）"
-                  rows={3}
-                />
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    setActionType('reject');
+                    setActionDialogOpen(true);
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  驳回
+                </Button>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setActionType('approve');
+                    setActionDialogOpen(true);
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  通过
+                </Button>
               </div>
             </div>
           )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (selectedApproval) {
-                  router.push(`/bid/${selectedApproval.documentId}`);
-                }
-              }}
-            >
-              查看详情
-            </Button>
-            <Button
-              variant="outline"
-              className="text-red-600"
-              onClick={() => openActionDialog('reject')}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              驳回
-            </Button>
-            <Button onClick={() => openActionDialog('approve')}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              通过
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 确认操作对话框 */}
+      {/* 审批操作对话框 */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {actionType === 'approve' ? '确认通过' : '确认驳回'}
-            </DialogTitle>
+            <DialogTitle>{actionType === 'approve' ? '审批通过' : '审批驳回'}</DialogTitle>
             <DialogDescription>
-              {actionType === 'approve'
-                ? '确认通过此文档的审核？'
-                : '确认驳回此文档？驳回后需要重新编辑。'}
+              请输入您的审批意见（可选）。
             </DialogDescription>
           </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="请输入审批意见..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={4}
+            />
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionDialogOpen(false)}>
               取消
             </Button>
             <Button
-              variant={actionType === 'reject' ? 'destructive' : 'default'}
+              variant={actionType === 'approve' ? 'default' : 'destructive'}
               onClick={handleApprovalAction}
+              disabled={executeApprovalMutation.isPending}
             >
-              确认
+              {executeApprovalMutation.isPending ? '提交中...' : '确认'}
             </Button>
           </DialogFooter>
         </DialogContent>

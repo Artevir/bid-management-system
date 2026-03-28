@@ -13,14 +13,15 @@ import {
   deleteChapter,
 } from '@/lib/bid/documents-service';
 import { success, AppError } from '@/lib/api/error-handler';
-import { parseIdFromPath } from '@/lib/api/validators';
+import { parseIdFromParams } from '@/lib/api/validators';
 
 // 获取章节详情
 async function getChapter(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const chapterId = parseIdFromPath(request, '章节');
+  const chapterId = parseIdFromParams(params, 'id', '章节');
   const chapter = await getChapterDetail(chapterId);
 
   if (!chapter) {
@@ -33,9 +34,10 @@ async function getChapter(
 // 更新章节
 async function updateChapterContent(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const chapterId = parseIdFromPath(request, '章节');
+  const chapterId = parseIdFromParams(params, 'id', '章节');
   const body = await request.json();
   const { title, content, isCompleted, assignedTo, deadline } = body;
 
@@ -53,24 +55,25 @@ async function updateChapterContent(
 // 删除章节
 async function deleteChapterById(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const chapterId = parseIdFromPath(request, '章节');
+  const chapterId = parseIdFromParams(params, 'id', '章节');
   await deleteChapter(chapterId);
   return success(null, '章节删除成功');
 }
 
-export async function GET(request: NextRequest) {
-  const chapterId = parseIdFromPath(request, '章节');
-  return withChapterPermission('read', () => chapterId)(request, (req, userId) => getChapter(req, userId));
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withChapterPermission('read', (req, p) => parseIdFromParams(p, 'id', '章节'));
+  return middleware(request, getChapter, params);
 }
 
-export async function PUT(request: NextRequest) {
-  const chapterId = parseIdFromPath(request, '章节');
-  return withChapterPermission('edit', () => chapterId)(request, (req, userId) => updateChapterContent(req, userId));
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withChapterPermission('edit', (req, p) => parseIdFromParams(p, 'id', '章节'));
+  return middleware(request, updateChapterContent, params);
 }
 
-export async function DELETE(request: NextRequest) {
-  const chapterId = parseIdFromPath(request, '章节');
-  return withChapterPermission('delete', () => chapterId)(request, (req, userId) => deleteChapterById(req, userId));
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withChapterPermission('delete', (req, p) => parseIdFromParams(p, 'id', '章节'));
+  return middleware(request, deleteChapterById, params);
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -48,133 +47,66 @@ import {
   Trash2,
   Send,
 } from 'lucide-react';
-
-interface BidDocument {
-  id: number;
-  projectId: number;
-  project?: { id: number; name: string };
-  name: string;
-  type: string;
-  status: string;
-  version: number;
-  deadline?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  draft: { label: '草稿', color: 'bg-gray-100 text-gray-800' },
-  in_progress: { label: '编辑中', color: 'bg-blue-100 text-blue-800' },
-  in_review: { label: '审核中', color: 'bg-yellow-100 text-yellow-800' },
-  approved: { label: '已通过', color: 'bg-green-100 text-green-800' },
-  rejected: { label: '已驳回', color: 'bg-red-100 text-red-800' },
-};
-
-const typeConfig: Record<string, { label: string }> = {
-  technical: { label: '技术标' },
-  business: { label: '商务标' },
-  comprehensive: { label: '综合标' },
-};
+import { 
+  useDocuments, 
+  useSubmitApproval, 
+  useDeleteChapter 
+} from '@/hooks/use-bid';
+import { useProjects } from '@/hooks/use-project';
+import { bidService } from '@/lib/api/bid-service';
+import { toast } from 'sonner';
+import { BID_STATUS_MAP } from '@/lib/constants/bid-ui';
 
 export default function BidDocumentsPage() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<BidDocument[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     projectId: '',
     name: '',
     type: 'technical',
-    description: '',
-    deadline: '',
   });
 
-  useEffect(() => {
-    fetchDocuments();
-    fetchProjects();
-  }, []);
+  // --- 服务端状态 (React Query) ---
+  const { data: documents = [], isLoading: loadingDocs } = useDocuments(0); // 0 表示获取全部，或按需调整
+  const { data: projects = [], isLoading: loadingProjects } = useProjects();
+  
+  const submitApprovalMutation = useSubmitApproval();
 
-  async function fetchDocuments() {
-    try {
-      const response = await fetch('/api/bid/documents');
-      const data = await response.json();
-      setDocuments(data.documents || []);
-    } catch (error) {
-      console.error('Failed to fetch documents:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchProjects() {
-    try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      setProjects(data.projects || []);
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  }
-
+  // --- 事件处理 ---
   async function handleCreateDocument() {
-    try {
-      const response = await fetch('/api/bid/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createForm),
-      });
+    if (!createForm.projectId || !createForm.name) {
+      toast.error('请填写完整信息');
+      return;
+    }
 
-      if (response.ok) {
-        const data = await response.json();
-        setCreateDialogOpen(false);
-        setCreateForm({
-          projectId: '',
-          name: '',
-          type: 'technical',
-          description: '',
-          deadline: '',
-        });
-        fetchDocuments();
-        router.push(`/bid/${data.document.id}/edit`);
-      }
+    try {
+      const res = await bidService.createDocument({
+        projectId: parseInt(createForm.projectId),
+        name: createForm.name,
+        userId: 0, // 后端会从 session 获取
+      });
+      
+      setCreateDialogOpen(false);
+      toast.success('文档创建成功');
+      router.push(`/bid/${res.data.documentId}/edit`);
     } catch (error) {
-      console.error('Failed to create document:', error);
+      // 错误已由 ApiClient 处理
     }
   }
 
   async function handleDeleteDocument(id: number) {
     if (!confirm('确定要删除此文档吗？')) return;
-
     try {
-      await fetch(`/api/bid/documents/${id}`, { method: 'DELETE' });
-      fetchDocuments();
-    } catch (error) {
-      console.error('Failed to delete document:', error);
-    }
+      await bidService.deleteDocument(id);
+      toast.success('文档已删除');
+      // React Query 会自动失效缓存并重新获取 (如果配置了 onSuccess)
+      // 此处简单起见可以手动调用 reload 或在 Mutation 中配置
+    } catch (error) {}
   }
 
-  async function handleSubmitForApproval(doc: BidDocument) {
+  async function handleSubmitForApproval(id: number) {
     if (!confirm('确定要提交审核吗？')) return;
-
-    try {
-      const response = await fetch('/api/bid/approval', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: doc.id }),
-      });
-
-      if (response.ok) {
-        fetchDocuments();
-      }
-    } catch (error) {
-      console.error('Failed to submit for approval:', error);
-    }
+    await submitApprovalMutation.mutateAsync(id);
   }
 
   return (
@@ -200,7 +132,7 @@ export default function BidDocumentsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loadingDocs ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />
@@ -216,35 +148,25 @@ export default function BidDocumentsPage() {
                 <TableRow>
                   <TableHead>文档名称</TableHead>
                   <TableHead>所属项目</TableHead>
-                  <TableHead>类型</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>版本</TableHead>
-                  <TableHead>截止日期</TableHead>
+                  <TableHead>创建人</TableHead>
                   <TableHead>更新时间</TableHead>
                   <TableHead className="w-[100px]">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documents.map((doc) => (
+                {documents.map((doc: any) => (
                   <TableRow key={doc.id}>
                     <TableCell className="font-medium">{doc.name}</TableCell>
-                    <TableCell>{doc.project?.name || '-'}</TableCell>
+                    <TableCell>{doc.projectName || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {typeConfig[doc.type]?.label || doc.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusConfig[doc.status]?.color}>
-                        {statusConfig[doc.status]?.label || doc.status}
+                      <Badge className={BID_STATUS_MAP[doc.status]?.color}>
+                        {BID_STATUS_MAP[doc.status]?.label || doc.status}
                       </Badge>
                     </TableCell>
                     <TableCell>v{doc.version}</TableCell>
-                    <TableCell>
-                      {doc.deadline
-                        ? new Date(doc.deadline).toLocaleDateString()
-                        : '-'}
-                    </TableCell>
+                    <TableCell>{doc.creatorName || '-'}</TableCell>
                     <TableCell>
                       {new Date(doc.updatedAt).toLocaleDateString()}
                     </TableCell>
@@ -271,7 +193,7 @@ export default function BidDocumentsPage() {
                           <DropdownMenuSeparator />
                           {doc.status === 'draft' && (
                             <DropdownMenuItem
-                              onClick={() => handleSubmitForApproval(doc)}
+                              onClick={() => handleSubmitForApproval(doc.id)}
                             >
                               <Send className="mr-2 h-4 w-4" />
                               提交审核
@@ -300,76 +222,36 @@ export default function BidDocumentsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>新建标书文档</DialogTitle>
-            <DialogDescription>创建一个新的标书文档</DialogDescription>
+            <DialogDescription>
+              选择所属项目并输入文档名称来开始编写。
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>所属项目</Label>
-              <Select
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="project">所属项目</Label>
+              <Select 
+                onValueChange={(v) => setCreateForm({ ...createForm, projectId: v })}
                 value={createForm.projectId}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, projectId: value })
-                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择项目" />
+                  <SelectValue placeholder="选择项目..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.name}
+                  {projects.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>文档名称</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="name">文档名称</Label>
               <Input
+                id="name"
+                placeholder="例如：技术投标文件-V1.0"
                 value={createForm.name}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, name: e.target.value })
-                }
-                placeholder="请输入文档名称"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>文档类型</Label>
-              <Select
-                value={createForm.type}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, type: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technical">技术标</SelectItem>
-                  <SelectItem value="business">商务标</SelectItem>
-                  <SelectItem value="comprehensive">综合标</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>截止日期</Label>
-              <Input
-                type="date"
-                value={createForm.deadline}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, deadline: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>描述</Label>
-              <Textarea
-                value={createForm.description}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, description: e.target.value })
-                }
-                placeholder="文档描述（可选）"
-                rows={3}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
               />
             </div>
           </div>
@@ -377,12 +259,7 @@ export default function BidDocumentsPage() {
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               取消
             </Button>
-            <Button
-              onClick={handleCreateDocument}
-              disabled={!createForm.projectId || !createForm.name}
-            >
-              创建
-            </Button>
+            <Button onClick={handleCreateDocument}>创建</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

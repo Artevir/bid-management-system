@@ -44,6 +44,9 @@ interface DashboardStats {
   }>;
 }
 
+import { projectService } from '@/lib/api/project-service';
+import { bidService } from '@/lib/api/bid-service';
+
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -56,32 +59,24 @@ export default function DashboardPage() {
   async function fetchDashboardData() {
     try {
       // 并行获取各项数据
-      const [projectsRes, documentsRes, approvalsRes, knowledgeRes] = await Promise.all([
-        fetch('/api/projects').catch(() => ({ json: () => ({ projects: [] }) })),
-        fetch('/api/bid/documents').catch(() => ({ json: () => ({ documents: [] }) })),
-        fetch('/api/bid/approval').catch(() => ({ json: () => ({ approvals: [] }) })),
-        fetch('/api/knowledge/entries').catch(() => ({ json: () => ({ entries: [] }) })),
+      const [projectsData, documentsData, approvalsData] = await Promise.all([
+        projectService.getProjects().catch(() => []),
+        bidService.getDocuments(0).catch(() => ({ data: [] })),
+        bidService.getApprovals().catch(() => ({ data: [] })),
       ]);
 
-      const [projectsData, documentsData, approvalsData, knowledgeData] = await Promise.all([
-        projectsRes.json(),
-        documentsRes.json(),
-        approvalsRes.json(),
-        knowledgeRes.json(),
-      ]);
-
-      const projects = projectsData.projects || [];
-      const documents = documentsData.documents || [];
-      const approvals = approvalsData.approvals || [];
-      const knowledge = knowledgeData.entries || [];
+      const projects = Array.isArray(projectsData) ? projectsData : [];
+      const documents = documentsData.data || [];
+      const approvals = approvalsData.data || [];
+      const knowledge: any[] = []; // 暂无知识库 service，保持空
 
       // 构建待办任务
       const pendingTasks = [
         ...approvals.map((a: any) => ({
           id: a.id,
           type: 'approval',
-          title: `审核文档: ${a.document?.name || '未知文档'}`,
-          projectName: a.document?.project?.name,
+          title: `审核文档: ${a.documentName || '未知文档'}`,
+          projectName: a.projectName,
           priority: 'high' as const,
         })),
         ...documents
@@ -91,7 +86,7 @@ export default function DashboardPage() {
             id: d.id,
             type: 'document',
             title: `编写文档: ${d.name}`,
-            projectName: d.project?.name,
+            projectName: d.projectName,
             priority: 'medium' as const,
             dueDate: d.deadline,
           })),

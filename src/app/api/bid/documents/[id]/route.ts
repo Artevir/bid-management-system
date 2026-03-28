@@ -16,21 +16,22 @@ import {
   getDocumentChapterStatistics,
 } from '@/lib/bid/documents-service';
 import { success, AppError } from '@/lib/api/error-handler';
-import { parseIdFromPath } from '@/lib/api/validators';
+import { parseIdFromParams } from '@/lib/api/validators';
 
 // 获取文档详情
 async function getDocument(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const documentId = parseIdFromPath(request, '文档');
+  const documentId = parseIdFromParams(params, 'id', '文档');
   const document = await getDocumentById(documentId);
 
   if (!document) {
     throw AppError.notFound('文档');
   }
 
-  // 获取章节统计 (业务逻辑已下沉至 Service 层)
+  // 获取章节统计
   const statistics = await getDocumentChapterStatistics(documentId);
 
   return success({
@@ -42,9 +43,10 @@ async function getDocument(
 // 更新文档
 async function updateDocument(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const documentId = parseIdFromPath(request, '文档');
+  const documentId = parseIdFromParams(params, 'id', '文档');
   const body = await request.json();
   const { name, status, deadline } = body;
 
@@ -67,9 +69,10 @@ async function updateDocument(
 // 删除文档
 async function deleteDoc(
   request: NextRequest,
-  userId: number
+  userId: number,
+  params: any
 ): Promise<NextResponse> {
-  const documentId = parseIdFromPath(request, '文档');
+  const documentId = parseIdFromParams(params, 'id', '文档');
   const { searchParams } = new URL(request.url);
   const permanent = searchParams.get('permanent') === 'true';
 
@@ -82,17 +85,17 @@ async function deleteDoc(
   return success(null, permanent ? '文档已永久删除' : '文档已移至回收站');
 }
 
-export async function GET(request: NextRequest) {
-  const documentId = parseIdFromPath(request, '文档');
-  return withDocumentPermission('read', () => documentId)(request, (req, userId) => getDocument(req, userId));
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withDocumentPermission('read', (req, p) => parseIdFromParams(p, 'id', '文档'));
+  return middleware(request, getDocument, params);
 }
 
-export async function PUT(request: NextRequest) {
-  const documentId = parseIdFromPath(request, '文档');
-  return withDocumentPermission('edit', () => documentId)(request, (req, userId) => updateDocument(req, userId));
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withDocumentPermission('edit', (req, p) => parseIdFromParams(p, 'id', '文档'));
+  return middleware(request, updateDocument, params);
 }
 
-export async function DELETE(request: NextRequest) {
-  const documentId = parseIdFromPath(request, '文档');
-  return withDocumentPermission('delete', () => documentId)(request, (req, userId) => deleteDoc(req, userId));
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const middleware = await withDocumentPermission('delete', (req, p) => parseIdFromParams(p, 'id', '文档'));
+  return middleware(request, deleteDoc, params);
 }

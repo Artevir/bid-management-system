@@ -76,6 +76,39 @@ export const useDeleteChapter = () => {
   });
 };
 
+// 审批相关 Hooks
+export const useApprovals = (documentId?: number) => {
+  return useQuery({
+    queryKey: ['bid-approvals', documentId],
+    queryFn: () => bidService.getApprovals(documentId).then(res => res.data),
+  });
+};
+
+export const useSubmitApproval = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (documentId: number) => bidService.submitApproval(documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bid-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['bid-approvals'] });
+      toast.success('已提交审核');
+    },
+  });
+};
+
+export const useExecuteApproval = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { documentId: number; level: string; action: 'approve' | 'reject'; comment?: string }) => 
+      bidService.executeApproval(data),
+    onSuccess: (_, { documentId }) => {
+      queryClient.invalidateQueries({ queryKey: ['bid-document', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['bid-approvals'] });
+      toast.success('审批操作已完成');
+    },
+  });
+};
+
 // 统计相关 Hooks
 export const useDocumentStats = (documentId: number) => {
   return useQuery({
