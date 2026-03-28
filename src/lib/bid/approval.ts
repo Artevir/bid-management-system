@@ -12,12 +12,13 @@ import {
   users,
 } from '@/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
+import { AppError } from '@/lib/api/error-handler';
+import { ApprovalLevel, ApprovalStatus } from '@/types/bid';
 
 // ============================================
 // 类型定义
 // ============================================
 
-export type ApprovalLevel = 'first' | 'second' | 'third' | 'final';
 export type ApprovalAction = 'submit' | 'approve' | 'reject' | 'withdraw';
 
 export interface ApprovalFlowConfig {
@@ -53,14 +54,14 @@ export async function createApprovalFlow(
     .limit(1);
 
   if (existing.length > 0) {
-    throw new Error('该文档已存在待审核流程');
+    throw AppError.conflict('该文档已存在待审核流程');
   }
 
   // 创建各级审核
   for (const levelConfig of config.levels) {
     await db.insert(approvalFlows).values({
       documentId: config.documentId,
-      level: levelConfig.level,
+      level: levelConfig.level as any,
       status: 'pending',
       assigneeId: levelConfig.assigneeId,
       dueDate: levelConfig.dueDate || null,
@@ -86,7 +87,7 @@ export async function submitForApproval(
     .limit(1);
 
   if (doc.length === 0) {
-    throw new Error('文档不存在');
+    throw AppError.notFound('文档');
   }
 
   // 获取项目成员（审核人）

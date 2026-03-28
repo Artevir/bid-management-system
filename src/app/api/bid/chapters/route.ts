@@ -5,32 +5,28 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth/middleware';
+import { withAuth, withDocumentPermission } from '@/lib/auth/middleware';
 import {
   getChapterTree,
   createChapter,
-} from '@/lib/bid/service';
+} from '@/lib/bid/documents-service';
+import { success, created, AppError, handleError } from '@/lib/api/error-handler';
 
 // 获取章节树
 async function getChapters(
   request: NextRequest,
   userId: number
 ): Promise<NextResponse> {
-  try {
-    const { searchParams } = new URL(request.url);
-    const documentId = searchParams.get('documentId');
+  const { searchParams } = new URL(request.url);
+  const documentId = searchParams.get('documentId');
 
-    if (!documentId) {
-      return NextResponse.json({ error: '缺少文档ID' }, { status: 400 });
-    }
-
-    const chapters = await getChapterTree(parseInt(documentId));
-
-    return NextResponse.json({ chapters });
-  } catch (error) {
-    console.error('Get chapters error:', error);
-    return NextResponse.json({ error: '获取章节失败' }, { status: 500 });
+  if (!documentId) {
+    throw AppError.badRequest('缺少文档ID');
   }
+
+  const chapters = await getChapterTree(parseInt(documentId, 10));
+
+  return success({ chapters });
 }
 
 // 创建章节
@@ -38,53 +34,48 @@ async function createNewChapter(
   request: NextRequest,
   userId: number
 ): Promise<NextResponse> {
-  try {
-    const body = await request.json();
-    const {
-      documentId,
-      parentId,
-      type,
-      serialNumber,
-      title,
-      content,
-      isRequired,
-      assignedTo,
-      deadline,
-      responseItemId,
-    } = body;
+  const body = await request.json();
+  const {
+    documentId,
+    parentId,
+    type,
+    serialNumber,
+    title,
+    content,
+    isRequired,
+    assignedTo,
+    deadline,
+    responseItemId,
+  } = body;
 
-    if (!documentId || !title) {
-      return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
-    }
-
-    const chapterId = await createChapter({
-      documentId,
-      parentId,
-      type,
-      serialNumber,
-      title,
-      content,
-      isRequired,
-      assignedTo,
-      deadline: deadline ? new Date(deadline) : undefined,
-      responseItemId,
-    });
-
-    return NextResponse.json({
-      success: true,
-      chapterId,
-      message: '章节创建成功',
-    });
-  } catch (error) {
-    console.error('Create chapter error:', error);
-    return NextResponse.json({ error: '创建章节失败' }, { status: 500 });
+  if (!documentId || !title) {
+    throw AppError.badRequest('缺少必填字段: documentId, title');
   }
+
+  const chapterId = await createChapter({
+    documentId,
+    parentId,
+    type,
+    serialNumber,
+    title,
+    content,
+    isRequired,
+    assignedTo,
+    deadline: deadline ? new Date(deadline) : undefined,
+    responseItemId,
+  });
+
+  return created({ chapterId }, '章节创建成功');
 }
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, (req, userId) => getChapters(req, userId));
+  const { searchParams } = new URL(request.url);
+  const documentId = parseInt(searchParams.get('documentId') || '0', 10);
+  return withDocumentPermission('read', () => documentId)(request, (req, userId) => getChapters(req, userId));
 }
 
 export async function POST(request: NextRequest) {
-  return withAuth(request, (req, userId) => createNewChapter(req, userId));
+  const body = await request.clone().json().catch(() => ({}));
+  const documentId = parseInt(body.documentId || '0', 10);
+  return withDocumentPermission('edit', () => documentId)(request, (req, userId) => createNewChapter(req, userId));
 }

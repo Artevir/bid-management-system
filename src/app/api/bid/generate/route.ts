@@ -13,7 +13,7 @@ import {
   retrieveRelevantKnowledge,
   saveGenerationLog,
 } from '@/lib/bid/ai-generator';
-import { getChapterDetail, updateChapter } from '@/lib/bid/service';
+import { getChapterDetail, updateChapter } from '@/lib/bid/documents-service';
 import { db } from '@/db';
 import { bidDocuments, projects, responseItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';

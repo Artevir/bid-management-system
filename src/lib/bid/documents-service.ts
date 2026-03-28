@@ -1,12 +1,13 @@
 /**
  * 投标文档统一服务层
- * 整合投标文档相关的所有功能
+ * 整合投标文档相关的所有功能，包括CRUD、审批、审查及统计
  */
 
 import { db } from '@/db';
 import {
   bidDocuments,
   bidChapters,
+  responseItems,
   docFrameworks,
   approvalFlows,
   documentGenerationHistories,
@@ -14,96 +15,57 @@ import {
   complianceChecks,
   users,
 } from '@/db/schema';
-import { eq, and, desc, count, sum, sql } from 'drizzle-orm';
+import { eq, and, desc, count, sum, sql, isNull } from 'drizzle-orm';
+import {
+  BidDocStatus,
+  ChapterType,
+  ApprovalLevel,
+  ApprovalStatus,
+  DocumentOverview,
+  DocumentDetail,
+  ChapterSummary,
+  ApprovalFlowSummary,
+  GenerationHistorySummary,
+  ReviewSummary,
+  ChapterTree,
+  CreateDocumentParams,
+  CreateChapterParams,
+  UpdateChapterParams,
+  DocumentStatistics,
+} from '@/types/bid';
 
 // ============================================
-// 类型定义
-// ============================================
-
-export type BidDocStatus = 'draft' | 'editing' | 'reviewing' | 'approved' | 'rejected' | 'published';
-export type ChapterType = 'cover' | 'toc' | 'business' | 'technical' | 'qualification' | 'price' | 'appendix';
-export type ApprovalLevel = 'first' | 'second' | 'third' | 'final';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'returned';
-
-export interface DocumentOverview {
-  id: number;
-  name: string;
-  status: BidDocStatus;
-  version: number;
-  progress: number;
-  totalChapters: number;
-  completedChapters: number;
-  wordCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface DocumentDetail extends DocumentOverview {
-  projectId: number;
-  currentApprovalLevel: ApprovalLevel | null;
-  deadline: Date | null;
-  publishedAt: Date | null;
-  publishedBy: number | null;
-  createdBy: number;
-  chapters: ChapterSummary[];
-  approvalFlows: ApprovalFlowSummary[];
-  generationHistories: GenerationHistorySummary[];
-  reviews: ReviewSummary[];
-}
-
-export interface ChapterSummary {
-  id: number;
-  title: string;
-  type: ChapterType | null;
-  wordCount: number;
-  isCompleted: boolean;
-  isRequired: boolean;
-}
-
-export interface ApprovalFlowSummary {
-  id: number;
-  level: ApprovalLevel;
-  status: ApprovalStatus;
-  assigneeId: number;
-  assigneeName: string;
-  assignedAt: Date;
-  dueDate: Date | null;
-  completedAt: Date | null;
-}
-
-export interface GenerationHistorySummary {
-  id: number;
-  generationConfig: string | null;
-  status: string;
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-}
-
-export interface ReviewSummary {
-  id: number;
-  type: string;
-  score: number | null;
-  status: string;
-  reviewedAt: Date | null;
-  createdAt: Date;
-}
-
-// ============================================
-// 文档概览服务
+// 标书文档核心服务 (CRUD)
 // ============================================
 
 /**
- * 获取项目的文档概览列表
+ * 创建标书文档
  */
-export async function getProjectDocumentOverview(
-  projectId: number
-): Promise<DocumentOverview[]> {
+export async function createDocument(params: CreateDocumentParams): Promise<number> {
+  const { projectId, name, userId } = params;
+
+  const [doc] = await db
+    .insert(bidDocuments)
+    .values({
+      projectId,
+      name,
+      status: 'draft',
+      createdBy: userId,
+    })
+    .returning({ id: bidDocuments.id });
+
+  return doc.id;
+}
+
+/**
+ * 获取项目的标书文档列表
+ */
+export async function getProjectDocuments(projectId: number): Promise<DocumentOverview[]> {
   const docs = await db
     .select({
       id: bidDocuments.id,
       name: bidDocuments.name,
-      status: bidDocuments.status,
+      status: bidDocuments.status as any,
       version: bidDocuments.version,
       progress: bidDocuments.progress,
       totalChapters: bidDocuments.totalChapters,
@@ -116,34 +78,37 @@ export async function getProjectDocumentOverview(
     .where(eq(bidDocuments.projectId, projectId))
     .orderBy(desc(bidDocuments.createdAt));
 
-  return docs;
+  return docs as DocumentOverview[];
 }
 
 /**
- * 获取文档详细信息
+ * 获取文档基本详情
  */
-export async function getDocumentFullDetail(
-  documentId: number
-): Promise<DocumentDetail | null> {
-  // 获取文档基本信息
-  const docs = await db
+export async function getDocumentById(documentId: number) {
+  const doc = await db
     .select()
     .from(bidDocuments)
     .where(eq(bidDocuments.id, documentId))
     .limit(1);
 
-  if (docs.length === 0) {
-    return null;
-  }
+  return doc[0] || null;
+}
 
-  const doc = docs[0];
+/**
+ * 获取文档完整详情 (聚合数据)
+ */
+export async function getDocumentFullDetail(
+  documentId: number
+): Promise<DocumentDetail | null> {
+  const doc = await getDocumentById(documentId);
+  if (!doc) return null;
 
   // 获取章节摘要
   const chapters = await db
     .select({
       id: bidChapters.id,
       title: bidChapters.title,
-      type: bidChapters.type,
+      type: bidChapters.type as any,
       wordCount: bidChapters.wordCount,
       isCompleted: bidChapters.isCompleted,
       isRequired: bidChapters.isRequired,
@@ -156,8 +121,8 @@ export async function getDocumentFullDetail(
   const flowsData = await db
     .select({
       id: approvalFlows.id,
-      level: approvalFlows.level,
-      status: approvalFlows.status,
+      level: approvalFlows.level as any,
+      status: approvalFlows.status as any,
       assigneeId: approvalFlows.assigneeId,
       assignedAt: approvalFlows.assignedAt,
       dueDate: approvalFlows.dueDate,
@@ -179,18 +144,11 @@ export async function getDocumentFullDetail(
         .where(sql`${users.id} = ANY(${flowIds})`)
     : [];
 
-  // 组合审批流程数据
-  const approvalFlowsData: ApprovalFlowSummary[] = flowsData.map((flow) => {
+  const approvalFlowsSummary: ApprovalFlowSummary[] = flowsData.map((flow) => {
     const assignee = assigneeData.find((a) => a.id === flow.assigneeId);
     return {
-      id: flow.id,
-      level: flow.level,
-      status: flow.status,
-      assigneeId: flow.assigneeId,
+      ...flow,
       assigneeName: assignee?.realName || '',
-      assignedAt: flow.assignedAt,
-      dueDate: flow.dueDate,
-      completedAt: flow.completedAt,
     };
   });
 
@@ -234,91 +192,326 @@ export async function getDocumentFullDetail(
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     projectId: doc.projectId,
-    currentApprovalLevel: doc.currentApprovalLevel,
+    currentApprovalLevel: doc.currentApprovalLevel as ApprovalLevel,
     deadline: doc.deadline,
     publishedAt: doc.publishedAt,
     publishedBy: doc.publishedBy,
     createdBy: doc.createdBy,
-    chapters,
-    approvalFlows: approvalFlowsData,
+    chapters: chapters as ChapterSummary[],
+    approvalFlows: approvalFlowsSummary,
     generationHistories,
     reviews,
   };
 }
 
+/**
+ * 更新文档状态
+ */
+export async function updateDocumentStatus(
+  documentId: number,
+  status: BidDocStatus
+): Promise<void> {
+  const updateData: any = {
+    status,
+    updatedAt: new Date(),
+  };
+
+  if (status === 'published') {
+    updateData.publishedAt = new Date();
+  }
+
+  await db
+    .update(bidDocuments)
+    .set(updateData)
+    .where(eq(bidDocuments.id, documentId));
+}
+
+/**
+ * 更新文档进度及统计信息
+ */
+export async function updateDocumentProgress(documentId: number): Promise<void> {
+  const chapters = await db
+    .select()
+    .from(bidChapters)
+    .where(eq(bidChapters.documentId, documentId));
+
+  const totalChapters = chapters.length;
+  const completedChapters = chapters.filter((c) => c.isCompleted).length;
+  const wordCount = chapters.reduce((sum, c) => sum + (c.wordCount || 0), 0);
+  const progress = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+
+  await db
+    .update(bidDocuments)
+    .set({
+      totalChapters,
+      completedChapters,
+      wordCount,
+      progress,
+      updatedAt: new Date(),
+    })
+    .where(eq(bidDocuments.id, documentId));
+}
+
 // ============================================
-// 文档模板服务
+// 章节服务
 // ============================================
 
 /**
- * 获取文档模板列表
+ * 创建章节
  */
-export async function getDocumentTemplates(
-  filters?: {
-    companyId?: number;
-    category?: string;
-    isDefault?: boolean;
+export async function createChapter(params: CreateChapterParams): Promise<number> {
+  const { documentId, parentId, type, serialNumber, title, content, isRequired, assignedTo, deadline, responseItemId } = params;
+
+  const existingChapters = await db
+    .select()
+    .from(bidChapters)
+    .where(
+      parentId
+        ? and(eq(bidChapters.documentId, documentId), eq(bidChapters.parentId, parentId))
+        : and(eq(bidChapters.documentId, documentId), isNull(bidChapters.parentId))
+    );
+
+  const sortOrder = existingChapters.length;
+  let level = 1;
+  if (parentId) {
+    const parent = await db.select().from(bidChapters).where(eq(bidChapters.id, parentId)).limit(1);
+    if (parent.length > 0) level = parent[0].level + 1;
   }
-) {
+
+  const [chapter] = await db
+    .insert(bidChapters)
+    .values({
+      documentId,
+      parentId: parentId || null,
+      type: type || null,
+      serialNumber: serialNumber || null,
+      title,
+      content: content || null,
+      sortOrder,
+      level,
+      isRequired: isRequired ?? true,
+      assignedTo: assignedTo || null,
+      deadline: deadline || null,
+      responseItemId: responseItemId || null,
+    })
+    .returning({ id: bidChapters.id });
+
+  await updateDocumentProgress(documentId);
+  return chapter.id;
+}
+
+/**
+ * 获取文档的章节树
+ */
+export async function getChapterTree(documentId: number): Promise<ChapterTree[]> {
+  const chapters = await db
+    .select()
+    .from(bidChapters)
+    .where(eq(bidChapters.documentId, documentId))
+    .orderBy(bidChapters.sortOrder);
+
+  const buildTree = (parentId: number | null = null): ChapterTree[] => {
+    return chapters
+      .filter((c) => c.parentId === parentId)
+      .map((chapter) => ({
+        id: chapter.id,
+        serialNumber: chapter.serialNumber,
+        title: chapter.title,
+        type: chapter.type as any,
+        wordCount: chapter.wordCount,
+        level: chapter.level,
+        isRequired: chapter.isRequired,
+        isCompleted: chapter.isCompleted,
+        assignedTo: chapter.assignedTo,
+        deadline: chapter.deadline,
+        children: buildTree(chapter.id),
+      }));
+  };
+
+  return buildTree();
+}
+
+/**
+ * 更新章节
+ */
+export async function updateChapter(
+  chapterId: number,
+  params: UpdateChapterParams
+): Promise<void> {
+  const updateData: any = {
+    ...params,
+    updatedAt: new Date(),
+  };
+
+  if (params.content) updateData.wordCount = params.content.length;
+  if (params.isCompleted) updateData.completedAt = new Date();
+
+  await db
+    .update(bidChapters)
+    .set(updateData)
+    .where(eq(bidChapters.id, chapterId));
+
+  const chapter = await db.select().from(bidChapters).where(eq(bidChapters.id, chapterId)).limit(1);
+  if (chapter[0]) await updateDocumentProgress(chapter[0].documentId);
+}
+
+/**
+ * 从响应矩阵生成章节结构
+ */
+export async function generateChaptersFromMatrix(
+  documentId: number,
+  matrixId: number,
+  userId: number
+): Promise<number[]> {
+  const items = await db
+    .select()
+    .from(responseItems)
+    .where(eq(responseItems.matrixId, matrixId))
+    .orderBy(responseItems.serialNumber);
+
+  const chapterIds: number[] = [];
+  const typeGroups = {
+    qualification: '资格部分',
+    scoring_item: '技术响应',
+    requirement: '其他要求',
+  };
+
+  for (const [type, sectionTitle] of Object.entries(typeGroups)) {
+    const typeItems = items.filter((i) => i.type === type);
+    if (typeItems.length === 0) continue;
+
+    const parentId = await createChapter({
+      documentId,
+      type: type as ChapterType,
+      title: sectionTitle,
+      isRequired: true,
+      userId,
+    } as any);
+
+    chapterIds.push(parentId);
+
+    for (const item of typeItems) {
+      const childId = await createChapter({
+        documentId,
+        parentId,
+        serialNumber: item.serialNumber || undefined,
+        title: item.title,
+        content: item.response || undefined,
+        isRequired: item.requirementType === 'mandatory',
+        responseItemId: item.id,
+      });
+      chapterIds.push(childId);
+    }
+  }
+
+  return chapterIds;
+}
+
+// ============================================
+// 模板服务
+// ============================================
+
+export async function getDocumentTemplates(filters?: { companyId?: number; category?: string; isDefault?: boolean }) {
   const conditions = [];
-
-  if (filters?.companyId) {
-    conditions.push(eq(docFrameworks.companyId, filters.companyId));
-  }
-
-  if (filters?.category) {
-    conditions.push(eq(docFrameworks.category, filters.category));
-  }
-
-  if (filters?.isDefault !== undefined) {
-    conditions.push(eq(docFrameworks.isDefault, filters.isDefault));
-  }
-
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  if (filters?.companyId) conditions.push(eq(docFrameworks.companyId, filters.companyId));
+  if (filters?.category) conditions.push(eq(docFrameworks.category, filters.category));
+  if (filters?.isDefault !== undefined) conditions.push(eq(docFrameworks.isDefault, filters.isDefault));
 
   return await db
     .select()
     .from(docFrameworks)
-    .where(whereClause)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(docFrameworks.isDefault), docFrameworks.createdAt);
 }
 
-/**
- * 获取默认模板
- */
-export async function getDefaultTemplate(
-  companyId: number,
-  category: string
-) {
-  const templates = await db
-    .select()
-    .from(docFrameworks)
-    .where(
-      and(
-        eq(docFrameworks.companyId, companyId),
-        eq(docFrameworks.category, category),
-        eq(docFrameworks.isDefault, true)
-      )
-    )
-    .limit(1);
+// ============================================
+// 统计服务 (下沉业务逻辑)
+// ============================================
 
-  return templates[0] || null;
+/**
+ * 获取文档章节统计信息
+ */
+export async function getDocumentChapterStatistics(documentId: number): Promise<DocumentStatistics> {
+  const chapters = await db
+    .select()
+    .from(bidChapters)
+    .where(eq(bidChapters.documentId, documentId));
+
+  const statistics: DocumentStatistics = {
+    totalChapters: chapters.length,
+    completedChapters: chapters.filter((c) => c.isCompleted).length,
+    byType: {},
+    byStatus: {
+      completed: chapters.filter((c) => c.isCompleted).length,
+      pending: chapters.filter((c) => !c.isCompleted).length,
+    },
+  };
+
+  chapters.forEach((chapter) => {
+    if (chapter.type) {
+      statistics.byType[chapter.type] = (statistics.byType[chapter.type] || 0) + 1;
+    }
+  });
+
+  return statistics;
+}
+
+/**
+ * 获取完整的文档统计信息 (包括审批、历史等)
+ */
+export async function getFullDocumentStatistics(documentId: number) {
+  const chapterStats = await getDocumentChapterStatistics(documentId);
+  
+  const generationStats = await db
+    .select({
+      total: count(),
+      completed: count(sql`CASE WHEN ${documentGenerationHistories.status} = 'completed' THEN 1 END`),
+    })
+    .from(documentGenerationHistories)
+    .where(eq(documentGenerationHistories.documentId, documentId));
+
+  const reviewStats = await db
+    .select({
+      total: count(documentReviews.id),
+      completed: count(sql`CASE WHEN ${documentReviews.status} = 'completed' THEN 1 END`),
+    })
+    .from(documentReviews)
+    .where(eq(documentReviews.documentId, documentId));
+
+  const complianceStats = await db
+    .select({
+      total: count(complianceChecks.id),
+      passed: count(sql`CASE WHEN ${complianceChecks.result} = 'pass' THEN 1 END`),
+      failed: count(sql`CASE WHEN ${complianceChecks.result} = 'fail' THEN 1 END`),
+    })
+    .from(complianceChecks)
+    .where(eq(complianceChecks.documentId, documentId));
+
+  return {
+    chapters: chapterStats,
+    generations: {
+      total: generationStats[0]?.total || 0,
+      completed: generationStats[0]?.completed || 0,
+    },
+    reviews: {
+      total: reviewStats[0]?.total || 0,
+      completed: reviewStats[0]?.completed || 0,
+    },
+    compliance: {
+      total: complianceStats[0]?.total || 0,
+      passed: complianceStats[0]?.passed || 0,
+      failed: complianceStats[0]?.failed || 0,
+    },
+  };
 }
 
 // ============================================
-// 文档审批服务
+// 审批服务
 // ============================================
 
-/**
- * 启动审批流程
- */
 export async function startApprovalProcess(
   documentId: number,
-  levels: Array<{
-    level: ApprovalLevel;
-    assigneeId: number;
-    dueDate?: Date;
-  }>,
+  levels: Array<{ level: ApprovalLevel; assigneeId: number; dueDate?: Date }>,
   userId: number
 ): Promise<number[]> {
   const flowIds: number[] = [];
@@ -342,7 +535,6 @@ export async function startApprovalProcess(
     flowIds.push(flow.id);
   }
 
-  // 更新文档状态为审批中
   await db
     .update(bidDocuments)
     .set({
@@ -355,210 +547,31 @@ export async function startApprovalProcess(
   return flowIds;
 }
 
-/**
- * 完成审批节点
- */
 export async function completeApprovalNode(
   flowId: number,
   result: 'approved' | 'rejected',
   comment?: string
 ): Promise<void> {
-  // 更新当前审批节点
   await db
     .update(approvalFlows)
-    .set({
-      status: result,
-      comment,
-      completedAt: new Date(),
-      updatedAt: new Date(),
-    })
+    .set({ status: result, comment, completedAt: new Date(), updatedAt: new Date() })
     .where(eq(approvalFlows.id, flowId));
 
-  // 获取审批流程信息
-  const flow = await db
-    .select()
-    .from(approvalFlows)
-    .where(eq(approvalFlows.id, flowId))
-    .limit(1);
+  const flow = await db.select().from(approvalFlows).where(eq(approvalFlows.id, flowId)).limit(1);
+  if (flow.length === 0) return;
 
-  if (flow.length === 0) {
-    return;
-  }
-
-  // 如果拒绝，更新文档状态
   if (result === 'rejected') {
-    await db
-      .update(bidDocuments)
-      .set({
-        status: 'rejected',
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocuments.id, flow[0].documentId));
+    await db.update(bidDocuments).set({ status: 'rejected', updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
     return;
   }
 
-  // 如果通过，查找下一级审批
   const levelOrder: ApprovalLevel[] = ['first', 'second', 'third', 'final'];
-  const currentIndex = levelOrder.indexOf(flow[0].level);
+  const currentIndex = levelOrder.indexOf(flow[0].level as ApprovalLevel);
   const nextLevel = levelOrder[currentIndex + 1];
 
   if (nextLevel) {
-    // 更新当前审批级别
-    await db
-      .update(bidDocuments)
-      .set({
-        currentApprovalLevel: nextLevel,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocuments.id, flow[0].documentId));
+    await db.update(bidDocuments).set({ currentApprovalLevel: nextLevel, updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
   } else {
-    // 所有审批通过，更新文档状态
-    await db
-      .update(bidDocuments)
-      .set({
-        status: 'approved',
-        currentApprovalLevel: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocuments.id, flow[0].documentId));
+    await db.update(bidDocuments).set({ status: 'approved', currentApprovalLevel: null, updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
   }
-}
-
-// ============================================
-// 文档审查服务
-// ============================================
-
-/**
- * 创建文档审查
- */
-export async function createDocumentReview(
-  documentId: number,
-  type: 'content' | 'compliance' | 'format' | 'completeness',
-  userId: number
-): Promise<number> {
-  const [review] = await db
-    .insert(documentReviews)
-    .values({
-      documentId,
-      type,
-      status: 'pending',
-      reviewedBy: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .returning({ id: documentReviews.id });
-
-  return review.id;
-}
-
-/**
- * 更新审查结果
- */
-export async function updateReviewResult(
-  reviewId: number,
-  result: {
-    score?: number;
-    result?: string;
-    issues?: string;
-    suggestion?: string;
-    status?: 'completed' | 'pending';
-  }
-): Promise<void> {
-  await db
-    .update(documentReviews)
-    .set({
-      ...result,
-      reviewedAt: result.status === 'completed' ? new Date() : undefined,
-      updatedAt: new Date(),
-    })
-    .where(eq(documentReviews.id, reviewId));
-}
-
-// ============================================
-// 文档统计服务
-// ============================================
-
-/**
- * 获取文档统计信息
- */
-export async function getDocumentStatistics(documentId: number) {
-  // 章节统计
-  const chapterStats = await db
-    .select({
-      total: count(),
-      completed: count(sql`CASE WHEN ${bidChapters.isCompleted} = true THEN 1 END`),
-      totalWords: sum(bidChapters.wordCount),
-    })
-    .from(bidChapters)
-    .where(eq(bidChapters.documentId, documentId));
-
-  // 生成历史统计
-  const generationStats = await db
-    .select({
-      total: count(),
-      completed: count(sql`CASE WHEN ${documentGenerationHistories.status} = 'completed' THEN 1 END`),
-    })
-    .from(documentGenerationHistories)
-    .where(eq(documentGenerationHistories.documentId, documentId));
-
-  // 审查统计
-  const reviewStats = await db
-    .select({
-      total: count(documentReviews.id),
-      completed: count(sql`CASE WHEN ${documentReviews.status} = 'completed' THEN 1 END`),
-    })
-    .from(documentReviews)
-    .where(eq(documentReviews.documentId, documentId));
-
-  // 合规检查统计
-  const complianceStats = await db
-    .select({
-      total: count(complianceChecks.id),
-      passed: count(sql`CASE WHEN ${complianceChecks.result} = 'pass' THEN 1 END`),
-      failed: count(sql`CASE WHEN ${complianceChecks.result} = 'fail' THEN 1 END`),
-    })
-    .from(complianceChecks)
-    .where(eq(complianceChecks.documentId, documentId));
-
-  return {
-    chapters: {
-      total: chapterStats[0]?.total || 0,
-      completed: chapterStats[0]?.completed || 0,
-      totalWords: chapterStats[0]?.totalWords || 0,
-    },
-    generations: {
-      total: generationStats[0]?.total || 0,
-      completed: generationStats[0]?.completed || 0,
-    },
-    reviews: {
-      total: reviewStats[0]?.total || 0,
-      completed: reviewStats[0]?.completed || 0,
-    },
-    compliance: {
-      total: complianceStats[0]?.total || 0,
-      passed: complianceStats[0]?.passed || 0,
-      failed: complianceStats[0]?.failed || 0,
-    },
-  };
-}
-
-/**
- * 获取项目文档统计
- */
-export async function getProjectDocumentStatistics(projectId: number) {
-  const docs = await getProjectDocumentOverview(projectId);
-
-  return {
-    totalDocuments: docs.length,
-    statusDistribution: {
-      draft: docs.filter((d) => d.status === 'draft').length,
-      editing: docs.filter((d) => d.status === 'editing').length,
-      reviewing: docs.filter((d) => d.status === 'reviewing').length,
-      approved: docs.filter((d) => d.status === 'approved').length,
-      published: docs.filter((d) => d.status === 'published').length,
-    },
-    totalChapters: docs.reduce((sum, d) => sum + d.totalChapters, 0),
-    completedChapters: docs.reduce((sum, d) => sum + d.completedChapters, 0),
-    totalWords: docs.reduce((sum, d) => sum + d.wordCount, 0),
-  };
 }
