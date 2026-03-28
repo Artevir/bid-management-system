@@ -4,11 +4,11 @@
  */
 
 import { db } from '@/db/index';
-import { auditLogs, AuditActionType, AuditAction } from '@/db/schema/audit-logs';
-import { users } from '@/db/schema/users';
+import { auditLogs, AuditActionType, AuditAction } from '@/lib/db/schema/audit-logs';
+import { users } from '@/lib/db/schema/users';
 import { eq, and, or, gte, lte, inArray, desc, sql, count } from 'drizzle-orm';
 import { cache } from '@/lib/cache';
-import type { AuditLogCreate, AuditLogQuery, AuditLogStats } from '@/db/schema/audit-logs';
+import type { AuditLogCreate, AuditLogQuery, AuditLogStats } from '@/lib/db/schema/audit-logs';
 
 // ============================================
 // 审计日志服务类
@@ -115,7 +115,7 @@ export class AuditLogService {
           user: {
             columns: {
               id: true,
-              name: true,
+              username: true,
               email: true,
               avatar: true,
             },
@@ -213,14 +213,14 @@ export class AuditLogService {
             where: eq(users.id, ua.userId),
             columns: {
               id: true,
-              name: true,
+              username: true,
               email: true,
             },
           });
 
           return {
             userId: ua.userId,
-            userName: user?.name || user?.email || 'Unknown',
+            userName: user?.username || user?.email || 'Unknown',
             actionCount: Number(ua.count),
           };
         })

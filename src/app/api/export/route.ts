@@ -5,8 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ImportExportService, { ExportFormat } from '@/lib/export/import-export-service';
 import { db } from '@/db/index';
-import { projects } from '@/db/schema/projects';
-import { documents } from '@/db/schema/documents';
+import { projects, bidDocuments } from '@/db/schema';
 
 // ============================================
 // GET - 导出数据
@@ -32,8 +31,8 @@ export async function GET(request: NextRequest) {
         break;
       
       case 'document':
-        data = await db.query.documents.findMany({
-          orderBy: (documents, { desc }) => [desc(documents.createdAt)],
+        data = await db.query.bidDocuments.findMany({
+          orderBy: (bidDocuments, { desc }) => [desc(bidDocuments.createdAt)],
         });
         break;
 

@@ -4,8 +4,7 @@
  */
 
 import { db } from '@/db/index';
-import { projects } from '@/db/schema/projects';
-import { documents } from '@/db/schema/documents';
+import { projects, bidDocuments } from '@/db/schema';
 import { sql, eq, and, gte, lte, desc, count } from 'drizzle-orm';
 
 // ============================================
@@ -138,10 +137,10 @@ export class ReportService {
     const conditions = [];
 
     if (startDate) {
-      conditions.push(gte(documents.createdAt, startDate));
+      conditions.push(gte(bidDocuments.createdAt, startDate));
     }
     if (endDate) {
-      conditions.push(lte(documents.createdAt, endDate));
+      conditions.push(lte(bidDocuments.createdAt, endDate));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -149,20 +148,20 @@ export class ReportService {
     // 总文档数
     const totalResult = await db
       .select({ count: count() })
-      .from(documents)
+      .from(bidDocuments)
       .where(whereClause);
 
     const total = Number(totalResult[0]?.count || 0);
 
-    // 按类型统计
+    // 按状态统计（原 documents.type 不存在，使用标书状态作为维度）
     const typeResult = await db
       .select({
-        type: documents.type,
+        type: bidDocuments.status,
         count: count(),
       })
-      .from(documents)
+      .from(bidDocuments)
       .where(whereClause)
-      .groupBy(documents.type);
+      .groupBy(bidDocuments.status);
 
     const byType: Record<string, number> = {};
     for (const row of typeResult) {
@@ -172,24 +171,24 @@ export class ReportService {
     // 按项目统计
     const projectResult = await db
       .select({
-        projectId: documents.projectId,
+        projectId: bidDocuments.projectId,
         count: count(),
       })
-      .from(documents)
+      .from(bidDocuments)
       .where(whereClause)
-      .groupBy(documents.projectId);
+      .groupBy(bidDocuments.projectId);
 
     const byProject: Record<string, number> = {};
     for (const row of projectResult) {
       byProject[row.projectId || 'unknown'] = Number(row.count);
     }
 
-    // 总大小
+    // 总规模（原 documents.file_size 不存在，使用 wordCount 汇总作为规模指标）
     const sizeResult = await db
       .select({
-        total: sql<number>`COALESCE(SUM(file_size), 0)`,
+        total: sql<number>`COALESCE(SUM(${bidDocuments.wordCount}), 0)`,
       })
-      .from(documents)
+      .from(bidDocuments)
       .where(whereClause);
 
     const totalSize = Number(sizeResult[0]?.total || 0);

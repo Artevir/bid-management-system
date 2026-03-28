@@ -5,10 +5,7 @@
  */
 
 import { db } from '@/db/index';
-import { projects } from '@/db/schema/projects';
-import { documents } from '@/db/schema/documents';
-import { users } from '@/db/schema/users';
-import { companies } from '@/db/schema/companies';
+import { projects, bidDocuments, companies, users } from '@/db/schema';
 import { sql, or, and, ilike, desc } from 'drizzle-orm';
 import { cache } from '@/lib/cache';
 
@@ -230,34 +227,37 @@ export class SearchService {
   ): Promise<{ results: SearchResult[]; total: number }> {
     const conditions = [];
 
-    conditions.push(ilike(documents.name, `%${query}%`));
+    conditions.push(ilike(bidDocuments.name, `%${query}%`));
 
     if (filters.projectId) {
-      conditions.push(sql`${documents.projectId} = ${filters.projectId}`);
+      conditions.push(sql`${bidDocuments.projectId} = ${filters.projectId}`);
+    }
+    if (filters.status) {
+      conditions.push(sql`${bidDocuments.status} = ${filters.status}`);
     }
     if (filters.type) {
-      conditions.push(sql`${documents.type} = ${filters.type}`);
+      conditions.push(sql`${bidDocuments.status} = ${filters.type}`);
     }
 
     const whereClause = or(...conditions);
 
-    const docList = await db.query.documents.findMany({
+    const docList = await db.query.bidDocuments.findMany({
       where: whereClause,
       limit: pageSize,
       offset: (page - 1) * pageSize,
-      orderBy: [desc(documents.createdAt)],
+      orderBy: [desc(bidDocuments.createdAt)],
     });
 
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
-      .from(documents)
+      .from(bidDocuments)
       .where(whereClause);
 
     const results = docList.map(doc => ({
       type: 'document' as const,
-      id: doc.id,
+      id: String(doc.id),
       title: doc.name,
-      description: doc.type || '',
+      description: doc.status || '',
       data: doc,
       score: this.calculateScore(query, doc.name),
       highlight: this.highlightText(query, doc.name),
