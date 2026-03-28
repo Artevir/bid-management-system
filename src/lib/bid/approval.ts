@@ -10,10 +10,17 @@ import {
   bidDocuments,
   projectMembers,
   users,
+  auditLogs,
 } from '@/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { AppError } from '@/lib/api/error-handler';
 import { ApprovalLevel, ApprovalStatus } from '@/types/bid';
+import { createAuditLog } from '@/lib/audit/service';
+import {
+  getDocumentById,
+  updateDocumentStatus,
+  APPROVAL_LEVEL_ORDER,
+} from './documents-service';
 
 // ============================================
 // 类型定义
@@ -57,19 +64,30 @@ export async function createApprovalFlow(
     throw AppError.conflict('该文档已存在待审核流程');
   }
 
-  // 创建各级审核
-  for (const levelConfig of config.levels) {
-    await db.insert(approvalFlows).values({
-      documentId: config.documentId,
-      level: levelConfig.level as any,
-      status: 'pending',
-      assigneeId: levelConfig.assigneeId,
-      dueDate: levelConfig.dueDate || null,
-      createdBy: config.createdBy,
-    });
-  }
+  return await db.transaction(async (tx) => {
+    // 创建各级审核
+    for (const levelConfig of config.levels) {
+      await tx.insert(approvalFlows).values({
+        documentId: config.documentId,
+        level: levelConfig.level as any,
+        status: 'pending',
+        assigneeId: levelConfig.assigneeId,
+        dueDate: levelConfig.dueDate || null,
+        createdBy: config.createdBy,
+      });
+    }
 
-  return config.documentId;
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId: config.createdBy,
+      action: 'create',
+      resource: 'document',
+      resourceId: config.documentId,
+      description: `发起了文档审核流程`,
+    });
+
+    return config.documentId;
+  });
 }
 
 /**
@@ -88,6 +106,22 @@ export async function submitForApproval(
 
   if (doc.length === 0) {
     throw AppError.notFound('文档');
+  }
+
+  // 验证提交人权限 (需有编辑权限)
+  const submitterMember = await db
+    .select()
+    .from(projectMembers)
+    .where(
+      and(
+        eq(projectMembers.projectId, doc[0].projectId),
+        eq(projectMembers.userId, submitterId)
+      )
+    )
+    .limit(1);
+
+  if (submitterMember.length === 0 || !submitterMember[0].canEdit) {
+    throw AppError.forbidden('您没有提交该文档审核的权限');
   }
 
   // 获取项目成员（审核人）
@@ -119,20 +153,31 @@ export async function submitForApproval(
     assigneeId: m.userId,
   }));
 
-  await createApprovalFlow({
-    documentId,
-    levels,
-    createdBy: submitterId,
-  });
+  await db.transaction(async (tx) => {
+    await createApprovalFlow({
+      documentId,
+      levels,
+      createdBy: submitterId,
+    });
 
-  // 更新文档状态为审核中
-  await db
-    .update(bidDocuments)
-    .set({
-      status: 'reviewing',
-      currentApprovalLevel: 'first',
-    })
-    .where(eq(bidDocuments.id, documentId));
+    // 更新文档状态为审核中
+    await tx
+      .update(bidDocuments)
+      .set({
+        status: 'reviewing',
+        currentApprovalLevel: 'first',
+      })
+      .where(eq(bidDocuments.id, documentId));
+
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId: submitterId,
+      action: 'update',
+      resource: 'document',
+      resourceId: documentId,
+      description: `提交了文档审核申请`,
+    });
+  });
 }
 
 /**
@@ -169,93 +214,103 @@ export async function executeApproval(
 
   const now = new Date();
 
-  if (action === 'approve') {
-    // 更新审核流程状态
-    await db
-      .update(approvalFlows)
-      .set({
-        status: 'approved',
-        completedAt: now,
-        comment: comment || null,
-      })
-      .where(eq(approvalFlows.id, flow[0].id));
-
-    // 创建审核记录
-    await db.insert(approvalRecords).values({
-      flowId: flow[0].id,
-      status: 'approved',
-      comment: comment || null,
-      reviewerId: userId,
-    });
-
-    // 检查是否有下一级
-    const nextLevel = getNextLevel(level);
-    const nextFlow = await db
-      .select()
-      .from(approvalFlows)
-      .where(
-        and(
-          eq(approvalFlows.documentId, documentId),
-          eq(approvalFlows.level, nextLevel)
-        )
-      )
-      .limit(1);
-
-    if (nextFlow.length > 0) {
-      // 进入下一级
-      await db
-        .update(bidDocuments)
-        .set({
-          currentApprovalLevel: nextLevel,
-        })
-        .where(eq(bidDocuments.id, documentId));
-    } else {
-      // 全部通过
-      await db
-        .update(bidDocuments)
+  await db.transaction(async (tx) => {
+    if (action === 'approve') {
+      // 更新审核流程状态
+      await tx
+        .update(approvalFlows)
         .set({
           status: 'approved',
+          completedAt: now,
+          comment: comment || null,
+        })
+        .where(eq(approvalFlows.id, flow[0].id));
+
+      // 创建审核记录
+      await tx.insert(approvalRecords).values({
+        flowId: flow[0].id,
+        status: 'approved',
+        comment: comment || null,
+        reviewerId: userId,
+      });
+
+      // 检查是否有下一级
+      const nextLevel = getNextLevel(level);
+      const nextFlow = await tx
+        .select()
+        .from(approvalFlows)
+        .where(
+          and(
+            eq(approvalFlows.documentId, documentId),
+            eq(approvalFlows.level, nextLevel)
+          )
+        )
+        .limit(1);
+
+      if (nextFlow.length > 0) {
+        // 进入下一级
+        await tx
+          .update(bidDocuments)
+          .set({
+            currentApprovalLevel: nextLevel,
+          })
+          .where(eq(bidDocuments.id, documentId));
+      } else {
+        // 全部通过
+        await tx
+          .update(bidDocuments)
+          .set({
+            status: 'approved',
+            currentApprovalLevel: null,
+          })
+          .where(eq(bidDocuments.id, documentId));
+      }
+    } else if (action === 'reject') {
+      // 更新审核流程状态
+      await tx
+        .update(approvalFlows)
+        .set({
+          status: 'rejected',
+          completedAt: now,
+          comment: comment || '审核不通过',
+        })
+        .where(eq(approvalFlows.id, flow[0].id));
+
+      // 创建审核记录
+      await tx.insert(approvalRecords).values({
+        flowId: flow[0].id,
+        status: 'rejected',
+        comment: comment || '审核不通过',
+        reviewerId: userId,
+      });
+
+      // 更新文档状态
+      await tx
+        .update(bidDocuments)
+        .set({
+          status: 'rejected',
           currentApprovalLevel: null,
         })
         .where(eq(bidDocuments.id, documentId));
     }
-  } else if (action === 'reject') {
-    // 更新审核流程状态
-    await db
-      .update(approvalFlows)
-      .set({
-        status: 'rejected',
-        completedAt: now,
-        comment: comment || '审核不通过',
-      })
-      .where(eq(approvalFlows.id, flow[0].id));
 
-    // 创建审核记录
-    await db.insert(approvalRecords).values({
-      flowId: flow[0].id,
-      status: 'rejected',
-      comment: comment || '审核不通过',
-      reviewerId: userId,
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId,
+      action: action === 'approve' ? 'approve' : 'reject',
+      resource: 'document',
+      resourceId: documentId,
+      description: `审批了文档节点: ${level}, 结果: ${action}`,
     });
-
-    // 更新文档状态
-    await db
-      .update(bidDocuments)
-      .set({
-        status: 'rejected',
-        currentApprovalLevel: null,
-      })
-      .where(eq(bidDocuments.id, documentId));
-  }
+  });
 }
 
 /**
  * 获取下一级审核
  */
 function getNextLevel(currentLevel: ApprovalLevel): ApprovalLevel {
-  const levels: ApprovalLevel[] = ['first', 'second', 'third', 'final'];
-  const currentIndex = levels.indexOf(currentLevel);
-  return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : currentLevel;
+  const currentIndex = APPROVAL_LEVEL_ORDER.indexOf(currentLevel);
+  return currentIndex < APPROVAL_LEVEL_ORDER.length - 1 ? APPROVAL_LEVEL_ORDER[currentIndex + 1] : currentLevel;
 }
 
 /**

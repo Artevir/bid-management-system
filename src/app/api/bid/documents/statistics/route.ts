@@ -11,7 +11,8 @@ import {
   getFullDocumentStatistics,
   getProjectDocumentStatistics,
 } from '@/lib/bid/documents-service';
-import { success, AppError, handleError } from '@/lib/api/error-handler';
+import { success, AppError } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
 
 // ============================================
 // GET - 获取文档统计信息
@@ -22,18 +23,20 @@ async function getStats(
   userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const documentId = searchParams.get('documentId');
-  const projectId = searchParams.get('projectId');
+  const documentIdStr = searchParams.get('documentId');
+  const projectIdStr = searchParams.get('projectId');
 
   // 如果提供了文档ID，获取单个文档的详细统计
-  if (documentId) {
-    const stats = await getFullDocumentStatistics(parseInt(documentId, 10));
+  if (documentIdStr) {
+    const documentId = parseResourceId(documentIdStr, '文档');
+    const stats = await getFullDocumentStatistics(documentId);
     return success(stats);
   }
 
   // 如果提供了项目ID，获取项目的文档统计
-  if (projectId) {
-    const stats = await getProjectDocumentStatistics(parseInt(projectId, 10));
+  if (projectIdStr) {
+    const projectId = parseResourceId(projectIdStr, '项目');
+    const stats = await getProjectDocumentStatistics(projectId);
     return success(stats);
   }
 

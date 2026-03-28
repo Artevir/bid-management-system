@@ -11,6 +11,7 @@ import {
   getProjectDocuments,
 } from '@/lib/bid/documents-service';
 import { success, created, AppError } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
 
 // 获取项目的标书文档列表
 async function getDocuments(
@@ -18,17 +19,10 @@ async function getDocuments(
   userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get('projectId');
+  const projectIdStr = searchParams.get('projectId');
+  const projectId = parseResourceId(projectIdStr, '项目');
 
-  if (!projectId) {
-    throw AppError.badRequest('缺少项目ID');
-  }
-
-  if (!/^\d+$/.test(projectId)) {
-    throw AppError.badRequest('项目ID格式错误');
-  }
-
-  const documents = await getProjectDocuments(parseInt(projectId, 10));
+  const documents = await getProjectDocuments(projectId);
 
   return success({ documents });
 }
@@ -39,11 +33,13 @@ async function createNewDocument(
   userId: number
 ): Promise<NextResponse> {
   const body = await request.json();
-  const { projectId, name, templateId } = body;
+  const { projectId: projectIdRaw, name, templateId } = body;
 
-  if (!projectId || !name) {
-    throw AppError.badRequest('缺少必填字段：projectId, name');
+  if (!name) {
+    throw AppError.badRequest('缺少项目名称');
   }
+
+  const projectId = parseResourceId(projectIdRaw?.toString(), '项目');
 
   const documentId = await createDocument({
     projectId,
@@ -60,12 +56,12 @@ async function createNewDocument(
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const projectId = parseInt(searchParams.get('projectId') || '0', 10);
+  const projectId = parseResourceId(searchParams.get('projectId'), '项目');
   return withProjectPermission(request, projectId, 'view', getDocuments);
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.clone().json().catch(() => ({}));
-  const projectId = parseInt(body.projectId || '0', 10);
+  const projectId = parseResourceId(body.projectId?.toString(), '项目');
   return withProjectPermission(request, projectId, 'edit', createNewDocument);
 }

@@ -21,6 +21,7 @@ import {
   bidScoringItems,
   bidRequirementChecklist,
   bidDocumentFramework,
+  auditLogs,
 } from '@/db/schema';
 import {
   eq,
@@ -35,6 +36,7 @@ import {
 } from 'drizzle-orm';
 import { AppError } from '@/lib/api/error-handler';
 import { ProjectStatus } from '@/types/project';
+import { createAuditLog } from '@/lib/audit/service';
 
 // ============================================
 // 项目查询参数类型
@@ -652,6 +654,15 @@ export async function createProject(
       await tx.insert(projectMilestones).values(milestones);
     }
 
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId,
+      action: 'create',
+      resource: 'project',
+      resourceId: newProjectId,
+      description: `创建了新项目: ${data.name} (${data.code})`,
+    });
+
     return newProjectId;
   });
 
@@ -718,17 +729,28 @@ export async function updateProject(
     updateData.tags = JSON.stringify(data.tags);
   }
 
-  await db.update(projects).set(updateData as typeof projects.$inferInsert).where(eq(projects.id, projectId));
+  await db.transaction(async (tx) => {
+    await tx.update(projects).set(updateData as typeof projects.$inferInsert).where(eq(projects.id, projectId));
 
-  // 如果项目状态变为中标或未中标，触发自动归档
-  if (data.status && ['awarded', 'lost'].includes(data.status) && oldStatus !== data.status) {
-    try {
-      await autoArchiveProject(projectId, data.status === 'awarded' ? 'awarded' : 'lost', userId);
-    } catch (error) {
-      console.error('自动归档失败:', error);
-      // 不抛出错误，允许项目状态更新成功
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId,
+      action: 'update',
+      resource: 'project',
+      resourceId: projectId,
+      description: `更新了项目信息: ${project.name}`,
+    });
+
+    // 如果项目状态变为中标或未中标，触发自动归档
+    if (data.status && ['awarded', 'lost'].includes(data.status) && oldStatus !== data.status) {
+      try {
+        await autoArchiveProject(projectId, data.status === 'awarded' ? 'awarded' : 'lost', userId);
+      } catch (error) {
+        console.error('自动归档失败:', error);
+        // 不抛出错误，允许项目状态更新成功
+      }
     }
-  }
+  });
 
   return true;
 }
@@ -827,16 +849,29 @@ export async function deleteProject(
     throw new Error('项目不存在');
   }
 
+  const project = existing[0];
+
   // 软删除：标记为已删除
-  await db
-    .update(projects)
-    .set({ 
-      isDeleted: true, 
-      deletedAt: new Date(), 
-      deletedBy: userId,
-      updatedAt: new Date() 
-    })
-    .where(eq(projects.id, projectId));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(projects)
+      .set({ 
+        isDeleted: true, 
+        deletedAt: new Date(), 
+        deletedBy: userId,
+        updatedAt: new Date() 
+      })
+      .where(eq(projects.id, projectId));
+
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId,
+      action: 'delete',
+      resource: 'project',
+      resourceId: projectId,
+      description: `删除了项目: ${project.name}`,
+    });
+  });
 
   return true;
 }

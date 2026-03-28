@@ -5,12 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, withDocumentPermission } from '@/lib/auth/middleware';
+import { withDocumentPermission } from '@/lib/auth/middleware';
 import {
   getChapterTree,
   createChapter,
 } from '@/lib/bid/documents-service';
-import { success, created, AppError, handleError } from '@/lib/api/error-handler';
+import { success, created, AppError } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
 
 // 获取章节树
 async function getChapters(
@@ -18,13 +19,10 @@ async function getChapters(
   userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const documentId = searchParams.get('documentId');
+  const documentIdStr = searchParams.get('documentId');
+  const documentId = parseResourceId(documentIdStr, '文档');
 
-  if (!documentId) {
-    throw AppError.badRequest('缺少文档ID');
-  }
-
-  const chapters = await getChapterTree(parseInt(documentId, 10));
+  const chapters = await getChapterTree(documentId);
 
   return success({ chapters });
 }
@@ -36,7 +34,7 @@ async function createNewChapter(
 ): Promise<NextResponse> {
   const body = await request.json();
   const {
-    documentId,
+    documentId: documentIdRaw,
     parentId,
     type,
     serialNumber,
@@ -48,9 +46,11 @@ async function createNewChapter(
     responseItemId,
   } = body;
 
-  if (!documentId || !title) {
-    throw AppError.badRequest('缺少必填字段: documentId, title');
+  if (!title) {
+    throw AppError.badRequest('缺少章节标题');
   }
+
+  const documentId = parseResourceId(documentIdRaw?.toString(), '文档');
 
   const chapterId = await createChapter({
     documentId,
@@ -70,12 +70,12 @@ async function createNewChapter(
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const documentId = parseInt(searchParams.get('documentId') || '0', 10);
+  const documentId = parseResourceId(searchParams.get('documentId'), '文档');
   return withDocumentPermission('read', () => documentId)(request, (req, userId) => getChapters(req, userId));
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.clone().json().catch(() => ({}));
-  const documentId = parseInt(body.documentId || '0', 10);
+  const documentId = parseResourceId(body.documentId?.toString(), '文档');
   return withDocumentPermission('edit', () => documentId)(request, (req, userId) => createNewChapter(req, userId));
 }

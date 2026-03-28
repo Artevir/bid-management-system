@@ -13,22 +13,17 @@ import { bidDocuments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import {
   getDocumentById,
-  updateDocumentStatus,
   getDocumentChapterStatistics,
 } from '@/lib/bid/documents-service';
-import { success, AppError, handleError } from '@/lib/api/error-handler';
+import { success, AppError } from '@/lib/api/error-handler';
+import { parseIdFromPath } from '@/lib/api/validators';
 
 // 获取文档详情
 async function getDocument(
   request: NextRequest,
   userId: number
 ): Promise<NextResponse> {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
-  
-  if (isNaN(documentId)) {
-    throw AppError.badRequest('无效的文档ID');
-  }
-
+  const documentId = parseIdFromPath(request, '文档');
   const document = await getDocumentById(documentId);
 
   if (!document) {
@@ -49,12 +44,7 @@ async function updateDocument(
   request: NextRequest,
   userId: number
 ): Promise<NextResponse> {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
-  
-  if (isNaN(documentId)) {
-    throw AppError.badRequest('无效的文档ID');
-  }
-
+  const documentId = parseIdFromPath(request, '文档');
   const body = await request.json();
   const { name, status, deadline } = body;
 
@@ -79,12 +69,7 @@ async function deleteDoc(
   request: NextRequest,
   userId: number
 ): Promise<NextResponse> {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
-  
-  if (isNaN(documentId)) {
-    throw AppError.badRequest('无效的文档ID');
-  }
-
+  const documentId = parseIdFromPath(request, '文档');
   const { searchParams } = new URL(request.url);
   const permanent = searchParams.get('permanent') === 'true';
 
@@ -98,16 +83,16 @@ async function deleteDoc(
 }
 
 export async function GET(request: NextRequest) {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
+  const documentId = parseIdFromPath(request, '文档');
   return withDocumentPermission('read', () => documentId)(request, (req, userId) => getDocument(req, userId));
 }
 
 export async function PUT(request: NextRequest) {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
+  const documentId = parseIdFromPath(request, '文档');
   return withDocumentPermission('edit', () => documentId)(request, (req, userId) => updateDocument(req, userId));
 }
 
 export async function DELETE(request: NextRequest) {
-  const documentId = parseInt(request.url.split('/').slice(-1)[0], 10);
+  const documentId = parseIdFromPath(request, '文档');
   return withDocumentPermission('delete', () => documentId)(request, (req, userId) => deleteDoc(req, userId));
 }

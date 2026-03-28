@@ -13,8 +13,9 @@ import {
   getApprovalFlowDetail,
   withdrawApproval,
 } from '@/lib/bid/approval';
-import { success, AppError, handleError } from '@/lib/api/error-handler';
+import { success, AppError } from '@/lib/api/error-handler';
 import { ApprovalLevel } from '@/types/bid';
+import { parseResourceId } from '@/lib/api/validators';
 
 // 提交审核
 async function submitApproval(
@@ -22,11 +23,7 @@ async function submitApproval(
   userId: number
 ): Promise<NextResponse> {
   const body = await request.json();
-  const { documentId } = body;
-
-  if (!documentId) {
-    throw AppError.badRequest('缺少文档ID');
-  }
+  const documentId = parseResourceId(body.documentId?.toString(), '文档');
 
   await submitForApproval(documentId, userId);
 
@@ -39,10 +36,11 @@ async function executeApprovalAction(
   userId: number
 ): Promise<NextResponse> {
   const body = await request.json();
-  const { documentId, level, action, comment } = body;
+  const { level, action, comment } = body;
+  const documentId = parseResourceId(body.documentId?.toString(), '文档');
 
-  if (!documentId || !level || !action) {
-    throw AppError.badRequest('缺少必填参数: documentId, level, action');
+  if (!level || !action) {
+    throw AppError.badRequest('缺少必填参数: level, action');
   }
 
   await executeApproval(
@@ -62,11 +60,7 @@ async function withdrawApprovalAction(
   userId: number
 ): Promise<NextResponse> {
   const body = await request.json();
-  const { documentId } = body;
-
-  if (!documentId) {
-    throw AppError.badRequest('缺少文档ID');
-  }
+  const documentId = parseResourceId(body.documentId?.toString(), '文档');
 
   await withdrawApproval(documentId, userId);
 
@@ -79,10 +73,11 @@ async function getApprovals(
   userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const documentId = searchParams.get('documentId');
+  const documentIdStr = searchParams.get('documentId');
 
-  if (documentId) {
-    const detail = await getApprovalFlowDetail(parseInt(documentId, 10));
+  if (documentIdStr) {
+    const documentId = parseResourceId(documentIdStr, '文档');
+    const detail = await getApprovalFlowDetail(documentId);
     return success(detail);
   }
 

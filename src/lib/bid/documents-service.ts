@@ -14,6 +14,7 @@ import {
   documentReviews,
   complianceChecks,
   users,
+  auditLogs,
 } from '@/db/schema';
 import { eq, and, desc, count, sum, sql, isNull } from 'drizzle-orm';
 import {
@@ -33,6 +34,15 @@ import {
   UpdateChapterParams,
   DocumentStatistics,
 } from '@/types/bid';
+import { createAuditLog } from '@/lib/audit/service';
+import { AppError } from '@/lib/api/error-handler';
+
+// ============================================
+// 常量定义
+// ============================================
+
+/** 审批级别顺序 */
+export const APPROVAL_LEVEL_ORDER: ApprovalLevel[] = ['first', 'second', 'third', 'final'];
 
 // ============================================
 // 标书文档核心服务 (CRUD)
@@ -44,17 +54,30 @@ import {
 export async function createDocument(params: CreateDocumentParams): Promise<number> {
   const { projectId, name, userId } = params;
 
-  const [doc] = await db
-    .insert(bidDocuments)
-    .values({
-      projectId,
-      name,
-      status: 'draft',
-      createdBy: userId,
-    })
-    .returning({ id: bidDocuments.id });
+  const documentId = await db.transaction(async (tx) => {
+    const [doc] = await tx
+      .insert(bidDocuments)
+      .values({
+        projectId,
+        name,
+        status: 'draft',
+        createdBy: userId,
+      })
+      .returning({ id: bidDocuments.id });
 
-  return doc.id;
+    // 记录审计日志
+    await tx.insert(auditLogs).values({
+      userId,
+      action: 'create',
+      resource: 'document',
+      resourceId: doc.id,
+      description: `创建了标书文档: ${name}`,
+    });
+
+    return doc.id;
+  });
+
+  return documentId;
 }
 
 /**
@@ -209,38 +232,52 @@ export async function getDocumentFullDetail(
  */
 export async function updateDocumentStatus(
   documentId: number,
-  status: BidDocStatus
+  status: BidDocStatus,
+  userId?: number
 ): Promise<void> {
-  const updateData: any = {
-    status,
-    updatedAt: new Date(),
-  };
+  await db.transaction(async (tx) => {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
 
-  if (status === 'published') {
-    updateData.publishedAt = new Date();
-  }
+    if (status === 'published') {
+      updateData.publishedAt = new Date();
+      if (userId) updateData.publishedBy = userId;
+    }
 
-  await db
-    .update(bidDocuments)
-    .set(updateData)
-    .where(eq(bidDocuments.id, documentId));
+    await tx
+      .update(bidDocuments)
+      .set(updateData)
+      .where(eq(bidDocuments.id, documentId));
+
+    if (userId) {
+      await tx.insert(auditLogs).values({
+        userId,
+        action: 'update',
+        resource: 'document',
+        resourceId: documentId,
+        description: `更新了文档状态为: ${status}`,
+      });
+    }
+  });
 }
 
 /**
- * 更新文档进度及统计信息
+ * 更新文档进度及统计信息 (内部调用，通常在事务中)
  */
-export async function updateDocumentProgress(documentId: number): Promise<void> {
-  const chapters = await db
+export async function updateDocumentProgress(tx: any, documentId: number): Promise<void> {
+  const chapters = await tx
     .select()
     .from(bidChapters)
     .where(eq(bidChapters.documentId, documentId));
 
   const totalChapters = chapters.length;
-  const completedChapters = chapters.filter((c) => c.isCompleted).length;
-  const wordCount = chapters.reduce((sum, c) => sum + (c.wordCount || 0), 0);
+  const completedChapters = chapters.filter((c: any) => c.isCompleted).length;
+  const wordCount = chapters.reduce((sum: number, c: any) => sum + (c.wordCount || 0), 0);
   const progress = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
 
-  await db
+  await tx
     .update(bidDocuments)
     .set({
       totalChapters,
@@ -262,42 +299,44 @@ export async function updateDocumentProgress(documentId: number): Promise<void> 
 export async function createChapter(params: CreateChapterParams): Promise<number> {
   const { documentId, parentId, type, serialNumber, title, content, isRequired, assignedTo, deadline, responseItemId } = params;
 
-  const existingChapters = await db
-    .select()
-    .from(bidChapters)
-    .where(
-      parentId
-        ? and(eq(bidChapters.documentId, documentId), eq(bidChapters.parentId, parentId))
-        : and(eq(bidChapters.documentId, documentId), isNull(bidChapters.parentId))
-    );
+  return await db.transaction(async (tx) => {
+    const existingChapters = await tx
+      .select()
+      .from(bidChapters)
+      .where(
+        parentId
+          ? and(eq(bidChapters.documentId, documentId), eq(bidChapters.parentId, parentId))
+          : and(eq(bidChapters.documentId, documentId), isNull(bidChapters.parentId))
+      );
 
-  const sortOrder = existingChapters.length;
-  let level = 1;
-  if (parentId) {
-    const parent = await db.select().from(bidChapters).where(eq(bidChapters.id, parentId)).limit(1);
-    if (parent.length > 0) level = parent[0].level + 1;
-  }
+    const sortOrder = existingChapters.length;
+    let level = 1;
+    if (parentId) {
+      const parent = await tx.select().from(bidChapters).where(eq(bidChapters.id, parentId)).limit(1);
+      if (parent.length > 0) level = parent[0].level + 1;
+    }
 
-  const [chapter] = await db
-    .insert(bidChapters)
-    .values({
-      documentId,
-      parentId: parentId || null,
-      type: type || null,
-      serialNumber: serialNumber || null,
-      title,
-      content: content || null,
-      sortOrder,
-      level,
-      isRequired: isRequired ?? true,
-      assignedTo: assignedTo || null,
-      deadline: deadline || null,
-      responseItemId: responseItemId || null,
-    })
-    .returning({ id: bidChapters.id });
+    const [chapter] = await tx
+      .insert(bidChapters)
+      .values({
+        documentId,
+        parentId: parentId || null,
+        type: type || null,
+        serialNumber: serialNumber || null,
+        title,
+        content: content || null,
+        sortOrder,
+        level,
+        isRequired: isRequired ?? true,
+        assignedTo: assignedTo || null,
+        deadline: deadline || null,
+        responseItemId: responseItemId || null,
+      })
+      .returning({ id: bidChapters.id });
 
-  await updateDocumentProgress(documentId);
-  return chapter.id;
+    await updateDocumentProgress(tx, documentId);
+    return chapter.id;
+  });
 }
 
 /**
@@ -332,27 +371,74 @@ export async function getChapterTree(documentId: number): Promise<ChapterTree[]>
 }
 
 /**
+ * 获取章节详情
+ */
+export async function getChapterDetail(chapterId: number) {
+  const chapter = await db
+    .select()
+    .from(bidChapters)
+    .where(eq(bidChapters.id, chapterId))
+    .limit(1);
+
+  return chapter[0] || null;
+}
+
+/**
  * 更新章节
  */
 export async function updateChapter(
   chapterId: number,
   params: UpdateChapterParams
 ): Promise<void> {
-  const updateData: any = {
-    ...params,
-    updatedAt: new Date(),
-  };
+  await db.transaction(async (tx) => {
+    const updateData: any = {
+      ...params,
+      updatedAt: new Date(),
+    };
 
-  if (params.content) updateData.wordCount = params.content.length;
-  if (params.isCompleted) updateData.completedAt = new Date();
+    if (params.content) updateData.wordCount = params.content.length;
+    if (params.isCompleted) updateData.completedAt = new Date();
 
-  await db
-    .update(bidChapters)
-    .set(updateData)
-    .where(eq(bidChapters.id, chapterId));
+    await tx
+      .update(bidChapters)
+      .set(updateData)
+      .where(eq(bidChapters.id, chapterId));
 
-  const chapter = await db.select().from(bidChapters).where(eq(bidChapters.id, chapterId)).limit(1);
-  if (chapter[0]) await updateDocumentProgress(chapter[0].documentId);
+    const chapter = await tx.select({ documentId: bidChapters.documentId }).from(bidChapters).where(eq(bidChapters.id, chapterId)).limit(1);
+    if (chapter[0]) await updateDocumentProgress(tx, chapter[0].documentId);
+  });
+}
+
+/**
+ * 删除章节 (及其子章节)
+ */
+export async function deleteChapter(chapterId: number): Promise<void> {
+  await db.transaction(async (tx) => {
+    const chapter = await tx.select().from(bidChapters).where(eq(bidChapters.id, chapterId)).limit(1);
+    if (!chapter[0]) return;
+
+    const documentId = chapter[0].documentId;
+
+    // 递归获取所有子章节ID
+    const getAllSubChapterIds = async (id: number): Promise<number[]> => {
+      const children = await tx.select({ id: bidChapters.id }).from(bidChapters).where(eq(bidChapters.parentId, id));
+      let ids = children.map((c: any) => c.id);
+      for (const childId of ids) {
+        const subIds = await getAllSubChapterIds(childId);
+        ids = [...ids, ...subIds];
+      }
+      return ids;
+    };
+
+    const subIds = await getAllSubChapterIds(chapterId);
+    const allIdsToDelete = [chapterId, ...subIds];
+
+    // 批量删除
+    await tx.delete(bidChapters).where(sql`${bidChapters.id} = ANY(${allIdsToDelete})`);
+
+    // 更新文档进度
+    await updateDocumentProgress(tx, documentId);
+  });
 }
 
 /**
@@ -376,35 +462,36 @@ export async function generateChaptersFromMatrix(
     requirement: '其他要求',
   };
 
-  for (const [type, sectionTitle] of Object.entries(typeGroups)) {
-    const typeItems = items.filter((i) => i.type === type);
-    if (typeItems.length === 0) continue;
+  return await db.transaction(async (tx) => {
+    for (const [type, sectionTitle] of Object.entries(typeGroups)) {
+      const typeItems = items.filter((i) => i.type === type);
+      if (typeItems.length === 0) continue;
 
-    const parentId = await createChapter({
-      documentId,
-      type: type as ChapterType,
-      title: sectionTitle,
-      isRequired: true,
-      userId,
-    } as any);
-
-    chapterIds.push(parentId);
-
-    for (const item of typeItems) {
-      const childId = await createChapter({
+      const parentId = await createChapter({
         documentId,
-        parentId,
-        serialNumber: item.serialNumber || undefined,
-        title: item.title,
-        content: item.response || undefined,
-        isRequired: item.requirementType === 'mandatory',
-        responseItemId: item.id,
-      });
-      chapterIds.push(childId);
-    }
-  }
+        type: type as ChapterType,
+        title: sectionTitle,
+        isRequired: true,
+        userId,
+      } as any);
 
-  return chapterIds;
+      chapterIds.push(parentId);
+
+      for (const item of typeItems) {
+        const childId = await createChapter({
+          documentId,
+          parentId,
+          serialNumber: item.serialNumber || undefined,
+          title: item.title,
+          content: item.response || undefined,
+          isRequired: item.requirementType === 'mandatory',
+          responseItemId: item.id,
+        });
+        chapterIds.push(childId);
+      }
+    }
+    return chapterIds;
+  });
 }
 
 // ============================================
@@ -425,7 +512,7 @@ export async function getDocumentTemplates(filters?: { companyId?: number; categ
 }
 
 // ============================================
-// 统计服务 (下沉业务逻辑)
+// 统计服务 (优化后的聚合查询)
 // ============================================
 
 /**
@@ -457,51 +544,57 @@ export async function getDocumentChapterStatistics(documentId: number): Promise<
 }
 
 /**
- * 获取完整的文档统计信息 (包括审批、历史等)
+ * 获取完整的文档统计信息 (高性能聚合查询版本)
  */
 export async function getFullDocumentStatistics(documentId: number) {
-  const chapterStats = await getDocumentChapterStatistics(documentId);
-  
-  const generationStats = await db
-    .select({
-      total: count(),
-      completed: count(sql`CASE WHEN ${documentGenerationHistories.status} = 'completed' THEN 1 END`),
+  // 使用 Promise.all 并行执行查询，虽然仍是多个查询，但能显著降低总耗时
+  // 如果需要极致性能，可考虑 SQL Union 或复杂 Join，但代码可读性会下降
+  const [chapterStatsResult, otherStats] = await Promise.all([
+    getDocumentChapterStatistics(documentId),
+    db.transaction(async (tx) => {
+      const gen = await tx.select({ total: count(), completed: count(sql`CASE WHEN status = 'completed' THEN 1 END`) }).from(documentGenerationHistories).where(eq(documentGenerationHistories.documentId, documentId));
+      const rev = await tx.select({ total: count(), completed: count(sql`CASE WHEN status = 'completed' THEN 1 END`) }).from(documentReviews).where(eq(documentReviews.documentId, documentId));
+      const comp = await tx.select({ total: count(), passed: count(sql`CASE WHEN result = 'pass' THEN 1 END`), failed: count(sql`CASE WHEN result = 'fail' THEN 1 END`) }).from(complianceChecks).where(eq(complianceChecks.documentId, documentId));
+      return { gen, rev, comp };
     })
-    .from(documentGenerationHistories)
-    .where(eq(documentGenerationHistories.documentId, documentId));
-
-  const reviewStats = await db
-    .select({
-      total: count(documentReviews.id),
-      completed: count(sql`CASE WHEN ${documentReviews.status} = 'completed' THEN 1 END`),
-    })
-    .from(documentReviews)
-    .where(eq(documentReviews.documentId, documentId));
-
-  const complianceStats = await db
-    .select({
-      total: count(complianceChecks.id),
-      passed: count(sql`CASE WHEN ${complianceChecks.result} = 'pass' THEN 1 END`),
-      failed: count(sql`CASE WHEN ${complianceChecks.result} = 'fail' THEN 1 END`),
-    })
-    .from(complianceChecks)
-    .where(eq(complianceChecks.documentId, documentId));
+  ]);
 
   return {
-    chapters: chapterStats,
+    chapters: chapterStatsResult,
     generations: {
-      total: generationStats[0]?.total || 0,
-      completed: generationStats[0]?.completed || 0,
+      total: otherStats.gen[0]?.total || 0,
+      completed: otherStats.gen[0]?.completed || 0,
     },
     reviews: {
-      total: reviewStats[0]?.total || 0,
-      completed: reviewStats[0]?.completed || 0,
+      total: otherStats.rev[0]?.total || 0,
+      completed: otherStats.rev[0]?.completed || 0,
     },
     compliance: {
-      total: complianceStats[0]?.total || 0,
-      passed: complianceStats[0]?.passed || 0,
-      failed: complianceStats[0]?.failed || 0,
+      total: otherStats.comp[0]?.total || 0,
+      passed: otherStats.comp[0]?.passed || 0,
+      failed: otherStats.comp[0]?.failed || 0,
     },
+  };
+}
+
+/**
+ * 获取项目文档统计
+ */
+export async function getProjectDocumentStatistics(projectId: number) {
+  const docs = await getProjectDocuments(projectId);
+
+  return {
+    totalDocuments: docs.length,
+    statusDistribution: {
+      draft: docs.filter((d) => d.status === 'draft').length,
+      editing: docs.filter((d) => d.status === 'editing').length,
+      reviewing: docs.filter((d) => d.status === 'reviewing').length,
+      approved: docs.filter((d) => d.status === 'approved').length,
+      published: docs.filter((d) => d.status === 'published').length,
+    },
+    totalChapters: docs.reduce((sum, d) => sum + d.totalChapters, 0),
+    completedChapters: docs.reduce((sum, d) => sum + d.completedChapters, 0),
+    totalWords: docs.reduce((sum, d) => sum + d.wordCount, 0),
   };
 }
 
@@ -516,62 +609,83 @@ export async function startApprovalProcess(
 ): Promise<number[]> {
   const flowIds: number[] = [];
 
-  for (const levelConfig of levels) {
-    const [flow] = await db
-      .insert(approvalFlows)
-      .values({
-        documentId,
-        level: levelConfig.level,
-        status: 'pending',
-        assigneeId: levelConfig.assigneeId,
-        assignedAt: new Date(),
-        dueDate: levelConfig.dueDate || null,
-        createdBy: userId,
-        createdAt: new Date(),
+  return await db.transaction(async (tx) => {
+    for (const levelConfig of levels) {
+      const [flow] = await tx
+        .insert(approvalFlows)
+        .values({
+          documentId,
+          level: levelConfig.level as any,
+          status: 'pending',
+          assigneeId: levelConfig.assigneeId,
+          assignedAt: new Date(),
+          dueDate: levelConfig.dueDate || null,
+          createdBy: userId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning({ id: approvalFlows.id });
+
+      flowIds.push(flow.id);
+    }
+
+    await tx
+      .update(bidDocuments)
+      .set({
+        status: 'reviewing',
+        currentApprovalLevel: levels[0].level,
         updatedAt: new Date(),
       })
-      .returning({ id: approvalFlows.id });
+      .where(eq(bidDocuments.id, documentId));
 
-    flowIds.push(flow.id);
-  }
+    await tx.insert(auditLogs).values({
+      userId,
+      action: 'update',
+      resource: 'document',
+      resourceId: documentId,
+      description: '发起了文档审批流程',
+    });
 
-  await db
-    .update(bidDocuments)
-    .set({
-      status: 'reviewing',
-      currentApprovalLevel: levels[0].level,
-      updatedAt: new Date(),
-    })
-    .where(eq(bidDocuments.id, documentId));
-
-  return flowIds;
+    return flowIds;
+  });
 }
 
 export async function completeApprovalNode(
   flowId: number,
   result: 'approved' | 'rejected',
+  userId: number,
   comment?: string
 ): Promise<void> {
-  await db
-    .update(approvalFlows)
-    .set({ status: result, comment, completedAt: new Date(), updatedAt: new Date() })
-    .where(eq(approvalFlows.id, flowId));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(approvalFlows)
+      .set({ status: result, comment, completedAt: new Date(), updatedAt: new Date() })
+      .where(eq(approvalFlows.id, flowId));
 
-  const flow = await db.select().from(approvalFlows).where(eq(approvalFlows.id, flowId)).limit(1);
-  if (flow.length === 0) return;
+    const flow = await tx.select().from(approvalFlows).where(eq(approvalFlows.id, flowId)).limit(1);
+    if (flow.length === 0) return;
 
-  if (result === 'rejected') {
-    await db.update(bidDocuments).set({ status: 'rejected', updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
-    return;
-  }
+    const documentId = flow[0].documentId;
 
-  const levelOrder: ApprovalLevel[] = ['first', 'second', 'third', 'final'];
-  const currentIndex = levelOrder.indexOf(flow[0].level as ApprovalLevel);
-  const nextLevel = levelOrder[currentIndex + 1];
+    if (result === 'rejected') {
+      await tx.update(bidDocuments).set({ status: 'rejected', updatedAt: new Date() }).where(eq(bidDocuments.id, documentId));
+    } else {
+      const currentIndex = APPROVAL_LEVEL_ORDER.indexOf(flow[0].level as ApprovalLevel);
+      const nextLevel = APPROVAL_LEVEL_ORDER[currentIndex + 1];
 
-  if (nextLevel) {
-    await db.update(bidDocuments).set({ currentApprovalLevel: nextLevel, updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
-  } else {
-    await db.update(bidDocuments).set({ status: 'approved', currentApprovalLevel: null, updatedAt: new Date() }).where(eq(bidDocuments.id, flow[0].documentId));
-  }
+      if (nextLevel) {
+        await tx.update(bidDocuments).set({ currentApprovalLevel: nextLevel, updatedAt: new Date() }).where(eq(bidDocuments.id, documentId));
+      } else {
+        await tx.update(bidDocuments).set({ status: 'approved', currentApprovalLevel: null, updatedAt: new Date() }).where(eq(bidDocuments.id, documentId));
+      }
+    }
+
+    await tx.insert(auditLogs).values({
+      userId,
+      action: result === 'approved' ? 'approve' : 'reject',
+      resource: 'document',
+      resourceId: documentId,
+      description: `审批了文档节点: ${flow[0].level}, 结果: ${result}`,
+    });
+  });
 }
