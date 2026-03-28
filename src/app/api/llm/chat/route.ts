@@ -207,15 +207,17 @@ export async function POST(request: NextRequest) {
           if (!request.signal.aborted) {
             await logCall({
               configId: config?.id,
-            conversationId,
-            modelId: chatModel,
-            provider: provider as any,
-            status: 'failed',
-            errorMessage: error.message,
-            createdBy: user.userId,
-          });
+              conversationId,
+              modelId: chatModel,
+              provider: provider as any,
+              status: 'failed',
+              errorMessage: error.message,
+              createdBy: user.userId,
+            });
 
-          controller.enqueue(encoder.encode(`\n[错误] ${error.message}`));
+            controller.enqueue(encoder.encode(`\n[错误] ${error.message}`));
+          }
+        } finally {
           controller.close();
         }
       },
