@@ -52,6 +52,8 @@ export interface GenerateOptions {
   frequencyPenalty?: number;
   /** 存在惩罚 */
   presencePenalty?: number;
+  /** 中断信号 */
+  signal?: AbortSignal; // P1 优化：支持传入 AbortSignal 以便立即切断模型商连接
   /** 额外参数 */
   extra?: Record<string, unknown>;
 }

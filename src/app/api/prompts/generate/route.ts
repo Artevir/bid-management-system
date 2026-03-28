@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
     if (template.modelName) options.model = template.modelName;
     if (template.temperature) options.temperature = parseFloat(template.temperature);
     if (template.maxTokens) options.maxTokens = template.maxTokens;
+    options.signal = request.signal; // P1 优化：将请求信号透传给适配器，确保立即切断连接
 
     if (stream) {
       // 流式响应
@@ -165,6 +166,12 @@ export async function POST(request: NextRequest) {
 
           try {
             for await (const chunk of llm.generateStream(messages, options)) {
+              // P1 优化：检查请求是否已中断
+              if (request.signal.aborted) {
+                console.log('Client aborted prompt generation');
+                break;
+              }
+
               if (chunk.content) {
                 fullContent += chunk.content;
                 // 发送SSE格式的数据
@@ -184,47 +191,60 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // 更新生成记录
-            await db
-              .update(schemeGenerations)
-              .set({
-                title: paramValues.title || paramValues.projectName || `方案_${generation.id}`,
-                content: fullContent,
-                status: 'completed',
-                promptTokens: usage?.promptTokens,
-                completionTokens: usage?.completionTokens,
-                totalTokens: usage?.totalTokens,
-                duration: Date.now() - startTime,
-                updatedAt: new Date(),
-              })
-              .where(eq(schemeGenerations.id, generation.id));
+            // 只有在未中断的情况下才更新生成记录
+            if (!request.signal.aborted) {
+              await db
+                .update(schemeGenerations)
+                .set({
+                  title: paramValues.title || paramValues.projectName || `方案_${generation.id}`,
+                  content: fullContent,
+                  status: 'completed',
+                  promptTokens: usage?.promptTokens,
+                  completionTokens: usage?.completionTokens,
+                  totalTokens: usage?.totalTokens,
+                  duration: Date.now() - startTime,
+                  updatedAt: new Date(),
+                })
+                .where(eq(schemeGenerations.id, generation.id));
 
-            // 更新模板使用次数
-            await db
-              .update(promptTemplates)
-              .set({ 
-                useCount: template.useCount + 1,
-                updatedAt: new Date() 
-              })
-              .where(eq(promptTemplates.id, templateId));
-
+              // 更新模板使用次数
+              await db
+                .update(promptTemplates)
+                .set({ 
+                  useCount: template.useCount + 1,
+                  updatedAt: new Date() 
+                })
+                .where(eq(promptTemplates.id, templateId));
+            } else {
+              // 如果中断了，标记为失败或取消
+              await db
+                .update(schemeGenerations)
+                .set({
+                  status: 'failed',
+                  updatedAt: new Date(),
+                })
+                .where(eq(schemeGenerations.id, generation.id));
+            }
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : '生成失败';
-            
-            await db
-              .update(schemeGenerations)
-              .set({
-                status: 'failed',
-                errorMessage,
-                updatedAt: new Date(),
-              })
-              .where(eq(schemeGenerations.id, generation.id));
+            console.error('Prompt generation error:', error);
+            if (!request.signal.aborted) {
+              const errorMessage = error instanceof Error ? error.message : '生成失败';
+              
+              await db
+                .update(schemeGenerations)
+                .set({
+                  status: 'failed',
+                  errorMessage,
+                  updatedAt: new Date(),
+                })
+                .where(eq(schemeGenerations.id, generation.id));
 
-            const data = JSON.stringify({ type: 'error', error: errorMessage });
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              const data = JSON.stringify({ type: 'error', error: errorMessage });
+              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            }
+          } finally {
+            controller.close();
           }
-
-          controller.close();
         },
       });
 

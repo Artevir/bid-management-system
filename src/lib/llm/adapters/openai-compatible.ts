@@ -267,7 +267,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
           stream_options: { include_usage: true },
           ...options?.extra,
         }),
-        signal: AbortSignal.timeout(this.config.timeout || 180000),
+        signal: options?.signal || AbortSignal.timeout(this.config.timeout || 120000),
       });
       
       if (!response.ok) {

@@ -59,15 +59,13 @@ export default function DashboardPage() {
   async function fetchDashboardData() {
     try {
       // 并行获取各项数据
-      const [projectsData, documentsData, approvalsData] = await Promise.all([
+      const [projectsData, documents, approvals] = await Promise.all([
         projectService.getProjects().catch(() => []),
-        bidService.getDocuments(0).catch(() => ({ data: [] })),
-        bidService.getApprovals().catch(() => ({ data: [] })),
+        bidService.getDocuments(1).catch(() => []), // 假设使用项目ID 1作为默认演示
+        bidService.getApprovals().catch(() => []),
       ]);
 
       const projects = Array.isArray(projectsData) ? projectsData : [];
-      const documents = documentsData.data || [];
-      const approvals = approvalsData.data || [];
       const knowledge: any[] = []; // 暂无知识库 service，保持空
 
       // 构建待办任务
@@ -75,8 +73,8 @@ export default function DashboardPage() {
         ...approvals.map((a: any) => ({
           id: a.id,
           type: 'approval',
-          title: `审核文档: ${a.documentName || '未知文档'}`,
-          projectName: a.projectName,
+          title: `审核文档: ${a.document?.name || '未知文档'}`, // getPendingApprovals 返回结构包含 document
+          projectName: a.document?.projectName,
           priority: 'high' as const,
         })),
         ...documents

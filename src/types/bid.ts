@@ -93,6 +93,7 @@ export interface ChapterTree {
   type: ChapterType | null;
   wordCount: number;
   level: number;
+  version: number;
   isRequired: boolean;
   isCompleted: boolean;
   assignedTo: number | null;
@@ -126,6 +127,7 @@ export interface CreateChapterParams {
 export interface UpdateChapterParams {
   title?: string;
   content?: string;
+  version?: number;
   isCompleted?: boolean;
   assignedTo?: number;
   deadline?: Date;
@@ -133,6 +135,53 @@ export interface UpdateChapterParams {
   promptParameters?: string | null;
   companyId?: number | null;
   tags?: string | null;
+}
+
+/** 章节详细信息 */
+export interface ChapterDetail extends ChapterSummary {
+  documentId: number;
+  parentId: number | null;
+  serialNumber: string | null;
+  content: string | null;
+  version: number;
+  level: number;
+  assignedTo: number | null;
+  deadline: Date | null;
+  completedAt: Date | null;
+  responseItemId: number | null;
+  promptTemplateId: number | null;
+  promptParameters: string | null;
+  companyId: number | null;
+  tags: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** 审批详细信息 */
+export interface ApprovalDetail extends ApprovalFlowSummary {
+  documentId: number;
+  documentName: string;
+  comment: string | null;
+  createdBy: number;
+  updatedAt: Date;
+}
+
+/** 审批执行参数 */
+export interface ApprovalExecutionParams {
+  documentId: number;
+  level: ApprovalLevel;
+  action: 'approve' | 'reject' | 'return';
+  comment?: string;
+}
+
+/** AI 生成配置参数 */
+export interface AIConfig {
+  templateId?: number;
+  parameters?: Record<string, any>;
+  companyId?: number;
+  tags?: string[];
+  useKnowledge?: boolean;
+  stream?: boolean;
 }
 
 /** 标书文档统计信息 */

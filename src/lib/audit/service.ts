@@ -53,6 +53,7 @@ export interface AuditLogInfo {
   responseStatus: number | null;
   errorMessage: string | null;
   duration: number | null;
+  projectId: number | null;
   createdAt: Date;
 }
 
@@ -70,6 +71,7 @@ export interface CreateAuditLogParams {
   requestMethod?: string | null;
   requestPath?: string | null;
   requestParams?: object | null;
+  projectId?: number | null;
   responseStatus?: number | null;
   errorMessage?: string | null;
   duration?: number | null;
@@ -118,6 +120,7 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<numb
       requestMethod: params.requestMethod || null,
       requestPath: params.requestPath || null,
       requestParams: params.requestParams ? JSON.stringify(params.requestParams) : null,
+      projectId: params.projectId || null,
       responseStatus: params.responseStatus || null,
       errorMessage: params.errorMessage || null,
       duration: params.duration || null,
@@ -144,6 +147,7 @@ export async function batchCreateAuditLogs(logs: CreateAuditLogParams[]): Promis
     requestMethod: params.requestMethod || null,
     requestPath: params.requestPath || null,
     requestParams: params.requestParams ? JSON.stringify(params.requestParams) : null,
+    projectId: params.projectId || null,
     responseStatus: params.responseStatus || null,
     errorMessage: params.errorMessage || null,
     duration: params.duration || null,

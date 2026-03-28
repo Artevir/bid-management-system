@@ -19,6 +19,11 @@ import {
   created,
   paginated,
 } from '@/lib/api/error-handler';
+import {
+  parseResourceId,
+  parseIdFromParams,
+  parsePaginationParams,
+} from '@/lib/api/validators';
 
 // ============================================
 // GET: 获取项目列表
@@ -29,10 +34,11 @@ async function getList(
   userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
+  const { page, pageSize } = parsePaginationParams(request.url);
 
   const params = {
-    page: parseInt(searchParams.get('page') || '1'),
-    pageSize: parseInt(searchParams.get('pageSize') || '20'),
+    page,
+    pageSize,
     keyword: searchParams.get('keyword') || undefined,
     status: searchParams.get('status')?.split(',').filter(Boolean) as ProjectStatus[] | undefined,
     industry: searchParams.get('industry')?.split(',').filter(Boolean) || undefined,

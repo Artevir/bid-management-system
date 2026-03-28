@@ -28,3 +28,18 @@ export function parseIdFromParams(params: any, key: string = 'id', resourceName:
   const id = params?.[key];
   return parseResourceId(id, resourceName);
 }
+
+/**
+ * 从 URL 中解析分页参数并应用安全限制 (P2)
+ */
+export function parsePaginationParams(url: string | URL, defaultPageSize: number = 20, maxPageSize: number = 100) {
+  const { searchParams } = new URL(url.toString());
+  
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const pageSize = Math.min(
+    Math.max(1, parseInt(searchParams.get('pageSize') || defaultPageSize.toString())),
+    maxPageSize
+  );
+
+  return { page, pageSize };
+}

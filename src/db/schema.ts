@@ -458,6 +458,7 @@ export const auditLogs = pgTable('audit_logs', {
   requestMethod: varchar('request_method', { length: 10 }),
   requestPath: varchar('request_path', { length: 255 }),
   requestParams: text('request_params'), // JSON格式存储
+  projectId: integer('project_id'), // 关联项目ID (P2 优化：增强审计可追溯性)
   responseStatus: integer('response_status'),
   errorMessage: text('error_message'),
   duration: integer('duration'), // 执行时长（毫秒）
@@ -1273,6 +1274,16 @@ export const bidDocuments = pgTable('bid_documents', {
   completedChapters: integer('completed_chapters').notNull().default(0),
   wordCount: integer('word_count').notNull().default(0),
   progress: integer('progress').notNull().default(0),
+  
+  // 统计缓存字段 (P1 性能优化)
+  totalGenerations: integer('total_generations').notNull().default(0),
+  completedGenerations: integer('completed_generations').notNull().default(0),
+  totalReviews: integer('total_reviews').notNull().default(0),
+  completedReviews: integer('completed_reviews').notNull().default(0),
+  totalComplianceChecks: integer('total_compliance_checks').notNull().default(0),
+  passedComplianceChecks: integer('passed_compliance_checks').notNull().default(0),
+  failedComplianceChecks: integer('failed_compliance_checks').notNull().default(0),
+
   currentApprovalLevel: approvalLevelEnum('current_approval_level'),
   deadline: timestamp('deadline'),
   publishedAt: timestamp('published_at'),
@@ -1298,6 +1309,7 @@ export const bidChapters = pgTable('bid_chapters', {
   serialNumber: varchar('serial_number', { length: 20 }), // 章节编号
   title: varchar('title', { length: 300 }).notNull(),
   content: text('content'),
+  version: integer('version').notNull().default(1),
   wordCount: integer('word_count').notNull().default(0),
   sortOrder: integer('sort_order').notNull().default(0),
   level: integer('level').notNull().default(1), // 章节层级

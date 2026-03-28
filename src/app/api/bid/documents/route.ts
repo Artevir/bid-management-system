@@ -24,7 +24,7 @@ async function getDocuments(
 
   const documents = await getProjectDocuments(projectId);
 
-  return success({ documents });
+  return success(documents);
 }
 
 // 创建标书文档

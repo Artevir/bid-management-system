@@ -380,33 +380,45 @@ async function optimizeContentStream(
 
         const stream = llm.generateStream(messages, {
           temperature: 0.5,
+          signal: request.signal, // P1 优化：将请求信号透传给适配器，确保立即切断连接
         });
 
         for await (const chunk of stream) {
+          // P0 致命风险修复：检查客户端是否已断开，及时释放资源
+          if (request.signal.aborted) {
+            console.log('Client aborted, stopping AI stream generation');
+            break;
+          }
+
           if (!chunk.done && chunk.content) {
             fullContent += chunk.content;
             controller.enqueue(encoder.encodeText(chunk.content));
           }
         }
 
-        await saveGenerationLog({
-          chapterId,
-          prompt: `优化内容: ${optimizationType}`,
-          model: 'llm-adapter',
-          generatedContent: fullContent,
-          isAccepted: false,
-          userId,
-        });
+        // 只有在未中断的情况下才保存日志
+        if (!request.signal.aborted) {
+          await saveGenerationLog({
+            chapterId,
+            prompt: `优化内容: ${optimizationType}`,
+            model: 'llm-adapter',
+            generatedContent: fullContent,
+            isAccepted: false,
+            userId,
+          });
 
-        controller.enqueue(encoder.encode({
-          type: 'complete',
-          wordCount: fullContent.length,
-        }));
+          controller.enqueue(encoder.encode({
+            type: 'complete',
+            wordCount: fullContent.length,
+          }));
+        }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '优化失败';
-        controller.enqueue(encoder.encodeError(errorMessage));
+        if (!request.signal.aborted) {
+          const errorMessage = error instanceof Error ? error.message : '优化失败';
+          controller.enqueue(encoder.encodeError(errorMessage));
+        }
       }
-    });
+    }, request.signal);
   } catch (error) {
     console.error('Optimize content stream error:', error);
     return NextResponse.json({ error: '优化内容失败' }, { status: 500 });

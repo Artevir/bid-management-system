@@ -27,7 +27,7 @@ async function getApprovals(
   }
 
   const pending = await getPendingApprovals(userId);
-  return success({ pending });
+  return success(pending);
 }
 
 export async function GET(request: NextRequest) {

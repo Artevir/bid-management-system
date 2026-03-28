@@ -28,7 +28,7 @@ async function getChapter(
     throw AppError.notFound('章节');
   }
 
-  return success({ chapter });
+  return success(chapter);
 }
 
 // 更新章节

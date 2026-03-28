@@ -24,7 +24,7 @@ async function getChapters(
 
   const chapters = await getChapterTree(documentId);
 
-  return success({ chapters });
+  return success(chapters);
 }
 
 // 创建章节

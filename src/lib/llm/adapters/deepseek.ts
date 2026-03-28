@@ -266,7 +266,7 @@ export class DeepSeekAdapter implements LLMAdapter {
           stop: options?.stop,
           stream: true,
         }),
-        signal: AbortSignal.timeout(this.config.timeout || 180000),
+        signal: options?.signal || AbortSignal.timeout(this.config.timeout || 120000),
       });
       
       if (!response.ok) {

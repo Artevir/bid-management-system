@@ -97,8 +97,28 @@ async function generateChapterContent(
   const llm = getLLM(forwardHeaders);
   
   if (stream) {
-    const stream = await llm.chatStream({ messages });
-    return createStreamResponse(stream);
+    return createStreamResponse(async (controller, encoder) => {
+      try {
+        const stream = await llm.chatStream({ messages });
+        for await (const chunk of stream) {
+          // P0 致命风险修复：检查客户端是否已断开，及时释放资源
+          if (request.signal.aborted) {
+            console.log('Client aborted, stopping chapter generation stream');
+            break;
+          }
+          controller.enqueue(encoder.encodeText(chunk));
+        }
+        
+        if (!request.signal.aborted) {
+          controller.enqueue(encoder.encodeComplete());
+        }
+      } catch (error) {
+        if (!request.signal.aborted) {
+          const errorMessage = error instanceof Error ? error.message : '生成失败';
+          controller.enqueue(encoder.encodeError(errorMessage));
+        }
+      }
+    }, request.signal);
   } else {
     const response = await llm.chat({ messages });
     return NextResponse.json({ content: response.content });

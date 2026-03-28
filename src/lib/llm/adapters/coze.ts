@@ -21,7 +21,7 @@ import {
 const DEFAULT_CONFIG: Partial<CozeProviderConfig> = {
   defaultModel: 'doubao-seed-1-8-251228',
   defaultEmbeddingModel: 'doubao-embedding',
-  timeout: 60000,
+  timeout: 120000, // P2 优化：统一超时时间为 120s
   maxRetries: 3,
 };
 

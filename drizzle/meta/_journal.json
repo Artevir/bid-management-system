@@ -8,6 +8,13 @@
       "when": 1773840286192,
       "tag": "0000_tricky_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774696000000,
+      "tag": "0001_foundation_hardening",
+      "breakpoints": true
     }
   ]
 }

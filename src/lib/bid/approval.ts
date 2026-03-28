@@ -345,15 +345,21 @@ export async function getPendingApprovals(userId: number): Promise<
   // 获取文档信息
   const documentIds = [...new Set(flows.map((f) => f.documentId))];
   const docs = await db
-    .select()
+    .select({
+      id: bidDocuments.id,
+      name: bidDocuments.name,
+      projectId: bidDocuments.projectId,
+      projectName: projects.name,
+    })
     .from(bidDocuments)
+    .leftJoin(projects, eq(bidDocuments.projectId, projects.id))
     .where(inArray(bidDocuments.id, documentIds));
 
   const docMap = new Map(docs.map((d) => [d.id, d]));
 
   return flows.map((flow) => ({
     ...flow,
-    document: docMap.get(flow.documentId) || null,
+    document: (docMap.get(flow.documentId) as any) || null,
   }));
 }
 

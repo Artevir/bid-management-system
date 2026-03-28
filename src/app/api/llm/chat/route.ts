@@ -155,6 +155,12 @@ export async function POST(request: NextRequest) {
           );
 
           for await (const chunk of chatStream) {
+            // P0 致命风险修复：检查客户端是否已断开，及时停止大模型请求
+            if (request.signal.aborted) {
+              console.log('Client aborted, stopping chat stream generation');
+              break;
+            }
+
             if (!firstTokenTime) {
               firstTokenTime = Date.now();
             }
@@ -162,41 +168,45 @@ export async function POST(request: NextRequest) {
             controller.enqueue(encoder.encode(chunk));
           }
 
-          const latency = Date.now() - startTime;
-          const firstTokenLatency = firstTokenTime ? firstTokenTime - startTime : 0;
+          // 只有在未中断的情况下才进行后续处理
+          if (!request.signal.aborted) {
+            const latency = Date.now() - startTime;
+            const firstTokenLatency = firstTokenTime ? firstTokenTime - startTime : 0;
 
-          // 记录日志
-          await logCall({
-            configId: config?.id,
-            conversationId,
-            modelId: chatModel,
-            provider: provider as any,
-            inputTokens: messages.reduce((sum, m) => sum + (m.content?.length || 0), 0),
-            outputTokens: fullContent.length,
-            latency,
-            firstTokenLatency,
-            status: 'success',
-            createdBy: user.userId,
-          });
-
-          // 添加消息到对话
-          if (conversationId) {
-            await addMessage({
+            // 记录日志
+            await logCall({
+              configId: config?.id,
               conversationId,
-              role: 'assistant',
-              content: fullContent,
+              modelId: chatModel,
+              provider: provider as any,
+              inputTokens: messages.reduce((sum, m) => sum + (m.content?.length || 0), 0),
+              outputTokens: fullContent.length,
+              latency,
+              firstTokenLatency,
+              status: 'success',
+              createdBy: user.userId,
             });
-          }
 
-          // 更新配置最后使用时间
-          if (config) {
-            await updateConfig(config.id, {});
+            // 添加消息到对话
+            if (conversationId) {
+              await addMessage({
+                conversationId,
+                role: 'assistant',
+                content: fullContent,
+              });
+            }
+
+            // 更新配置最后使用时间
+            if (config) {
+              await updateConfig(config.id, {});
+            }
           }
 
           controller.close();
         } catch (error: any) {
-          await logCall({
-            configId: config?.id,
+          if (!request.signal.aborted) {
+            await logCall({
+              configId: config?.id,
             conversationId,
             modelId: chatModel,
             provider: provider as any,

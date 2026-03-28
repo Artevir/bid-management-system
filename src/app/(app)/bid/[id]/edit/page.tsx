@@ -77,13 +77,27 @@ export default function BidEditorPage() {
 
   const handleUpdateChapter = async (data: Partial<ChapterTree>) => {
     if (!selectedChapter) return;
-    await updateChapterMutation.mutateAsync({
-      id: selectedChapter.id,
-      documentId,
-      data
-    });
-    // 更新选中的章节状态，以便 UI 即时反馈
-    setSelectedChapter({ ...selectedChapter, ...data } as ChapterTree);
+    try {
+      await updateChapterMutation.mutateAsync({
+        id: selectedChapter.id,
+        documentId,
+        data: {
+          ...data,
+          version: selectedChapter.version, // P1 乐观锁：传入当前版本号
+        }
+      });
+      // 更新选中的章节状态，以便 UI 即时反馈
+      // 这里的 version + 1 是乐观更新，实际上后端也会加 1
+      setSelectedChapter({ ...selectedChapter, ...data, version: selectedChapter.version + 1 } as ChapterTree);
+    } catch (error: any) {
+      if (error.status === 409) {
+        toast.error('保存失败：内容已被他人修改，请刷新后重试');
+        // 重新获取数据
+        queryClient.invalidateQueries({ queryKey: ['bid-chapters', documentId] });
+      } else {
+        toast.error('更新章节失败: ' + error.message);
+      }
+    }
   };
 
   const handleCreateChapter = async (parentId?: number) => {

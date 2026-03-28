@@ -59,21 +59,45 @@ export const SSE_HEADERS = {
 
 /**
  * 创建流式响应
+ * P0 致命风险修复：支持 AbortSignal 监听，防止资源泄露
  */
 export function createStreamResponse(
-  callback: (controller: ReadableStreamDefaultController, encoder: ReturnType<typeof createSSEEncoder>) => Promise<void>
+  callback: (controller: ReadableStreamDefaultController, encoder: ReturnType<typeof createSSEEncoder>) => Promise<void>,
+  signal?: AbortSignal
 ): Response {
   const encoder = createSSEEncoder();
   
   const stream = new ReadableStream({
     async start(controller) {
+      // 监听取消信号
+      if (signal) {
+        if (signal.aborted) {
+          controller.close();
+          return;
+        }
+        signal.addEventListener('abort', () => {
+          try {
+            controller.close();
+          } catch (e) {
+            // 忽略已经关闭的错误
+          }
+        });
+      }
+
       try {
         await callback(controller, encoder);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '未知错误';
-        controller.enqueue(encoder.encodeError(errorMessage));
+        // 如果已经取消，不发送错误消息
+        if (!signal?.aborted) {
+          controller.enqueue(encoder.encodeError(errorMessage));
+        }
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch (e) {
+          // 忽略已经关闭的错误
+        }
       }
     },
   });

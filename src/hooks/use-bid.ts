@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 export const useDocuments = (projectId: number) => {
   return useQuery({
     queryKey: ['bid-documents', projectId],
-    queryFn: () => bidService.getDocuments(projectId).then(res => res.data),
+    queryFn: () => bidService.getDocuments(projectId),
     enabled: !!projectId,
   });
 };
@@ -18,7 +18,7 @@ export const useDocuments = (projectId: number) => {
 export const useDocument = (id: number) => {
   return useQuery({
     queryKey: ['bid-document', id],
-    queryFn: () => bidService.getDocument(id).then(res => res.data),
+    queryFn: () => bidService.getDocument(id),
     enabled: !!id,
   });
 };
@@ -38,7 +38,7 @@ export const useUpdateDocument = () => {
 export const useChapters = (documentId: number) => {
   return useQuery({
     queryKey: ['bid-chapters', documentId],
-    queryFn: () => bidService.getChapters(documentId).then(res => res.data),
+    queryFn: () => bidService.getChapters(documentId),
     enabled: !!documentId,
   });
 };
@@ -80,7 +80,7 @@ export const useDeleteChapter = () => {
 export const useApprovals = (documentId?: number) => {
   return useQuery({
     queryKey: ['bid-approvals', documentId],
-    queryFn: () => bidService.getApprovals(documentId).then(res => res.data),
+    queryFn: () => bidService.getApprovals(documentId),
   });
 };
 
@@ -99,7 +99,7 @@ export const useSubmitApproval = () => {
 export const useExecuteApproval = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { documentId: number; level: string; action: 'approve' | 'reject'; comment?: string }) => 
+    mutationFn: (data: any) => 
       bidService.executeApproval(data),
     onSuccess: (_, { documentId }) => {
       queryClient.invalidateQueries({ queryKey: ['bid-document', documentId] });
@@ -113,7 +113,7 @@ export const useExecuteApproval = () => {
 export const useDocumentStats = (documentId: number) => {
   return useQuery({
     queryKey: ['bid-stats', 'document', documentId],
-    queryFn: () => bidService.getStatistics({ documentId }).then(res => res.data),
+    queryFn: () => bidService.getStatistics({ documentId }),
     enabled: !!documentId,
   });
 };
