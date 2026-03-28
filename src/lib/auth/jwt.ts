@@ -1,0 +1,377 @@
+/**
+ * JWT服务
+ * 使用jose库进行JWT令牌的生成和验证
+ */
+
+import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { cookies } from 'next/headers';
+import { db } from '@/db';
+import { sessions, users } from '@/db/schema';
+import { eq, and, gt } from 'drizzle-orm';
+import crypto from 'crypto';
+
+// JWT配置
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'; // 访问令牌有效期
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d'; // 刷新令牌有效期
+
+// 将时间字符串转换为秒数
+function parseTime(timeString: string): number {
+  const unit = timeString.slice(-1);
+  const value = parseInt(timeString.slice(0, -1));
+  
+  switch (unit) {
+    case 's': return value;
+    case 'm': return value * 60;
+    case 'h': return value * 60 * 60;
+    case 'd': return value * 60 * 60 * 24;
+    default: return value;
+  }
+}
+
+// 编码密钥
+const secretKey = new TextEncoder().encode(JWT_SECRET);
+
+// JWT Payload接口
+export interface JwtCustomPayload extends JWTPayload {
+  userId: number;
+  username: string;
+  email: string;
+  roleId?: number;
+  departmentId: number;
+}
+
+// Token响应接口
+export interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+/**
+ * 生成访问令牌（Access Token）
+ * @param payload JWT载荷
+ * @returns 访问令牌
+ */
+export async function generateAccessToken(payload: JwtCustomPayload): Promise<string> {
+  const token = await new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer('bid-management-system')
+    .setAudience('bid-management-users')
+    .setExpirationTime(JWT_EXPIRES_IN)
+    .sign(secretKey);
+  
+  return token;
+}
+
+/**
+ * 生成刷新令牌（Refresh Token）
+ * @param payload JWT载荷
+ * @returns 刷新令牌
+ */
+export async function generateRefreshToken(payload: JwtCustomPayload): Promise<string> {
+  const token = await new SignJWT({ ...payload, type: 'refresh' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer('bid-management-system')
+    .setAudience('bid-management-users')
+    .setExpirationTime(JWT_REFRESH_EXPIRES_IN)
+    .sign(secretKey);
+  
+  return token;
+}
+
+/**
+ * 验证访问令牌
+ * @param token 访问令牌
+ * @returns 解码后的载荷
+ */
+export async function verifyAccessToken(token: string): Promise<JwtCustomPayload> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey, {
+      issuer: 'bid-management-system',
+      audience: 'bid-management-users',
+    });
+    
+    return payload as JwtCustomPayload;
+  } catch (error) {
+    throw new Error('Invalid or expired access token');
+  }
+}
+
+/**
+ * 验证刷新令牌
+ * @param token 刷新令牌
+ * @returns 解码后的载荷
+ */
+export async function verifyRefreshToken(token: string): Promise<JwtCustomPayload> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey, {
+      issuer: 'bid-management-system',
+      audience: 'bid-management-users',
+    });
+    
+    if (payload.type !== 'refresh') {
+      throw new Error('Invalid token type');
+    }
+    
+    return payload as JwtCustomPayload;
+  } catch (error) {
+    throw new Error('Invalid or expired refresh token');
+  }
+}
+
+/**
+ * 生成令牌对（访问令牌 + 刷新令牌）
+ * @param user 用户信息
+ * @returns 令牌对
+ */
+export async function generateTokenPair(user: {
+  id: number;
+  username: string;
+  email: string;
+  departmentId: number;
+  roleId?: number;
+}): Promise<TokenResponse> {
+  const payload: JwtCustomPayload = {
+    userId: user.id,
+    username: user.username,
+    email: user.email,
+    departmentId: user.departmentId,
+    roleId: user.roleId,
+  };
+  
+  const accessToken = await generateAccessToken(payload);
+  const refreshToken = await generateRefreshToken(payload);
+  
+  // 计算过期时间（秒）
+  const expiresIn = parseTime(JWT_EXPIRES_IN);
+  
+  return {
+    accessToken,
+    refreshToken,
+    expiresIn,
+  };
+}
+
+/**
+ * 创建会话记录
+ * @param userId 用户ID
+ * @param refreshToken 刷新令牌
+ * @param ipAddress IP地址
+ * @param userAgent 用户代理
+ * @returns 会话ID
+ */
+export async function createSession(
+  userId: number,
+  refreshToken: string,
+  ipAddress?: string,
+  userAgent?: string
+): Promise<number> {
+  // 对刷新令牌进行哈希处理
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+  
+  // 计算过期时间
+  const expiresAt = new Date();
+  expiresAt.setSeconds(expiresAt.getSeconds() + parseTime(JWT_REFRESH_EXPIRES_IN));
+  
+  // 插入会话记录
+  const [session] = await db
+    .insert(sessions)
+    .values({
+      userId,
+      tokenHash,
+      ipAddress,
+      userAgent,
+      expiresAt,
+      lastAccessedAt: new Date(),
+    })
+    .returning();
+  
+  return session.id;
+}
+
+/**
+ * 验证会话
+ * @param refreshToken 刷新令牌
+ * @returns 用户ID或null
+ */
+export async function validateSession(refreshToken: string): Promise<number | null> {
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+  
+  const session = await db.query.sessions.findFirst({
+    where: and(
+      eq(sessions.tokenHash, tokenHash),
+      gt(sessions.expiresAt, new Date())
+    ),
+  });
+  
+  if (!session) {
+    return null;
+  }
+  
+  // 更新最后访问时间
+  await db
+    .update(sessions)
+    .set({ lastAccessedAt: new Date() })
+    .where(eq(sessions.id, session.id));
+  
+  return session.userId;
+}
+
+/**
+ * 撤销会话（登出）
+ * @param refreshToken 刷新令牌
+ */
+export async function revokeSession(refreshToken: string): Promise<void> {
+  const tokenHash = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+  
+  await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
+}
+
+/**
+ * 撤销用户所有会话
+ * @param userId 用户ID
+ */
+export async function revokeAllUserSessions(userId: number): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+/**
+ * 清理过期会话
+ */
+export async function cleanupExpiredSessions(): Promise<void> {
+  await db.delete(sessions).where(
+    // @ts-ignore - drizzle orm类型问题
+    sql`${sessions.expiresAt} < NOW()`
+  );
+}
+
+/**
+ * 从Cookie中获取访问令牌
+ * @returns 访问令牌或null
+ */
+export async function getAccessTokenFromCookie(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get('accessToken')?.value || null;
+}
+
+/**
+ * 从Cookie中获取刷新令牌
+ * @returns 刷新令牌或null
+ */
+export async function getRefreshTokenFromCookie(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get('refreshToken')?.value || null;
+}
+
+/**
+ * 设置令牌Cookie
+ * @param accessToken 访问令牌
+ * @param refreshToken 刷新令牌
+ */
+export async function setTokenCookies(
+  accessToken: string,
+  refreshToken: string
+): Promise<void> {
+  const cookieStore = await cookies();
+  
+  // 访问令牌Cookie（短期）
+  cookieStore.set('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: parseTime(JWT_EXPIRES_IN),
+    path: '/',
+  });
+  
+  // 刷新令牌Cookie（长期）
+  cookieStore.set('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: parseTime(JWT_REFRESH_EXPIRES_IN),
+    path: '/',
+  });
+}
+
+/**
+ * 清除令牌Cookie
+ */
+export async function clearTokenCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  
+  cookieStore.delete('accessToken');
+  cookieStore.delete('refreshToken');
+}
+
+/**
+ * 获取当前用户（从Cookie中解析）
+ * @returns 用户信息或null
+ */
+export async function getCurrentUser(): Promise<JwtCustomPayload | null> {
+  const accessToken = await getAccessTokenFromCookie();
+  
+  if (!accessToken) {
+    return null;
+  }
+  
+  try {
+    const payload = await verifyAccessToken(accessToken);
+    return payload;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 刷新访问令牌
+ * @param refreshToken 刷新令牌
+ * @returns 新的令牌对
+ */
+export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse | null> {
+  // 验证刷新令牌
+  const payload = await verifyRefreshToken(refreshToken);
+  
+  // 验证会话
+  const userId = await validateSession(refreshToken);
+  
+  if (!userId || userId !== payload.userId) {
+    return null;
+  }
+  
+  // 获取用户最新信息
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+  
+  if (!user) {
+    return null;
+  }
+  
+  // 生成新的令牌对
+  const tokens = await generateTokenPair({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    departmentId: user.departmentId,
+  });
+  
+  // 撤销旧的刷新令牌
+  await revokeSession(refreshToken);
+  
+  // 创建新的会话
+  await createSession(userId, tokens.refreshToken);
+  
+  return tokens;
+}
