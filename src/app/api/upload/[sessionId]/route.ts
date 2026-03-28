@@ -16,10 +16,10 @@ import {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const sessionId = params.sessionId;
+    const { sessionId } = await params;
     const formData = await request.formData();
 
     const chunkNumber = parseInt(formData.get('chunkNumber') as string);
@@ -52,10 +52,10 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const sessionId = params.sessionId;
+    const { sessionId } = await params;
     const body = await request.json();
     const { fileHash, targetPath } = body;
 

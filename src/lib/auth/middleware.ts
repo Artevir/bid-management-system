@@ -5,12 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, getAccessTokenFromCookie } from '@/lib/auth/jwt';
-import { hasPermission, hasAnyPermission, hasAllPermissions, canAccessApi } from '@/lib/auth/permission';
+import { hasPermission, hasAnyPermission, hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 import { handleError, AppError } from '@/lib/api/error-handler';
+import { userPermissionCache, userMenuCache, userRoleCache, invalidateUserCache as invalidateUserPermissionCache } from '@/lib/cache/service';
 
 // 权限缓存（简单的内存缓存，避免频繁查询数据库）
 const permissionCache = new Map<number, { permissions: Set<string>; expireAt: number }>();
@@ -201,4 +202,58 @@ export async function withChapterPermission(
 ) {
   return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>, params?: any) =>
     withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
+}
+
+export async function requireAuth(request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
+  try {
+    const accessToken = await getAccessTokenFromCookie();
+    if (!accessToken) {
+      return { error: '未登录' };
+    }
+
+    const payload = await verifyAccessToken(accessToken);
+    const userId = payload.userId;
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        id: true,
+        departmentId: true,
+      },
+    });
+
+    if (!user) {
+      return { error: '用户不存在' };
+    }
+
+    return { user: { id: user.id, orgId: user.departmentId } };
+  } catch (error: any) {
+    return { error: error?.message || '认证失败' };
+  }
+}
+
+export async function withAdmin(
+  request: NextRequest,
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  params?: any
+): Promise<NextResponse> {
+  return withAuth(request, async (req, userId, p) => {
+    const roles = await getUserRoles(userId);
+    const isAdmin = roles.some((r) => r.level === 0 || r.code === 'super_admin');
+    if (!isAdmin) {
+      return NextResponse.json({ error: '需要管理员权限' }, { status: 403 });
+    }
+    return handler(req, userId, p);
+  }, params);
+}
+
+export function clearPermissionCache(userId?: number): void {
+  permissionCache.clear();
+  if (typeof userId === 'number') {
+    invalidateUserPermissionCache(userId);
+    return;
+  }
+  userPermissionCache.clearNamespace();
+  userMenuCache.clearNamespace();
+  userRoleCache.clearNamespace();
 }

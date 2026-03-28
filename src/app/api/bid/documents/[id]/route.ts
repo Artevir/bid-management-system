@@ -85,17 +85,20 @@ async function deleteDoc(
   return success(null, permanent ? '文档已永久删除' : '文档已移至回收站');
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withDocumentPermission('read', (req, p) => parseIdFromParams(p, 'id', '文档'));
-  return middleware(request, getDocument, params);
+  const p = await params;
+  return middleware(request, getDocument, p);
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withDocumentPermission('edit', (req, p) => parseIdFromParams(p, 'id', '文档'));
-  return middleware(request, updateDocument, params);
+  const p = await params;
+  return middleware(request, updateDocument, p);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withDocumentPermission('delete', (req, p) => parseIdFromParams(p, 'id', '文档'));
-  return middleware(request, deleteDoc, params);
+  const p = await params;
+  return middleware(request, deleteDoc, p);
 }

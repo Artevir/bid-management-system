@@ -13,10 +13,10 @@ const tenantService = new TenantService();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     const tenant = tenantService.getTenant(tenantId);
 
     if (!tenant) {
@@ -42,10 +42,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
     const body = await request.json();
     const { name, domain, status, config } = body;
 
@@ -95,10 +95,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  { params }: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await params;
 
     const success = tenantService.suspendTenant(tenantId);
 

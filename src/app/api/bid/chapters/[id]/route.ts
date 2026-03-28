@@ -63,17 +63,20 @@ async function deleteChapterById(
   return success(null, '章节删除成功');
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withChapterPermission('read', (req, p) => parseIdFromParams(p, 'id', '章节'));
-  return middleware(request, getChapter, params);
+  const p = await params;
+  return middleware(request, getChapter, p);
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withChapterPermission('edit', (req, p) => parseIdFromParams(p, 'id', '章节'));
-  return middleware(request, updateChapterContent, params);
+  const p = await params;
+  return middleware(request, updateChapterContent, p);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withChapterPermission('delete', (req, p) => parseIdFromParams(p, 'id', '章节'));
-  return middleware(request, deleteChapterById, params);
+  const p = await params;
+  return middleware(request, deleteChapterById, p);
 }

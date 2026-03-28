@@ -300,3 +300,24 @@ export {
   type CacheStats as EnhancedCacheStats,
   type CacheOptions,
 } from './service';
+
+export {
+  redis,
+  RedisKeys,
+  getRedisClient,
+  isUsingMemoryFallback,
+  cacheSet,
+  cacheGet,
+  cacheDelete,
+  cacheDeletePattern,
+  cacheExists,
+  cacheTTL,
+  invalidateCompanyCache,
+  invalidateProjectCache as invalidateProjectRedisCache,
+  invalidateUserCache as invalidateUserRedisCache,
+  invalidateAllCache,
+} from './redis-client';
+
+export { redis as cache };
+
+export default redis;

@@ -15,10 +15,10 @@ import { withPermission, withAnyPermission, PERMISSIONS } from '@/lib/auth/rbac-
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roleId: string } }
+  { params }: { params: Promise<{ roleId: string }> }
 ) {
   try {
-    const { roleId } = params;
+    const { roleId } = await params;
     const roleIdNum = parseInt(roleId, 10);
     if (!Number.isFinite(roleIdNum)) {
       return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
@@ -85,7 +85,8 @@ export const PATCH = withAnyPermission(
   [PERMISSIONS.ROLE_UPDATE, PERMISSIONS.ROLE_ASSIGN],
   async (request: NextRequest, context?: any, userId?: string) => {
     try {
-      const { roleId } = context?.params;
+      const p = await context?.params;
+      const roleId = p?.roleId;
       const roleIdNum = parseInt(roleId, 10);
       if (!Number.isFinite(roleIdNum)) {
         return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
@@ -167,7 +168,8 @@ export const DELETE = withPermission(
   PERMISSIONS.ROLE_DELETE,
   async (request: NextRequest, context?: any) => {
     try {
-      const { roleId } = context?.params;
+      const p = await context?.params;
+      const roleId = p?.roleId;
       const roleIdNum = parseInt(roleId, 10);
       if (!Number.isFinite(roleIdNum)) {
         return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });

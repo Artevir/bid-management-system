@@ -125,7 +125,8 @@ async function generateChapterContent(
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const middleware = await withChapterPermission('edit', (req, p) => parseIdFromParams(p, 'id', '章节'));
-  return middleware(request, generateChapterContent, params);
+  const p = await params;
+  return middleware(request, generateChapterContent, p);
 }
