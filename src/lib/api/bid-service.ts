@@ -46,6 +46,19 @@ export const bidService = {
   deleteChapter: (id: number) => 
     api.delete(`/api/bid/chapters/${id}`),
 
+  // 审批相关
+  getApprovals: (documentId?: number) => 
+    api.get<any>(`/api/bid/approvals${documentId ? `?documentId=${documentId}` : ''}`),
+  
+  submitApproval: (documentId: number) => 
+    api.post('/api/bid/approvals/submit', { documentId }),
+  
+  executeApproval: (data: { documentId: number; level: string; action: 'approve' | 'reject'; comment?: string }) => 
+    api.post('/api/bid/approvals/execute', data),
+  
+  withdrawApproval: (documentId: number) => 
+    api.post('/api/bid/approvals/withdraw', { documentId }),
+
   // 统计相关
   getStatistics: (params: { documentId?: number; projectId?: number }) => {
     const query = params.documentId 

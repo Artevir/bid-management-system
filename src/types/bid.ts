@@ -26,6 +26,7 @@ export interface DocumentOverview {
   wordCount: number;
   createdAt: Date;
   updatedAt: Date;
+  creatorName?: string;
 }
 
 /** 章节简要信息 */

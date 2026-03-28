@@ -96,8 +96,10 @@ export async function getProjectDocuments(projectId: number): Promise<DocumentOv
       wordCount: bidDocuments.wordCount,
       createdAt: bidDocuments.createdAt,
       updatedAt: bidDocuments.updatedAt,
+      creatorName: users.realName,
     })
     .from(bidDocuments)
+    .leftJoin(users, eq(bidDocuments.createdBy, users.id))
     .where(eq(bidDocuments.projectId, projectId))
     .orderBy(desc(bidDocuments.createdAt));
 

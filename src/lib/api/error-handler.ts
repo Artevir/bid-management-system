@@ -166,36 +166,61 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
   }
 
   // 数据库错误（Drizzle/PostgreSQL）
-  if (error instanceof Error && error.message.includes('duplicate key')) {
-    return NextResponse.json(
-      {
-        success: false,
-        requestId,
-        error: {
-          code: ErrorCode.CONFLICT,
-          message: '数据已存在，请检查唯一字段',
-        },
-        timestamp: new Date().toISOString(),
-        path,
-      },
-      { status: 409 }
-    );
-  }
+  const dbErrorMap: Record<string, { code: ErrorCode; message: string; status: number }> = {
+    '23505': { code: ErrorCode.CONFLICT, message: '数据已存在，请检查唯一字段', status: 409 },
+    '23503': { code: ErrorCode.BAD_REQUEST, message: '关联数据不存在', status: 400 },
+    '23502': { code: ErrorCode.BAD_REQUEST, message: '必填字段缺失', status: 400 },
+  };
 
-  if (error instanceof Error && error.message.includes('foreign key')) {
-    return NextResponse.json(
-      {
-        success: false,
-        requestId,
-        error: {
-          code: ErrorCode.BAD_REQUEST,
-          message: '关联数据不存在',
+  if (error instanceof Error) {
+    // 优先通过错误代码映射
+    const pgCode = (error as any).code;
+    if (pgCode && dbErrorMap[pgCode]) {
+      const mapped = dbErrorMap[pgCode];
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: { code: mapped.code, message: mapped.message },
+          timestamp: new Date().toISOString(),
+          path,
         },
-        timestamp: new Date().toISOString(),
-        path,
-      },
-      { status: 400 }
-    );
+        { status: mapped.status }
+      );
+    }
+
+    // 回退到字符串匹配
+    if (error.message.includes('duplicate key')) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: ErrorCode.CONFLICT,
+            message: '数据已存在，请检查唯一字段',
+          },
+          timestamp: new Date().toISOString(),
+          path,
+        },
+        { status: 409 }
+      );
+    }
+
+    if (error.message.includes('foreign key')) {
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: {
+            code: ErrorCode.BAD_REQUEST,
+            message: '关联数据不存在',
+          },
+          timestamp: new Date().toISOString(),
+          path,
+        },
+        { status: 400 }
+      );
+    }
   }
 
   // 默认500错误
