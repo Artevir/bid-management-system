@@ -33,6 +33,7 @@ import {
   sql,
   count,
 } from 'drizzle-orm';
+import { AppError } from '@/lib/api/error-handler';
 import { ProjectStatus } from '@/types/project';
 
 // ============================================
@@ -538,108 +539,121 @@ export async function createProject(
     .where(eq(projects.code, data.code))
     .limit(1);
 
-  if (existing.length > 0 && !existing[0].isDeleted) {
-    throw new Error('项目编码已存在');
+  if (existing.length > 0) {
+    if (existing[0].isDeleted) {
+      throw AppError.conflict('该项目编码属于已删除的项目，请使用新的项目编码或恢复原项目');
+    }
+    throw AppError.conflict('项目编码已存在');
   }
 
-  // 创建项目
-  const result = await db
-    .insert(projects)
-    .values({
-      name: data.name,
-      code: data.code,
-      tenderCode: data.tenderCode,
-      type: data.type,
-      industry: data.industry,
-      region: data.region,
-      tenderOrganization: data.tenderOrganization,
-      tenderAgent: data.tenderAgent,
-      tenderMethod: data.tenderMethod,
-      budget: data.budget,
-      publishDate: data.publishDate,
-      registerDeadline: data.registerDeadline,
-      questionDeadline: data.questionDeadline,
-      submissionDeadline: data.submissionDeadline,
-      openBidDate: data.openBidDate,
-      ownerId: data.ownerId,
-      departmentId: data.departmentId,
-      description: data.description,
-      tags: data.tags ? JSON.stringify(data.tags) : null,
-      status: 'draft',
-      progress: 0,
-    })
-    .returning({ id: projects.id });
+  // 使用事务确保数据一致性
+  const projectId = await db.transaction(async (tx) => {
+    // 创建项目
+    const result = await tx
+      .insert(projects)
+      .values({
+        name: data.name,
+        code: data.code,
+        tenderCode: data.tenderCode,
+        type: data.type,
+        industry: data.industry,
+        region: data.region,
+        tenderOrganization: data.tenderOrganization,
+        tenderAgent: data.tenderAgent,
+        tenderMethod: data.tenderMethod,
+        budget: data.budget,
+        publishDate: data.publishDate,
+        registerDeadline: data.registerDeadline,
+        questionDeadline: data.questionDeadline,
+        submissionDeadline: data.submissionDeadline,
+        openBidDate: data.openBidDate,
+        ownerId: data.ownerId,
+        departmentId: data.departmentId,
+        description: data.description,
+        tags: data.tags ? JSON.stringify(data.tags) : null,
+        status: 'draft',
+        progress: 0,
+      })
+      .returning({ id: projects.id });
 
-  const projectId = result[0].id;
+    const newProjectId = result[0].id;
 
-  // 将项目负责人添加为项目成员
-  await db.insert(projectMembers).values({
-    projectId,
-    userId: data.ownerId,
-    role: 'owner',
-    canView: true,
-    canEdit: true,
-    canAudit: true,
-    canExport: true,
-    maxSecurityLevel: 'secret',
-    invitedBy: userId,
+    // 将项目负责人添加为项目成员
+    await tx.insert(projectMembers).values({
+      projectId: newProjectId,
+      userId: data.ownerId,
+      role: 'owner',
+      canView: true,
+      canEdit: true,
+      canAudit: true,
+      canExport: true,
+      maxSecurityLevel: 'secret',
+      invitedBy: userId,
+    });
+
+    // 创建默认阶段
+    const defaultPhases: Array<{ type: 'preparation' | 'analysis' | 'drafting' | 'review' | 'submission'; name: string; sortOrder: number }> = [
+      { type: 'preparation', name: '准备阶段', sortOrder: 1 },
+      { type: 'analysis', name: '分析阶段', sortOrder: 2 },
+      { type: 'drafting', name: '编制阶段', sortOrder: 3 },
+      { type: 'review', name: '审核阶段', sortOrder: 4 },
+      { type: 'submission', name: '投标阶段', sortOrder: 5 },
+    ];
+
+    await tx.insert(projectPhases).values(
+      defaultPhases.map(phase => ({
+        projectId: newProjectId,
+        type: phase.type,
+        name: phase.name,
+        sortOrder: phase.sortOrder,
+        status: phase.sortOrder === 1 ? 'in_progress' : 'pending',
+      }))
+    );
+
+    // 创建关键里程碑节点
+    const milestones = [];
+    if (data.submissionDeadline) {
+      milestones.push({
+        projectId: newProjectId,
+        name: '投标截止',
+        description: '投标文件提交截止时间',
+        dueDate: data.submissionDeadline,
+        status: 'pending',
+        reminderDays: 3,
+        sortOrder: 1,
+      });
+    }
+
+    if (data.openBidDate) {
+      milestones.push({
+        projectId: newProjectId,
+        name: '开标日期',
+        description: '开标时间',
+        dueDate: data.openBidDate,
+        status: 'pending',
+        reminderDays: 1,
+        sortOrder: 2,
+      });
+    }
+
+    if (data.registerDeadline) {
+      milestones.push({
+        projectId: newProjectId,
+        name: '报名截止',
+        description: '投标报名截止时间',
+        dueDate: data.registerDeadline,
+        status: 'pending',
+        reminderDays: 2,
+        sortOrder: 0,
+      });
+    }
+
+    if (milestones.length > 0) {
+      await tx.insert(projectMilestones).values(milestones);
+    }
+
+    return newProjectId;
   });
-
-  // 创建默认阶段
-  const defaultPhases: Array<{ type: 'preparation' | 'analysis' | 'drafting' | 'review' | 'submission'; name: string; sortOrder: number }> = [
-    { type: 'preparation', name: '准备阶段', sortOrder: 1 },
-    { type: 'analysis', name: '分析阶段', sortOrder: 2 },
-    { type: 'drafting', name: '编制阶段', sortOrder: 3 },
-    { type: 'review', name: '审核阶段', sortOrder: 4 },
-    { type: 'submission', name: '投标阶段', sortOrder: 5 },
-  ];
-
-  for (const phase of defaultPhases) {
-    await db.insert(projectPhases).values({
-      projectId,
-      type: phase.type,
-      name: phase.name,
-      sortOrder: phase.sortOrder,
-      status: phase.sortOrder === 1 ? 'in_progress' : 'pending',
-    });
-  }
-
-  // 创建关键里程碑节点
-  if (data.submissionDeadline) {
-    await db.insert(projectMilestones).values({
-      projectId,
-      name: '投标截止',
-      description: '投标文件提交截止时间',
-      dueDate: data.submissionDeadline,
-      status: 'pending',
-      reminderDays: 3,
-      sortOrder: 1,
-    });
-  }
-
-  if (data.openBidDate) {
-    await db.insert(projectMilestones).values({
-      projectId,
-      name: '开标日期',
-      description: '开标时间',
-      dueDate: data.openBidDate,
-      status: 'pending',
-      reminderDays: 1,
-      sortOrder: 2,
-    });
-  }
-
-  if (data.registerDeadline) {
-    await db.insert(projectMilestones).values({
-      projectId,
-      name: '报名截止',
-      description: '投标报名截止时间',
-      dueDate: data.registerDeadline,
-      status: 'pending',
-      reminderDays: 2,
-      sortOrder: 0,
-    });
-  }
 
   return projectId;
 }

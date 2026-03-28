@@ -9,6 +9,7 @@ import { db } from '@/db';
 import { sessions, users } from '@/db/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import crypto from 'crypto';
+import { AppError } from '@/lib/api/error-handler';
 
 // JWT配置
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
@@ -96,7 +97,7 @@ export async function verifyAccessToken(token: string): Promise<JwtCustomPayload
     
     return payload as JwtCustomPayload;
   } catch (error) {
-    throw new Error('Invalid or expired access token');
+    throw AppError.unauthorized('认证失败，无效或过期的访问令牌');
   }
 }
 
@@ -113,12 +114,13 @@ export async function verifyRefreshToken(token: string): Promise<JwtCustomPayloa
     });
     
     if (payload.type !== 'refresh') {
-      throw new Error('Invalid token type');
+      throw AppError.unauthorized('无效的令牌类型');
     }
     
     return payload as JwtCustomPayload;
   } catch (error) {
-    throw new Error('Invalid or expired refresh token');
+    if (error instanceof AppError) throw error;
+    throw AppError.unauthorized('认证失败，无效或过期的刷新令牌');
   }
 }
 

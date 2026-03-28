@@ -10,6 +10,8 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
+import { handleError, AppError } from '@/lib/api/error-handler';
+
 // 权限缓存（简单的内存缓存，避免频繁查询数据库）
 const permissionCache = new Map<number, { permissions: Set<string>; expireAt: number }>();
 const CACHE_TTL = 60 * 1000; // 60秒缓存
@@ -43,30 +45,28 @@ export async function withAuth(
   request: NextRequest,
   handler: (request: NextRequest, userId: number) => Promise<NextResponse>
 ): Promise<NextResponse> {
+  let userId: number;
+  
   try {
     // 从Cookie获取访问令牌
     const accessToken = await getAccessTokenFromCookie();
     
     if (!accessToken) {
-      return NextResponse.json(
-        { error: '未登录' },
-        { status: 401 }
-      );
+      throw AppError.unauthorized('未登录');
     }
     
     // 验证令牌
     const payload = await verifyAccessToken(accessToken);
-    
-    // 调用实际的处理器
-    return await handler(request, payload.userId);
-    
+    userId = payload.userId;
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    
-    return NextResponse.json(
-      { error: '认证失败，请重新登录' },
-      { status: 401 }
-    );
+    return handleError(error, request.url);
+  }
+
+  try {
+    // 调用实际的处理器
+    return await handler(request, userId);
+  } catch (error) {
+    return handleError(error, request.url);
   }
 }
 
@@ -78,11 +78,11 @@ export async function withOptionalAuth(
   request: NextRequest,
   handler: (request: NextRequest, userId?: number) => Promise<NextResponse>
 ): Promise<NextResponse> {
+  let userId: number | undefined;
+
   try {
     // 从Cookie获取访问令牌
     const accessToken = await getAccessTokenFromCookie();
-    
-    let userId: number | undefined;
     
     if (accessToken) {
       try {
@@ -92,14 +92,15 @@ export async function withOptionalAuth(
         // 令牌无效，但继续执行（可选认证）
       }
     }
+  } catch (error) {
+    // 获取token过程出错也忽略，继续执行
+  }
     
+  try {
     // 调用实际的处理器
     return await handler(request, userId);
-    
   } catch (error) {
-    console.error('Optional auth middleware error:', error);
-    // 即使出错也继续执行
-    return await handler(request);
+    return handleError(error, request.url);
   }
 }
 
@@ -275,30 +276,22 @@ export async function withResourcePermission(
   handler: (request: NextRequest, userId: number) => Promise<NextResponse>
 ): Promise<NextResponse> {
   return withAuth(request, async (req, userId) => {
-    try {
-      const resourceId = await resourceIdGetter(req);
-      const result = await checkResourcePermission(userId, resourceType, resourceId, action);
-      
-      if (!result.allowed) {
-        return NextResponse.json(
-          { 
-            error: result.reason || '权限不足',
-            resourceType,
-            resourceId,
-            action,
-          },
-          { status: 403 }
-        );
-      }
-      
-      return await handler(req, userId);
-    } catch (error) {
-      console.error('Resource permission check error:', error);
+    const resourceId = await resourceIdGetter(req);
+    const result = await checkResourcePermission(userId, resourceType, resourceId, action);
+    
+    if (!result.allowed) {
       return NextResponse.json(
-        { error: '权限检查失败' },
-        { status: 500 }
+        { 
+          error: result.reason || '权限不足',
+          resourceType,
+          resourceId,
+          action,
+        },
+        { status: 403 }
       );
     }
+    
+    return await handler(req, userId);
   });
 }
 

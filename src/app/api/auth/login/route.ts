@@ -13,12 +13,13 @@ import {
   createSession,
   setTokenCookies,
 } from '@/lib/auth/jwt';
+import { handleError, AppError } from '@/lib/api/error-handler';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  const ipAddress = request.headers.get('x-forwarded-for') || 
+  const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                     request.headers.get('x-real-ip') || 
-                    'unknown';
+                    request.ip || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
   
   try {
@@ -27,10 +28,7 @@ export async function POST(request: NextRequest) {
     
     // 验证输入
     if (!username || !password) {
-      return NextResponse.json(
-        { error: '用户名和密码不能为空' },
-        { status: 400 }
-      );
+      throw AppError.badRequest('用户名和密码不能为空');
     }
     
     // 查询用户
@@ -53,20 +51,14 @@ export async function POST(request: NextRequest) {
         duration: Date.now() - startTime,
       });
       
-      return NextResponse.json(
-        { error: '用户名或密码错误' },
-        { status: 401 }
-      );
+      throw AppError.unauthorized('用户名或密码错误');
     }
     
     // 检查用户状态
     if (user.status === 'locked') {
       // 检查是否已解锁
       if (user.lockedUntil && new Date() < user.lockedUntil) {
-        return NextResponse.json(
-          { error: '账户已被锁定，请稍后再试' },
-          { status: 403 }
-        );
+        throw AppError.forbidden('账户已被锁定，请稍后再试');
       } else {
         // 自动解锁
         await db
@@ -82,10 +74,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (user.status === 'inactive') {
-      return NextResponse.json(
-        { error: '账户未激活' },
-        { status: 403 }
-      );
+      throw AppError.forbidden('账户未激活');
     }
     
     // 验证密码
@@ -127,10 +116,7 @@ export async function POST(request: NextRequest) {
         duration: Date.now() - startTime,
       });
       
-      return NextResponse.json(
-        { error: '用户名或密码错误' },
-        { status: 401 }
-      );
+      throw AppError.unauthorized('用户名或密码错误');
     }
     
     // 获取用户角色（如果有）
@@ -195,11 +181,6 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Login error:', error);
-    
-    return NextResponse.json(
-      { error: '登录失败，请稍后再试' },
-      { status: 500 }
-    );
+    return handleError(error, request.url);
   }
 }
