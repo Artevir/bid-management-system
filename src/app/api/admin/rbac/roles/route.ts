@@ -4,11 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/index';
-import { roles } from '@/db/schema/rbac';
-import { userRoles } from '@/db/schema/rbac';
-import { rolePermissions } from '@/db/schema/rbac';
-import { permissions } from '@/db/schema/rbac';
-import { eq, and, sql } from 'drizzle-orm';
+import { roles, userRoles, rolePermissions } from '@/db/schema/rbac';
+import { eq, sql } from 'drizzle-orm';
 import RBACService from '@/lib/auth/rbac-service';
 import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
 
@@ -90,19 +87,19 @@ export const POST = withPermission(
         name,
         code,
         description,
-        level,
-        permissions: permissionIds || [],
+        level: typeof level === 'number' ? level : 2,
         isSystem: false,
         isActive: true,
       }).returning();
 
       // 分配权限
       if (permissionIds && permissionIds.length > 0) {
+        const grantedBy = userId ? parseInt(userId, 10) : null;
         for (const permId of permissionIds) {
           await db.insert(rolePermissions).values({
             roleId: newRole.id,
             permissionId: permId,
-            assignedBy: userId,
+            grantedBy,
           });
         }
       }

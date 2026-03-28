@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/index';
 import { roles, rolePermissions, userRoles } from '@/db/schema/rbac';
-import { eq, and } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import RBACService from '@/lib/auth/rbac-service';
 import { withPermission, withAnyPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
 
@@ -19,10 +19,14 @@ export async function GET(
 ) {
   try {
     const { roleId } = params;
+    const roleIdNum = parseInt(roleId, 10);
+    if (!Number.isFinite(roleIdNum)) {
+      return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
+    }
 
     // 获取角色信息
     const role = await db.query.roles.findFirst({
-      where: eq(roles.id, roleId),
+      where: eq(roles.id, roleIdNum),
     });
 
     if (!role) {
@@ -34,7 +38,7 @@ export async function GET(
 
     // 获取角色的权限
     const rolePerms = await db.query.rolePermissions.findMany({
-      where: eq(rolePermissions.roleId, roleId),
+      where: eq(rolePermissions.roleId, roleIdNum),
       with: {
         permission: true,
       },
@@ -42,12 +46,13 @@ export async function GET(
 
     // 获取角色的用户
     const roleUsers = await db.query.userRoles.findMany({
-      where: eq(userRoles.roleId, roleId),
+      where: eq(userRoles.roleId, roleIdNum),
       with: {
         user: {
           columns: {
             id: true,
-            name: true,
+            username: true,
+            realName: true,
             email: true,
             avatar: true,
           },
@@ -81,12 +86,16 @@ export const PATCH = withAnyPermission(
   async (request: NextRequest, context?: any, userId?: string) => {
     try {
       const { roleId } = context?.params;
+      const roleIdNum = parseInt(roleId, 10);
+      if (!Number.isFinite(roleIdNum)) {
+        return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
+      }
       const body = await request.json();
       const { name, description, level, isActive, permissions: permissionIds } = body;
 
       // 获取现有角色
       const existing = await db.query.roles.findFirst({
-        where: eq(roles.id, roleId),
+        where: eq(roles.id, roleIdNum),
       });
 
       if (!existing) {
@@ -97,7 +106,7 @@ export const PATCH = withAnyPermission(
       }
 
       // 系统角色不允许修改关键信息
-      if (existing.isSystem && (name || level || code)) {
+      if (existing.isSystem && (name || level)) {
         return NextResponse.json({
           success: false,
           error: '系统内置角色不允许修改名称、代码和级别',
@@ -114,25 +123,26 @@ export const PATCH = withAnyPermission(
       if (Object.keys(updateData).length > 0) {
         await db.update(roles)
           .set(updateData)
-          .where(eq(roles.id, roleId));
+          .where(eq(roles.id, roleIdNum));
       }
 
       // 更新权限
       if (permissionIds !== undefined) {
         // 删除旧权限
-        await db.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+        await db.delete(rolePermissions).where(eq(rolePermissions.roleId, roleIdNum));
 
         // 添加新权限
+        const grantedBy = userId ? parseInt(userId, 10) : null;
         for (const permId of permissionIds) {
           await db.insert(rolePermissions).values({
-            roleId,
+            roleId: roleIdNum,
             permissionId: permId,
-            assignedBy: userId,
+            grantedBy,
           });
         }
 
         // 更新角色的权限列表缓存
-        await RBACService.updateRolePermissionsCache(roleId);
+        await RBACService.updateRolePermissionsCache(roleIdNum);
       }
 
       return NextResponse.json({
@@ -158,10 +168,14 @@ export const DELETE = withPermission(
   async (request: NextRequest, context?: any) => {
     try {
       const { roleId } = context?.params;
+      const roleIdNum = parseInt(roleId, 10);
+      if (!Number.isFinite(roleIdNum)) {
+        return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
+      }
 
       // 获取角色信息
       const role = await db.query.roles.findFirst({
-        where: eq(roles.id, roleId),
+        where: eq(roles.id, roleIdNum),
       });
 
       if (!role) {
@@ -183,7 +197,7 @@ export const DELETE = withPermission(
       const userCount = await db
         .select({ count: sql<number>`count(*)` })
         .from(userRoles)
-        .where(eq(userRoles.roleId, roleId));
+        .where(eq(userRoles.roleId, roleIdNum));
 
       if (Number(userCount[0]?.count || 0) > 0) {
         return NextResponse.json({
@@ -193,7 +207,7 @@ export const DELETE = withPermission(
       }
 
       // 删除角色
-      await db.delete(roles).where(eq(roles.id, roleId));
+      await db.delete(roles).where(eq(roles.id, roleIdNum));
 
       return NextResponse.json({
         success: true,
