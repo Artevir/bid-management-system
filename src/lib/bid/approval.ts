@@ -108,6 +108,11 @@ export async function submitForApproval(
     throw AppError.notFound('文档');
   }
 
+  // 幂等性检查：如果文档已经在审核中，则不允许重复提交
+  if (doc[0].status === 'reviewing') {
+    throw AppError.conflict('该文档已在审核中，请勿重复提交');
+  }
+
   // 验证提交人权限 (需有编辑权限)
   const submitterMember = await db
     .select()

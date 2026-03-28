@@ -300,8 +300,9 @@ export async function createChapter(params: CreateChapterParams): Promise<number
   const { documentId, parentId, type, serialNumber, title, content, isRequired, assignedTo, deadline, responseItemId } = params;
 
   return await db.transaction(async (tx) => {
-    const existingChapters = await tx
-      .select()
+    // 使用 SQL 聚合计算最大的 sortOrder，保证在事务内计算的准确性并减少数据传输
+    const [{ maxOrder }] = await tx
+      .select({ maxOrder: sql<number>`COALESCE(MAX(${bidChapters.sortOrder}), -1)` })
       .from(bidChapters)
       .where(
         parentId
@@ -309,7 +310,7 @@ export async function createChapter(params: CreateChapterParams): Promise<number
           : and(eq(bidChapters.documentId, documentId), isNull(bidChapters.parentId))
       );
 
-    const sortOrder = existingChapters.length;
+    const sortOrder = maxOrder + 1;
     let level = 1;
     if (parentId) {
       const parent = await tx.select().from(bidChapters).where(eq(bidChapters.id, parentId)).limit(1);

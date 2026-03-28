@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import crypto from 'crypto';
 
 // ============================================
 // 错误类型定义
@@ -95,6 +96,7 @@ export class AppError extends Error {
 
 interface ErrorResponse {
   success: false;
+  requestId: string;
   error: {
     code: ErrorCode;
     message: string;
@@ -112,7 +114,9 @@ interface ErrorResponse {
  * 将错误转换为标准响应
  */
 export function handleError(error: unknown, path?: string): NextResponse<ErrorResponse> {
-  console.error('[API Error]', {
+  const requestId = crypto.randomUUID();
+
+  console.error(`[API Error][${requestId}]`, {
     path,
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
@@ -123,6 +127,7 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
     return NextResponse.json(
       {
         success: false,
+        requestId,
         error: {
           code: error.code,
           message: error.message,
@@ -147,6 +152,7 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
     return NextResponse.json(
       {
         success: false,
+        requestId,
         error: {
           code: ErrorCode.VALIDATION_ERROR,
           message: '请求参数验证失败',
@@ -164,6 +170,7 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
     return NextResponse.json(
       {
         success: false,
+        requestId,
         error: {
           code: ErrorCode.CONFLICT,
           message: '数据已存在，请检查唯一字段',
@@ -179,6 +186,7 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
     return NextResponse.json(
       {
         success: false,
+        requestId,
         error: {
           code: ErrorCode.BAD_REQUEST,
           message: '关联数据不存在',
@@ -191,14 +199,17 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
   }
 
   // 默认500错误
+  const message = process.env.NODE_ENV === 'production' 
+    ? '服务器内部错误' 
+    : (error instanceof Error ? error.message : '未知错误');
+
   return NextResponse.json(
     {
       success: false,
+      requestId,
       error: {
         code: ErrorCode.INTERNAL_ERROR,
-        message: process.env.NODE_ENV === 'production' 
-          ? '服务器内部错误' 
-          : (error instanceof Error ? error.message : '未知错误'),
+        message,
       },
       timestamp: new Date().toISOString(),
       path,
