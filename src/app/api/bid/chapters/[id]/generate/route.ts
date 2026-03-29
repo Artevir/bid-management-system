@@ -14,6 +14,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { withChapterPermission } from '@/lib/auth/middleware';
 import { getLLM, createCozeAdapterWithHeaders, ChatMessage, LLMFactory, extractForwardHeaders } from '@/lib/llm';
+import { streamChat } from '@/lib/llm/service';
 import { createStreamResponse } from '@/lib/stream-utils';
 import { retrieveRelevantKnowledge } from '@/lib/bid/ai-generator';
 import { AppError } from '@/lib/api/error-handler';
@@ -102,7 +103,7 @@ async function generateChapterContent(
   if (stream) {
     return createStreamResponse(async (controller, encoder) => {
       try {
-        const stream = await llm.chatStream({ messages });
+        const stream = streamChat({ messages }, forwardHeaders);
         for await (const chunk of stream) {
           // P0 致命风险修复：检查客户端是否已断开，及时释放资源
           if (request.signal.aborted) {
