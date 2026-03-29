@@ -42,6 +42,12 @@ const nextConfig: NextConfig = {
 
   // Webpack 配置优化
   webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.output = {
+        ...config.output,
+        chunkFilename: '[id].js',
+      };
+    }
     // 生产环境客户端构建优化
     if (!isServer) {
       // 代码分割配置
