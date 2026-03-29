@@ -42,8 +42,8 @@ export default function RootLayout({
             <AppLayout>
               {children}
             </AppLayout>
+            <Toaster />
           </ThemeProvider>
-          <Toaster />
         </ReactQueryProvider>
       </body>
     </html>
