@@ -318,6 +318,5 @@ export {
   invalidateAllCache,
 } from './redis-client';
 
-export { redis as cache };
-
-export default redis;
+export { redis as cache } from './redis-client';
+export { default } from './redis-client';
