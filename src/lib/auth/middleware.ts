@@ -44,9 +44,9 @@ function setCachedPermissions(userId: number, permissions: Set<string>): void {
  */
 export async function withAuth(
   request: NextRequest,
-  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
-): Promise<NextResponse> {
+): Promise<Response> {
   let userId: number;
   
   try {
@@ -78,9 +78,9 @@ export async function withAuth(
  */
 export async function withOptionalAuth(
   request: NextRequest,
-  handler: (request: NextRequest, userId?: number, params?: any) => Promise<NextResponse>,
+  handler: (request: NextRequest, userId?: number, params?: any) => Promise<Response>,
   params?: any
-): Promise<NextResponse> {
+): Promise<Response> {
   let userId: number | undefined;
 
   try {
@@ -123,9 +123,9 @@ export async function checkPermission(
 export async function withPermission(
   request: NextRequest,
   permission: string,
-  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
-): Promise<NextResponse> {
+): Promise<Response> {
   return withAuth(request, async (req, userId, p) => {
     const hasAccess = await checkPermission(userId, permission);
     
@@ -159,9 +159,9 @@ export async function withResourcePermission(
   resourceType: ResourceType,
   resourceIdGetter: (request: NextRequest, params?: any) => number | Promise<number>,
   action: PermissionAction,
-  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
-): Promise<NextResponse> {
+): Promise<Response> {
   return withAuth(request, async (req, userId, p) => {
     const resourceId = await resourceIdGetter(req, p);
     const result = await checkResourcePermission(userId, resourceType, resourceId, action);
@@ -189,7 +189,7 @@ export async function withDocumentPermission(
   action: PermissionAction,
   documentIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>, params?: any) =>
+  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>, params?: any) =>
     withResourcePermission(request, 'document', documentIdGetter, action, handler, params);
 }
 
@@ -200,7 +200,7 @@ export async function withChapterPermission(
   action: PermissionAction,
   chapterIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>, params?: any) =>
+  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>, params?: any) =>
     withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
 }
 
@@ -234,9 +234,9 @@ export async function requireAuth(request: NextRequest): Promise<{ user?: { id: 
 
 export async function withAdmin(
   request: NextRequest,
-  handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>,
+  handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
-): Promise<NextResponse> {
+): Promise<Response> {
   return withAuth(request, async (req, userId, p) => {
     const roles = await getUserRoles(userId);
     const isAdmin = roles.some((r) => r.level === 0 || r.code === 'super_admin');
