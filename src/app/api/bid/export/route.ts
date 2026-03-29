@@ -29,12 +29,15 @@ async function handleExport(
     const result = await exportDocument(documentId, options);
 
     // 返回文件内容
-    // 处理 Buffer 类型 - 转换为 Uint8Array 以兼容 Response
-    const responseContent = Buffer.isBuffer(result.content)
-      ? new Uint8Array(result.content)
-      : result.content;
+    const parts: any[] = [];
+    if (Buffer.isBuffer(result.content) || result.content instanceof Uint8Array) {
+      parts.push(Uint8Array.from(result.content as any));
+    } else {
+      parts.push(result.content as any);
+    }
+    const body = new Blob(parts, { type: result.mimeType });
 
-    return new NextResponse(responseContent, {
+    return new NextResponse(body, {
       status: 200,
       headers: {
         'Content-Type': result.mimeType,
