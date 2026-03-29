@@ -41,10 +41,17 @@ export default function BidEditorPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 模拟选项数据 (实际项目中应从 API 获取)
-  const [options, setOptions] = useState({
+  type OptionItem = { id: number; name: string };
+  type OptionsState = {
+    templates: OptionItem[];
+    companies: OptionItem[];
+    availableTags: OptionItem[];
+  };
+
+  const [options, setOptions] = useState<OptionsState>({
     templates: [],
     companies: [],
-    availableTags: []
+    availableTags: [],
   });
 
   // 加载选项数据
@@ -55,10 +62,21 @@ export default function BidEditorPage() {
           fetch('/api/companies?pageSize=100').then(res => res.json()),
           fetch('/api/tags?pageSize=100').then(res => res.json()),
         ]);
+
+        const companies: OptionItem[] = (companiesRes.data?.list || []).map((c: any) => ({
+          id: Number(c.id),
+          name: String(c.name ?? c.title ?? ''),
+        }));
+
+        const availableTags: OptionItem[] = (tagsRes.data?.list || []).map((t: any) => ({
+          id: Number(t.id),
+          name: String(t.name ?? t.title ?? ''),
+        }));
+
         setOptions({
           templates: [{ id: 1, name: '通用投标响应模板' }],
-          companies: companiesRes.data?.list || [],
-          availableTags: tagsRes.data?.list || [],
+          companies,
+          availableTags,
         });
       } catch (e) {
         console.error('Failed to fetch editor options', e);
