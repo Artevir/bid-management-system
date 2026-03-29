@@ -1,0 +1,142 @@
+可以。下面这份是 《高频 sed / perl 批量替换命令建议表》，专门按你这个仓库当前暴露过的问题类型整理的。原则是：
+能批量替换的才批量替换 
+涉及业务语义的先 grep 再人工确认 
+先备份，再替换 
+优先用 perl -0pi 处理跨行替换，简单单行再用 sed -i 
+你前面这套仓库已经反复出现的高频类别，主要就是：中间件 async 调用、res.data、旧 schema 路径、cache 导入、Next.js 15 路由参数、LLM 旧调用方式。
+0）先备份再动
+备份整个项目里将要动到的文本文件
+cd /www/wwwroot/bid-management-systemfind src docs -type f \( -name "*.ts" -o -name "*.tsx" \) > /tmp/patch-files.txttar -czf /tmp/bid-management-system-before-batch-$(date +%Y%m%d-%H%M%S).tar.gz $(cat /tmp/patch-files.txt)
+或者最简单
+cp -r /www/wwwroot/bid-management-system /www/wwwroot/bid-management-system.bak.$(date +%Y%m%d-%H%M%S)
+1）res.data.xxx → res.xxx
+这个是高频且相对安全的一类，但仍建议先 grep 再替换。你已经在 bid/page.tsx 上碰到过。
+先查
+grep -R "res\.data\." -n src/app src/lib
+批量替换
+find src/app src/lib -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e 's/\bres\.data\./res./g'
+风险说明
+这个替换只适合你已经确认 service 返回值是已解包对象的仓库。如果某些地方 res 真的是原始 axios/fetch 响应，这一刀会误伤，所以务必先看 grep 结果。
+2）旧 schema 路径 → 统一 schema 导入
+你前面已经确认真实表定义集中在 src/db/schema.ts，而 audit-logs 在 src/lib/db/schema/audit-logs.ts。
+单个路径替换：audit-logs
+grep -R "@/db/schema/audit-logs" -n srcfind src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s#@/db/schema/audit-logs#@/lib/db/schema/audit-logs#g"
+单个路径替换：projects/documents/companies 拆分文件
+先查：
+grep -R "@/db/schema/projects\|@/db/schema/documents\|@/db/schema/companies" -n src
+这些不建议“一刀切自动改成同一个 import 行”，因为：
+documents 实际要改成 bidDocuments 
+每个文件原来 import 组合不同 
+相对安全的做法：先删旧 import，再人工补新 import
+find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 sed -i "/@\/db\/schema\/projects/d"find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 sed -i "/@\/db\/schema\/documents/d"find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 sed -i "/@\/db\/schema\/companies/d"
+然后再按文件补：
+import { projects, bidDocuments, companies } from '@/db/schema';
+3）request.ip 清理
+这是非常适合批量改的一类。你已经在登录 API 上遇到过。
+先查
+grep -R "request\.ip" -n src
+粗暴删掉 request.ip ||
+find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s/\s*request\.ip\s*\|\|\s*//g"
+更推荐：人工改成标准 IP 获取模板
+const ipAddress =  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||  request.headers.get('x-real-ip') ||  request.headers.get('cf-connecting-ip') ||  'unknown';
+这类建议不要完全自动替换，因为每个文件变量名未必都叫 ipAddress。
+4）import { cache } from '@/lib/cache' → redis-client
+这个是高频且相对适合批量替换。你已经查到很多文件这么写。
+先查
+grep -R "import { cache } from '@/lib/cache'" -n src
+批量替换
+find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s#import \{ cache \} from '@/lib/cache';#import { redis as cache } from '@/lib/cache/redis-client';#g"
+处理默认 redis 导入
+先查：
+grep -R "import redis, .*from '@/lib/cache'" -n src
+再替换：
+find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s#from '@/lib/cache';#from '@/lib/cache/redis-client';#g"
+风险说明
+这条会把所有 from '@/lib/cache' 改成 redis-client，包括不该改的聚合 API 导入。所以更稳是先 grep 精确命中后，按文件替换。
+5）旧 LLM 直接调用 → service 层调用
+这类不建议完全自动替换，但可以先批量搜出。你已经确认 streamChat / invokeChat 是当前稳定口径。
+查所有旧式调用
+grep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 200
+查 service 层能力
+grep -R "streamChat\|invokeChat" -n src/lib/llm src/lib | head -n 100
+不建议直接 sed 全替
+因为：
+llm.chat(...) 不一定都该改成 invokeChat(...) 
+参数结构未必完全相同 
+有的地方还要传 forwardHeaders 
+这类建议“批量搜，逐文件改”。
+6）Next.js 15 动态路由 params
+你目前这类已经基本清掉了，但如果以后再来一轮，很适合半自动处理。
+先查
+grep -R "params }: { params: {" -n src/app/api
+第一刀：把类型包装成 Promise
+find src/app/api -type f -name "route.ts" -print0 | xargs -0 perl -pi -e 's/\{ params \}: \{ params: \{ ([^}]+) \} \}/{ params }: { params: Promise<{ $1 }> }/g'
+第二刀：const { id } = params → await params
+这类变量名不统一，不建议全自动。先查：
+grep -R "const { .* } = params" -n src/app/api
+再人工逐个改。
+7）中间件同步调用 → async middleware 调用
+这类也适合先批量搜，后局部改。你已经在 withDocumentPermission(...) 上真实撞到。
+查
+grep -R "withDocumentPermission(" -n srcgrep -R "withChapterPermission(" -n srcgrep -R "withResourcePermission(" -n src
+识别错误模式
+重点看这种：
+return withDocumentPermission(...)(request, ...)
+不建议直接正则批量改
+因为每个调用处的变量名、handler 体不同。这类建议：
+grep 定位 
+手工改成： 
+const middleware = await withDocumentPermission(...);return middleware(request, ...);
+8）空数组 never[] 问题
+这类不能可靠地用 sed 一刀切，因为涉及具体类型名。你已经在 templates: [] 上踩过。
+查
+grep -R "templates: \[\]\|companies: \[\]\|availableTags: \[\]" -n srcgrep -R "useState({" -n src/app src/components | head -n 200
+处理方式
+这种建议人工补类型，不建议 sed。
+9）queryClient 未定义
+查
+grep -R "queryClient\." -n srcgrep -R "useQueryClient" -n src
+自动替换不推荐
+因为：
+有的组件已经有 useQueryClient 
+有的没有 
+插入位置要看组件结构 
+这类建议人工改。
+10）const 被重新赋值
+查
+这类很难精确 grep 全抓，但可以搜常见变量：
+grep -R "startDate =\|endDate =\|let startDate\|let endDate" -n src/app/api src/lib
+自动替换不推荐
+因为要结合上下文决定是改成 let，还是改成“默认值一次性计算”。
+11）OpenAPI 类型问题
+查
+grep -R "OpenAPIObjectConfig" -n docs srcsed -n '1,260p' docs/openapi/openapi-spec.ts
+自动替换不推荐
+因为要根据当前库的真实类型来定，不适合一刀切。
+12）登录页 / UI 组件运行时问题
+这类不要用 sed。你前面已经验证过，Label 的问题更适合做“最小页面 + 逐个 import 加回”的二分排查。
+13）一组你现在最值得直接复制的命令
+13.1 先看有哪些高频可批量替换点
+grep -R "res\.data\." -n src/app src/libgrep -R "request\.ip" -n srcgrep -R "import { cache } from '@/lib/cache'" -n srcgrep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n srcgrep -R "@/db/schema/audit-logs" -n src
+13.2 批量替换（相对安全）
+find src/app src/lib -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e 's/\bres\.data\./res./g'find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s#import \{ cache \} from '@/lib/cache';#import { redis as cache } from '@/lib/cache/redis-client';#g"find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 | xargs -0 perl -pi -e "s#@/db/schema/audit-logs#@/lib/db/schema/audit-logs#g"
+13.3 重新构建
+rm -rf .nextpnpm build 2>&1 | tee build.logtail -n 80 build.log
+14）我的建议：哪些能批量，哪些别批量
+可以批量
+res.data. → res. 
+@/db/schema/audit-logs → @/lib/db/schema/audit-logs 
+import { cache } from '@/lib/cache' → import { redis as cache } from '@/lib/cache/redis-client' 
+删除明显错误的旧 import 行 
+先 grep，后人工
+withDocumentPermission(...)(...) 
+withChapterPermission(...)(...) 
+llm.chat(...) / llm.chatStream(...) 
+Next.js 动态路由 params 
+request.ip 
+不建议批量
+never[] 
+queryClient / router 
+OpenAPI 类型 
+登录页运行时组件问题 
+如果你愿意，我下一条可以继续给你做一份《可直接执行的“先 grep 再替换”脚本草案》，把这些命令串成一套小脚本。

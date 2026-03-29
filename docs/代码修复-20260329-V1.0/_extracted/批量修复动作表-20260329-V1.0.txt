@@ -1,0 +1,164 @@
+可以。下面这份就是你这个仓库当前最适合的 《批量修复动作表》。不是讲原理，直接按 错误模式 → 正确模式 给你对照。你前面暴露出的主要问题，已经很清楚地集中在：路由签名、中间件异步调用、auth/cache/schema/llm 导入口径、前端类型返回值这几类。
+1. Next.js 15 动态路由参数
+错误模式
+export async function GET(  request: NextRequest,  { params }: { params: { id: string } }) {  const { id } = params;}
+正确模式
+export async function GET(  request: NextRequest,  { params }: { params: Promise<{ id: string }> }) {  const { id } = await params;}
+适用对象
+[id]/route.ts 
+[roleId]/route.ts 
+[tenantId]/route.ts 
+[sessionId]/route.ts 
+2. 中间件 async 返回函数调用
+错误模式
+return withDocumentPermission('read', () => documentId)(request, handler);
+正确模式
+const middleware = await withDocumentPermission('read', () => documentId);return middleware(request, handler);
+同类适用
+withDocumentPermission(...) 
+withChapterPermission(...) 
+withResourcePermission(...) 
+你已经在 src/app/api/bid/chapters/route.ts 上遇到过这一类。
+3. 中间件 handler 返回类型
+错误模式
+handler: (request: NextRequest, userId: number, params?: any) => Promise<NextResponse>
+正确模式
+handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>
+同时函数本身也改
+错误模式
+): Promise<NextResponse> {
+正确模式
+): Promise<Response> {
+适用文件
+src/lib/auth/middleware.ts 
+这是你决定走“全体系修复”后最值钱的一刀，因为流式接口天然更适合 Response。
+4. schema 导入路径漂移
+错误模式
+import { projects } from '@/db/schema/projects';import { documents } from '@/db/schema/documents';import { companies } from '@/db/schema/companies';import { auditLogs } from '@/db/schema/audit-logs';
+正确模式
+import { projects, bidDocuments, companies } from '@/db/schema';import { auditLogs } from '@/lib/db/schema/audit-logs';
+特别注意
+错误模式
+documents
+正确模式
+bidDocuments
+因为你已经确认 src/db/schema.ts 里真实导出的是 bidDocuments，不是 documents。
+5. auth 模块调用口径
+错误模式
+import { requireAuth } from '@/lib/auth/middleware';const authResult = await requireAuth(request);
+正确模式 A：如果走 session 口径
+import { requireAuth } from '@/lib/auth/session';const user = await requireAuth();
+正确模式 B：如果走 middleware 口径
+import { requireAuth } from '@/lib/auth/middleware';const authResult = await requireAuth(request);
+规则
+不要混用。要么这类路由统一走 session.requireAuth()，要么统一走 middleware.requireAuth(request)。
+你现在仓库里这两个版本都存在，所以后续最好选一套。
+6. withAdmin 旧封装
+错误模式
+return withAdmin(request, createUser);
+正确模式
+return withAuth(request, async (req, userId, params) => {  const ok = await checkPermission(userId, '真实管理员权限码');  if (!ok) {    return NextResponse.json({ error: '需要管理员权限' }, { status: 403 });  }  return createUser(req, userId, params);});
+说明
+这是长期最干净的方式。不过如果你当前 middleware.ts 里已经补回了 withAdmin，那这条可以作为后续重构目标，不一定非要立刻改完。
+7. cache 导入口径
+错误模式
+import { cache } from '@/lib/cache';import redis, { RedisKeys } from '@/lib/cache';import { cacheGet, cacheSet } from '@/lib/cache';
+正确模式 A：底层 Redis 能力
+import redis, {  RedisKeys,  getRedisClient,  isUsingMemoryFallback,  cacheGet,  cacheSet,  cacheDelete,  cacheDeletePattern,  cacheExists,  cacheTTL,  invalidateCompanyCache,} from '@/lib/cache/redis-client';
+正确模式 B：旧 cache 变量写法
+import { redis as cache } from '@/lib/cache/redis-client';
+规则
+业务层缓存聚合逻辑，才从 @/lib/cache 
+直接用 Redis 客户端能力，就从 @/lib/cache/redis-client 
+你前面的 build 和 grep 已经证明这块漂移很多。
+8. LLM 调用方式
+错误模式
+const llm = getLLM();const response = await llm.chat({ messages });const stream = await llm.chatStream({ messages });
+正确模式
+const content = await invokeChat({ messages }, forwardHeaders);const stream = streamChat({ messages }, forwardHeaders);
+规则
+流式统一走 streamChat(...) 
+非流式统一走 invokeChat(...) 
+不直接依赖 adapter 实例上的 chat / chatStream 
+因为你已经确认 LLMAdapter 和调用方不一致，而 service 层函数是稳定存在的。
+9. request.ip 旧用法
+错误模式
+const ipAddress =  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||  request.headers.get('x-real-ip') ||  request.ip ||  'unknown';
+正确模式
+const ipAddress =  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||  request.headers.get('x-real-ip') ||  request.headers.get('cf-connecting-ip') ||  'unknown';
+你已经在登录路由上碰到过这个。
+10. res.data.xxx 返回值漂移
+错误模式
+router.push(`/bid/${res.data.documentId}/edit`);
+正确模式
+router.push(`/bid/${res.documentId}/edit`);
+规则
+如果 service 层已经帮你解包返回值，就不要再按 axios 风格写 res.data.xxx。
+你已经在 src/app/(app)/bid/page.tsx 上撞到过。
+11. 空数组被推断成 never[]
+错误模式
+const [options, setOptions] = useState({  templates: [],  companies: [],  availableTags: [],});
+正确模式 A：显式 state 类型
+type OptionsState = {  templates: { id: number; name: string }[];  companies: { id: number; name: string }[];  availableTags: { id: number; name: string }[];};const [options, setOptions] = useState<OptionsState>({  templates: [],  companies: [],  availableTags: [],});
+正确模式 B：最小断言
+const [options, setOptions] = useState({  templates: [] as { id: number; name: string }[],  companies: [] as { id: number; name: string }[],  availableTags: [] as { id: number; name: string }[],});
+你在编辑页已经碰到过这一类。
+12. 未定义的 hook / 变量
+错误模式
+queryClient.invalidateQueries(...)
+正确模式
+import { useQueryClient } from '@tanstack/react-query';const queryClient = useQueryClient();queryClient.invalidateQueries(...);
+同类规则
+router 没定义 → const router = useRouter() 
+params 没定义 → 明确从 props/context 取 
+mutation 没定义 → 先定义 hook 返回值 
+13. const 被重新赋值
+错误模式
+const startDate = parsedStartDate;const endDate = parsedEndDate;if (!startDate && !endDate) {  startDate = thirtyDaysAgo;  endDate = now;}
+正确模式 A
+let startDate = parsedStartDate;let endDate = parsedEndDate;if (!startDate && !endDate) {  startDate = thirtyDaysAgo;  endDate = now;}
+正确模式 B：更推荐
+const now = new Date();const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);const startDate = parsedStartDate || thirtyDaysAgo;const endDate = parsedEndDate || now;
+14. 登录页运行时组件触发点
+错误模式
+页面本身没错，但依赖链里某个 UI 组件导致：
+__webpack_modules__[moduleId] is not a function
+正确排查模式
+先缩成最小页面
+'use client';export default function LoginPage() {  return <div>login ok</div>;}
+再逐个加回 import
+Button 
+Input 
+Label 
+Card 
+Alert 
+你这次已经验证过 Label 是触发点之一，替换成原生 <label> 后登录页恢复。
+15. OpenAPI 对象类型不匹配
+错误模式
+const spec: OpenAPIObjectConfig = {  ...  components: { ... }}
+正确模式
+如果这是完整 OpenAPI 文档，改成匹配完整文档的类型 
+如果这是生成器 config，就按生成器要求拆开 
+不要长期靠 any 
+你前面已经在 docs/openapi/openapi-spec.ts 上撞到过这一类。
+16. 流式 Response 和 NextResponse 冲突
+错误模式
+handler: (...) => Promise<NextResponse>
+但内部返回：
+return createStreamResponse(...)
+正确模式
+把中间件链统一成：
+handler: (...) => Promise<Response>
+这样：
+NextResponse.json(...) 继续兼容 
+原生流式 Response 也兼容 
+这就是你现在走“全体系修复”的核心收益点。
+最后给你一个最常用的“批量修复节奏”
+第一步：搜一类
+grep -R "withDocumentPermission(" -n src
+第二步：按上面的“错误模式 → 正确模式”统一改
+第三步：再 build
+pnpm build
+第四步：只看新出现的一类问题
+不要混修。
+如果你愿意，我下一条可以继续给你整理一版《高频 sed / perl 批量替换命令建议表》，把其中适合自动替换的模式也列出来。

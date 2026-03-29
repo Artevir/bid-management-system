@@ -1,0 +1,48 @@
+可以。下面给你一份 可直接执行的“先 grep 再替换”脚本草案，适合你现在这个仓库做批量排查 + 批量替换 + 重新构建。
+我按“相对安全”的规则来写：
+先输出命中结果 
+再询问是否执行替换，改成环境变量开关 
+默认先备份 
+只对你这个仓库里已经反复验证过的高频模式下手 
+脚本名建议
+fix-pass.sh
+脚本内容
+#!/usr/bin/env bashset -euo pipefailPROJECT_DIR="/www/wwwroot/bid-management-system"DO_REPLACE="${DO_REPLACE:-0}"DO_BUILD="${DO_BUILD:-0}"BACKUP_DIR="${BACKUP_DIR:-/tmp}"cd "$PROJECT_DIR"echo "== 项目目录 =="pwdechoecho "== 备份源码 =="TS=$(date +%Y%m%d-%H%M%S)BACKUP_FILE="${BACKUP_DIR}/bid-management-system-backup-${TS}.tar.gz"tar -czf "$BACKUP_FILE" src docs package.json pnpm-lock.yaml 2>/dev/null || trueecho "备份完成: $BACKUP_FILE"echoecho "============================================================"echo "1) 扫描：res.data.xxx 旧返回值写法"echo "============================================================"grep -R "res\.data\." -n src/app src/lib || trueechoecho "============================================================"echo "2) 扫描：旧 request.ip 用法"echo "============================================================"grep -R "request\.ip" -n src || trueechoecho "============================================================"echo "3) 扫描：cache 旧导入"echo "============================================================"grep -R "import { cache } from '@/lib/cache'" -n src || truegrep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n src || trueechoecho "============================================================"echo "4) 扫描：audit-logs 旧 schema 路径"echo "============================================================"grep -R "@/db/schema/audit-logs" -n src || trueechoecho "============================================================"echo "5) 扫描：旧 schema 拆分路径"echo "============================================================"grep -R "@/db/schema/projects\|@/db/schema/documents\|@/db/schema/companies" -n src || trueechoecho "============================================================"echo "6) 扫描：Next.js 15 旧 params 签名"echo "============================================================"grep -R "params }: { params: {" -n src/app/api || trueechoecho "============================================================"echo "7) 扫描：中间件 async 同步调用残留"echo "============================================================"grep -R "withDocumentPermission(" -n src || truegrep -R "withChapterPermission(" -n src || truegrep -R "withResourcePermission(" -n src || trueechoecho "============================================================"echo "8) 扫描：LLM 旧实例调用"echo "============================================================"grep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 200 || trueechoecho "============================================================"echo "9) 扫描：queryClient 使用"echo "============================================================"grep -R "queryClient\." -n src || truegrep -R "useQueryClient" -n src || trueechoecho "============================================================"echo "10) 扫描：空数组状态初始化"echo "============================================================"grep -R "templates: \[\]\|companies: \[\]\|availableTags: \[\]" -n src || trueif [[ "$DO_REPLACE" != "1" ]]; then  echo  echo "仅扫描完成。"  echo "如需执行批量替换，请使用："  echo "  DO_REPLACE=1 bash fix-pass.sh"  echo  echo "如需替换后自动构建，请使用："  echo "  DO_REPLACE=1 DO_BUILD=1 bash fix-pass.sh"  exit 0fiechoecho "============================================================"echo "开始执行批量替换（相对安全项）"echo "============================================================"echoecho "[替换 1] res.data. -> res."find src/app src/lib -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 \  | xargs -0 perl -pi -e 's/\bres\.data\./res./g'echoecho "[替换 2] audit-logs schema 路径"find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 \  | xargs -0 perl -pi -e "s#@/db/schema/audit-logs#@/lib/db/schema/audit-logs#g"echoecho "[替换 3] import { cache } from '@/lib/cache' -> redis-client"find src -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 \  | xargs -0 perl -pi -e "s#import \{ cache \} from '@/lib/cache';#import { redis as cache } from '@/lib/cache/redis-client';#g"echoecho "[提示] 以下几类不做自动替换，只做人工修复："echo "  - request.ip"echo "  - Next.js 15 params"echo "  - withDocumentPermission(...)(...) 这类 async 调用"echo "  - llm.chat / llm.chatStream"echo "  - never[] / useState 类型"echo "  - queryClient / router 未定义"echo "  - openapi 类型问题"echoecho "============================================================"echo "替换后复查"echo "============================================================"echo "-- res.data.xxx --"grep -R "res\.data\." -n src/app src/lib || trueechoecho "-- audit-logs 旧路径 --"grep -R "@/db/schema/audit-logs" -n src || trueechoecho "-- import { cache } from '@/lib/cache' --"grep -R "import { cache } from '@/lib/cache'" -n src || trueif [[ "$DO_BUILD" == "1" ]]; then  echo  echo "============================================================"  echo "清理 .next 并构建"  echo "============================================================"  rm -rf .next  pnpm build 2>&1 | tee build.log || true  echo  echo "============================================================"  echo "构建日志最后 120 行"  echo "============================================================"  tail -n 120 build.log || truefi
+使用方法
+只扫描，不改
+bash fix-pass.sh
+扫描后直接替换“相对安全项”
+DO_REPLACE=1 bash fix-pass.sh
+替换后再自动构建
+DO_REPLACE=1 DO_BUILD=1 bash fix-pass.sh
+这份脚本当前自动处理了什么
+自动处理 3 类：
+1）res.data.xxx → res.xxx
+这是你仓库里已经验证过的一类高频问题。
+2）@/db/schema/audit-logs → @/lib/db/schema/audit-logs
+这是你已经确认真实路径的一类。
+3）import { cache } from '@/lib/cache' → import { redis as cache } from '@/lib/cache/redis-client'
+这是你当前仓库里命中很多的旧导入写法。
+这份脚本故意没自动处理什么
+这些虽然常见，但不适合盲改：
+1）request.ip
+因为不同文件变量名和逻辑不一定一样。
+2）Next.js 15 的 params
+因为变量名有 id / roleId / tenantId / sessionId 等，不适合一刀切。
+3）withDocumentPermission(...)(...)
+因为每个 handler 写法不同，要人工改成：
+const middleware = await withDocumentPermission(...);return middleware(request, ...);
+4）llm.chat / llm.chatStream
+因为你仓库里要统一走 invokeChat / streamChat，不能机械替换。
+5）never[] / useState
+这是类型设计问题，必须看上下文。
+6）queryClient
+需要补 useQueryClient()，不能自动插入。
+我建议你下一步怎么用
+先运行：
+bash fix-pass.sh
+看扫描结果。如果确认无误，再运行：
+DO_REPLACE=1 DO_BUILD=1 bash fix-pass.sh
+然后把 build.log 最后 120 行发我，我继续按“批量修复优先，单点补刀兜底”的方式带你收尾。
+如果你愿意，我下一条还能继续给你一版：
+《专门处理 Next.js 15 params 和 async middleware 调用的半自动脚本草案》

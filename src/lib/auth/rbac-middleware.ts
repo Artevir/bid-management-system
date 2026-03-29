@@ -218,9 +218,9 @@ export function unauthorizedResponse(error: string = '未授权：请先登录')
  */
 export function withPermission(
   permissionCode: string,
-  handler: (request: NextRequest, context?: any, userId?: string) => Promise<NextResponse>
+  handler: (request: NextRequest, context?: any, userId?: string) => Promise<Response>
 ) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: any): Promise<Response> => {
     const checkResult = await checkPermission(request, permissionCode);
     
     if (!checkResult.hasPermission) {
@@ -236,9 +236,9 @@ export function withPermission(
  */
 export function withAnyPermission(
   permissionCodes: string[],
-  handler: (request: NextRequest, context?: any, userId?: string) => Promise<NextResponse>
+  handler: (request: NextRequest, context?: any, userId?: string) => Promise<Response>
 ) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: any): Promise<Response> => {
     const checkResult = await checkAnyPermission(request, permissionCodes);
     
     if (!checkResult.hasPermission) {
@@ -254,9 +254,9 @@ export function withAnyPermission(
  */
 export function withAllPermissions(
   permissionCodes: string[],
-  handler: (request: NextRequest, context?: any, userId?: string) => Promise<NextResponse>
+  handler: (request: NextRequest, context?: any, userId?: string) => Promise<Response>
 ) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: any): Promise<Response> => {
     const checkResult = await checkAllPermissions(request, permissionCodes);
     
     if (!checkResult.hasPermission) {

@@ -322,7 +322,7 @@ import { NextRequest } from 'next/server';
 type AsyncHandler<T = unknown> = (
   request: NextRequest,
   context?: { params: Record<string, string> }
-) => Promise<NextResponse<T>>;
+) => Promise<Response>;
 
 /**
  * 包装异步处理器，自动捕获错误

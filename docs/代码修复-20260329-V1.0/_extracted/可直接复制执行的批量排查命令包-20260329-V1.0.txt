@@ -1,0 +1,101 @@
+可以，下面这份就是 《可直接复制执行的批量排查命令包》。按你现在这个仓库的实际问题，分成：
+认证 
+缓存 
+路由 
+LLM 
+前端类型 
+你可以直接在项目根目录 /www/wwwroot/bid-management-system 执行。
+0. 进入项目目录
+cd /www/wwwroot/bid-management-system
+1. 认证排查包
+1.1 查旧 auth 调用口径
+grep -R "requireAuth\|withAdmin\|clearPermissionCache" -n src
+1.2 查 middleware 真实导出
+grep -n "export " src/lib/auth/middleware.tssed -n '1,320p' src/lib/auth/middleware.ts
+1.3 查 session 真实导出
+grep -n "export " src/lib/auth/session.tssed -n '1,220p' src/lib/auth/session.ts
+1.4 查权限码定义
+grep -R "PERMISSIONS" -n src/lib/auth src/app/api | head -n 100grep -R "admin" -n src/lib/auth src/db src/app/api | head -n 100
+1.5 查所有中间件返回类型是否还写死 NextResponse
+grep -R "Promise<NextResponse" -n src/lib/auth src/app/api src/lib
+2. 缓存排查包
+2.1 查所有从 @/lib/cache 导入的地方
+grep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n src
+2.2 查 cache 模块真实导出
+grep -R "export " -n src/lib/cache*find src/lib -maxdepth 2 -type f | grep cache
+2.3 看 barrel 文件
+sed -n '1,260p' src/lib/cache/index.ts
+2.4 看 redis-client 真实能力
+sed -n '1,360p' src/lib/cache/redis-client.ts
+2.5 查谁还在用 cache
+grep -R "import { cache } from '@/lib/cache'" -n srcgrep -R "redis, { RedisKeys\|getRedisClient\|isUsingMemoryFallback" -n src
+3. 路由排查包
+3.1 查旧版动态路由 params 写法
+grep -R "params }: { params: {" -n src/app/api
+3.2 查中间件异步调用残留
+grep -R "withDocumentPermission(" -n srcgrep -R "withChapterPermission(" -n srcgrep -R "withResourcePermission(" -n src
+3.3 查所有 route.ts
+find src/app/api -name "route.ts" | sort
+3.4 查所有 API 里直接返回流式 Response 的地方
+grep -R "createStreamResponse\|ReadableStream\|text/event-stream" -n src/app/api src/lib
+3.5 查 NextRequest 旧属性
+grep -R "request\.ip" -n srcgrep -R "request\.geo" -n srcgrep -R "request\.ua" -n src
+4. LLM 排查包
+4.1 查 LLMAdapter 定义
+grep -R "interface LLMAdapter\|type LLMAdapter" -n src/lib/llm src/libsed -n '240,340p' src/lib/llm/types.ts
+4.2 查真实可用的聊天能力
+grep -R "chatStream\|streamChat\|invokeChat\|chat(" -n src/lib/llm src/lib | head -n 120
+4.3 查所有旧式 llm.chat / llm.chatStream
+grep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 120
+4.4 查所有 LLM 相关导入
+grep -R "from '@/lib/llm'\|from \"@/lib/llm\"" -n src/app/api src/lib | head -n 120grep -R "from '@/lib/llm/service'\|from \"@/lib/llm/service\"" -n src/app/api src/lib | head -n 120
+5. 前端类型排查包
+5.1 查所有 res.data.xxx
+grep -R "res\.data\." -n src/app src/lib
+5.2 查空数组状态初始化
+grep -R "templates: \[\]\|companies: \[\]\|availableTags: \[\]" -n srcgrep -R "useState({" -n src/app src/components | head -n 200
+5.3 查 queryClient 使用但未定义的地方
+grep -R "queryClient\." -n srcgrep -R "useQueryClient" -n src
+5.4 查 router 使用情况
+grep -R "router\." -n src/app src/components | head -n 200grep -R "useRouter" -n src/app src/components | head -n 200
+5.5 查未完成 TODO / FIXME
+grep -R "TODO\|FIXME\|HACK" -n src | head -n 200
+6. schema 排查包
+6.1 查所有旧 schema 路径
+grep -R "@/db/schema/" -n src
+6.2 查真实表导出
+grep -n "export const projects\|export const bidDocuments\|export const companies\|export const users" src/db/schema.ts
+6.3 查 audit schema 真实位置
+find src -path "*audit-logs*" -type f | sort
+7. OpenAPI / 文档类型排查包
+7.1 看 openapi 文件
+sed -n '1,260p' docs/openapi/openapi-spec.ts
+7.2 查相关类型
+grep -R "OpenAPIObjectConfig" -n docs srcgrep -R "components:" -n docs/openapi src | head -n 50
+8. 运行时组件排查包
+8.1 看登录页
+sed -n '1,260p' src/app/login/page.tsx
+8.2 看全局 layout
+sed -n '1,260p' src/app/layout.tsx
+8.3 看 UI 组件
+sed -n '1,220p' src/components/ui/label.tsxsed -n '1,220p' src/components/ui/button.tsxsed -n '1,220p' src/components/ui/card.tsxsed -n '1,220p' src/components/ui/alert.tsx
+9. 构建前统一检查包
+9.1 清理缓存
+rm -rf .next
+9.2 最终构建
+pnpm build
+9.3 如果只想看最新报错尾部
+pnpm build 2>&1 | tee build.logtail -n 80 build.log
+10. 我建议你现在最常用的组合
+如果你想高效推进，不要每次全扫。按这个组合最省时间：
+认证 + 中间件
+grep -R "requireAuth\|withAdmin\|clearPermissionCache" -n srcgrep -R "withDocumentPermission(" -n srcgrep -R "withChapterPermission(" -n srcgrep -R "Promise<NextResponse" -n src/lib/auth src/app/api src/lib
+缓存
+grep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n srcgrep -R "import { cache } from '@/lib/cache'" -n srcsed -n '1,260p' src/lib/cache/index.tssed -n '1,360p' src/lib/cache/redis-client.ts
+路由 + LLM
+grep -R "params }: { params: {" -n src/app/apigrep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 120grep -R "chatStream\|streamChat\|invokeChat" -n src/lib/llm src/lib | head -n 120
+前端类型
+grep -R "res\.data\." -n src/app src/libgrep -R "queryClient\." -n srcgrep -R "templates: \[\]\|companies: \[\]\|availableTags: \[\]" -n src
+构建
+rm -rf .nextpnpm build 2>&1 | tee build.logtail -n 80 build.log
+如果你愿意，我下一条可以继续给你做一份《批量修复动作表（每类问题的“错误模式 → 正确模式”对照版）》。

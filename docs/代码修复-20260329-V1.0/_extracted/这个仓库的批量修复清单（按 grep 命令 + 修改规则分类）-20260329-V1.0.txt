@@ -1,0 +1,190 @@
+这个仓库的批量修复清单（按 grep 命令 + 修改规则分类）
+可以。下面这份就是你现在这个仓库最适合的 批量修复清单。目标不是“见一个错修一个”，而是按问题类型批量清仓。你现在仓库暴露出来的问题，已经很明显分成几类了：Next.js 15 路由签名、权限中间件调用、缓存模块导入口径、数据库 schema 导入、LLM 调用方式、前端类型问题。 
+一、先定修复顺序
+按这个顺序最省时间：
+框架契约类动态路由签名、中间件返回类型、middleware 异步调用方式 
+模块导出漂移类auth / cache / schema / llm 
+接口返回值类型类res.data.xxx、never[]、未定义变量 
+运行时组件依赖类类似 Label 这种触发点 
+文档/工具类型类openapi-spec.ts 这类 
+二、批量修复清单
+A. Next.js 15 动态路由参数签名
+这个你当前基本已经清掉了，但以后再遇到同类仓库可以直接这样扫。你前面这类问题已经出现过：动态路由 route.ts 第二个参数必须按 Promise 处理。
+grep
+grep -R "params }: { params: {" -n src/app/api
+错误模式
+{ params }: { params: { id: string } }const { id } = params
+正确规则
+{ params }: { params: Promise<{ id: string }> }const { id } = await params
+适用对象
+[id]/route.ts 
+[roleId]/route.ts 
+[tenantId]/route.ts 
+[sessionId]/route.ts 
+B. 中间件 async 返回函数调用残留
+你已经抓到过典型问题：withDocumentPermission(...) 现在是 async function，不能再写成同步链式调用。
+grep
+grep -R "withDocumentPermission(" -n srcgrep -R "withChapterPermission(" -n srcgrep -R "withResourcePermission(" -n src
+错误模式
+return withDocumentPermission('read', () => documentId)(request, handler)
+正确规则
+const middleware = await withDocumentPermission('read', () => documentId)return middleware(request, handler)
+优先检查
+src/app/api/bid/chapters/route.ts 
+其他所有 api/*/route.ts 
+C. 中间件返回类型统一成 Response
+你已经决定走“全体系修复”，这是非常值得做的一项。当前 withAuth / withPermission / withResourcePermission / withDocumentPermission / withChapterPermission 要统一接受 Promise<Response>，这样流式接口不会再和 NextResponse 类型打架。这个问题你已经在 generate/route.ts 上真实撞到了。
+grep
+grep -R "Promise<NextResponse" -n src/lib/auth src/app/api src/lib
+统一规则
+把所有中间件 handler 类型从：
+Promise<NextResponse>
+改成：
+Promise<Response>
+适用文件
+src/lib/auth/middleware.ts 
+修完后复查
+grep -R "Promise<NextResponse" -n src/lib/auth src/app/api src/lib
+D. auth 模块旧调用口径
+你现在仓库里已经同时存在：
+src/lib/auth/middleware.ts 里的 requireAuth / withAdmin / clearPermissionCache 
+src/lib/auth/session.ts 里的 requireAuth()说明 auth 这块经历过接口漂移。 
+grep
+grep -R "requireAuth\|withAdmin\|clearPermissionCache" -n src
+修复规则
+1）页面/API 如果只是“拿当前用户”
+优先统一成：
+import { requireAuth } from '@/lib/auth/session'
+2）API 包装式鉴权
+统一成：
+withAuth(...)checkPermission(...)
+3）withAdmin
+长期建议不要保留模糊封装，改成显式：
+return withAuth(request, async (req, userId, params) => {  const ok = await checkPermission(userId, '真实管理员权限码')  if (!ok) {    return NextResponse.json({ error: '需要管理员权限' }, { status: 403 })  }  return handler(req, userId, params)})
+补充 grep：查真实管理员权限码
+grep -R "admin" -n src/lib/auth src/db src/app/api | head -n 100grep -R "PERMISSIONS" -n src/lib/auth src/app/api | head -n 100
+E. cache 模块导入口径统一
+这是你仓库里第二大“历史漂移源”。当前真实 Redis 能力在 src/lib/cache/redis-client.ts，但大量调用方还从 @/lib/cache 导。你前面已经查到了完整清单。
+grep
+grep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n src
+统一规则
+1）业务层缓存聚合 API
+如果 index.ts 已经整理好，就继续从：
+@/lib/cache
+2）底层 Redis 客户端能力
+统一改成：
+@/lib/cache/redis-client
+明确替换规则
+原来
+import { cache } from '@/lib/cache'
+改成
+import { redis as cache } from '@/lib/cache/redis-client'
+原来
+import redis, { RedisKeys, getRedisClient, isUsingMemoryFallback } from '@/lib/cache'
+改成
+import redis, { RedisKeys, getRedisClient, isUsingMemoryFallback } from '@/lib/cache/redis-client'
+优先文件
+src/lib/alert/alert-service.ts 
+src/lib/audit/audit-service.ts 
+src/lib/auth/rbac-middleware.ts 
+src/lib/batch/batch-operation-service.ts 
+src/lib/search/search-service.ts 
+src/lib/services/generation-progress-service-v2.ts 
+src/lib/storage/oss-client.ts 
+src/lib/workflow/workflow-engine.ts 
+F. 数据库 schema 导入统一
+这一块你已经清了大半，后面继续保持这个规则就行。真实表定义集中在 src/db/schema.ts，审计日志在 src/lib/db/schema/audit-logs.ts。
+grep
+grep -R "@/db/schema/" -n src
+统一规则
+projects / bidDocuments / companies → @/db/schema 
+auditLogs → @/lib/db/schema/audit-logs 
+不要再引用不存在的拆分路径： 
+@/db/schema/projects 
+@/db/schema/documents 
+@/db/schema/companies 
+@/db/schema/audit-logs 
+额外确认
+grep -n "export const bidDocuments\|export const projects\|export const companies" src/db/schema.ts
+G. LLM 调用方式统一
+你已经验证过：当前仓库里 LLMAdapter 并没有 chat / chatStream 这类你期望的方法，而 service 层有 streamChat(...)。这说明应统一走 service 层，不要直接调 adapter 实例。
+grep
+grep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 100grep -R "streamChat\|invokeChat" -n src/lib/llm src/lib | head -n 100
+统一规则
+流式 → streamChat(...) 
+非流式 → invokeChat(...) 
+不要直接写： 
+llm.chat(...)llm.chatStream(...)
+优先文件
+src/app/api/bid/chapters/[id]/generate/route.ts 
+其他 AI / LLM 相关 route/service 
+H. request.ip / 旧 NextRequest 属性
+你已经碰到过一次。Next.js 15 下 NextRequest 没有 ip。这个适合一把扫掉。
+grep
+grep -R "request\.ip" -n src
+统一规则
+改成：
+const ipAddress =  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||  request.headers.get('x-real-ip') ||  request.headers.get('cf-connecting-ip') ||  'unknown'
+I. res.data.xxx 返回值漂移
+这也是典型“service 已解包，但调用方还按旧 axios 习惯写”的问题。你已经在 bid/page.tsx 上遇到过。
+grep
+grep -R "res\.data\." -n src/app src/lib
+统一规则
+如果 service 返回已经是解包对象：
+原来
+res.data.documentId
+改成
+res.documentId
+J. never[] / 空数组状态类型
+你已经碰到过 templates: [] 被推成 never[]。这是 React + TS 常见坑。
+grep
+grep -R "useState({[[:space:]]*$" -n src/app src/componentsgrep -R "templates: \[\]\|companies: \[\]\|availableTags: \[\]" -n src
+统一规则
+显式给 useState 类型：
+const [options, setOptions] = useState<OptionsState>({  templates: [],  companies: [],  availableTags: [],})
+不要让空数组裸推断。
+K. 未定义变量 / hook 漏引入
+比如你已经遇到过 queryClient 没定义。
+grep
+这个不能完全靠 grep，但可以先搜典型变量：
+grep -R "queryClient\." -n srcgrep -R "router\." -n src/app src/components
+统一规则
+queryClient → const queryClient = useQueryClient() 
+router → const router = useRouter() 
+L. 运行时组件触发点
+你登录页已经验证过：页面主体不一定是根因，往往是依赖组件链。Label 的替换就是一个成功样本。
+grep
+如果再遇到运行时炸页，就先看页面 import：
+sed -n '1,260p' src/app/login/page.tsx
+统一规则
+先把页面缩成最小版本 
+再逐个把 import 加回来 
+优先怀疑： 
+ui/card 
+ui/alert 
+ui/button 
+任何 barrel export 
+任何 server/client 边界混乱组件 
+M. OpenAPI / 文档生成类型
+你前面已经撞到过 components 不属于 OpenAPIObjectConfig 的错误。这个属于“工具链类型不匹配”。
+grep
+sed -n '1,240p' docs/openapi/openapi-spec.tsgrep -R "OpenAPIObjectConfig" -n docs src
+统一规则
+不要长期用 any 糊 
+搞清楚你现在用的是： 
+完整 OpenAPI 对象 
+还是某个生成器的 config 对象 
+类型要和真实库的输入结构对齐 
+三、每轮固定执行流程
+第 1 步：按类别扫
+grep -R "params }: { params: {" -n src/app/apigrep -R "withDocumentPermission(" -n srcgrep -R "withChapterPermission(" -n srcgrep -R "requireAuth\|withAdmin\|clearPermissionCache" -n srcgrep -R "from '@/lib/cache'\|from \"@/lib/cache\"" -n srcgrep -R "@/db/schema/" -n srcgrep -R "request\.ip" -n srcgrep -R "res\.data\." -n src/app src/libgrep -R "\.chatStream(\|\.chat(" -n src/app/api src/lib | head -n 100
+第 2 步：一次只修一类
+不要混修。
+第 3 步：重新构建
+pnpm build
+第 4 步：记录新出现的“类别”
+你现在的仓库，build 每过一轮，报错都会从“某一类”收敛到“下一类”。
+四、最值得你现在马上做的两件事
+先把这两个搜一下，你现在后面大概率还会继续碰到：
+grep -R "withDocumentPermission(" -n srcgrep -R "res\.data\." -n src/app src/lib
+如果你愿意，我下一条可以继续给你做一份《可直接复制执行的批量排查命令包》，按“认证 / 缓存 / 路由 / LLM / 前端类型”分组整理。
