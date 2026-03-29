@@ -183,3 +183,5 @@ export function CompanyForm({
     </Form>
   );
 }
+
+export type { CompanyFormData } from './company-schema';

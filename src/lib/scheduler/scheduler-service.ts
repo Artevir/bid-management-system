@@ -3,7 +3,7 @@
  * 使用 node-cron 实现定时任务
  */
 
-import cron from 'node-cron';
+import cron, { type ScheduledTask as CronScheduledTask } from 'node-cron';
 import { db } from '@/db/index';
 import { cache } from '@/lib/cache';
 import { sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';
@@ -46,7 +46,7 @@ export interface ScheduledTask {
 
 export class SchedulerService {
   private static tasks: Map<string, ScheduledTask> = new Map();
-  private static cronJobs: Map<string, cron.ScheduledTask> = new Map();
+  private static cronJobs: Map<string, CronScheduledTask> = new Map();
 
   /**
    * 初始化调度服务
@@ -162,7 +162,6 @@ export class SchedulerService {
     const cronJob = cron.schedule(task.cron, async () => {
       await this.executeTask(taskId);
     }, {
-      scheduled: true,
       timezone: 'Asia/Shanghai',
     });
 

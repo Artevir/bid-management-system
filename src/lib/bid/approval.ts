@@ -8,6 +8,7 @@ import {
   approvalFlows,
   approvalRecords,
   bidDocuments,
+  projects,
   projectMembers,
   users,
   auditLogs,

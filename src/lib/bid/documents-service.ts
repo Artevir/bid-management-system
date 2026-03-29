@@ -468,7 +468,7 @@ export async function updateChapter(
         .for('update'); // 加锁读取最新版本
 
       if (current && current.version !== version) {
-        throw new AppError('数据已被他人修改，请刷新后重试', 409);
+        throw AppError.conflict('数据已被他人修改，请刷新后重试');
       }
     }
 

@@ -117,7 +117,7 @@ export function EditorContent({
         <Card className="h-full shadow-none border-none bg-transparent">
           <CardContent className="p-0 h-full">
             <AIInlineEditor
-              content={(chapter as any).content || ''}
+              value={(chapter as any).content || ''}
               onChange={(content) => onUpdate({ ...chapter, content } as any)}
               placeholder="请输入章节内容，或使用 AI 生成..."
               streamingContent={streamingContent}

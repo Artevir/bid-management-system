@@ -19,8 +19,8 @@ export async function withProjectPermission(
   request: NextRequest,
   projectId: number,
   permission: 'view' | 'edit' | 'audit' | 'export',
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
+  handler: (request: NextRequest, userId: number) => Promise<Response>
+): Promise<Response> {
   return withAuth(request, async (req, userId) => {
     const hasAccess = await hasProjectPermission(projectId, userId, permission);
 
@@ -46,8 +46,8 @@ export async function withProjectPermission(
 export async function withProjectMember(
   request: NextRequest,
   projectId: number,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
+  handler: (request: NextRequest, userId: number) => Promise<Response>
+): Promise<Response> {
   return withAuth(request, async (req, userId) => {
     const permissions = await getProjectMemberPermission(projectId, userId);
 
@@ -72,8 +72,8 @@ export async function withProjectMember(
 export async function withProjectAdmin(
   request: NextRequest,
   projectId: number,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
+  handler: (request: NextRequest, userId: number) => Promise<Response>
+): Promise<Response> {
   return withAuth(request, async (req, userId) => {
     const permissions = await getProjectMemberPermission(projectId, userId);
 
@@ -99,8 +99,8 @@ export async function withDocumentAccess(
   request: NextRequest,
   projectId: number,
   documentLevel: SecurityLevel,
-  handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-): Promise<NextResponse> {
+  handler: (request: NextRequest, userId: number) => Promise<Response>
+): Promise<Response> {
   return withAuth(request, async (req, userId) => {
     const canAccess = await canAccessDocument(projectId, userId, documentLevel);
 
@@ -129,8 +129,8 @@ export function createProjectPermissionMiddleware(
 ) {
   return async (
     request: NextRequest,
-    handler: (request: NextRequest, userId: number) => Promise<NextResponse>
-  ): Promise<NextResponse> => {
+    handler: (request: NextRequest, userId: number) => Promise<Response>
+  ): Promise<Response> => {
     return withAuth(request, async (req, userId) => {
       const projectId = await getProjectId(request);
       const hasAccess = await hasProjectPermission(projectId, userId, permission);

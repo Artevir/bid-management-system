@@ -127,7 +127,7 @@ export class OSSClient {
       let size: number;
       let contentType = options.contentType;
 
-      if (file instanceof Buffer) {
+      if (Buffer.isBuffer(file)) {
         buffer = file;
         size = buffer.length;
       } else {

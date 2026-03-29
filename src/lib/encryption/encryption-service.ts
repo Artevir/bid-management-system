@@ -342,7 +342,7 @@ export function withDecryption<T extends Record<string, any>>(fields: string[]) 
         const result = await originalMethod.apply(this, args);
 
         // 如果返回的是数据对象或数组，自动解密敏感字段
-        const decryptObject = (obj: any) => {
+        const decryptObject = (obj: any): any => {
           if (!obj || typeof obj !== 'object') return obj;
 
           if (Array.isArray(obj)) {

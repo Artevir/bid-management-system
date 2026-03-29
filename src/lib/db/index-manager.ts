@@ -55,8 +55,8 @@ export class IndexManager {
       // 分割SQL语句（按分号分隔，过滤空行和注释）
       const statements = migrationSQL
         .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0 && !s.startsWith('--'));
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0 && !s.startsWith('--'));
 
       // 执行每条SQL语句
       for (const statement of statements) {
@@ -102,7 +102,15 @@ export class IndexManager {
         ORDER BY idx_scan DESC
       `);
 
-      const allIndexes = indexes.rows || [];
+      const allIndexes: IndexInfo[] = (indexes.rows ?? []).map((row: any) => ({
+        schemaName: String(row.schemaName),
+        tableName: String(row.tableName),
+        indexName: String(row.indexName),
+        indexSize: String(row.indexSize),
+        indexScans: Number(row.indexScans),
+        tuplesRead: Number(row.tuplesRead),
+        tuplesFetched: Number(row.tuplesFetched),
+      }));
 
       // 计算总大小
       const totalSize = await db.execute(sql`
@@ -112,13 +120,13 @@ export class IndexManager {
       `);
 
       // 查找未使用的索引
-      const unusedIndexes = allIndexes.filter((idx: any) => 
+      const unusedIndexes = allIndexes.filter((idx) => 
         idx.indexScans === 0 && !idx.indexName.includes('_pkey')
       );
 
       // 获取最常用的索引
       const mostUsedIndexes = [...allIndexes]
-        .sort((a: any, b: any) => b.indexScans - a.indexScans)
+        .sort((a, b) => b.indexScans - a.indexScans)
         .slice(0, 10);
 
       // 获取最大的索引
@@ -137,12 +145,24 @@ export class IndexManager {
         LIMIT 10
       `);
 
+      const totalSizeRaw = (totalSize.rows?.[0] as any)?.totalSize;
+      const totalSizeText = typeof totalSizeRaw === 'string' ? totalSizeRaw : '0 B';
+      const largestIndexes: IndexInfo[] = (largestIndexesResult.rows ?? []).map((row: any) => ({
+        schemaName: String(row.schemaName),
+        tableName: String(row.tableName),
+        indexName: String(row.indexName),
+        indexSize: String(row.indexSize),
+        indexScans: Number(row.indexScans),
+        tuplesRead: Number(row.tuplesRead),
+        tuplesFetched: Number(row.tuplesFetched),
+      }));
+
       return {
         totalIndexes: allIndexes.length,
-        totalSize: totalSize.rows[0]?.totalSize || '0 B',
-        unusedIndexes: unusedIndexes as IndexInfo[],
-        mostUsedIndexes: mostUsedIndexes as IndexInfo[],
-        largestIndexes: largestIndexesResult.rows as IndexInfo[],
+        totalSize: totalSizeText,
+        unusedIndexes,
+        mostUsedIndexes,
+        largestIndexes,
       };
     } catch (error) {
       console.error('[Index] 获取索引统计失败:', error);

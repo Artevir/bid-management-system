@@ -62,6 +62,7 @@ interface AIInlineEditorProps {
   className?: string;
   chapterId?: number;
   chapterTitle?: string;
+  streamingContent?: string;
 }
 
 // AI角色标签映射
@@ -86,6 +87,7 @@ export function AIInlineEditor({
   className,
   chapterId,
   chapterTitle,
+  streamingContent: _externalStreamingContent,
 }: AIInlineEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [selection, setSelection] = useState<{ start: number; end: number; text: string } | null>(null);

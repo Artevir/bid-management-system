@@ -15,7 +15,7 @@ import { cache } from '@/lib/cache';
 
 export interface SearchResult<T = any> {
   type: 'project' | 'document' | 'user' | 'company';
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   data: T;
@@ -181,7 +181,7 @@ export class SearchService {
       conditions.push(sql`${projects.status} = ${filters.status}`);
     }
     if (filters.companyId) {
-      conditions.push(sql`${projects.companyId} = ${filters.companyId}`);
+      conditions.push(sql`${projects.platformId} = ${filters.companyId}`);
     }
 
     const whereClause = or(...conditions);
@@ -206,8 +206,8 @@ export class SearchService {
       title: project.name,
       description: project.description || '',
       data: project,
-      score: this.calculateScore(query, project.name, project.description),
-      highlight: this.highlightText(query, project.name, project.description),
+      score: this.calculateScore(query, project.name, project.description ?? undefined),
+      highlight: this.highlightText(query, project.name, project.description ?? undefined),
     }));
 
     return {
@@ -280,7 +280,8 @@ export class SearchService {
   ): Promise<{ results: SearchResult[]; total: number }> {
     const conditions = [];
 
-    conditions.push(ilike(users.name, `%${query}%`));
+    conditions.push(ilike(users.username, `%${query}%`));
+    conditions.push(ilike(users.realName, `%${query}%`));
     conditions.push(ilike(users.email, `%${query}%`));
 
     const whereClause = or(...conditions);
@@ -300,11 +301,11 @@ export class SearchService {
     const results = userList.map(user => ({
       type: 'user' as const,
       id: user.id,
-      title: user.name,
+      title: user.realName || user.username,
       description: user.email || '',
       data: user,
-      score: this.calculateScore(query, user.name, user.email),
-      highlight: this.highlightText(query, user.name, user.email),
+      score: this.calculateScore(query, user.realName, user.username, user.email),
+      highlight: this.highlightText(query, user.realName || user.username, user.email ?? undefined),
     }));
 
     return {
@@ -346,8 +347,8 @@ export class SearchService {
       title: company.name,
       description: company.description || '',
       data: company,
-      score: this.calculateScore(query, company.name, company.description),
-      highlight: this.highlightText(query, company.name, company.description),
+      score: this.calculateScore(query, company.name, company.description ?? undefined),
+      highlight: this.highlightText(query, company.name, company.description ?? undefined),
     }));
 
     return {

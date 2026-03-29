@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db } from '@/db/index';
-import { projects } from '@/db/schema/projects';
+import { projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('Project Service', () => {

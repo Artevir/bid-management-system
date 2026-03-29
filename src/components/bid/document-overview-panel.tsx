@@ -20,6 +20,7 @@ import {
   Eye,
   MoreHorizontal,
   Plus,
+  AlertCircle,
 } from 'lucide-react';
 import { BID_STATUS_MAP } from '@/lib/constants/bid-ui';
 import { cn } from '@/lib/utils';

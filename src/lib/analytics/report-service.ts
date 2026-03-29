@@ -86,16 +86,16 @@ export class ReportService {
     // 按公司统计
     const companyResult = await db
       .select({
-        companyId: projects.companyId,
+        companyId: projects.platformId,
         count: count(),
       })
       .from(projects)
       .where(whereClause)
-      .groupBy(projects.companyId);
+      .groupBy(projects.platformId);
 
     const byCompany: Record<string, number> = {};
     for (const row of companyResult) {
-      byCompany[row.companyId || 'unknown'] = Number(row.count);
+      byCompany[String(row.companyId ?? 'unknown')] = Number(row.count);
     }
 
     // 趋势数据（按月）
