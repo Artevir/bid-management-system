@@ -22,6 +22,7 @@ import {
   ChevronUp,
   RefreshCw,
 } from 'lucide-react';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 interface PromptTemplate {
   id: number;
@@ -203,8 +204,8 @@ export default function SchemeGeneratePage() {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedContent);
+  const handleCopy = async () => {
+    await copyTextToClipboard(generatedContent);
   };
 
   const handleDownload = () => {

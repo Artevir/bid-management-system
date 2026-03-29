@@ -39,6 +39,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 // API端点类型
 interface ApiEndpoint {
@@ -277,9 +278,13 @@ export default function ApiDocsPage() {
   }, [searchKeyword, selectedTag, selectedMethod, endpoints]);
 
   // 复制到剪贴板
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('已复制到剪贴板');
+  const copyToClipboard = async (text: string) => {
+    const ok = await copyTextToClipboard(text);
+    if (ok) {
+      toast.success('已复制到剪贴板');
+    } else {
+      toast.error('复制失败：当前环境不支持剪贴板');
+    }
   };
 
   // 格式化JSON

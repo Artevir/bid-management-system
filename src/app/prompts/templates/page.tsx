@@ -50,6 +50,7 @@ import {
   Code as _Code,
   Braces,
 } from 'lucide-react';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 interface PromptCategory {
   id: number;
@@ -936,8 +937,8 @@ function GenerateDialogContent({
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedContent);
+  const handleCopy = async () => {
+    await copyTextToClipboard(generatedContent);
   };
 
   if (!template) return null;

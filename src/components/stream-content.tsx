@@ -22,6 +22,7 @@ import {
   FileText,
 } from 'lucide-react';
 import type { StreamIssue } from '@/hooks/use-stream-llm';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 // ============================================
 // 流式内容显示组件
@@ -58,9 +59,11 @@ export function StreamContent({
 
   const handleCopy = async () => {
     if (content) {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      const ok = await copyTextToClipboard(content);
+      if (ok) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
     }
   };
 

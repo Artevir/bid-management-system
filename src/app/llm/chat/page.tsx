@@ -30,6 +30,7 @@ import {
   Bot,
   BarChart3,
 } from 'lucide-react';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 // 消息接口
 interface Message {
@@ -207,8 +208,8 @@ export default function LLMChatPage() {
     }
   };
 
-  const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
+  const handleCopy = async (content: string) => {
+    await copyTextToClipboard(content);
   };
 
   const handleConfigChange = (configId: string) => {
