@@ -49,23 +49,8 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
 
 function AlertDescription({
   className,
-  children,
   ...props
 }: React.ComponentProps<"div">) {
-  const normalizedChildren =
-    children &&
-    typeof children === "object" &&
-    !Array.isArray(children) &&
-    !React.isValidElement(children) &&
-    typeof (children as any).message === "string"
-      ? (children as any).message
-      : children &&
-          typeof children === "object" &&
-          !Array.isArray(children) &&
-          !React.isValidElement(children)
-        ? String(children)
-        : children
-
   return (
     <div
       data-slot="alert-description"
@@ -74,9 +59,7 @@ function AlertDescription({
         className
       )}
       {...props}
-    >
-      {normalizedChildren}
-    </div>
+    />
   )
 }
 

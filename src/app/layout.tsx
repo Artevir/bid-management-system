@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import AppLayout from '@/components/layout/app-layout';
-import { ReactQueryProvider } from '@/components/providers/react-query-provider';
-import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: {
@@ -30,19 +28,16 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased">
-        <ReactQueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <AppLayout>
-              {children}
-            </AppLayout>
-            <Toaster />
-          </ThemeProvider>
-        </ReactQueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </ThemeProvider>
       </body>
     </html>
   );
