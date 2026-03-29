@@ -104,7 +104,7 @@ export default function AuditLogsPage() {
       } else {
         setError(data.error || '加载失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('加载审计日志失败');
     } finally {
       setLoading(false);

@@ -52,7 +52,7 @@ export default function SessionsPage() {
       } else {
         setError(data.error || '加载失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('加载会话列表失败');
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ export default function SessionsPage() {
       } else {
         setError(data.error || '撤销失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('撤销会话失败');
     } finally {
       setIsRevoking(false);
@@ -108,7 +108,7 @@ export default function SessionsPage() {
       } else {
         setError(data.error || '撤销失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('撤销会话失败');
     } finally {
       setIsRevoking(false);

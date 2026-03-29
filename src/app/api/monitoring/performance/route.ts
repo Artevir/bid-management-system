@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(performanceMonitor.getStats());
 
       case 'requests':
-        const limit = parseInt(searchParams.get('limit') || '100');
+        const _limit = parseInt(searchParams.get('limit') || '100');
         return NextResponse.json({
           metrics: performanceMonitor.getStats().requests,
         });
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 // DELETE - 清除性能指标
 // ============================================
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   // 在实际应用中，这里应该添加权限验证
   // 只有管理员才能清除性能指标
 

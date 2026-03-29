@@ -9,7 +9,7 @@ import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 获取当前用户
     const currentUser = await getCurrentUser();

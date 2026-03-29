@@ -13,8 +13,8 @@ import {
   imageStatusEnum,
   imageSizeEnum,
 } from '@/db/image-schema';
-import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';
-import { ImageGenerationClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { eq, desc, asc, and, or, like, sql, inArray as _inArray } from 'drizzle-orm';
+import { ImageGenerationClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -80,7 +80,7 @@ export async function generateImage(
   options: GenerateImageOptions,
   customHeaders?: Record<string, string>
 ): Promise<GenerateImageResult> {
-  const startTime = Date.now();
+  const _startTime = Date.now();
   
   try {
     // 1. 创建图片记录（状态：生成中）

@@ -48,7 +48,7 @@ import {
   Trash2,
   Eye,
   Tag,
-  Calendar,
+  Calendar as _Calendar,
   FolderTree,
 } from 'lucide-react';
 

@@ -33,7 +33,7 @@ async function getSections(
       children: SectionNode[];
     }
 
-    const buildTree = (parentId: number | null = null): SectionNode[] => {
+    const buildTree = (_parentId: number | null = null): SectionNode[] => {
       return results
         .filter((r) => r.id !== undefined)
         .map((result) => ({

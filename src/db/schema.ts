@@ -2314,7 +2314,7 @@ export const projectTasks = pgTable('project_tasks', {
 // 过程记录关系定义
 // ============================================
 
-export const meetingMinutesRelations = relations(meetingMinutes, ({ one, many }) => ({
+export const meetingMinutesRelations = relations(meetingMinutes, ({ one, _many }) => ({
   project: one(projects, {
     fields: [meetingMinutes.projectId],
     references: [projects.id],
@@ -2325,7 +2325,7 @@ export const meetingMinutesRelations = relations(meetingMinutes, ({ one, many })
   }),
 }));
 
-export const contactRecordsRelations = relations(contactRecords, ({ one, many }) => ({
+export const contactRecordsRelations = relations(contactRecords, ({ one, _many }) => ({
   project: one(projects, {
     fields: [contactRecords.projectId],
     references: [projects.id],
@@ -2494,7 +2494,7 @@ export const reminderRules = pgTable('reminder_rules', {
 // decimal 类型辅助函数
 // ============================================
 
-function decimal(name: string, options: { precision: number; scale: number }) {
+function decimal(name: string, _options: { precision: number; scale: number }) {
   // 使用 numeric 作为 PostgreSQL 的 decimal 类型
   return text(name); // 简化处理，实际使用时转换为数字
 }
@@ -5685,7 +5685,7 @@ export const discussionFiles = pgTable('discussion_files', {
 // 项目组织架构关系定义
 // ============================================
 
-export const orgTemplatesRelations = relations(orgTemplates, ({ one, many }) => ({
+export const orgTemplatesRelations = relations(orgTemplates, ({ one, _many }) => ({
   creator: one(users, {
     fields: [orgTemplates.createdBy],
     references: [users.id],

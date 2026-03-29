@@ -3,7 +3,7 @@
  * 使用大语言模型提供智能推荐功能
  */
 
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 推荐类型

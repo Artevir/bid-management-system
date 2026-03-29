@@ -3,7 +3,7 @@
  * 支持可配置工作流、条件分支、并行任务、审批流转
  */
 
-import { db } from '@/db/index';
+import { db as _db } from '@/db/index';
 import { cache } from '@/lib/cache';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -421,7 +421,7 @@ export class WorkflowEngine {
   private static async executeNotificationNode(
     instanceId: string,
     node: WorkflowNode,
-    instance: WorkflowInstance
+    _instance: WorkflowInstance
   ): Promise<any> {
     // TODO: 实现通知发送逻辑
     console.log(`[Workflow] 通知节点: ${node.name}, 收件人: ${node.config?.recipients}`);

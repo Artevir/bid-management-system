@@ -7,13 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { responseMatrices, parseItems } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { responseMatrices, parseItems as _parseItems } from '@/db/schema';
+import { eq, and as _and } from 'drizzle-orm';
 
 // 获取响应矩阵列表
 async function getMatrixList(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

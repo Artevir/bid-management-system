@@ -20,11 +20,11 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { 
   Upload, 
-  FileText, 
+  FileText as _FileText, 
   X, 
   AlertCircle, 
   CheckCircle2,
-  Calendar,
+  Calendar as _Calendar,
   FileIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';

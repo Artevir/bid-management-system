@@ -7,8 +7,8 @@ import { requireAuth } from '@/lib/auth/middleware';
 import {
   createAnnotation,
   getNodeAnnotations,
-  resolveAnnotation,
-  dismissAnnotation,
+  resolveAnnotation as _resolveAnnotation,
+  dismissAnnotation as _dismissAnnotation,
   getIssueStats,
 } from '@/lib/approval/annotation';
 

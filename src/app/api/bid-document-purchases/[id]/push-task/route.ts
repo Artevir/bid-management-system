@@ -8,9 +8,9 @@ import { db } from '@/db';
 import {
   bidDocumentPurchases,
   projectTasks,
-  users,
+  users as _users,
 } from '@/db/schema';
-import { biddingPlatforms } from '@/db/bidding-platform-schema';
+import { biddingPlatforms as _biddingPlatforms } from '@/db/bidding-platform-schema';
 import { eq } from 'drizzle-orm';
 
 // ============================================
@@ -55,7 +55,7 @@ async function pushToTask(
 
     // 检查是否有关联项目（任务中心需要关联项目）
     // 如果没有项目，创建一个虚拟项目或提示用户
-    let projectId = purchase.projectId;
+    const projectId = purchase.projectId;
     if (!projectId) {
       // 查找或创建一个"独立任务"分类的项目
       // 这里先简单处理：如果项目ID不存在，则不允许推送

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getImageGeneration, deleteImageGeneration } from '@/lib/image-generation/service';
 import { requireAuth } from '@/lib/auth/session';
-import { z } from 'zod';
+import { z as _z } from 'zod';
 
 // ============================================
 // GET - 获取图片生成详情

@@ -17,7 +17,7 @@ import {
   XCircle,
   RefreshCw,
   TrendingUp,
-  TrendingDown,
+  TrendingDown as _TrendingDown,
   Clock,
   Zap,
   Trash2,

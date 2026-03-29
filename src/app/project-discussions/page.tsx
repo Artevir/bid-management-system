@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import Link from 'next/link';
+import _Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,16 +35,16 @@ import {
   Download,
   Settings,
   RefreshCw,
-  Users,
-  FileText,
-  Image,
+  Users as _Users,
+  FileText as _FileText,
+  Image as _Image,
   File,
-  ChevronDown,
+  ChevronDown as _ChevronDown,
   AtSign,
-  Smile,
-  Clock,
-  Check,
-  X,
+  Smile as _Smile,
+  Clock as _Clock,
+  Check as _Check,
+  X as _X,
   Loader2,
 } from 'lucide-react';
 

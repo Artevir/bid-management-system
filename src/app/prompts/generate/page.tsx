@@ -16,8 +16,8 @@ import {
   Copy,
   Download,
   FileText,
-  History,
-  Settings,
+  History as _History,
+  Settings as _Settings,
   ChevronDown,
   ChevronUp,
   RefreshCw,
@@ -63,7 +63,7 @@ interface GenerationHistory {
 export default function SchemeGeneratePage() {
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [history, setHistory] = useState<GenerationHistory[]>([]);
+  const [_history, _setHistory] = useState<GenerationHistory[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Selection
@@ -77,7 +77,7 @@ export default function SchemeGeneratePage() {
   const [generating, setGenerating] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, _setShowPreview] = useState(true);
   
   // Advanced settings
   const [advancedOpen, setAdvancedOpen] = useState(false);

@@ -7,10 +7,10 @@ import { db } from '@/db';
 import {
   qualifications,
   projects,
-  competitors,
-  bidDecisions,
+  competitors as _competitors,
+  bidDecisions as _bidDecisions,
 } from '@/db/schema';
-import { eq, and, lte, gte, lt, desc, sql } from 'drizzle-orm';
+import { eq, and, lte, gte, lt, desc as _desc, sql as _sql } from 'drizzle-orm';
 import { notificationService } from '@/lib/notification/service';
 
 // ============================================

@@ -204,7 +204,7 @@ export class DeepSeekAdapter implements LLMAdapter {
       const choice = data.choices?.[0];
       
       // 合并推理内容和最终内容（如果有）
-      let content = choice?.message?.content || '';
+      const content = choice?.message?.content || '';
       const reasoningContent = choice?.message?.reasoning_content;
       
       // 映射finish_reason
@@ -270,7 +270,7 @@ export class DeepSeekAdapter implements LLMAdapter {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
+        const _errorText = await response.text();
         yield {
           content: '',
           done: true,
@@ -366,7 +366,7 @@ export class DeepSeekAdapter implements LLMAdapter {
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
       yield {
         content: '',
         done: true,
@@ -456,7 +456,7 @@ export class DeepSeekAdapter implements LLMAdapter {
             totalTokens: data.usage?.total_tokens || 0,
           },
         }));
-    } catch (error) {
+    } catch (_error) {
       // 回退到逐个处理
       const results: EmbeddingResult[] = [];
       for (const text of texts) {

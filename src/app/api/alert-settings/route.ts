@@ -11,7 +11,7 @@ import {
 } from '@/lib/tender-subscription/service';
 
 // GET /api/alert-settings - 获取当前用户的预警设置
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {

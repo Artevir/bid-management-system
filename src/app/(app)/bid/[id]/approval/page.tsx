@@ -5,10 +5,10 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -42,8 +42,8 @@ import {
   XCircle,
   RefreshCw,
   User,
-  Calendar,
-  FileText,
+  Calendar as _Calendar,
+  FileText as _FileText,
   Plus,
   Eye,
   MessageSquare,
@@ -69,7 +69,7 @@ interface DocumentDetail {
 }
 
 export default function BidApprovalPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const params = useParams();
   const documentId = params.id as string;
   const [document, setDocument] = useState<DocumentDetail | null>(null);

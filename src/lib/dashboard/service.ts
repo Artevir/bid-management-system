@@ -8,16 +8,16 @@ import {
   projects,
   projectMembers,
   projectMilestones,
-  projectPhases,
+  projectPhases as _projectPhases,
   bidDocuments,
-  bidChapters,
+  bidChapters as _bidChapters,
   reviewReports,
   knowledgeItems,
   users,
   departments,
 } from '@/db/schema';
-import { eq, and, or, desc, asc, count, sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, subDays, subMonths, format } from 'date-fns';
+import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull as _isNull, isNotNull } from 'drizzle-orm';
+import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek as _endOfWeek, subDays, subMonths, format } from 'date-fns';
 
 // ============================================
 // 类型定义
@@ -472,7 +472,7 @@ export async function getUserProjects(
     limit?: number;
   } = {}
 ) {
-  const { status, role, limit = 10 } = options;
+  const { status, _role, limit = 10 } = options;
 
   // 获取用户参与的项目
   const memberProjects = await db

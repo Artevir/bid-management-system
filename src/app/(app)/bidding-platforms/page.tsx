@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea as _Textarea } from '@/components/ui/textarea';
 import {
   Building2,
   MapPin,
@@ -44,7 +44,7 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  Edit,
+  Edit as _Edit,
 } from 'lucide-react';
 import Link from 'next/link';
 

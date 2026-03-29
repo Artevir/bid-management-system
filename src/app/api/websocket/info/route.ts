@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET - 获取WebSocket连接信息
 // ============================================
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const protocol = process.env.COZE_PROJECT_DOMAIN_DEFAULT?.startsWith('https') 
     ? 'wss' 
     : 'ws';

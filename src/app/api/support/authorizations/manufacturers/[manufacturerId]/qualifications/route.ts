@@ -7,8 +7,8 @@ import { getSession } from '@/lib/auth/session';
 import {
   getQualifications,
   createQualification,
-  updateQualification,
-  deleteQualification,
+  updateQualification as _updateQualification,
+  deleteQualification as _deleteQualification,
 } from '@/lib/authorization/service';
 
 // GET - 获取资质材料列表

@@ -9,7 +9,7 @@ import { HeaderUtils, LLMClient, Config } from 'coze-coding-dev-sdk';
 import { reviewDocument, ReviewType } from '@/lib/bid/reviewer';
 import { db } from '@/db';
 import { documentReviews, complianceChecks, bidChapters, bidDocuments } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and as _and } from 'drizzle-orm';
 import { createStreamResponse } from '@/lib/stream-utils';
 
 // ============================================
@@ -18,7 +18,7 @@ import { createStreamResponse } from '@/lib/stream-utils';
 
 async function executeReviewStream(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -227,7 +227,7 @@ function getReviewPrompt(type: ReviewType): string {
 
 async function executeReview(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -258,7 +258,7 @@ async function executeReview(
 
 async function getReviewHistory(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -293,7 +293,7 @@ async function getReviewHistory(
 
 async function getComplianceResults(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
         try {
           const userId = 1; // TODO: 从session获取
           return await executeReviewStream(request, userId);
-        } catch (error) {
+        } catch (_error) {
           return NextResponse.json({ error: '执行审校失败' }, { status: 500 });
         }
       }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,9 +19,9 @@ import {
 } from '@/components/ui/table';
 import {
   ArrowLeft,
-  FileText,
+  FileText as _FileText,
   Clock,
-  Building,
+  Building as _Building,
   AlertCircle,
   CheckCircle,
   XCircle,
@@ -31,11 +31,11 @@ import {
   Loader2,
   Calendar,
   MapPin,
-  Phone,
-  Mail,
-  Users,
+  Phone as _Phone,
+  Mail as _Mail,
+  Users as _Users,
   Briefcase,
-  DollarSign,
+  DollarSign as _DollarSign,
   Settings,
   Award,
   FileCheck,
@@ -261,7 +261,7 @@ export default function InterpretationDetailPage() {
     });
   };
 
-  const formatFileSize = (bytes: number | null) => {
+  const _formatFileSize = (bytes: number | null) => {
     if (!bytes) return '-';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';

@@ -96,7 +96,7 @@ export async function verifyAccessToken(token: string): Promise<JwtCustomPayload
     });
     
     return payload as JwtCustomPayload;
-  } catch (error) {
+  } catch (_error) {
     throw AppError.unauthorized('认证失败，无效或过期的访问令牌');
   }
 }
@@ -331,7 +331,7 @@ export async function getCurrentUser(): Promise<JwtCustomPayload | null> {
   try {
     const payload = await verifyAccessToken(accessToken);
     return payload;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

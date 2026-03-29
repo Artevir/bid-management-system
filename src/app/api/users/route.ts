@@ -6,13 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users, departments } from '@/db/schema';
+import { users, departments as _departments } from '@/db/schema';
 import { eq, like, or, desc } from 'drizzle-orm';
 import { withAuth, withAdmin } from '@/lib/auth/middleware';
 import { hashPassword } from '@/lib/auth/password';
 
 // 获取用户列表
-async function getUsers(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getUsers(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
@@ -52,7 +52,7 @@ async function getUsers(request: NextRequest, userId: number): Promise<NextRespo
 }
 
 // 创建用户
-async function createUser(request: NextRequest, currentUserId: number): Promise<NextResponse> {
+async function createUser(request: NextRequest, _currentUserId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { username, email, password, realName, phone, departmentId, position } = body;

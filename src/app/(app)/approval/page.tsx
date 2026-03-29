@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,13 +22,13 @@ import {
   XCircle,
   FileText,
   ChevronRight,
-  AlertCircle,
+  AlertCircle as _AlertCircle,
 } from 'lucide-react';
 import { useApprovals, useExecuteApproval } from '@/hooks/use-bid';
-import { APPROVAL_STATUS_MAP } from '@/lib/constants/bid-ui';
+import { APPROVAL_STATUS_MAP as _APPROVAL_STATUS_MAP } from '@/lib/constants/bid-ui';
 
 export default function ApprovalPage() {
-  const router = useRouter();
+  const _router = useRouter();
   
   // --- 服务端状态 (React Query) ---
   const { data: approvals = [], isLoading: loadingApprovals } = useApprovals();

@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -43,9 +43,9 @@ import {
   Loader2,
   FileCheck,
   Calendar,
-  User,
-  Building2,
-  Clock,
+  User as _User,
+  Building2 as _Building2,
+  Clock as _Clock,
   MoreHorizontal,
   Edit,
   Trash2,
@@ -117,7 +117,7 @@ const STATUS_COLORS: Record<string, string> = {
   terminated: 'bg-slate-100 text-slate-800',
 };
 
-const TRACKING_STATUS_LABELS: Record<string, string> = {
+const _TRACKING_STATUS_LABELS: Record<string, string> = {
   not_tracked: '未追踪',
   tracking: '追踪中',
   completed: '已完成',

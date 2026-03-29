@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -44,10 +44,10 @@ import {
   Copy,
   Play,
   Eye,
-  Filter,
-  Tag,
+  Filter as _Filter,
+  Tag as _Tag,
   Sparkles,
-  Code,
+  Code as _Code,
   Braces,
 } from 'lucide-react';
 
@@ -100,13 +100,13 @@ export default function PromptTemplatesPage() {
 }
 
 function PromptTemplatesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const _router = useRouter();
+  const _searchParams = useSearchParams();
   
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<PromptCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [_total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   
@@ -921,7 +921,7 @@ function GenerateDialogContent({
                   console.error('Generation error:', data.error);
                   setStreaming(false);
                 }
-              } catch (e) {
+              } catch (_e) {
                 // Ignore parse errors for incomplete chunks
               }
             }

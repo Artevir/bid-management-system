@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { reviewConfigs, reviewRules, reviewTemplates, users } from '@/db/schema';
-import { eq, and, desc, inArray, isNull } from 'drizzle-orm';
+import { eq, and, desc, inArray, isNull as _isNull } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

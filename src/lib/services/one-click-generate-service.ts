@@ -7,12 +7,12 @@ import { db } from '@/db';
 import {
   bidDocuments,
   bidChapters,
-  bidDocumentFramework,
+  bidDocumentFramework as _bidDocumentFramework,
   bidDocumentInterpretations,
   companies,
   companyFiles,
   partnerApplications,
-  partnerMaterials,
+  partnerMaterials as _partnerMaterials,
   projects,
   users,
 } from '@/db/schema';
@@ -778,7 +778,7 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
   /**
    * 获取待审核的AI生成文档
    */
-  async getPendingReviews(projectId?: number) {
+  async getPendingReviews(_projectId?: number) {
     const { bidDocumentReviews } = await import('@/db/schema');
 
     const conditions = [eq(bidDocumentReviews.status, 'pending')];
@@ -863,7 +863,7 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
    */
   async getAvailableDataSources(projectId: number) {
     // 获取项目关联的公司
-    const project = await db
+    const _project = await db
       .select()
       .from(projects)
       .where(eq(projects.id, projectId))

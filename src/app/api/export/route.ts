@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ImportExportService, { ExportFormat } from '@/lib/export/import-export-service';
 import { db } from '@/db/index';
-import { projects, bidDocuments } from '@/db/schema';
+import { projects as _projects, bidDocuments as _bidDocuments } from '@/db/schema';
 
 // ============================================
 // GET - 导出数据
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const filename = searchParams.get('filename') || `${type}_export`;
 
     let data: any[] = [];
-    let prefix = type;
+    const prefix = type;
 
     // 根据类型获取数据
     switch (type) {

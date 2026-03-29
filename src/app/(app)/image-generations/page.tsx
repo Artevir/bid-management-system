@@ -28,7 +28,7 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageGenerationDialog } from '@/components/image-generation-dialog';

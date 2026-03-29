@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -27,7 +27,7 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescription as _DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -42,8 +42,8 @@ import {
   RotateCcw,
   MoreHorizontal,
   Search,
-  Filter,
-  Clock,
+  Filter as _Filter,
+  Clock as _Clock,
   AlertTriangle,
   FileText,
   Building,
@@ -89,8 +89,8 @@ interface RecycleBinStats {
 }
 
 function RecycleBinContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const _router = useRouter();
+  const _searchParams = useSearchParams();
   
   // 状态
   const [items, setItems] = useState<RecycleBinItem[]>([]);

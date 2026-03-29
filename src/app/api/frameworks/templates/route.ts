@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       if (template.childrenConfig) {
         try {
           children = JSON.parse(template.childrenConfig);
-        } catch (e) {
+        } catch (_e) {
           // 忽略解析错误
         }
       }
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       .where(eq(docFrameworkChapters.frameworkId, frameworkId))
       .orderBy(asc(docFrameworkChapters.sequence));
 
-    let baseSequence = position !== undefined ? position : existingChapters.length;
+    const baseSequence = position !== undefined ? position : existingChapters.length;
 
     // 创建章节
     const createdChapters: any[] = [];

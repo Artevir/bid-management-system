@@ -3,9 +3,9 @@
  * 支持实时进度显示和SSE推送
  */
 
-import { db } from '@/db';
-import { bidDocuments, bidChapters } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { db as _db } from '@/db';
+import { bidDocuments as _bidDocuments, bidChapters as _bidChapters } from '@/db/schema';
+import { eq as _eq } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

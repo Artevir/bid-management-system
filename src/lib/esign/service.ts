@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { projects, bidDocuments } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { projects as _projects, bidDocuments } from '@/db/schema';
+import { eq, and as _and } from 'drizzle-orm';
 
 // ============================================
 // 电子签章类型定义
@@ -55,7 +55,7 @@ export class CertificateService {
   /**
    * 获取用户证书
    */
-  async getUserCertificates(userId: number): Promise<DigitalCertificate[]> {
+  async getUserCertificates(_userId: number): Promise<DigitalCertificate[]> {
     // TODO: 从CA服务商获取证书
     return [];
   }
@@ -80,7 +80,7 @@ export class CertificateService {
   /**
    * 申请证书
    */
-  async applyCertificate(data: {
+  async applyCertificate(_data: {
     userId: number;
     subject: string;
     identityType: 'personal' | 'enterprise';
@@ -96,7 +96,7 @@ export class CertificateService {
   /**
    * 续期证书
    */
-  async renewCertificate(certificateId: string): Promise<boolean> {
+  async renewCertificate(_certificateId: string): Promise<boolean> {
     // TODO: 调用CA服务商API续期
     return true;
   }
@@ -104,7 +104,7 @@ export class CertificateService {
   /**
    * 吊销证书
    */
-  async revokeCertificate(certificateId: string, reason: string): Promise<boolean> {
+  async revokeCertificate(_certificateId: string, _reason: string): Promise<boolean> {
     // TODO: 调用CA服务商API吊销
     return true;
   }
@@ -118,7 +118,7 @@ export class SealService {
   /**
    * 获取公司印章列表
    */
-  async getCompanySeals(companyId: number): Promise<ElectronicSeal[]> {
+  async getCompanySeals(_companyId: number): Promise<ElectronicSeal[]> {
     // TODO: 从数据库获取
     return [];
   }
@@ -148,7 +148,7 @@ export class SealService {
   /**
    * 生成印章图片
    */
-  async generateSealImage(params: {
+  async generateSealImage(_params: {
     name: string;
     type: 'circle' | 'ellipse' | 'square';
     color: string;
@@ -162,7 +162,7 @@ export class SealService {
   /**
    * 停用印章
    */
-  async deactivateSeal(sealId: string): Promise<void> {
+  async deactivateSeal(_sealId: string): Promise<void> {
     // TODO: 更新数据库状态
   }
 }
@@ -220,7 +220,7 @@ export class SignService {
   /**
    * 验证文档签名
    */
-  async verifySignature(signedDocumentId: string): Promise<{
+  async verifySignature(_signedDocumentId: string): Promise<{
     valid: boolean;
     reason?: string;
     details?: {
@@ -259,10 +259,10 @@ export class SignService {
   async batchSign(documents: {
     documentId: number;
     signLocation: string;
-  }[], certificateId: string, sealId?: string): Promise<SignedDocument[]> {
+  }[], _certificateId: string, _sealId?: string): Promise<SignedDocument[]> {
     const results: SignedDocument[] = [];
 
-    for (const doc of documents) {
+    for (const _doc of documents) {
       // TODO: 实现批量签名
     }
 
@@ -293,7 +293,7 @@ export class SignService {
   /**
    * 获取签名记录
    */
-  async getSignRecords(documentId: number): Promise<SignedDocument[]> {
+  async getSignRecords(_documentId: number): Promise<SignedDocument[]> {
     // TODO: 从数据库获取
     return [];
   }

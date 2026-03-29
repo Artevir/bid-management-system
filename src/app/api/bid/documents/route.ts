@@ -16,7 +16,7 @@ import { parseResourceId } from '@/lib/api/validators';
 // 获取项目的标书文档列表
 async function getDocuments(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const projectIdStr = searchParams.get('projectId');

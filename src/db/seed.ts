@@ -21,7 +21,7 @@ import {
   promptCategories,
 } from './schema';
 import { hash } from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { eq as _eq } from 'drizzle-orm';
 
 // 环境安全检查
 function checkEnvironment() {
@@ -122,7 +122,7 @@ async function seedPermissions() {
   let count = 0;
   for (const perm of perms) {
     const result = await db.insert(permissions).values(perm).onConflictDoNothing();
-    if (result.rowCount && result.rowCount > 0) count++;
+    if (result.rowCount && result.rowCount > 0) _count++;
   }
   
   console.log(`   ✓ 已创建 ${perms.length} 个权限`);
@@ -134,7 +134,7 @@ async function seedAdminUsers(depts: any[]) {
   console.log('👤 初始化管理员用户...');
   
   const hqDept = depts.find(d => d.code === 'HQ');
-  const techDept = depts.find(d => d.code === 'TECH');
+  const _techDept = depts.find(d => d.code === 'TECH');
   
   if (!hqDept) {
     throw new Error('找不到总公司部门');

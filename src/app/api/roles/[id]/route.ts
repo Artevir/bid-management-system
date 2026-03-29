@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { roles, rolePermissions, permissions } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { roles, rolePermissions, permissions as _permissions } from '@/db/schema';
+import { eq, inArray as _inArray } from 'drizzle-orm';
 import { withAuth, withAdmin, clearPermissionCache } from '@/lib/auth/middleware';
 
 // 获取角色详情

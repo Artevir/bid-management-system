@@ -11,7 +11,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { docFrameworks, companies } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { success, created, AppError, handleError } from '@/lib/api/error-handler';
+import { success, created, AppError, handleError as _handleError } from '@/lib/api/error-handler';
 
 // ============================================
 // GET - 获取文档模板列表
@@ -19,7 +19,7 @@ import { success, created, AppError, handleError } from '@/lib/api/error-handler
 
 async function getTemplates(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const companyId = searchParams.get('companyId');

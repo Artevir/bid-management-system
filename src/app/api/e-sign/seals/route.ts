@@ -7,9 +7,9 @@ import { getSession } from '@/lib/auth/session';
 import {
   createSeal,
   getSeals,
-  getSealById,
-  updateSeal,
-  deleteSeal,
+  getSealById as _getSealById,
+  updateSeal as _updateSeal,
+  deleteSeal as _deleteSeal,
 } from '@/lib/e-sign/service';
 
 // GET /api/e-sign/seals - 获取电子印章列表

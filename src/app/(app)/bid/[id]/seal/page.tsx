@@ -5,12 +5,12 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge as _Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -39,7 +39,7 @@ import {
 import {
   PenTool,
   Plus,
-  Search,
+  Search as _Search,
   RefreshCw,
   Clock,
   CheckCircle,
@@ -71,7 +71,7 @@ interface DocumentDetail {
 }
 
 export default function BidSealPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const params = useParams();
   const documentId = params.id as string;
   const [document, setDocument] = useState<DocumentDetail | null>(null);

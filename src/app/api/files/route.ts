@@ -46,8 +46,8 @@ async function getList(
 
 // 获取文件分类
 async function getCategories(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     // 确保分类已初始化

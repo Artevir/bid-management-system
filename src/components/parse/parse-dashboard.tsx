@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Separator as _Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Table,
@@ -23,22 +23,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  FileText,
+  FileText as _FileText,
   Loader2,
   AlertCircle,
   CheckCircle,
   AlertTriangle,
-  Clock,
+  Clock as _Clock,
   Play,
   Eye,
   Check,
-  X,
-  Search,
+  X as _X,
+  Search as _Search,
   Filter,
   RefreshCw,
 } from 'lucide-react';
@@ -225,7 +225,7 @@ export function ParseDashboard({ projectId }: ParseDashboardProps) {
     setConfirmDialogOpen(true);
   };
 
-  const formatDate = (dateStr: string | null) => {
+  const _formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
     return format(new Date(dateStr), 'yyyy-MM-dd HH:mm', { locale: zhCN });
   };

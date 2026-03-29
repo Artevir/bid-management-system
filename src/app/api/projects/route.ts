@@ -20,8 +20,8 @@ import {
   paginated,
 } from '@/lib/api/error-handler';
 import {
-  parseResourceId,
-  parseIdFromParams,
+  parseResourceId as _parseResourceId,
+  parseIdFromParams as _parseIdFromParams,
   parsePaginationParams,
 } from '@/lib/api/validators';
 

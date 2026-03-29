@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/auth/middleware';
 import { getAuditLogStats } from '@/lib/audit/service';
 
-async function getStats(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getStats(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
 

@@ -18,7 +18,7 @@ import {
   type CrawlKeyword,
   type NewCrawlKeyword,
 } from '@/db/schema';
-import { eq, and, desc, sql, lte, gte, inArray, isNull, or, like, ilike } from 'drizzle-orm';
+import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull, or, like as _like, ilike } from 'drizzle-orm';
 import { SearchClient } from 'coze-coding-dev-sdk';
 
 // ============================================

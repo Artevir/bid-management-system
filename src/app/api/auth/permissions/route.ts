@@ -12,7 +12,7 @@ import {
   getUserPermissionCodes 
 } from '@/lib/auth/permission';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 获取当前用户
     const currentUser = await getCurrentUser();

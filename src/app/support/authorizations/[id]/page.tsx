@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -20,12 +20,12 @@ import {
   Calendar,
   User,
   Building2,
-  Clock,
+  Clock as _Clock,
   FileText,
-  Truck,
-  CheckCircle,
-  XCircle,
-  Plus,
+  Truck as _Truck,
+  CheckCircle as _CheckCircle,
+  XCircle as _XCircle,
+  Plus as _Plus,
   Edit,
   Send,
 } from 'lucide-react';

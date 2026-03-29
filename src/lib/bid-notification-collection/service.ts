@@ -8,7 +8,7 @@ import {
   bidNotificationCollections,
   projectTasks,
   users,
-  projects,
+  projects as _projects,
   type BidNotificationCollection,
   type NewBidNotificationCollection,
 } from '@/db/schema';

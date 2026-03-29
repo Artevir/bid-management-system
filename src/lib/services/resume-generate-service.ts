@@ -5,9 +5,9 @@
 
 import { db } from '@/db';
 import { bidDocuments, bidChapters, documentGenerationHistories } from '@/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and as _and, inArray as _inArray } from 'drizzle-orm';
 import { generationProgressServiceV2, Checkpoint, GenerationProgress } from './generation-progress-service-v2';
-import { oneClickGenerateService, OneClickGenerateParams } from './one-click-generate-service';
+import { oneClickGenerateService as _oneClickGenerateService, OneClickGenerateParams } from './one-click-generate-service';
 
 // ============================================
 // 类型定义
@@ -151,7 +151,7 @@ export const resumeGenerateService = {
 
     // 继续生成
     try {
-      const result = await this.continueGeneration(
+      const _result = await this.continueGeneration(
         documentId,
         pendingChapters,
         params,

@@ -300,7 +300,7 @@ export class EncryptionService {
  * 自动加密敏感字段的装饰器
  * @param fields 要加密的字段列表
  */
-export function withEncryption<T extends Record<string, any>>(fields: string[]) {
+export function withEncryption<_T extends Record<string, any>>(fields: string[]) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
@@ -333,7 +333,7 @@ export function withEncryption<T extends Record<string, any>>(fields: string[]) 
  * 自动解密敏感字段的装饰器
  * @param fields 要解密的字段列表
  */
-export function withDecryption<T extends Record<string, any>>(fields: string[]) {
+export function withDecryption<_T extends Record<string, any>>(fields: string[]) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,22 +14,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu as _DropdownMenu,
+  DropdownMenuContent as _DropdownMenuContent,
+  DropdownMenuItem as _DropdownMenuItem,
+  DropdownMenuTrigger as _DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import {
   Plus,
-  MoreHorizontal,
+  MoreHorizontal as _MoreHorizontal,
   Calendar,
-  User,
+  User as _User,
   Building2,
   GripVertical,
-  LayoutGrid,
+  LayoutGrid as _LayoutGrid,
   List,
-  Filter,
+  Filter as _Filter,
 } from 'lucide-react';
 
 // ============================================
@@ -81,7 +81,7 @@ export default function ProjectKanbanPage() {
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
   const [dragSourceColumn, setDragSourceColumn] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [_viewMode, _setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   useEffect(() => {
     fetchProjects();
@@ -204,7 +204,7 @@ export default function ProjectKanbanPage() {
   };
 
   // 获取进度条颜色
-  const getProgressColor = (progress: number) => {
+  const _getProgressColor = (progress: number) => {
     if (progress >= 80) return 'bg-green-500';
     if (progress >= 50) return 'bg-blue-500';
     if (progress >= 30) return 'bg-yellow-500';

@@ -9,16 +9,16 @@ import {
   alertSettings,
   tenderAlerts,
   tenderInfos,
-  users,
+  users as _users,
 } from '@/db/schema';
-import { eq, and, desc, sql, inArray, or, like, gte, lte, isNull } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, or as _or, like as _like, gte as _gte, lte, isNull as _isNull } from 'drizzle-orm';
 import type {
   TenderSubscription,
   NewTenderSubscription,
   AlertSetting,
   NewAlertSetting,
   TenderAlert,
-  NewTenderAlert,
+  NewTenderAlert as _NewTenderAlert,
   AlertType,
   AlertChannel,
 } from '@/db/schema';

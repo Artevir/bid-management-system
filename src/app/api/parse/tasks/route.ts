@@ -15,7 +15,7 @@ import {
 // 获取解析任务列表
 async function getTasks(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

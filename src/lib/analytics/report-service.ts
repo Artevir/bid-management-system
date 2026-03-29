@@ -5,7 +5,7 @@
 
 import { db } from '@/db/index';
 import { projects, bidDocuments } from '@/db/schema';
-import { sql, eq, and, gte, lte, desc, count } from 'drizzle-orm';
+import { sql, eq as _eq, and, gte, lte, desc as _desc, count } from 'drizzle-orm';
 
 // ============================================
 // 报表类型
@@ -205,8 +205,8 @@ export class ReportService {
    * 中标率分析
    */
   static async getBidRateAnalysis(
-    startDate?: Date,
-    endDate?: Date
+    _startDate?: Date,
+    _endDate?: Date
   ): Promise<{
     totalProjects: number;
     wonProjects: number;
@@ -229,8 +229,8 @@ export class ReportService {
    * 审核效率分析
    */
   static async getReviewEfficiency(
-    startDate?: Date,
-    endDate?: Date
+    _startDate?: Date,
+    _endDate?: Date
   ): Promise<{
     totalReviews: number;
     averageReviewTime: number; // 平均审核时间（小时）
@@ -249,8 +249,8 @@ export class ReportService {
    * 人员工作量统计
    */
   static async getUserWorkload(
-    startDate?: Date,
-    endDate?: Date
+    _startDate?: Date,
+    _endDate?: Date
   ): Promise<{
     byUser: Record<string, {
       projects: number;
@@ -269,8 +269,8 @@ export class ReportService {
    * 部门绩效报表
    */
   static async getDepartmentPerformance(
-    startDate?: Date,
-    endDate?: Date
+    _startDate?: Date,
+    _endDate?: Date
   ): Promise<{
     byDepartment: Record<string, {
       projectCount: number;
@@ -290,8 +290,8 @@ export class ReportService {
    * 财务统计报表
    */
   static async getFinanceStatistics(
-    startDate?: Date,
-    endDate?: Date
+    _startDate?: Date,
+    _endDate?: Date
   ): Promise<{
     totalRevenue: number;
     totalCost: number;
@@ -320,7 +320,7 @@ export class ReportService {
       filters?: Record<string, any>;
     } = {}
   ): Promise<any> {
-    const { startDate, endDate, filters } = options;
+    const { startDate, endDate, _filters } = options;
 
     switch (type) {
       case ReportType.PROJECT_STATISTICS:
@@ -352,7 +352,7 @@ export class ReportService {
   /**
    * 导出报表数据为图表格式
    */
-  static formatForChart(data: any, chartType: 'bar' | 'line' | 'pie' | 'table'): any {
+  static formatForChart(data: any, _chartType: 'bar' | 'line' | 'pie' | 'table'): any {
     // TODO: 根据图表类型格式化数据
     return data;
   }

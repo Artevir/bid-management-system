@@ -211,7 +211,7 @@ export class OllamaAdapter implements LLMAdapter {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
+        const _errorText = await response.text();
         yield {
           content: '',
           done: true,
@@ -290,7 +290,7 @@ export class OllamaAdapter implements LLMAdapter {
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
       yield {
         content: '',
         done: true,

@@ -10,10 +10,10 @@ import {
   sampleReviews,
   sampleTodos,
   authorizationApplications,
-  authorizationManufacturers,
-  users,
+  authorizationManufacturers as _authorizationManufacturers,
+  users as _users,
 } from '@/db/schema';
-import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
 
 // 生成随机ID
 function generateRandomId(length: number = 6): string {

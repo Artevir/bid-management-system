@@ -7,8 +7,8 @@ import { getSession } from '@/lib/auth/session';
 import {
   getTodos,
   createTodo,
-  updateTodoStatus,
-  deleteTodo,
+  updateTodoStatus as _updateTodoStatus,
+  deleteTodo as _deleteTodo,
 } from '@/lib/authorization/service';
 
 // GET - 获取待办事项列表

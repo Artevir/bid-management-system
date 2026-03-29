@@ -3,10 +3,10 @@
  * 支持 Redis 持久化存储、断点续传、SSE 推送
  */
 
-import { db } from '@/db';
-import { bidDocuments, bidChapters, documentGenerationHistories } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import redis, { RedisKeys, getRedisClient, isUsingMemoryFallback } from '@/lib/cache';
+import { db as _db } from '@/db';
+import { bidDocuments as _bidDocuments, bidChapters as _bidChapters, documentGenerationHistories as _documentGenerationHistories } from '@/db/schema';
+import { eq as _eq, and as _and } from 'drizzle-orm';
+import redis, { RedisKeys, getRedisClient as _getRedisClient, isUsingMemoryFallback } from '@/lib/cache';
 
 // ============================================
 // 类型定义

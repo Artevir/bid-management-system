@@ -199,7 +199,7 @@ export function getOnlineStats(): OnlineStats {
   };
 }
 
-export function getUserOnlineStatus(userId: string): boolean {
+export function getUserOnlineStatus(_userId: string): boolean {
   return false;
 }
 

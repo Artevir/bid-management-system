@@ -20,7 +20,7 @@ import { success, AppError, handleError } from '@/lib/api/error-handler';
 
 async function getDocumentInterpretations(
   request: NextRequest,
-  userId: number
+  _userId: number
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -59,7 +59,7 @@ async function getDocumentInterpretations(
 
 async function linkInterpretation(
   request: NextRequest,
-  userId: number
+  _userId: number
 ) {
   try {
     const body = await request.json();

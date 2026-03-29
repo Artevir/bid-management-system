@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import AuditLogService from '@/lib/audit/audit-service';
-import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
+import { withPermission as _withPermission, PERMISSIONS as _PERMISSIONS } from '@/lib/auth/rbac-middleware';
 
 // ============================================
 // GET - 获取审计日志统计信息

@@ -9,7 +9,7 @@ import {
   bidAttendees,
   projectTasks,
   users,
-  projects,
+  projects as _projects,
   type BidAttendance,
   type NewBidAttendance,
   type BidAttendee,

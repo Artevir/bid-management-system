@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -53,21 +53,21 @@ import {
   Edit,
   Trash2,
   FileText,
-  FolderOpen,
+  FolderOpen as _FolderOpen,
   ChevronRight,
-  ChevronDown,
-  CheckCircle2,
+  ChevronDown as _ChevronDown,
+  CheckCircle2 as _CheckCircle2,
   Loader2,
-  Upload,
-  Download,
+  Upload as _Upload,
+  Download as _Download,
   Settings,
-  Layers,
+  Layers as _Layers,
   FileUp,
-  Copy,
-  Eye,
+  Copy as _Copy,
+  Eye as _Eye,
   BookOpen,
   LayoutTemplate,
-  Palette,
+  Palette as _Palette,
   Type,
   AlignLeft,
   Building2,
@@ -134,7 +134,7 @@ export default function DocFrameworksPage() {
 }
 
 function DocFrameworksContent() {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
   
   // State
@@ -143,7 +143,7 @@ function DocFrameworksContent() {
   const [selectedFramework, setSelectedFramework] = useState<DocFramework | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');
+  const [_activeTab, _setActiveTab] = useState(searchParams.get('tab') || 'list');
   
   // Filter States
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('all');

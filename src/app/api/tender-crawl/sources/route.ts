@@ -7,9 +7,9 @@ import { getSession } from '@/lib/auth/session';
 import {
   createCrawlSource,
   getCrawlSources,
-  getCrawlSourceById,
-  updateCrawlSource,
-  deleteCrawlSource,
+  getCrawlSourceById as _getCrawlSourceById,
+  updateCrawlSource as _updateCrawlSource,
+  deleteCrawlSource as _deleteCrawlSource,
 } from '@/lib/tender-crawl/service';
 
 // GET /api/tender-crawl/sources - 获取抓取源列表

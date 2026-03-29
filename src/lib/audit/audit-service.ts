@@ -4,10 +4,10 @@
  */
 
 import { db } from '@/db/index';
-import { auditLogs, AuditActionType, AuditAction } from '@/lib/db/schema/audit-logs';
+import { auditLogs, AuditActionType as _AuditActionType, AuditAction } from '@/lib/db/schema/audit-logs';
 import { users } from '@/lib/db/schema/users';
-import { eq, and, or, gte, lte, inArray, desc, sql, count } from 'drizzle-orm';
-import { cache } from '@/lib/cache';
+import { eq, and, or as _or, gte, lte, inArray, desc, sql as _sql, count } from 'drizzle-orm';
+import { cache as _cache } from '@/lib/cache';
 import type { AuditLogCreate, AuditLogQuery, AuditLogStats } from '@/lib/db/schema/audit-logs';
 
 // ============================================

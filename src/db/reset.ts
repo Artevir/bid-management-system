@@ -82,7 +82,7 @@ async function dropAllTables(): Promise<void> {
 }
 
 // 重建表结构（使用 Drizzle push）
-async function recreateSchema(): Promise<void> {
+async function _recreateSchema(): Promise<void> {
   console.log('🏗️  正在重建表结构...');
   console.log('   请执行: pnpm db:push');
   // 注意：实际的表创建由 drizzle-kit push 完成

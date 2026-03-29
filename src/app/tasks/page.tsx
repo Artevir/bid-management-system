@@ -21,11 +21,11 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select';
 import {
   Clock,
@@ -36,8 +36,8 @@ import {
   FileText,
   Calendar,
   User,
-  ArrowRight,
-  Send,
+  ArrowRight as _ArrowRight,
+  Send as _Send,
   RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';

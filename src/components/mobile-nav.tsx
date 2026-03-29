@@ -9,7 +9,7 @@ import {
   FileText,
   CheckCircle,
   BookOpen,
-  User,
+  User as _User,
   Menu,
   Plus,
   Search,

@@ -20,7 +20,7 @@ import { parseResourceId } from '@/lib/api/validators';
 
 async function getStats(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const documentIdStr = searchParams.get('documentId');

@@ -7,16 +7,16 @@ import { getSession } from '@/lib/auth/session';
 import {
   createGuarantee,
   getGuarantees,
-  getGuaranteeById,
-  updateGuarantee,
-  deleteGuarantee,
-  markAsPaid,
-  markAsReturned,
-  markAsForfeited,
+  getGuaranteeById as _getGuaranteeById,
+  updateGuarantee as _updateGuarantee,
+  deleteGuarantee as _deleteGuarantee,
+  markAsPaid as _markAsPaid,
+  markAsReturned as _markAsReturned,
+  markAsForfeited as _markAsForfeited,
   getPendingGuarantees,
   getExpiringGuarantees,
   getGuaranteeStatistics,
-  assignGuarantee,
+  assignGuarantee as _assignGuarantee,
 } from '@/lib/guarantee/service';
 
 // GET /api/guarantees - 获取保证金列表

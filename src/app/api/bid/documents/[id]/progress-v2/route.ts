@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generationProgressServiceV2 } from '@/lib/services/generation-progress-service-v2';
-import { generationNotificationService } from '@/lib/services/generation-notification-service';
+import { generationNotificationService as _generationNotificationService } from '@/lib/services/generation-notification-service';
 
 /**
  * GET /api/bid/documents/[id]/progress-v2

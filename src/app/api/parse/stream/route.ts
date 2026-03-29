@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth/middleware';
+import { withAuth as _withAuth } from '@/lib/auth/middleware';
 import { HeaderUtils } from 'coze-coding-dev-sdk';
 import { comprehensiveParse } from '@/lib/parse/extractors';
 import { db } from '@/db';
@@ -14,7 +14,7 @@ import { eq } from 'drizzle-orm';
 // 流式解析文档
 async function streamParse(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -176,7 +176,7 @@ async function streamParse(
 async function saveSection(
   taskId: number,
   section: any,
-  parentId?: number
+  _parentId?: number
 ): Promise<void> {
   const [result] = await db
     .insert(parseResults)

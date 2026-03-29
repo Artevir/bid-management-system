@@ -11,7 +11,7 @@ import {
   docFrameworkInstances,
   docFrameworkContents,
 } from '@/db/schema';
-import { eq, and, asc, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and as _and, asc, desc as _desc, inArray, sql as _sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================
@@ -481,7 +481,7 @@ async function createFrameworkSnapshot(
     .orderBy(asc(docFrameworkChapters.sequence));
 
   // 创建快照数据
-  const snapshot = {
+  const _snapshot = {
     framework: {
       name: framework.name,
       code: framework.code,
@@ -533,7 +533,7 @@ async function createFrameworkSnapshot(
 async function createInstanceSnapshot(
   instanceId: number, 
   description: string,
-  userId: number
+  _userId: number
 ) {
   // 获取实例信息
   const [instance] = await db

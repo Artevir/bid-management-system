@@ -11,7 +11,7 @@ import {
   bidArchiveFiles,
   users 
 } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and as _and, desc } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

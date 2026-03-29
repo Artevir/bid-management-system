@@ -27,11 +27,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select';
 import {
   DropdownMenu,
@@ -47,7 +47,7 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Search,
+  Search as _Search,
   Filter,
   RefreshCw,
   Settings,
@@ -56,7 +56,7 @@ import {
   Building2,
   DollarSign,
   CheckCircle2,
-  XCircle,
+  XCircle as _XCircle,
   Sparkles,
   Clock,
 } from 'lucide-react';
@@ -109,7 +109,7 @@ interface AlertSetting {
 }
 
 export default function TenderSubscriptionPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [alertSetting, setAlertSetting] = useState<AlertSetting | null>(null);
   const [loading, setLoading] = useState(true);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,16 +20,16 @@ import {
   ArrowLeft,
   Clock,
   CheckCircle,
-  XCircle,
+  XCircle as _XCircle,
   FileText,
   User,
-  Calendar,
+  Calendar as _Calendar,
   Building2,
   AlertCircle,
   Loader2,
   ChevronRight,
-  MessageSquare,
-  Send,
+  MessageSquare as _MessageSquare,
+  Send as _Send,
   RotateCcw,
   ThumbsUp,
   ThumbsDown,

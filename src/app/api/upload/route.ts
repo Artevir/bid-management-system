@@ -5,10 +5,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   createUploadSession,
-  getUploadSession,
-  uploadChunk,
-  mergeChunks,
-  verifyFileIntegrity,
+  getUploadSession as _getUploadSession,
+  uploadChunk as _uploadChunk,
+  mergeChunks as _mergeChunks,
+  verifyFileIntegrity as _verifyFileIntegrity,
   getUploadedChunks,
   getUploadProgress,
 } from '@/lib/upload/chunked-upload';

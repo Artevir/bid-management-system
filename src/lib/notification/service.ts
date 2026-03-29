@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { reminderRules, users } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { reminderRules as _reminderRules, users } from '@/db/schema';
+import { eq, and as _and } from 'drizzle-orm';
 
 // ============================================
 // 消息类型定义
@@ -47,7 +47,7 @@ export class EmailService {
     };
   }
 
-  async send(to: string, subject: string, html: string): Promise<boolean> {
+  async send(to: string, subject: string, _html: string): Promise<boolean> {
     try {
       // 实际项目中应该使用 nodemailer 或其他邮件服务
       console.log(`[Email] To: ${to}, Subject: ${subject}`);
@@ -281,8 +281,8 @@ export class NotificationService {
 
   async sendToRole(
     roleCode: string,
-    message: MessagePayload,
-    channels: NotificationChannel[]
+    _message: MessagePayload,
+    _channels: NotificationChannel[]
   ): Promise<void> {
     // 查找指定角色的所有用户
     // TODO: 实现角色用户查询

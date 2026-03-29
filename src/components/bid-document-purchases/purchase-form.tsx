@@ -158,7 +158,7 @@ export function BidDocumentPurchaseForm({
   onCancel,
   onPushToTask,
 }: BidDocumentPurchaseFormProps) {
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);

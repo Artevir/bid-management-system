@@ -21,10 +21,10 @@ import {
   type ProjectOrgMember,
   type NewProjectOrgMember,
   type ArchivedOrgTemplate,
-  type NewArchivedOrgTemplate,
+  type _NewArchivedOrgTemplate,
   type PermissionLevel,
 } from '@/db/schema';
-import { eq, and, desc, sql, inArray, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray as _inArray, isNull, isNotNull as _isNotNull } from 'drizzle-orm';
 
 // ============================================
 // 系统预置模板

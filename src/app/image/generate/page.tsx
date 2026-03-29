@@ -60,7 +60,7 @@ export default function ImageGeneratePage() {
   const [imageType, setImageType] = useState<ImageType>('flowchart');
   const [prompt, setPrompt] = useState('');
   const [size, setSize] = useState<ImageSize>('2K');
-  const [style, setStyle] = useState('简洁商务');
+  const [style, _setStyle] = useState('简洁商务');
   const [colorScheme, setColorScheme] = useState('蓝白商务风');
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ success: boolean; imageId?: number; imageUrl?: string; error?: string } | null>(null);
@@ -79,7 +79,7 @@ export default function ImageGeneratePage() {
       });
       const data = await response.json();
       setResult(data);
-    } catch (error) {
+    } catch (_error) {
       setResult({ success: false, error: '网络错误' });
     } finally {
       setGenerating(false);

@@ -17,7 +17,7 @@ import {
   logCall,
   type LLMProvider,
 } from '@/lib/llm/service';
-import { Config, LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';
+import { Config as _Config, LLMClient as _LLMClient, HeaderUtils as _HeaderUtils, type Message } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -176,7 +176,7 @@ export async function callAI(options: AICallOptions): Promise<AICallResult> {
     const provider = getProviderFromModelId(modelId);
 
     // 2. 构建消息
-    let messages: Message[] = [];
+    const messages: Message[] = [];
     let agentInfo: any = null;
 
     if (options.mode === 'agent' && options.agentId) {
@@ -316,7 +316,7 @@ export async function* streamAI(
     const provider = getProviderFromModelId(modelId);
 
     // 2. 构建消息
-    let messages: Message[] = [];
+    const messages: Message[] = [];
 
     if (options.mode === 'agent' && options.agentId) {
       // AI角色模式

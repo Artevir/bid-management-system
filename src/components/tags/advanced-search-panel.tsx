@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
+import { Switch as _Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
   Search,
@@ -124,7 +124,7 @@ export function AdvancedSearchPanel({
   ];
 
   // 实体类型选项
-  const entityTypeOptions = [
+  const _entityTypeOptions = [
     { value: 'project', label: '项目' },
     { value: 'document', label: '文档' },
     { value: 'template', label: '模板' },
@@ -263,7 +263,7 @@ export function AdvancedSearchPanel({
   };
 
   // 切换实体类型选择
-  const toggleEntityType = (entityType: string) => {
+  const _toggleEntityType = (entityType: string) => {
     setFilters((prev) => ({
       ...prev,
       entityTypes: prev.entityTypes.includes(entityType)

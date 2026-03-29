@@ -10,12 +10,12 @@ import {
   schemeChapters,
   schemeTags,
   schemeTagRelations,
-  schemeFiles,
-  schemeGenerationLogs,
+  schemeFiles as _schemeFiles,
+  schemeGenerationLogs as _schemeGenerationLogs,
   schemeVersions,
-  schemeShares,
+  schemeShares as _schemeShares,
 } from '@/db/scheme-schema';
-import { docFrameworks, docFrameworkChapters, users } from '@/db/schema';
+import { docFrameworks as _docFrameworks, docFrameworkChapters, users } from '@/db/schema';
 import {
   eq,
   and,
@@ -25,8 +25,8 @@ import {
   asc,
   inArray,
   sql,
-  count,
-  isNull,
+  count as _count,
+  isNull as _isNull,
 } from 'drizzle-orm';
 
 // ============================================
@@ -732,7 +732,7 @@ export async function deleteChapter(chapterId: number) {
 /**
  * 构建章节树
  */
-function buildChapterTree(chapters: any[], parentId: number | null = null): any[] {
+function _buildChapterTree(chapters: any[], parentId: number | null = null): any[] {
   return chapters
     .filter((c) => c.parentId === parentId)
     .map((c) => ({
@@ -747,7 +747,7 @@ function buildChapterTree(chapters: any[], parentId: number | null = null): any[
 export async function updateChapterContent(
   chapterId: number,
   content: string,
-  userId: number
+  _userId: number
 ) {
   const [chapter] = await db
     .select()

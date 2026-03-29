@@ -26,7 +26,7 @@ import { eq } from 'drizzle-orm';
 
 async function getPrintingsHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -169,7 +169,7 @@ async function createPrintingHandler(
 
 async function updatePrintingHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -263,7 +263,7 @@ async function updatePrintingHandler(
 
 async function deletePrintingHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

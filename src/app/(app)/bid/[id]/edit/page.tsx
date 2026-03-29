@@ -24,7 +24,7 @@ export default function BidEditorPage() {
   const documentId = parseInt(params.id as string);
 
   // --- 服务端状态 (TanStack Query) ---
-  const { data: document, isLoading: loadingDoc } = useDocument(documentId);
+  const { data: _document, isLoading: loadingDoc } = useDocument(documentId);
   const { data: chapters = [], isLoading: loadingChapters } = useChapters(documentId);
   
   const updateChapterMutation = useUpdateChapter();

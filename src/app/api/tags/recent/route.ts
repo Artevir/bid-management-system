@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { recentVisits, unifiedTags, tagCategories } from '@/db/schema';
-import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, inArray as _inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

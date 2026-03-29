@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from './middleware';
 import { hasProjectPermission, getProjectMemberPermission } from '@/lib/project/member';
-import { canAccessDocument, getUserMaxSecurityLevel } from '@/lib/document/security';
+import { canAccessDocument, getUserMaxSecurityLevel as _getUserMaxSecurityLevel } from '@/lib/document/security';
 import { SecurityLevel } from '@/lib/document/security';
 
 /**

@@ -26,15 +26,15 @@ import {
   CheckCircle,
   BookOpen,
   BarChart3,
-  Calendar,
+  Calendar as _Calendar,
   BrainCircuit,
-  Calculator,
-  LayoutDashboard,
+  Calculator as _Calculator,
+  LayoutDashboard as _LayoutDashboard,
   LogOut,
-  Moon,
-  Sun,
+  Moon as _Moon,
+  Sun as _Sun,
   Keyboard,
-  HelpCircle,
+  HelpCircle as _HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,8 +54,8 @@ const mainNavItems = [
 
 export function AppHeader({ className }: AppHeaderProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [searchOpen, setSearchOpen] = React.useState(false);
+  const _router = useRouter();
+  const [_searchOpen, setSearchOpen] = React.useState(false);
 
   // 快捷键处理
   React.useEffect(() => {
@@ -69,7 +69,7 @@ export function AppHeader({ className }: AppHeaderProps) {
       // 快速导航 g + key
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         const key = e.key.toLowerCase();
-        const navItem = mainNavItems.find(item => 
+        const _navItem = mainNavItems.find(item => 
           item.shortcut?.endsWith(key)
         );
         // 简单实现：按g后按对应字母跳转

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { historicalQuotes, projects } from '@/db/schema';
-import { desc, eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
+import { historicalQuotes, projects as _projects } from '@/db/schema';
+import { desc, eq, and, gte, lte, sql, inArray as _inArray } from 'drizzle-orm';
 
 /**
  * 获取历史报价列表

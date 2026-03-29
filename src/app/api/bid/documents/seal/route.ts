@@ -23,7 +23,7 @@ import { success, created, AppError, handleError } from '@/lib/api/error-handler
 
 async function getDocumentSealApplications(
   request: NextRequest,
-  userId: number
+  _userId: number
 ) {
   try {
     const { searchParams } = new URL(request.url);

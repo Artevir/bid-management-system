@@ -35,7 +35,7 @@ import {
   Search,
   Loader2,
   AlertCircle,
-  FileText,
+  FileText as _FileText,
   Download,
   Trash2,
   Eye,
@@ -45,8 +45,8 @@ import {
 import {
   DOCUMENT_SECURITY_LABELS,
   DOCUMENT_SECURITY_COLORS,
-  FILE_CATEGORY_LABELS,
-  FileCategoryType,
+  FILE_CATEGORY_LABELS as _FILE_CATEGORY_LABELS,
+  FileCategoryType as _FileCategoryType,
   DocumentSecurityLevel,
 } from '@/types/document';
 

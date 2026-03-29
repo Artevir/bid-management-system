@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { aiEvaluationSets, aiTestCases, aiTestRuns, aiTestCaseResults, aiQualityMetrics } from '@/db/schema';
-import { eq, and, desc, avg, count } from 'drizzle-orm';
+import { eq, and, desc, avg, count as _count } from 'drizzle-orm';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
 
 // ============================================

@@ -12,12 +12,12 @@ import {
   Hash,
   FolderTree,
   Tag as TagIcon,
-  Users,
+  Users as _Users,
   Calendar,
   Activity,
   Loader2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn as _cn } from '@/lib/utils';
 
 // ============================================
 // Types

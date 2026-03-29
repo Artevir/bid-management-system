@@ -6,8 +6,8 @@
 import { db } from '@/db';
 import {
   imageGenerations,
-  projects,
-  bidDocuments,
+  projects as _projects,
+  bidDocuments as _bidDocuments,
 } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import {

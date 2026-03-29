@@ -8,7 +8,7 @@ import {
   getManufacturers,
   createManufacturer,
   updateManufacturer,
-  deleteManufacturer,
+  deleteManufacturer as _deleteManufacturer,
 } from '@/lib/authorization/service';
 
 // GET - 获取厂家列表
@@ -73,7 +73,7 @@ export async function POST(
 // PUT - 批量更新厂家排序
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { _params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();

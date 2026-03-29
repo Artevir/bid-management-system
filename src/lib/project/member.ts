@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { projects, projectMembers, users, departments } from '@/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray as _inArray } from 'drizzle-orm';
 
 // 项目成员角色
 export type ProjectRole = 'owner' | 'editor' | 'viewer' | 'auditor';
@@ -14,7 +14,7 @@ export type ProjectRole = 'owner' | 'editor' | 'viewer' | 'auditor';
 export type SecurityLevel = 'public' | 'internal' | 'confidential' | 'secret';
 
 // 密级权重（用于比较）
-const SECURITY_LEVEL_WEIGHT: Record<SecurityLevel, number> = {
+const _SECURITY_LEVEL_WEIGHT: Record<SecurityLevel, number> = {
   public: 0,
   internal: 1,
   confidential: 2,
@@ -347,7 +347,7 @@ export async function removeProjectMember(
     return false;
   }
 
-  const result = await db
+  const _result = await db
     .delete(projectMembers)
     .where(
       and(

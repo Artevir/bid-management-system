@@ -22,7 +22,7 @@ import {
 } from '@/lib/cost/service';
 import { db } from '@/db';
 import { projects } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq as _eq } from 'drizzle-orm';
 
 // 获取成本数据
 export async function GET(request: NextRequest) {

@@ -3,7 +3,7 @@
  * 支持Excel、CSV、PDF等格式的导入导出
  */
 
-import { cache } from '@/lib/cache';
+import { cache as _cache } from '@/lib/cache';
 
 // ============================================
 // 导出格式枚举
@@ -54,7 +54,7 @@ export class ImportExportService {
       }
 
       // 获取所有列名
-      const columns = Object.keys(data[0]);
+      const _columns = Object.keys(data[0]);
 
       // 生成CSV格式（临时方案）
       const csvContent = this.generateCSV(data, options);
@@ -91,7 +91,7 @@ export class ImportExportService {
    */
   static async exportToJSON(
     data: any[],
-    options: ExportOptions = { format: ExportFormat.JSON }
+    _options: ExportOptions = { format: ExportFormat.JSON }
   ): Promise<Buffer> {
     try {
       if (data.length === 0) {
@@ -146,7 +146,7 @@ export class ImportExportService {
    */
   static async importFromJSON(
     buffer: Buffer,
-    options: ImportOptions = { format: ExportFormat.JSON }
+    _options: ImportOptions = { format: ExportFormat.JSON }
   ): Promise<any[]> {
     try {
       const content = buffer.toString('utf-8');
@@ -213,7 +213,7 @@ export class ImportExportService {
 
     // 跳过首行
     const startIndex = options.skipFirstRow ? 1 : 0;
-    const startIndexForHeaders = startIndex === 0 ? 0 : 1;
+    const _startIndexForHeaders = startIndex === 0 ? 0 : 1;
     const headersToUse = startIndex === 0 ? headers : headers;
 
     // 解析数据行

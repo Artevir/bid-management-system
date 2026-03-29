@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resumeGenerateService } from '@/lib/services/resume-generate-service';
-import { generationProgressServiceV2 } from '@/lib/services/generation-progress-service-v2';
+import { generationProgressServiceV2 as _generationProgressServiceV2 } from '@/lib/services/generation-progress-service-v2';
 
 /**
  * GET /api/bid/documents/[id]/resume

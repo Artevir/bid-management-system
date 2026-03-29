@@ -1,0 +1,1329 @@
+file	line	before	after
+src\app\(app)\approval\page.tsx	6	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\approval\page.tsx	6	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\(app)\approval\page.tsx	25	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\app\(app)\approval\page.tsx	28	import { APPROVAL_STATUS_MAP } from '@/lib/constants/bid-ui';	import { APPROVAL_STATUS_MAP as _APPROVAL_STATUS_MAP } from '@/lib/constants/bid-ui';
+src\app\(app)\approval\page.tsx	31	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bid-attendances\page.tsx	7	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid-attendances\page.tsx	51	  Car,	  Car as _Car,
+src\app\(app)\bid-attendances\page.tsx	52	  UserCheck,	  UserCheck as _UserCheck,
+src\app\(app)\bid-attendances\page.tsx	240	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-attendances\page.tsx	451	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-attendances\page.tsx	474	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-attendances\page.tsx	495	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-attendances\page.tsx	518	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-document-purchases\page.tsx	9	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid-document-purchases\page.tsx	9	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\(app)\bid-document-purchases\page.tsx	46	  Phone,	  Phone as _Phone,
+src\app\(app)\bid-document-purchases\page.tsx	143	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid-document-purchases\page.tsx	196	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid-document-purchases\page.tsx	217	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid-document-purchases\page.tsx	237	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid-document-purchases\page.tsx	265	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid-notification-collections\page.tsx	7	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid-notification-collections\page.tsx	50	  MapPin,	  MapPin as _MapPin,
+src\app\(app)\bid-notification-collections\page.tsx	51	  Phone,	  Phone as _Phone,
+src\app\(app)\bid-notification-collections\page.tsx	196	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-notification-collections\page.tsx	358	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-notification-collections\page.tsx	381	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-notification-collections\page.tsx	402	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-notification-collections\page.tsx	425	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-printings\page.tsx	41	  Eye,	  Eye as _Eye,
+src\app\(app)\bid-printings\page.tsx	43	  Calendar,	  Calendar as _Calendar,
+src\app\(app)\bid-printings\page.tsx	51	  FileText,	  FileText as _FileText,
+src\app\(app)\bid-printings\page.tsx	152	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bid-printings\page.tsx	175	  const [detailDialogOpen, setDetailDialogOpen] = useState(false);	  const [_detailDialogOpen, setDetailDialogOpen] = useState(false);
+src\app\(app)\bid-printings\page.tsx	175	  const [_detailDialogOpen, setDetailDialogOpen] = useState(false);	  const [_detailDialogOpen, _setDetailDialogOpen] = useState(false);
+src\app\(app)\bid-printings\page.tsx	176	  const [selectedPrinting, setSelectedPrinting] = useState<Printing | null>(null);	  const [_selectedPrinting, setSelectedPrinting] = useState<Printing | null>(null);
+src\app\(app)\bid-printings\page.tsx	176	  const [_selectedPrinting, setSelectedPrinting] = useState<Printing | null>(null);	  const [_selectedPrinting, _setSelectedPrinting] = useState<Printing | null>(null);
+src\app\(app)\bid-seal-applications\page.tsx	7	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid-seal-applications\page.tsx	23	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\app\(app)\bid-seal-applications\page.tsx	44	  Building2,	  Building2 as _Building2,
+src\app\(app)\bid-seal-applications\page.tsx	218	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-seal-applications\page.tsx	265	  const loadCompanyAddress = async (companyId: number) => {	  const _loadCompanyAddress = async (companyId: number) => {
+src\app\(app)\bid-seal-applications\page.tsx	440	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-seal-applications\page.tsx	463	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-seal-applications\page.tsx	484	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid-seal-applications\page.tsx	507	    } catch (err) {	    } catch (_err) {
+src\app\(app)\bid\[id]\approval\page.tsx	8	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\(app)\bid\[id]\approval\page.tsx	11	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid\[id]\approval\page.tsx	45	  Calendar,	  Calendar as _Calendar,
+src\app\(app)\bid\[id]\approval\page.tsx	46	  FileText,	  FileText as _FileText,
+src\app\(app)\bid\[id]\approval\page.tsx	72	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bid\[id]\edit\page.tsx	27	  const { data: document, isLoading: loadingDoc } = useDocument(documentId);	  const { data: _document, isLoading: loadingDoc } = useDocument(documentId);
+src\app\(app)\bid\[id]\interpretations\page.tsx	8	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\(app)\bid\[id]\interpretations\page.tsx	13	import { Badge } from '@/components/ui/badge';	import { Badge as _Badge } from '@/components/ui/badge';
+src\app\(app)\bid\[id]\interpretations\page.tsx	16	  Select,	  Select as _Select,
+src\app\(app)\bid\[id]\interpretations\page.tsx	17	  SelectContent,	  SelectContent as _SelectContent,
+src\app\(app)\bid\[id]\interpretations\page.tsx	18	  SelectItem,	  SelectItem as _SelectItem,
+src\app\(app)\bid\[id]\interpretations\page.tsx	19	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\app\(app)\bid\[id]\interpretations\page.tsx	20	  SelectValue,	  SelectValue as _SelectValue,
+src\app\(app)\bid\[id]\interpretations\page.tsx	125	  const handleLinkInterpretation = async (interpretationId: number) => {	  const _handleLinkInterpretation = async (interpretationId: number) => {
+src\app\(app)\bid\[id]\seal\page.tsx	8	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\(app)\bid\[id]\seal\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid\[id]\seal\page.tsx	13	import { Badge } from '@/components/ui/badge';	import { Badge as _Badge } from '@/components/ui/badge';
+src\app\(app)\bid\[id]\seal\page.tsx	42	  Search,	  Search as _Search,
+src\app\(app)\bid\[id]\seal\page.tsx	74	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bid\[id]\statistics\page.tsx	8	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\(app)\bid\[id]\statistics\page.tsx	12	import { Badge } from '@/components/ui/badge';	import { Badge as _Badge } from '@/components/ui/badge';
+src\app\(app)\bid\[id]\statistics\page.tsx	22	  BarChart3,	  BarChart3 as _BarChart3,
+src\app\(app)\bid\[id]\statistics\page.tsx	23	  PieChart,	  PieChart as _PieChart,
+src\app\(app)\bid\[id]\statistics\page.tsx	27	  Clock,	  Clock as _Clock,
+src\app\(app)\bid\[id]\statistics\page.tsx	28	  Users,	  Users as _Users,
+src\app\(app)\bid\[id]\statistics\page.tsx	29	  Calendar,	  Calendar as _Calendar,
+src\app\(app)\bid\[id]\statistics\page.tsx	70	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bid\[id]\statistics\page.tsx	74	  const [projectStats, setProjectStats] = useState<ProjectDocumentStatistics | null>(null);	  const [_projectStats, setProjectStats] = useState<ProjectDocumentStatistics | null>(null);
+src\app\(app)\bid\[id]\statistics\page.tsx	74	  const [_projectStats, setProjectStats] = useState<ProjectDocumentStatistics | null>(null);	  const [_projectStats, _setProjectStats] = useState<ProjectDocumentStatistics | null>(null);
+src\app\(app)\bid\[id]\statistics\page.tsx	75	  const [loading, setLoading] = useState(true);	  const [_loading, setLoading] = useState(true);
+src\app\(app)\bid\page.tsx	53	  useDeleteChapter 	  useDeleteChapter as _useDeleteChapter 
+src\app\(app)\bid\page.tsx	71	  const { data: projects = [], isLoading: loadingProjects } = useProjects();	  const { data: projects = [], isLoading: _loadingProjects } = useProjects();
+src\app\(app)\bid\page.tsx	92	    } catch (error) {	    } catch (_error) {
+src\app\(app)\bid\page.tsx	104	    } catch (error) {}	    } catch (_error) {}
+src\app\(app)\bid\templates\page.tsx	8	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\(app)\bid\templates\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\bid\templates\page.tsx	41	  Search,	  Search as _Search,
+src\app\(app)\bid\templates\page.tsx	46	  MoreHorizontal,	  MoreHorizontal as _MoreHorizontal,
+src\app\(app)\bid\templates\page.tsx	68	  const router = useRouter();	  const _router = useRouter();
+src\app\(app)\bidding-platforms\page.tsx	33	import { Textarea } from '@/components/ui/textarea';	import { Textarea as _Textarea } from '@/components/ui/textarea';
+src\app\(app)\bidding-platforms\page.tsx	47	  Edit,	  Edit as _Edit,
+src\app\(app)\contract-signings\page.tsx	7	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\contract-signings\page.tsx	52	  Building,	  Building as _Building,
+src\app\(app)\contract-signings\page.tsx	53	  Phone,	  Phone as _Phone,
+src\app\(app)\contract-signings\page.tsx	54	  MapPin,	  MapPin as _MapPin,
+src\app\(app)\contract-signings\page.tsx	238	    } catch (err) {	    } catch (_err) {
+src\app\(app)\contract-signings\page.tsx	454	    } catch (err) {	    } catch (_err) {
+src\app\(app)\contract-signings\page.tsx	477	    } catch (err) {	    } catch (_err) {
+src\app\(app)\contract-signings\page.tsx	498	    } catch (err) {	    } catch (_err) {
+src\app\(app)\contract-signings\page.tsx	536	    } catch (err) {	    } catch (_err) {
+src\app\(app)\contract-signings\page.tsx	561	  const getContractTypeLabel = (type: string) => {	  const _getContractTypeLabel = (type: string) => {
+src\app\(app)\image-generations\page.tsx	31	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\app\(app)\performance-bonds\page.tsx	7	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\(app)\performance-bonds\page.tsx	50	  DollarSign,	  DollarSign as _DollarSign,
+src\app\(app)\performance-bonds\page.tsx	216	    } catch (err) {	    } catch (_err) {
+src\app\(app)\performance-bonds\page.tsx	390	    } catch (err) {	    } catch (_err) {
+src\app\(app)\performance-bonds\page.tsx	413	    } catch (err) {	    } catch (_err) {
+src\app\(app)\performance-bonds\page.tsx	434	    } catch (err) {	    } catch (_err) {
+src\app\(app)\performance-bonds\page.tsx	457	    } catch (err) {	    } catch (_err) {
+src\app\(app)\tender-subscriptions\page.tsx	30	  Select,	  Select as _Select,
+src\app\(app)\tender-subscriptions\page.tsx	31	  SelectContent,	  SelectContent as _SelectContent,
+src\app\(app)\tender-subscriptions\page.tsx	32	  SelectItem,	  SelectItem as _SelectItem,
+src\app\(app)\tender-subscriptions\page.tsx	33	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\app\(app)\tender-subscriptions\page.tsx	34	  SelectValue,	  SelectValue as _SelectValue,
+src\app\(app)\tender-subscriptions\page.tsx	50	  Search,	  Search as _Search,
+src\app\(app)\tender-subscriptions\page.tsx	59	  XCircle,	  XCircle as _XCircle,
+src\app\(app)\tender-subscriptions\page.tsx	112	  const router = useRouter();	  const _router = useRouter();
+src\app\admin\audit\page.tsx	107	    } catch (err) {	    } catch (_err) {
+src\app\admin\roles\page.tsx	94	    } catch (err) {	    } catch (_err) {
+src\app\admin\roles\page.tsx	145	    } catch (err) {	    } catch (_err) {
+src\app\admin\roles\page.tsx	162	    } catch (err) {	    } catch (_err) {
+src\app\admin\roles\page.tsx	175	    } catch (err) {	    } catch (_err) {
+src\app\admin\roles\page.tsx	195	    } catch (err) {	    } catch (_err) {
+src\app\admin\users\page.tsx	23	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\app\admin\users\page.tsx	112	    } catch (err) {	    } catch (_err) {
+src\app\admin\users\page.tsx	179	    } catch (err) {	    } catch (_err) {
+src\app\admin\users\page.tsx	192	    } catch (err) {	    } catch (_err) {
+src\app\admin\users\page.tsx	205	    } catch (err) {	    } catch (_err) {
+src\app\admin\users\page.tsx	224	    } catch (err) {	    } catch (_err) {
+src\app\ai-assistant\page.tsx	6	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\app\ai-assistant\page.tsx	7	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\ai-assistant\page.tsx	19	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\ai-assistant\page.tsx	29	  Plus,	  Plus as _Plus,
+src\app\ai-assistant\page.tsx	30	  X,	  X as _X,
+src\app\ai-assistant\page.tsx	33	  ChevronDown,	  ChevronDown as _ChevronDown,
+src\app\api-docs\page.tsx	38	  Gavel,	  Gavel as _Gavel,
+src\app\api-docs\page.tsx	243	  const [endpoints, setEndpoints] = useState<ApiEndpoint[]>(MOCK_API_ENDPOINTS);	  const [endpoints, _setEndpoints] = useState<ApiEndpoint[]>(MOCK_API_ENDPOINTS);
+src\app\api\admin\audit\stats\route.ts	7	import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';	import { withPermission as _withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
+src\app\api\admin\audit\stats\route.ts	7	import { withPermission as _withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';	import { withPermission as _withPermission, PERMISSIONS as _PERMISSIONS } from '@/lib/auth/rbac-middleware';
+src\app\api\admin\rbac\roles\route.ts	16	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\ai-governance\route.ts	27	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	44	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	93	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	122	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	147	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	172	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	193	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	219	  userId: number	  _userId: number
+src\app\api\ai-governance\route.ts	239	  request: NextRequest,	  _request: NextRequest,
+src\app\api\ai-governance\route.ts	240	  userId: number	  _userId: number
+src\app\api\alert-settings\route.ts	14	export async function GET(req: NextRequest) {	export async function GET(_req: NextRequest) {
+src\app\api\alerts\route.ts	11	  complianceCheckService,	  complianceCheckService as _complianceCheckService,
+src\app\api\alerts\route.ts	74	export async function POST(req: NextRequest) {	export async function POST(_req: NextRequest) {
+src\app\api\approval\annotations\route.ts	10	  resolveAnnotation,	  resolveAnnotation as _resolveAnnotation,
+src\app\api\approval\annotations\route.ts	11	  dismissAnnotation,	  dismissAnnotation as _dismissAnnotation,
+src\app\api\archives\[id]\route.ts	14	import { eq, and, desc } from 'drizzle-orm';	import { eq, and as _and, desc } from 'drizzle-orm';
+src\app\api\archives\auto\route.ts	13	  companies 	  companies as _companies 
+src\app\api\archives\auto\route.ts	15	import { eq, inArray } from 'drizzle-orm';	import { eq, inArray as _inArray } from 'drizzle-orm';
+src\app\api\archives\route.ts	11	  bidArchiveFiles,	  bidArchiveFiles as _bidArchiveFiles,
+src\app\api\archives\route.ts	15	  users 	  users as _users 
+src\app\api\archives\route.ts	25	  isNull, 	  isNull as _isNull, 
+src\app\api\archives\route.ts	27	  count,	  count as _count,
+src\app\api\archives\route.ts	227	async function getArchiveTree(companyId: string | null, keyword: string | null) {	async function getArchiveTree(_companyId: string | null, keyword: string | null) {
+src\app\api\archives\route.ts	227	async function getArchiveTree(_companyId: string | null, keyword: string | null) {	async function getArchiveTree(_companyId: string | null, _keyword: string | null) {
+src\app\api\audit\stats\route.ts	10	async function getStats(request: NextRequest, userId: number): Promise<NextResponse> {	async function getStats(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\auth\me\route.ts	12	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\auth\menus\route.ts	10	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\auth\permissions\route.ts	15	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\auth\refresh\route.ts	13	export async function POST(request: NextRequest) {	export async function POST(_request: NextRequest) {
+src\app\api\bid-document-purchases\[id]\push-task\route.ts	11	  users,	  users as _users,
+src\app\api\bid-document-purchases\[id]\push-task\route.ts	13	import { biddingPlatforms } from '@/db/bidding-platform-schema';	import { biddingPlatforms as _biddingPlatforms } from '@/db/bidding-platform-schema';
+src\app\api\bid-document-purchases\route.ts	17	import { eq, desc, asc, and, or, like, sql } from 'drizzle-orm';	import { eq, desc, asc as _asc, and, or, like, sql } from 'drizzle-orm';
+src\app\api\bid-document-purchases\route.ts	25	  userId: number	  _userId: number
+src\app\api\bid-document-purchases\route.ts	192	  userId: number	  _userId: number
+src\app\api\bid-document-purchases\route.ts	328	  userId: number	  _userId: number
+src\app\api\bid-printings\route.ts	29	  userId: number	  _userId: number
+src\app\api\bid-printings\route.ts	172	  userId: number	  _userId: number
+src\app\api\bid-printings\route.ts	266	  userId: number	  _userId: number
+src\app\api\bid-seal-applications\route.ts	30	  userId: number	  _userId: number
+src\app\api\bid-seal-applications\route.ts	179	  userId: number	  _userId: number
+src\app\api\bid-seal-applications\route.ts	274	  userId: number	  _userId: number
+src\app\api\bid\chapters\route.ts	19	  userId: number	  _userId: number
+src\app\api\bid\chapters\route.ts	33	  userId: number	  _userId: number
+src\app\api\bid\documents\[id]\generation-progress\route.ts	61	        } catch (error) {	        } catch (_error) {
+src\app\api\bid\documents\[id]\generation-progress\route.ts	73	        } catch (error) {	        } catch (_error) {
+src\app\api\bid\documents\[id]\progress-v2\route.ts	3	import { generationNotificationService } from '@/lib/services/generation-notification-service';	import { generationNotificationService as _generationNotificationService } from '@/lib/services/generation-notification-service';
+src\app\api\bid\documents\[id]\resume\route.ts	3	import { generationProgressServiceV2 } from '@/lib/services/generation-progress-service-v2';	import { generationProgressServiceV2 as _generationProgressServiceV2 } from '@/lib/services/generation-progress-service-v2';
+src\app\api\bid\documents\[id]\route.ts	9	import { withAuth, withDocumentPermission } from '@/lib/auth/middleware';	import { withAuth as _withAuth, withDocumentPermission } from '@/lib/auth/middleware';
+src\app\api\bid\documents\approval\route.ts	22	  userId: number	  _userId: number
+src\app\api\bid\documents\interpretations\route.ts	23	  userId: number	  _userId: number
+src\app\api\bid\documents\interpretations\route.ts	62	  userId: number	  _userId: number
+src\app\api\bid\documents\route.ts	19	  userId: number	  _userId: number
+src\app\api\bid\documents\seal\route.ts	26	  userId: number	  _userId: number
+src\app\api\bid\documents\statistics\route.ts	23	  userId: number	  _userId: number
+src\app\api\bid\documents\templates\route.ts	14	import { success, created, AppError, handleError } from '@/lib/api/error-handler';	import { success, created, AppError, handleError as _handleError } from '@/lib/api/error-handler';
+src\app\api\bid\documents\templates\route.ts	22	  userId: number	  _userId: number
+src\app\api\bid\export\route.ts	13	  userId: number	  _userId: number
+src\app\api\bid\export\route.ts	57	  userId: number	  _userId: number
+src\app\api\bid\frameworks\merge\route.ts	9	import frameworkMergeService, { type FrameworkMergeOptions, type MergedChapter, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';	import frameworkMergeService, { type FrameworkMergeOptions, type MergedChapter as _MergedChapter, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';
+src\app\api\bid\frameworks\merge\route.ts	21	  userId: number	  _userId: number
+src\app\api\bid\frameworks\merge\route.ts	146	  userId: number	  _userId: number
+src\app\api\bid\generate\route.ts	20	import { createStreamResponse, createSSEEncoder } from '@/lib/stream-utils';	import { createStreamResponse, createSSEEncoder as _createSSEEncoder } from '@/lib/stream-utils';
+src\app\api\bid\generate\route.ts	434	  userId: number	  _userId: number
+src\app\api\bid\generate\route.ts	473	        } catch (error) {	        } catch (_error) {
+src\app\api\bid\generate\route.ts	486	        } catch (error) {	        } catch (_error) {
+src\app\api\bid\review\route.ts	12	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\app\api\bid\review\route.ts	21	  userId: number	  _userId: number
+src\app\api\bid\review\route.ts	230	  userId: number	  _userId: number
+src\app\api\bid\review\route.ts	261	  userId: number	  _userId: number
+src\app\api\bid\review\route.ts	296	  userId: number	  _userId: number
+src\app\api\bid\review\route.ts	384	        } catch (error) {	        } catch (_error) {
+src\app\api\bidding-platforms\route.ts	15	import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';	import { eq, desc as _desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';
+src\app\api\bidding-platforms\route.ts	15	import { eq, desc as _desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';	import { eq, desc as _desc, asc, and, or, like, sql, inArray as _inArray } from 'drizzle-orm';
+src\app\api\cache\stats\route.ts	14	async function getCacheStats(request: NextRequest, userId: number): Promise<NextResponse> {	async function getCacheStats(_request: NextRequest, userId: number): Promise<NextResponse> {
+src\app\api\cache\stats\route.ts	14	async function getCacheStats(_request: NextRequest, userId: number): Promise<NextResponse> {	async function getCacheStats(_request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\cache\stats\route.ts	31	async function clearCache(request: NextRequest, userId: number): Promise<NextResponse> {	async function clearCache(_request: NextRequest, userId: number): Promise<NextResponse> {
+src\app\api\cache\stats\route.ts	31	async function clearCache(_request: NextRequest, userId: number): Promise<NextResponse> {	async function clearCache(_request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\companies\[id]\files\route.ts	9	import { checkCompanyPermission, checkCompanyFilePermission } from '@/lib/auth/resource-permission';	import { checkCompanyPermission, checkCompanyFilePermission as _checkCompanyFilePermission } from '@/lib/auth/resource-permission';
+src\app\api\companies\[id]\frameworks\[frameworkId]\route.ts	19	  userId: number	  _userId: number
+src\app\api\companies\[id]\frameworks\[frameworkId]\route.ts	50	  userId: number	  _userId: number
+src\app\api\companies\[id]\frameworks\[frameworkId]\route.ts	114	  userId: number	  _userId: number
+src\app\api\companies\[id]\frameworks\route.ts	18	  userId: number	  _userId: number
+src\app\api\company-contacts\roles\route.ts	9	import { companyContactRoles, users, type ContactRoleType } from '@/db/schema';	import { companyContactRoles, users as _users, type ContactRoleType } from '@/db/schema';
+src\app\api\company-contacts\route.ts	11	import { eq, and, asc, desc } from 'drizzle-orm';	import { eq, and as _and, asc, desc } from 'drizzle-orm';
+src\app\api\costs\route.ts	25	import { eq } from 'drizzle-orm';	import { eq as _eq } from 'drizzle-orm';
+src\app\api\dashboard\route.ts	44	  userId: number	  _userId: number
+src\app\api\dashboard\route.ts	64	  request: NextRequest,	  _request: NextRequest,
+src\app\api\dashboard\route.ts	65	  userId: number	  _userId: number
+src\app\api\dashboard\route.ts	104	  userId: number	  _userId: number
+src\app\api\dashboard\route.ts	127	  userId: number	  _userId: number
+src\app\api\dashboard\route.ts	150	  userId: number	  _userId: number
+src\app\api\departments\route.ts	10	import { eq, desc, asc } from 'drizzle-orm';	import { eq, desc as _desc, asc } from 'drizzle-orm';
+src\app\api\departments\route.ts	14	async function getDepartments(request: NextRequest, userId: number): Promise<NextResponse> {	async function getDepartments(_request: NextRequest, userId: number): Promise<NextResponse> {
+src\app\api\departments\route.ts	14	async function getDepartments(_request: NextRequest, userId: number): Promise<NextResponse> {	async function getDepartments(_request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\departments\route.ts	28	async function createDepartment(request: NextRequest, userId: number): Promise<NextResponse> {	async function createDepartment(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\e-sign\configs\route.ts	10	  getSealConfigById,	  getSealConfigById as _getSealConfigById,
+src\app\api\e-sign\configs\route.ts	11	  updateSealConfig,	  updateSealConfig as _updateSealConfig,
+src\app\api\e-sign\configs\route.ts	12	  deleteSealConfig,	  deleteSealConfig as _deleteSealConfig,
+src\app\api\e-sign\seals\route.ts	10	  getSealById,	  getSealById as _getSealById,
+src\app\api\e-sign\seals\route.ts	11	  updateSeal,	  updateSeal as _updateSeal,
+src\app\api\e-sign\seals\route.ts	12	  deleteSeal,	  deleteSeal as _deleteSeal,
+src\app\api\e-sign\tasks\route.ts	10	  getSignTaskById,	  getSignTaskById as _getSignTaskById,
+src\app\api\e-sign\tasks\route.ts	11	  updateSignTask,	  updateSignTask as _updateSignTask,
+src\app\api\e-sign\tasks\route.ts	12	  cancelSignTask,	  cancelSignTask as _cancelSignTask,
+src\app\api\e-sign\tasks\route.ts	16	  getSignersByTaskId,	  getSignersByTaskId as _getSignersByTaskId,
+src\app\api\esign\route.ts	10	  signService,	  signService as _signService,
+src\app\api\export\route.ts	8	import { projects, bidDocuments } from '@/db/schema';	import { projects as _projects, bidDocuments } from '@/db/schema';
+src\app\api\export\route.ts	8	import { projects as _projects, bidDocuments } from '@/db/schema';	import { projects as _projects, bidDocuments as _bidDocuments } from '@/db/schema';
+src\app\api\files\multipart\abort\route.ts	14	  userId: number	  _userId: number
+src\app\api\files\multipart\init\route.ts	17	  userId: number	  _userId: number
+src\app\api\files\multipart\presign\route.ts	15	  userId: number	  _userId: number
+src\app\api\files\route.ts	49	  request: NextRequest,	  _request: NextRequest,
+src\app\api\files\route.ts	50	  userId: number	  _userId: number
+src\app\api\files\upload\route.ts	7	import { withAuth, withPermission } from '@/lib/auth/middleware';	import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
+src\app\api\files\versions\route.ts	65	  userId: number	  _userId: number
+src\app\api\files\versions\route.ts	224	  userId: number	  _userId: number
+src\app\api\frameworks\chapters\route.ts	9	import { eq, and, asc, desc, inArray, isNull, sql } from 'drizzle-orm';	import { eq, and, asc, desc as _desc, inArray, isNull, sql } from 'drizzle-orm';
+src\app\api\frameworks\instances\route.ts	16	import { eq, and, asc, inArray, sql } from 'drizzle-orm';	import { eq, and, asc, inArray as _inArray, sql } from 'drizzle-orm';
+src\app\api\frameworks\route.ts	10	import { eq, like, desc, asc, and, or, inArray, isNull, sql, isNotNull } from 'drizzle-orm';	import { eq, like, desc, asc as _asc, and, or, inArray, isNull, sql, isNotNull } from 'drizzle-orm';
+src\app\api\frameworks\route.ts	10	import { eq, like, desc, asc as _asc, and, or, inArray, isNull, sql, isNotNull } from 'drizzle-orm';	import { eq, like, desc, asc as _asc, and, or, inArray as _inArray, isNull, sql, isNotNull } from 'drizzle-orm';
+src\app\api\frameworks\route.ts	10	import { eq, like, desc, asc as _asc, and, or, inArray as _inArray, isNull, sql, isNotNull } from 'drizzle-orm';	import { eq, like, desc, asc as _asc, and, or, inArray as _inArray, isNull as _isNull, sql, isNotNull } from 'drizzle-orm';
+src\app\api\frameworks\templates\[id]\route.ts	9	import { eq, asc } from 'drizzle-orm';	import { eq, asc as _asc } from 'drizzle-orm';
+src\app\api\frameworks\templates\[id]\route.ts	39	      } catch (e) {	      } catch (_e) {
+src\app\api\frameworks\templates\[id]\route.ts	47	      } catch (e) {	      } catch (_e) {
+src\app\api\frameworks\templates\categories\route.ts	9	import { eq, asc, desc, count, sql } from 'drizzle-orm';	import { eq, asc, desc as _desc, count, sql } from 'drizzle-orm';
+src\app\api\frameworks\templates\route.ts	38	        } catch (e) {	        } catch (_e) {
+src\app\api\frameworks\versions\route.ts	14	import { eq, and, asc, desc, inArray, sql } from 'drizzle-orm';	import { eq, and as _and, asc, desc, inArray, sql } from 'drizzle-orm';
+src\app\api\frameworks\versions\route.ts	14	import { eq, and as _and, asc, desc, inArray, sql } from 'drizzle-orm';	import { eq, and as _and, asc, desc as _desc, inArray, sql } from 'drizzle-orm';
+src\app\api\frameworks\versions\route.ts	14	import { eq, and as _and, asc, desc as _desc, inArray, sql } from 'drizzle-orm';	import { eq, and as _and, asc, desc as _desc, inArray, sql as _sql } from 'drizzle-orm';
+src\app\api\frameworks\versions\route.ts	484	  const snapshot = {	  const _snapshot = {
+src\app\api\frameworks\versions\route.ts	536	  userId: number	  _userId: number
+src\app\api\guarantees\[id]\return-apply\route.ts	10	  approveReturn,	  approveReturn as _approveReturn,
+src\app\api\guarantees\[id]\return-apply\route.ts	11	  completeReturn,	  completeReturn as _completeReturn,
+src\app\api\guarantees\[id]\return-apply\route.ts	12	  rejectReturn,	  rejectReturn as _rejectReturn,
+src\app\api\guarantees\route.ts	10	  getGuaranteeById,	  getGuaranteeById as _getGuaranteeById,
+src\app\api\guarantees\route.ts	11	  updateGuarantee,	  updateGuarantee as _updateGuarantee,
+src\app\api\guarantees\route.ts	12	  deleteGuarantee,	  deleteGuarantee as _deleteGuarantee,
+src\app\api\guarantees\route.ts	13	  markAsPaid,	  markAsPaid as _markAsPaid,
+src\app\api\guarantees\route.ts	14	  markAsReturned,	  markAsReturned as _markAsReturned,
+src\app\api\guarantees\route.ts	15	  markAsForfeited,	  markAsForfeited as _markAsForfeited,
+src\app\api\guarantees\route.ts	19	  assignGuarantee,	  assignGuarantee as _assignGuarantee,
+src\app\api\health\enhanced\route.ts	9	import { getCacheStats, memoryCache, clearAllCache } from '@/lib/cache';	import { getCacheStats, memoryCache as _memoryCache, clearAllCache } from '@/lib/cache';
+src\app\api\health\enhanced\route.ts	53	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\health\enhanced\route.ts	178	  } catch (error) {	  } catch (_error) {
+src\app\api\health\route.ts	10	import { memoryCache } from '@/lib/cache';	import { memoryCache as _memoryCache } from '@/lib/cache';
+src\app\api\health\route.ts	16	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\health\route.ts	37	    const cacheStats = getCacheStats();	    const _cacheStats = getCacheStats();
+src\app\api\image-generations\[id]\route.ts	10	import { z } from 'zod';	import { z as _z } from 'zod';
+src\app\api\image\[id]\route.ts	10	import { getImageById, updateImage, deleteImage, incrementDownloadCount } from '@/lib/image/service';	import { getImageById, updateImage, deleteImage, incrementDownloadCount as _incrementDownloadCount } from '@/lib/image/service';
+src\app\api\interpretations\route.ts	8	import { HeaderUtils } from 'coze-coding-dev-sdk';	import { HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\app\api\knowledge\approval\route.ts	46	  userId: number	  _userId: number
+src\app\api\knowledge\approval\route.ts	96	  userId: number	  _userId: number
+src\app\api\knowledge\approval\route.ts	193	  userId: number	  _userId: number
+src\app\api\knowledge\categories\route.ts	11	import { eq, isNull } from 'drizzle-orm';	import { eq, isNull as _isNull } from 'drizzle-orm';
+src\app\api\knowledge\categories\route.ts	15	  request: NextRequest,	  _request: NextRequest,
+src\app\api\knowledge\categories\route.ts	16	  userId: number	  _userId: number
+src\app\api\knowledge\categories\route.ts	46	  userId: number	  _userId: number
+src\app\api\knowledge\entries\route.ts	16	  userId: number	  _userId: number
+src\app\api\knowledge\import\route.ts	14	  updateKnowledgeItem,	  updateKnowledgeItem as _updateKnowledgeItem,
+src\app\api\knowledge\search\route.ts	17	  userId: number	  _userId: number
+src\app\api\knowledge\search\route.ts	107	  userId: number	  _userId: number
+src\app\api\llm\models\[modelId]\route.ts	14	  type ModelStatus,	  type _ModelStatus,
+src\app\api\matrix\generate\route.ts	58	  userId: number	  _userId: number
+src\app\api\matrix\route.ts	10	import { responseMatrices, parseItems } from '@/db/schema';	import { responseMatrices, parseItems as _parseItems } from '@/db/schema';
+src\app\api\matrix\route.ts	11	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\app\api\matrix\route.ts	16	  userId: number	  _userId: number
+src\app\api\monitoring\performance\route.ts	22	        const limit = parseInt(searchParams.get('limit') || '100');	        const _limit = parseInt(searchParams.get('limit') || '100');
+src\app\api\monitoring\performance\route.ts	55	export async function DELETE(request: NextRequest) {	export async function DELETE(_request: NextRequest) {
+src\app\api\notification-settings\route.ts	19	export async function GET(req: NextRequest) {	export async function GET(_req: NextRequest) {
+src\app\api\notification-settings\route.ts	88	    const body = await req.json();	    const _body = await req.json();
+src\app\api\notifications\route.ts	9	import { eq, and, desc, sql, inArray, isNull, ne } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, ne } from 'drizzle-orm';
+src\app\api\notifications\route.ts	9	import { eq, and, desc, sql, inArray, isNull as _isNull, ne } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, ne as _ne } from 'drizzle-orm';
+src\app\api\openapi\route.ts	9	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\openings\route.ts	10	  getOpeningById,	  getOpeningById as _getOpeningById,
+src\app\api\openings\route.ts	11	  updateOpening,	  updateOpening as _updateOpening,
+src\app\api\openings\route.ts	12	  deleteOpening,	  deleteOpening as _deleteOpening,
+src\app\api\parse\stream\route.ts	7	import { withAuth } from '@/lib/auth/middleware';	import { withAuth as _withAuth } from '@/lib/auth/middleware';
+src\app\api\parse\stream\route.ts	17	  userId: number	  _userId: number
+src\app\api\parse\stream\route.ts	179	  parentId?: number	  _parentId?: number
+src\app\api\parse\tasks\[id]\items\route.ts	8	import { getParseItems, confirmParseItem, ParseItemType } from '@/lib/parse/service';	import { getParseItems, confirmParseItem as _confirmParseItem, ParseItemType } from '@/lib/parse/service';
+src\app\api\parse\tasks\[id]\sections\route.ts	36	    const buildTree = (parentId: number | null = null): SectionNode[] => {	    const buildTree = (_parentId: number | null = null): SectionNode[] => {
+src\app\api\parse\tasks\route.ts	18	  userId: number	  _userId: number
+src\app\api\permissions\route.ts	10	import { eq, desc, asc } from 'drizzle-orm';	import { eq, desc as _desc, asc } from 'drizzle-orm';
+src\app\api\permissions\route.ts	64	async function getPermissions(request: NextRequest, userId: number): Promise<NextResponse> {	async function getPermissions(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\permissions\route.ts	95	async function createPermission(request: NextRequest, userId: number): Promise<NextResponse> {	async function createPermission(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\platform-sync\route.ts	20	  type PlatformFullInfo,	  type _PlatformFullInfo,
+src\app\api\process\contacts\route.ts	16	  userId: number	  _userId: number
+src\app\api\process\contacts\route.ts	81	  userId: number	  _userId: number
+src\app\api\process\contacts\route.ts	109	  userId: number	  _userId: number
+src\app\api\process\meetings\route.ts	16	  userId: number	  _userId: number
+src\app\api\process\meetings\route.ts	74	  userId: number	  _userId: number
+src\app\api\process\meetings\route.ts	99	  userId: number	  _userId: number
+src\app\api\process\tasks\route.ts	91	  userId: number	  _userId: number
+src\app\api\process\tasks\route.ts	116	  userId: number	  _userId: number
+src\app\api\project-discussions\route.ts	12	import { checkProjectPermission } from '@/lib/project-org/service';	import { checkProjectPermission as _checkProjectPermission } from '@/lib/project-org/service';
+src\app\api\project-tags\[id]\route.ts	11	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\app\api\project-tags\route.ts	10	import { eq, like, asc, count, sql } from 'drizzle-orm';	import { eq, like, asc, count as _count, sql } from 'drizzle-orm';
+src\app\api\project\reminders\route.ts	20	  request: NextRequest,	  _request: NextRequest,
+src\app\api\project\reminders\route.ts	21	  userId: number	  _userId: number
+src\app\api\project\reminders\route.ts	39	  userId: number	  _userId: number
+src\app\api\project\reminders\route.ts	60	  request: NextRequest,	  _request: NextRequest,
+src\app\api\project\reminders\route.ts	61	  userId: number	  _userId: number
+src\app\api\project\reminders\route.ts	80	  userId: number	  _userId: number
+src\app\api\project\reminders\route.ts	106	  userId: number	  _userId: number
+src\app\api\project\reminders\route.ts	128	  userId: number	  _userId: number
+src\app\api\projects\[id]\members\[memberId]\route.ts	9	import { withAuth, withPermission } from '@/lib/auth/middleware';	import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
+src\app\api\projects\[id]\members\route.ts	8	import { withAuth, withPermission } from '@/lib/auth/middleware';	import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
+src\app\api\projects\[id]\members\route.ts	11	  addProjectMember,	  addProjectMember as _addProjectMember,
+src\app\api\projects\route.ts	23	  parseResourceId,	  parseResourceId as _parseResourceId,
+src\app\api\projects\route.ts	24	  parseIdFromParams,	  parseIdFromParams as _parseIdFromParams,
+src\app\api\prompts\categories\route.ts	8	import { eq, like, desc, asc, and } from 'drizzle-orm';	import { eq, like, desc as _desc, asc, and } from 'drizzle-orm';
+src\app\api\prompts\templates\route.ts	15	  roles,	  roles as _roles,
+src\app\api\quote-analysis\route.ts	10	  getQuoteAnalysisRequestById,	  getQuoteAnalysisRequestById as _getQuoteAnalysisRequestById,
+src\app\api\quote-analysis\route.ts	11	  updateQuoteAnalysisRequest,	  updateQuoteAnalysisRequest as _updateQuoteAnalysisRequest,
+src\app\api\quote-analysis\schemes\[id]\adopt\route.ts	7	import { adoptQuoteScheme, getQuoteSchemesByRequestId } from '@/lib/quote-analysis/service';	import { adoptQuoteScheme, getQuoteSchemesByRequestId as _getQuoteSchemesByRequestId } from '@/lib/quote-analysis/service';
+src\app\api\quotes\analyze\route.ts	3	import { historicalQuotes, competitors, competitorBids } from '@/db/schema';	import { historicalQuotes, competitors, competitorBids as _competitorBids } from '@/db/schema';
+src\app\api\quotes\analyze\route.ts	4	import { eq, and, gte, lte, sql, desc, isNotNull } from 'drizzle-orm';	import { eq, and, gte as _gte, lte, sql, desc, isNotNull } from 'drizzle-orm';
+src\app\api\quotes\analyze\route.ts	4	import { eq, and, gte as _gte, lte, sql, desc, isNotNull } from 'drizzle-orm';	import { eq, and, gte as _gte, lte as _lte, sql, desc, isNotNull } from 'drizzle-orm';
+src\app\api\quotes\analyze\route.ts	4	import { eq, and, gte as _gte, lte as _lte, sql, desc, isNotNull } from 'drizzle-orm';	import { eq, and, gte as _gte, lte as _lte, sql as _sql, desc, isNotNull } from 'drizzle-orm';
+src\app\api\quotes\analyze\route.ts	143	function generateRecommendations(stats: any, budget: number, data: any[]) {	function generateRecommendations(stats: any, _budget: number, data: any[]) {
+src\app\api\quotes\analyze\route.ts	143	function generateRecommendations(stats: any, _budget: number, data: any[]) {	function generateRecommendations(stats: any, _budget: number, _data: any[]) {
+src\app\api\quotes\analyze\route.ts	210	async function analyzeCompetitors(industry: string | null, region: string | null) {	async function analyzeCompetitors(_industry: string | null, region: string | null) {
+src\app\api\quotes\analyze\route.ts	210	async function analyzeCompetitors(_industry: string | null, region: string | null) {	async function analyzeCompetitors(_industry: string | null, _region: string | null) {
+src\app\api\quotes\route.ts	3	import { historicalQuotes, projects } from '@/db/schema';	import { historicalQuotes, projects as _projects } from '@/db/schema';
+src\app\api\quotes\route.ts	4	import { desc, eq, and, gte, lte, sql, inArray } from 'drizzle-orm';	import { desc, eq, and, gte, lte, sql, inArray as _inArray } from 'drizzle-orm';
+src\app\api\quotes\suggestion\route.ts	7	import { quoteStrategyService, historicalAnalysisService, costModelService } from '@/lib/quote/service';	import { quoteStrategyService, historicalAnalysisService as _historicalAnalysisService, costModelService } from '@/lib/quote/service';
+src\app\api\quotes\suggestion\route.ts	7	import { quoteStrategyService, historicalAnalysisService as _historicalAnalysisService, costModelService } from '@/lib/quote/service';	import { quoteStrategyService, historicalAnalysisService as _historicalAnalysisService, costModelService as _costModelService } from '@/lib/quote/service';
+src\app\api\recycle-bin\route.ts	19	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	19	  getRuleById,	  getRuleById as _getRuleById,
+src\app\api\review\config\route.ts	24	  getTemplateById,	  getTemplateById as _getTemplateById,
+src\app\api\review\config\route.ts	28	  getDefaultTemplate,	  getDefaultTemplate as _getDefaultTemplate,
+src\app\api\review\config\route.ts	37	  request: NextRequest,	  _request: NextRequest,
+src\app\api\review\config\route.ts	38	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	59	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	112	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	140	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	168	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	195	  request: NextRequest,	  _request: NextRequest,
+src\app\api\review\config\route.ts	196	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	233	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	257	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	284	  request: NextRequest,	  _request: NextRequest,
+src\app\api\review\config\route.ts	285	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	322	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	346	  userId: number	  _userId: number
+src\app\api\review\config\route.ts	373	  request: NextRequest,	  _request: NextRequest,
+src\app\api\review\config\route.ts	374	  userId: number	  _userId: number
+src\app\api\roles\[id]\route.ts	10	import { roles, rolePermissions, permissions } from '@/db/schema';	import { roles, rolePermissions, permissions as _permissions } from '@/db/schema';
+src\app\api\roles\[id]\route.ts	11	import { eq, inArray } from 'drizzle-orm';	import { eq, inArray as _inArray } from 'drizzle-orm';
+src\app\api\roles\route.ts	9	import { roles, rolePermissions, permissions } from '@/db/schema';	import { roles, rolePermissions as _rolePermissions, permissions } from '@/db/schema';
+src\app\api\roles\route.ts	9	import { roles, rolePermissions as _rolePermissions, permissions } from '@/db/schema';	import { roles, rolePermissions as _rolePermissions, permissions as _permissions } from '@/db/schema';
+src\app\api\roles\route.ts	10	import { eq, inArray, desc } from 'drizzle-orm';	import { eq, inArray as _inArray, desc } from 'drizzle-orm';
+src\app\api\roles\route.ts	11	import { withAuth, withAdmin, clearPermissionCache } from '@/lib/auth/middleware';	import { withAuth, withAdmin, clearPermissionCache as _clearPermissionCache } from '@/lib/auth/middleware';
+src\app\api\roles\route.ts	14	async function getRoles(request: NextRequest, userId: number): Promise<NextResponse> {	async function getRoles(_request: NextRequest, userId: number): Promise<NextResponse> {
+src\app\api\roles\route.ts	14	async function getRoles(_request: NextRequest, userId: number): Promise<NextResponse> {	async function getRoles(_request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\roles\route.ts	42	async function createRole(request: NextRequest, userId: number): Promise<NextResponse> {	async function createRole(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\schemes\ai\generate\route.ts	112	async function generateContent(prompt: string, mode: string): Promise<string> {	async function generateContent(_prompt: string, mode: string): Promise<string> {
+src\app\api\schemes\ai\generate\route.ts	112	async function generateContent(_prompt: string, mode: string): Promise<string> {	async function generateContent(_prompt: string, _mode: string): Promise<string> {
+src\app\api\schemes\categories\route.ts	16	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\sessions\route.ts	12	  getSessionStats,	  getSessionStats as _getSessionStats,
+src\app\api\sessions\stats\route.ts	10	async function getStats(request: NextRequest, userId: number): Promise<NextResponse> {	async function getStats(_request: NextRequest, userId: number): Promise<NextResponse> {
+src\app\api\sessions\stats\route.ts	10	async function getStats(_request: NextRequest, userId: number): Promise<NextResponse> {	async function getStats(_request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\support\authorizations\[id]\deliveries\route.ts	10	  updateDelivery,	  updateDelivery as _updateDelivery,
+src\app\api\support\authorizations\[id]\manufacturers\route.ts	11	  deleteManufacturer,	  deleteManufacturer as _deleteManufacturer,
+src\app\api\support\authorizations\[id]\manufacturers\route.ts	76	  { params }: { params: Promise<{ id: string }> }	  { _params }: { params: Promise<{ id: string }> }
+src\app\api\support\authorizations\[id]\todos\route.ts	10	  updateTodoStatus,	  updateTodoStatus as _updateTodoStatus,
+src\app\api\support\authorizations\[id]\todos\route.ts	11	  deleteTodo,	  deleteTodo as _deleteTodo,
+src\app\api\support\authorizations\manufacturers\[manufacturerId]\qualifications\route.ts	10	  updateQualification,	  updateQualification as _updateQualification,
+src\app\api\support\authorizations\manufacturers\[manufacturerId]\qualifications\route.ts	11	  deleteQualification,	  deleteQualification as _deleteQualification,
+src\app\api\tags\[id]\versions\route.ts	9	import { eq, and, desc, asc } from 'drizzle-orm';	import { eq, and, desc, asc as _asc } from 'drizzle-orm';
+src\app\api\tags\batch\route.ts	8	import { unifiedTags, entityTags, tagCategories } from '@/db/schema';	import { unifiedTags, entityTags, tagCategories as _tagCategories } from '@/db/schema';
+src\app\api\tags\categories\route.ts	9	import { eq, like, desc, asc, and, or, inArray, isNull } from 'drizzle-orm';	import { eq, like, desc as _desc, asc, and, or, inArray, isNull } from 'drizzle-orm';
+src\app\api\tags\categories\route.ts	9	import { eq, like, desc as _desc, asc, and, or, inArray, isNull } from 'drizzle-orm';	import { eq, like, desc as _desc, asc, and, or as _or, inArray, isNull } from 'drizzle-orm';
+src\app\api\tags\categories\route.ts	9	import { eq, like, desc as _desc, asc, and, or as _or, inArray, isNull } from 'drizzle-orm';	import { eq, like, desc as _desc, asc, and, or as _or, inArray as _inArray, isNull } from 'drizzle-orm';
+src\app\api\tags\favorites\route.ts	9	import { eq, and, desc, asc, inArray, sql } from 'drizzle-orm';	import { eq, and, desc, asc, inArray as _inArray, sql } from 'drizzle-orm';
+src\app\api\tags\favorites\route.ts	9	import { eq, and, desc, asc, inArray as _inArray, sql } from 'drizzle-orm';	import { eq, and, desc, asc, inArray as _inArray, sql as _sql } from 'drizzle-orm';
+src\app\api\tags\recent\route.ts	9	import { eq, and, desc, inArray, sql } from 'drizzle-orm';	import { eq, and, desc, inArray as _inArray, sql } from 'drizzle-orm';
+src\app\api\tags\search\route.ts	9	import { eq, like, desc, asc, and, or, inArray, isNull, sql, not, between, gte, lte } from 'drizzle-orm';	import { eq, like, desc, asc, and, or, inArray, isNull, sql, not as _not, between, gte, lte } from 'drizzle-orm';
+src\app\api\tags\search\route.ts	10	import { getCurrentUser } from '@/lib/auth/jwt';	import { getCurrentUser as _getCurrentUser } from '@/lib/auth/jwt';
+src\app\api\tags\statistics\route.ts	8	import { unifiedTags, tagCategories, entityTags, users } from '@/db/schema';	import { unifiedTags, tagCategories, entityTags, users as _users } from '@/db/schema';
+src\app\api\tags\statistics\route.ts	9	import { eq, and, desc, asc, sql, gte, lte, inArray, count, sum } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray, count, sum } from 'drizzle-orm';
+src\app\api\tags\statistics\route.ts	9	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray, count, sum } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray as _inArray, count, sum } from 'drizzle-orm';
+src\app\api\tags\statistics\route.ts	9	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray as _inArray, count, sum } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray as _inArray, count as _count, sum } from 'drizzle-orm';
+src\app\api\tags\statistics\route.ts	9	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray as _inArray, count as _count, sum } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, sql, gte, lte, inArray as _inArray, count as _count, sum as _sum } from 'drizzle-orm';
+src\app\api\tags\statistics\route.ts	10	import { getCurrentUser } from '@/lib/auth/jwt';	import { getCurrentUser as _getCurrentUser } from '@/lib/auth/jwt';
+src\app\api\tasks\planning\route.ts	12	  getInterpretationForPlanning,	  getInterpretationForPlanning as _getInterpretationForPlanning,
+src\app\api\templates\[id]\route.ts	15	  createTemplateFromDocument,	  createTemplateFromDocument as _createTemplateFromDocument,
+src\app\api\templates\route.ts	19	  userId: number	  _userId: number
+src\app\api\templates\route.ts	76	  request: NextRequest,	  _request: NextRequest,
+src\app\api\templates\route.ts	77	  userId: number	  _userId: number
+src\app\api\tender-alerts\route.ts	9	  getAlertById,	  getAlertById as _getAlertById,
+src\app\api\tender-alerts\route.ts	10	  markAlertAsRead,	  markAlertAsRead as _markAlertAsRead,
+src\app\api\tender-alerts\route.ts	12	  dismissAlert,	  dismissAlert as _dismissAlert,
+src\app\api\tender-alerts\trigger\route.ts	15	import { eq, isNull, and, gt } from 'drizzle-orm';	import { eq, isNull as _isNull, and, gt } from 'drizzle-orm';
+src\app\api\tender-crawl\sources\init-from-platforms\route.ts	211	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\tender-crawl\sources\route.ts	10	  getCrawlSourceById,	  getCrawlSourceById as _getCrawlSourceById,
+src\app\api\tender-crawl\sources\route.ts	11	  updateCrawlSource,	  updateCrawlSource as _updateCrawlSource,
+src\app\api\tender-crawl\sources\route.ts	12	  deleteCrawlSource,	  deleteCrawlSource as _deleteCrawlSource,
+src\app\api\tender-crawl\tenders\[id]\create-project\route.ts	8	import { projects, tenderInfos, users, departments } from '@/db/schema';	import { projects, tenderInfos, users, departments as _departments } from '@/db/schema';
+src\app\api\tender-crawl\tenders\route.ts	10	  getTenderInfoById,	  getTenderInfoById as _getTenderInfoById,
+src\app\api\tender-crawl\tenders\route.ts	11	  updateTenderInfo,	  updateTenderInfo as _updateTenderInfo,
+src\app\api\tender-crawl\tenders\route.ts	12	  deleteTenderInfo,	  deleteTenderInfo as _deleteTenderInfo,
+src\app\api\tender-crawl\tenders\route.ts	13	  followTenderInfo,	  followTenderInfo as _followTenderInfo,
+src\app\api\tender-crawl\tenders\route.ts	14	  unfollowTenderInfo,	  unfollowTenderInfo as _unfollowTenderInfo,
+src\app\api\tender-crawl\tenders\route.ts	15	  ignoreTenderInfo,	  ignoreTenderInfo as _ignoreTenderInfo,
+src\app\api\tender-subscriptions\route.ts	10	  getSubscriptionById,	  getSubscriptionById as _getSubscriptionById,
+src\app\api\tender-subscriptions\route.ts	11	  updateSubscription,	  updateSubscription as _updateSubscription,
+src\app\api\tender-subscriptions\route.ts	12	  deleteSubscription,	  deleteSubscription as _deleteSubscription,
+src\app\api\tender-subscriptions\route.ts	14	  type UpdateSubscriptionParams,	  type _UpdateSubscriptionParams,
+src\app\api\upload\[sessionId]\route.ts	10	  getUploadSession,	  getUploadSession as _getUploadSession,
+src\app\api\upload\route.ts	8	  getUploadSession,	  getUploadSession as _getUploadSession,
+src\app\api\upload\route.ts	9	  uploadChunk,	  uploadChunk as _uploadChunk,
+src\app\api\upload\route.ts	10	  mergeChunks,	  mergeChunks as _mergeChunks,
+src\app\api\upload\route.ts	11	  verifyFileIntegrity,	  verifyFileIntegrity as _verifyFileIntegrity,
+src\app\api\users\route.ts	9	import { users, departments } from '@/db/schema';	import { users, departments as _departments } from '@/db/schema';
+src\app\api\users\route.ts	15	async function getUsers(request: NextRequest, userId: number): Promise<NextResponse> {	async function getUsers(request: NextRequest, _userId: number): Promise<NextResponse> {
+src\app\api\users\route.ts	55	async function createUser(request: NextRequest, currentUserId: number): Promise<NextResponse> {	async function createUser(request: NextRequest, _currentUserId: number): Promise<NextResponse> {
+src\app\api\v2\route.ts	13	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\websocket\info\route.ts	12	export async function GET(request: NextRequest) {	export async function GET(_request: NextRequest) {
+src\app\api\workflow\tasks\handle\route.ts	12	  workflowNodes,	  workflowNodes as _workflowNodes,
+src\app\api\workflow\tasks\handle\route.ts	14	  users,	  users as _users,
+src\app\archives\page.tsx	8	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\archives\page.tsx	12	  DialogDescription,	  DialogDescription as _DialogDescription,
+src\app\archives\page.tsx	25	  DropdownMenu,	  DropdownMenu as _DropdownMenu,
+src\app\archives\page.tsx	26	  DropdownMenuContent,	  DropdownMenuContent as _DropdownMenuContent,
+src\app\archives\page.tsx	27	  DropdownMenuItem,	  DropdownMenuItem as _DropdownMenuItem,
+src\app\archives\page.tsx	28	  DropdownMenuSeparator,	  DropdownMenuSeparator as _DropdownMenuSeparator,
+src\app\archives\page.tsx	29	  DropdownMenuTrigger,	  DropdownMenuTrigger as _DropdownMenuTrigger,
+src\app\archives\page.tsx	34	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\app\archives\page.tsx	35	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\archives\page.tsx	35	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\archives\page.tsx	35	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\archives\page.tsx	35	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\archives\page.tsx	55	  Plus,	  Plus as _Plus,
+src\app\archives\page.tsx	56	  MoreVertical,	  MoreVertical as _MoreVertical,
+src\app\archives\page.tsx	67	  ArrowRight,	  ArrowRight as _ArrowRight,
+src\app\archives\page.tsx	151	  const router = useRouter();	  const _router = useRouter();
+src\app\archives\page.tsx	152	  const searchParams = useSearchParams();	  const _searchParams = useSearchParams();
+src\app\archives\page.tsx	163	  const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');	  const [_viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
+src\app\archives\page.tsx	163	  const [_viewMode, setViewMode] = useState<'tree' | 'list'>('tree');	  const [_viewMode, _setViewMode] = useState<'tree' | 'list'>('tree');
+src\app\archives\page.tsx	166	  const [detailDialogOpen, setDetailDialogOpen] = useState(false);	  const [_detailDialogOpen, setDetailDialogOpen] = useState(false);
+src\app\calendar\page.tsx	25	  Calendar as CalendarIcon,	  Calendar as _CalendarIcon,
+src\app\calendar\page.tsx	27	  AlertTriangle,	  AlertTriangle as _AlertTriangle,
+src\app\calendar\page.tsx	31	  Plus,	  Plus as _Plus,
+src\app\calendar\page.tsx	78	  const [viewType, setViewType] = useState<'month' | 'week'>('month');	  const [_viewType, setViewType] = useState<'month' | 'week'>('month');
+src\app\calendar\page.tsx	78	  const [_viewType, setViewType] = useState<'month' | 'week'>('month');	  const [_viewType, _setViewType] = useState<'month' | 'week'>('month');
+src\app\calendar\page.tsx	187	  const filteredEvents = useMemo(() => {	  const _filteredEvents = useMemo(() => {
+src\app\companies\[id]\edit\page.tsx	9	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\[id]\edit\page.tsx	9	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\[id]\edit\page.tsx	9	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\[id]\edit\page.tsx	9	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\companies\[id]\page.tsx	23	import { Progress } from '@/components/ui/progress';	import { Progress as _Progress } from '@/components/ui/progress';
+src\app\companies\[id]\page.tsx	47	  Building2,	  Building2 as _Building2,
+src\app\companies\[id]\page.tsx	49	  Phone,	  Phone as _Phone,
+src\app\companies\[id]\page.tsx	50	  Mail,	  Mail as _Mail,
+src\app\companies\[id]\page.tsx	52	  Calendar,	  Calendar as _Calendar,
+src\app\companies\[id]\page.tsx	170	    } catch (error) {	    } catch (_error) {
+src\app\companies\[id]\page.tsx	191	    } catch (error) {	    } catch (_error) {
+src\app\companies\create\page.tsx	9	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\create\page.tsx	9	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\create\page.tsx	9	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\companies\create\page.tsx	9	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\companies\create\page.tsx	11	import { ArrowLeft, Loader2 } from 'lucide-react';	import { ArrowLeft, Loader2 as _Loader2 } from 'lucide-react';
+src\app\companies\page.tsx	11	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\costs\page.tsx	36	  DollarSign,	  DollarSign as _DollarSign,
+src\app\costs\page.tsx	38	  TrendingDown,	  TrendingDown as _TrendingDown,
+src\app\costs\page.tsx	40	  Calendar,	  Calendar as _Calendar,
+src\app\costs\page.tsx	45	  Clock,	  Clock as _Clock,
+src\app\dashboard\page.tsx	26	  FileText,	  FileText as _FileText,
+src\app\dashboard\page.tsx	31	  Users,	  Users as _Users,
+src\app\dashboard\page.tsx	82	const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];	const _COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+src\app\e-sign\page.tsx	4	import Link from 'next/link';	import _Link from 'next/link';
+src\app\files\page.tsx	38	  FileText,	  FileText as _FileText,
+src\app\files\page.tsx	48	  FILE_CATEGORY_LABELS,	  FILE_CATEGORY_LABELS as _FILE_CATEGORY_LABELS,
+src\app\files\page.tsx	49	  FileCategoryType,	  FileCategoryType as _FileCategoryType,
+src\app\frameworks\page.tsx	8	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card as _Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+src\app\frameworks\page.tsx	8	import { Card as _Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+src\app\frameworks\page.tsx	8	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+src\app\frameworks\page.tsx	8	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription } from '@/components/ui/card';
+src\app\frameworks\page.tsx	8	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\frameworks\page.tsx	33	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\frameworks\page.tsx	33	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\frameworks\page.tsx	33	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\frameworks\page.tsx	33	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\frameworks\page.tsx	56	  FolderOpen,	  FolderOpen as _FolderOpen,
+src\app\frameworks\page.tsx	58	  ChevronDown,	  ChevronDown as _ChevronDown,
+src\app\frameworks\page.tsx	59	  CheckCircle2,	  CheckCircle2 as _CheckCircle2,
+src\app\frameworks\page.tsx	61	  Upload,	  Upload as _Upload,
+src\app\frameworks\page.tsx	62	  Download,	  Download as _Download,
+src\app\frameworks\page.tsx	64	  Layers,	  Layers as _Layers,
+src\app\frameworks\page.tsx	66	  Copy,	  Copy as _Copy,
+src\app\frameworks\page.tsx	67	  Eye,	  Eye as _Eye,
+src\app\frameworks\page.tsx	70	  Palette,	  Palette as _Palette,
+src\app\frameworks\page.tsx	137	  const router = useRouter();	  const _router = useRouter();
+src\app\frameworks\page.tsx	146	  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');	  const [_activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');
+src\app\frameworks\page.tsx	146	  const [_activeTab, setActiveTab] = useState(searchParams.get('tab') || 'list');	  const [_activeTab, _setActiveTab] = useState(searchParams.get('tab') || 'list');
+src\app\gantt\page.tsx	22	  Calendar,	  Calendar as _Calendar,
+src\app\gantt\page.tsx	29	  Settings,	  Settings as _Settings,
+src\app\gantt\page.tsx	33	import { toast } from 'sonner';	import { toast as _toast } from 'sonner';
+src\app\gantt\page.tsx	501	                {tasks.map((task, index) => {	                {tasks.map((task, _index) => {
+src\app\guarantees\[id]\page.tsx	33	  Calendar,	  Calendar as _Calendar,
+src\app\guarantees\[id]\page.tsx	35	  FileText,	  FileText as _FileText,
+src\app\guarantees\[id]\page.tsx	38	  Clock,	  Clock as _Clock,
+src\app\guarantees\[id]\page.tsx	39	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\app\guarantees\[id]\page.tsx	40	  XCircle,	  XCircle as _XCircle,
+src\app\guarantees\[id]\page.tsx	43	  Banknote,	  Banknote as _Banknote,
+src\app\guarantees\page.tsx	43	  Calendar,	  Calendar as _Calendar,
+src\app\guarantees\page.tsx	44	  Building2,	  Building2 as _Building2,
+src\app\guarantees\page.tsx	45	  FileText,	  FileText as _FileText,
+src\app\image\generate\page.tsx	63	  const [style, setStyle] = useState('简洁商务');	  const [style, _setStyle] = useState('简洁商务');
+src\app\image\generate\page.tsx	82	    } catch (error) {	    } catch (_error) {
+src\app\image\library\page.tsx	6	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\image\library\page.tsx	6	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\interpretations\[id]\page.tsx	7	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\interpretations\[id]\page.tsx	22	  FileText,	  FileText as _FileText,
+src\app\interpretations\[id]\page.tsx	24	  Building,	  Building as _Building,
+src\app\interpretations\[id]\page.tsx	34	  Phone,	  Phone as _Phone,
+src\app\interpretations\[id]\page.tsx	35	  Mail,	  Mail as _Mail,
+src\app\interpretations\[id]\page.tsx	36	  Users,	  Users as _Users,
+src\app\interpretations\[id]\page.tsx	38	  DollarSign,	  DollarSign as _DollarSign,
+src\app\interpretations\[id]\page.tsx	264	  const formatFileSize = (bytes: number | null) => {	  const _formatFileSize = (bytes: number | null) => {
+src\app\interpretations\page.tsx	8	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\interpretations\page.tsx	8	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\interpretations\page.tsx	10	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\interpretations\page.tsx	10	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\interpretations\page.tsx	10	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\interpretations\page.tsx	10	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\interpretations\page.tsx	87	  const router = useRouter();	  const _router = useRouter();
+src\app\interpretations\page.tsx	173	      } catch (error) {	      } catch (_error) {
+src\app\interpretations\upload\page.tsx	6	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\knowledge\approval\page.tsx	26	  MessageSquare,	  MessageSquare as _MessageSquare,
+src\app\knowledge\approval\page.tsx	27	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\app\knowledge\page.tsx	51	  Calendar,	  Calendar as _Calendar,
+src\app\llm\chat\page.tsx	20	  Plus,	  Plus as _Plus,
+src\app\llm\chat\page.tsx	21	  Trash2,	  Trash2 as _Trash2,
+src\app\llm\chat\page.tsx	57	interface Conversation {	interface _Conversation {
+src\app\llm\models\page.tsx	8	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\llm\models\page.tsx	8	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\llm\page.tsx	26	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\llm\page.tsx	26	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\llm\page.tsx	26	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\llm\page.tsx	26	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\llm\page.tsx	31	  Settings,	  Settings as _Settings,
+src\app\llm\page.tsx	38	  Copy,	  Copy as _Copy,
+src\app\llm\page.tsx	40	  BookOpen,	  BookOpen as _BookOpen,
+src\app\llm\usage\page.tsx	24	  BarChart3,	  BarChart3 as _BarChart3,
+src\app\llm\usage\page.tsx	33	  Cpu,	  Cpu as _Cpu,
+src\app\login\page.tsx	49	    } catch (err) {	    } catch (_err) {
+src\app\mobile\approval\page.tsx	6	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\mobile\approval\page.tsx	23	  XCircle,	  XCircle as _XCircle,
+src\app\mobile\approval\page.tsx	26	  Calendar,	  Calendar as _Calendar,
+src\app\mobile\approval\page.tsx	31	  MessageSquare,	  MessageSquare as _MessageSquare,
+src\app\mobile\approval\page.tsx	32	  Send,	  Send as _Send,
+src\app\monitoring\page.tsx	20	  TrendingDown,	  TrendingDown as _TrendingDown,
+src\app\notifications\page.tsx	5	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\notifications\page.tsx	5	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\notifications\page.tsx	17	import { ScrollArea } from '@/components/ui/scroll-area';	import { ScrollArea as _ScrollArea } from '@/components/ui/scroll-area';
+src\app\notifications\page.tsx	25	  Filter,	  Filter as _Filter,
+src\app\notifications\page.tsx	26	  Settings,	  Settings as _Settings,
+src\app\notifications\page.tsx	32	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\app\openings\[id]\page.tsx	41	  MapPin,	  MapPin as _MapPin,
+src\app\openings\[id]\page.tsx	44	  Clock,	  Clock as _Clock,
+src\app\openings\[id]\page.tsx	45	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\app\openings\[id]\page.tsx	46	  XCircle,	  XCircle as _XCircle,
+src\app\openings\[id]\page.tsx	47	  TrendingUp,	  TrendingUp as _TrendingUp,
+src\app\openings\page.tsx	43	  MapPin,	  MapPin as _MapPin,
+src\app\page.tsx	15	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\app\page.tsx	18	  Users,	  Users as _Users,
+src\app\project-discussions\page.tsx	4	import Link from 'next/link';	import _Link from 'next/link';
+src\app\project-discussions\page.tsx	38	  Users,	  Users as _Users,
+src\app\project-discussions\page.tsx	39	  FileText,	  FileText as _FileText,
+src\app\project-discussions\page.tsx	40	  Image,	  Image as _Image,
+src\app\project-discussions\page.tsx	42	  ChevronDown,	  ChevronDown as _ChevronDown,
+src\app\project-discussions\page.tsx	44	  Smile,	  Smile as _Smile,
+src\app\project-discussions\page.tsx	45	  Clock,	  Clock as _Clock,
+src\app\project-discussions\page.tsx	46	  Check,	  Check as _Check,
+src\app\project-discussions\page.tsx	47	  X,	  X as _X,
+src\app\project-org\page.tsx	8	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\app\project-org\page.tsx	25	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\app\project-org\page.tsx	35	  Users,	  Users as _Users,
+src\app\project-org\page.tsx	37	  Settings,	  Settings as _Settings,
+src\app\project-org\page.tsx	49	  FileText,	  FileText as _FileText,
+src\app\project-org\page.tsx	50	  ChevronRight,	  ChevronRight as _ChevronRight,
+src\app\project-org\page.tsx	94	  const router = useRouter();	  const _router = useRouter();
+src\app\project-org\page.tsx	101	  const [showTemplateDialog, setShowTemplateDialog] = useState(false);	  const [_showTemplateDialog, setShowTemplateDialog] = useState(false);
+src\app\project-org\page.tsx	171	  const getTypeLabel = (type: string) => {	  const _getTypeLabel = (type: string) => {
+src\app\projects\[id]\page.tsx	30	  MapPin,	  MapPin as _MapPin,
+src\app\projects\[id]\page.tsx	622	                  {project.phases.map((phase, index) => (	                  {project.phases.map((phase, _index) => (
+src\app\projects\kanban\page.tsx	4	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\projects\kanban\page.tsx	4	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\projects\kanban\page.tsx	17	  DropdownMenu,	  DropdownMenu as _DropdownMenu,
+src\app\projects\kanban\page.tsx	18	  DropdownMenuContent,	  DropdownMenuContent as _DropdownMenuContent,
+src\app\projects\kanban\page.tsx	19	  DropdownMenuItem,	  DropdownMenuItem as _DropdownMenuItem,
+src\app\projects\kanban\page.tsx	20	  DropdownMenuTrigger,	  DropdownMenuTrigger as _DropdownMenuTrigger,
+src\app\projects\kanban\page.tsx	25	  MoreHorizontal,	  MoreHorizontal as _MoreHorizontal,
+src\app\projects\kanban\page.tsx	27	  User,	  User as _User,
+src\app\projects\kanban\page.tsx	30	  LayoutGrid,	  LayoutGrid as _LayoutGrid,
+src\app\projects\kanban\page.tsx	32	  Filter,	  Filter as _Filter,
+src\app\projects\kanban\page.tsx	84	  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');	  const [_viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+src\app\projects\kanban\page.tsx	84	  const [_viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');	  const [_viewMode, _setViewMode] = useState<'kanban' | 'list'>('kanban');
+src\app\projects\kanban\page.tsx	207	  const getProgressColor = (progress: number) => {	  const _getProgressColor = (progress: number) => {
+src\app\projects\page.tsx	43	  FolderOpen,	  FolderOpen as _FolderOpen,
+src\app\projects\page.tsx	45	  Building2,	  Building2 as _Building2,
+src\app\projects\page.tsx	46	  MapPin,	  MapPin as _MapPin,
+src\app\prompts\agents\page.tsx	6	import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription, CardFooter } from '@/components/ui/card';
+src\app\prompts\agents\page.tsx	10	import { Label } from '@/components/ui/label';	import { Label as _Label } from '@/components/ui/label';
+src\app\prompts\agents\page.tsx	18	  DialogFooter,	  DialogFooter as _DialogFooter,
+src\app\prompts\agents\page.tsx	38	  Search,	  Search as _Search,
+src\app\prompts\agents\page.tsx	46	  Sparkles,	  Sparkles as _Sparkles,
+src\app\prompts\agents\page.tsx	50	  UserCheck,	  UserCheck as _UserCheck,
+src\app\prompts\categories\page.tsx	5	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\prompts\categories\page.tsx	5	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\prompts\categories\page.tsx	37	  Search,	  Search as _Search,
+src\app\prompts\categories\page.tsx	42	  FileText,	  FileText as _FileText,
+src\app\prompts\categories\page.tsx	67	  const [treeView, setTreeView] = useState(true);	  const [_treeView, setTreeView] = useState(true);
+src\app\prompts\categories\page.tsx	67	  const [_treeView, setTreeView] = useState(true);	  const [_treeView, _setTreeView] = useState(true);
+src\app\prompts\generate\page.tsx	19	  History,	  History as _History,
+src\app\prompts\generate\page.tsx	20	  Settings,	  Settings as _Settings,
+src\app\prompts\generate\page.tsx	66	  const [history, setHistory] = useState<GenerationHistory[]>([]);	  const [_history, setHistory] = useState<GenerationHistory[]>([]);
+src\app\prompts\generate\page.tsx	66	  const [_history, setHistory] = useState<GenerationHistory[]>([]);	  const [_history, _setHistory] = useState<GenerationHistory[]>([]);
+src\app\prompts\generate\page.tsx	80	  const [showPreview, setShowPreview] = useState(true);	  const [showPreview, _setShowPreview] = useState(true);
+src\app\prompts\templates\page.tsx	6	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+src\app\prompts\templates\page.tsx	6	import { Card, CardContent, CardHeader as _CardHeader, CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription } from '@/components/ui/card';
+src\app\prompts\templates\page.tsx	6	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+src\app\prompts\templates\page.tsx	47	  Filter,	  Filter as _Filter,
+src\app\prompts\templates\page.tsx	48	  Tag,	  Tag as _Tag,
+src\app\prompts\templates\page.tsx	50	  Code,	  Code as _Code,
+src\app\prompts\templates\page.tsx	103	  const router = useRouter();	  const _router = useRouter();
+src\app\prompts\templates\page.tsx	104	  const searchParams = useSearchParams();	  const _searchParams = useSearchParams();
+src\app\prompts\templates\page.tsx	109	  const [total, setTotal] = useState(0);	  const [_total, setTotal] = useState(0);
+src\app\prompts\templates\page.tsx	924	              } catch (e) {	              } catch (_e) {
+src\app\quote-analysis\page.tsx	4	import Link from 'next/link';	import _Link from 'next/link';
+src\app\quote-analysis\page.tsx	8	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\app\quote-analysis\page.tsx	28	  Select,	  Select as _Select,
+src\app\quote-analysis\page.tsx	29	  SelectContent,	  SelectContent as _SelectContent,
+src\app\quote-analysis\page.tsx	30	  SelectItem,	  SelectItem as _SelectItem,
+src\app\quote-analysis\page.tsx	31	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\app\quote-analysis\page.tsx	32	  SelectValue,	  SelectValue as _SelectValue,
+src\app\quote-analysis\page.tsx	37	  Users,	  Users as _Users,
+src\app\quote-analysis\page.tsx	39	  DollarSign,	  DollarSign as _DollarSign,
+src\app\quote-analysis\page.tsx	40	  BarChart3,	  BarChart3 as _BarChart3,
+src\app\quote-analysis\page.tsx	41	  Lightbulb,	  Lightbulb as _Lightbulb,
+src\app\quote-analysis\page.tsx	79	  const router = useRouter();	  const _router = useRouter();
+src\app\quote-analysis\page.tsx	116	      const res = await fetch(`/api/quote-analysis/${requestId}`, {	      const _res = await fetch(`/api/quote-analysis/${requestId}`, {
+src\app\quotes\page.tsx	3	import { useState, useEffect } from 'react';	import { useState, useEffect as _useEffect } from 'react';
+src\app\quotes\page.tsx	7	import { Skeleton } from '@/components/ui/skeleton';	import { Skeleton as _Skeleton } from '@/components/ui/skeleton';
+src\app\quotes\page.tsx	17	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\quotes\page.tsx	17	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\quotes\page.tsx	17	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\quotes\page.tsx	17	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\quotes\page.tsx	22	  TrendingDown,	  TrendingDown as _TrendingDown,
+src\app\quotes\page.tsx	28	  DollarSign,	  DollarSign as _DollarSign,
+src\app\recycle-bin\page.tsx	8	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\recycle-bin\page.tsx	30	  DialogDescription,	  DialogDescription as _DialogDescription,
+src\app\recycle-bin\page.tsx	45	  Filter,	  Filter as _Filter,
+src\app\recycle-bin\page.tsx	46	  Clock,	  Clock as _Clock,
+src\app\recycle-bin\page.tsx	92	  const router = useRouter();	  const _router = useRouter();
+src\app\recycle-bin\page.tsx	93	  const searchParams = useSearchParams();	  const _searchParams = useSearchParams();
+src\app\reports\page.tsx	8	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\reports\page.tsx	8	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\reports\page.tsx	8	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\app\reports\page.tsx	8	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\app\reports\page.tsx	44	  TrendingDown,	  TrendingDown as _TrendingDown,
+src\app\reports\page.tsx	49	  Users,	  Users as _Users,
+src\app\reports\page.tsx	52	  Calendar,	  Calendar as _Calendar,
+src\app\reports\page.tsx	54	  PieChartIcon,	  PieChartIcon as _PieChartIcon,
+src\app\reports\page.tsx	179	  const progressPieData = reportData ? [	  const _progressPieData = reportData ? [
+src\app\reports\page.tsx	187	  const docPieData = reportData ? [	  const _docPieData = reportData ? [
+src\app\review\config\page.tsx	41	  Trash2,	  Trash2 as _Trash2,
+src\app\review\config\page.tsx	45	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\app\schemes\[id]\edit\page.tsx	8	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\schemes\[id]\edit\page.tsx	8	import { Card as _Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\schemes\[id]\edit\page.tsx	8	import { Card as _Card, CardContent as _CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\app\schemes\[id]\edit\page.tsx	8	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\schemes\[id]\edit\page.tsx	37	  Edit,	  Edit as _Edit,
+src\app\schemes\[id]\edit\page.tsx	40	  Folder,	  Folder as _Folder,
+src\app\schemes\[id]\edit\page.tsx	47	  DropdownMenuSeparator,	  DropdownMenuSeparator as _DropdownMenuSeparator,
+src\app\schemes\[id]\edit\page.tsx	91	  const router = useRouter();	  const _router = useRouter();
+src\app\search\page.tsx	86	  const router = useRouter();	  const _router = useRouter();
+src\app\search\page.tsx	198	  const highlightKeyword = (text: string, key: string) => {	  const highlightKeyword = (text: string, _key: string) => {
+src\app\search\page.tsx	373	              {results?.data.map((result, index) => {	              {results?.data.map((result, _index) => {
+src\app\settings\company-frameworks\page.tsx	27	  Table,	  Table as _Table,
+src\app\settings\company-frameworks\page.tsx	28	  TableBody,	  TableBody as _TableBody,
+src\app\settings\company-frameworks\page.tsx	29	  TableCell,	  TableCell as _TableCell,
+src\app\settings\company-frameworks\page.tsx	30	  TableHead,	  TableHead as _TableHead,
+src\app\settings\company-frameworks\page.tsx	31	  TableHeader,	  TableHeader as _TableHeader,
+src\app\settings\company-frameworks\page.tsx	32	  TableRow,	  TableRow as _TableRow,
+src\app\settings\company-frameworks\page.tsx	48	  FileText,	  FileText as _FileText,
+src\app\settings\company-frameworks\page.tsx	178	    return items.map((chapter, index) => (	    return items.map((chapter, _index) => (
+src\app\settings\company-frameworks\page.tsx	269	  const router = useRouter();	  const _router = useRouter();
+src\app\settings\offline\page.tsx	3	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\app\settings\offline\page.tsx	26	  XCircle,	  XCircle as _XCircle,
+src\app\settings\offline\page.tsx	45	  recordOfflineOperation,	  recordOfflineOperation as _recordOfflineOperation,
+src\app\settings\offline\page.tsx	137	    } catch (error) {	    } catch (_error) {
+src\app\settings\offline\page.tsx	156	    } catch (error) {	    } catch (_error) {
+src\app\settings\offline\page.tsx	170	    } catch (error) {	    } catch (_error) {
+src\app\settings\sessions\page.tsx	55	    } catch (err) {	    } catch (_err) {
+src\app\settings\sessions\page.tsx	86	    } catch (err) {	    } catch (_err) {
+src\app\settings\sessions\page.tsx	111	    } catch (err) {	    } catch (_err) {
+src\app\support\applications\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\support\applications\page.tsx	30	  Plus,	  Plus as _Plus,
+src\app\support\applications\page.tsx	34	  Calendar,	  Calendar as _Calendar,
+src\app\support\authorizations\[id]\page.tsx	11	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\app\support\authorizations\[id]\page.tsx	23	  Clock,	  Clock as _Clock,
+src\app\support\authorizations\[id]\page.tsx	25	  Truck,	  Truck as _Truck,
+src\app\support\authorizations\[id]\page.tsx	26	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\app\support\authorizations\[id]\page.tsx	27	  XCircle,	  XCircle as _XCircle,
+src\app\support\authorizations\[id]\page.tsx	28	  Plus,	  Plus as _Plus,
+src\app\support\authorizations\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\support\authorizations\page.tsx	46	  User,	  User as _User,
+src\app\support\authorizations\page.tsx	47	  Building2,	  Building2 as _Building2,
+src\app\support\authorizations\page.tsx	48	  Clock,	  Clock as _Clock,
+src\app\support\authorizations\page.tsx	120	const TRACKING_STATUS_LABELS: Record<string, string> = {	const _TRACKING_STATUS_LABELS: Record<string, string> = {
+src\app\support\partner-applications\[id]\page.tsx	31	  Phone,	  Phone as _Phone,
+src\app\support\partner-applications\[id]\page.tsx	32	  MessageSquare,	  MessageSquare as _MessageSquare,
+src\app\support\partner-applications\[id]\page.tsx	33	  FileText,	  FileText as _FileText,
+src\app\support\partner-applications\[id]\page.tsx	34	  DollarSign,	  DollarSign as _DollarSign,
+src\app\support\partner-applications\[id]\page.tsx	38	  XCircle,	  XCircle as _XCircle,
+src\app\support\partner-applications\create\page.tsx	15	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\app\support\partner-applications\create\page.tsx	213	          materials: materials.map(({ id, ...m }) => m),	          materials: materials.map(({ _id, ...m }) => m),
+src\app\support\partner-applications\create\page.tsx	214	          fees: fees.map(({ id, ...f }) => f),	          fees: fees.map(({ _id, ...f }) => f),
+src\app\support\partner-applications\create\page.tsx	215	          todos: todos.map(({ id, ...t }) => t),	          todos: todos.map(({ _id, ...t }) => t),
+src\app\support\partner-applications\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\support\partner-applications\page.tsx	36	import { toast } from 'sonner';	import { toast as _toast } from 'sonner';
+src\app\support\price-applications\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\support\price-applications\page.tsx	34	  Calendar,	  Calendar as _Calendar,
+src\app\support\price-applications\page.tsx	36	import { toast } from 'sonner';	import { toast as _toast } from 'sonner';
+src\app\support\sample-applications\[id]\page.tsx	22	  MapPin,	  MapPin as _MapPin,
+src\app\support\sample-applications\page.tsx	12	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\app\support\sample-applications\page.tsx	37	  DropdownMenu,	  DropdownMenu as _DropdownMenu,
+src\app\support\sample-applications\page.tsx	38	  DropdownMenuContent,	  DropdownMenuContent as _DropdownMenuContent,
+src\app\support\sample-applications\page.tsx	39	  DropdownMenuItem,	  DropdownMenuItem as _DropdownMenuItem,
+src\app\support\sample-applications\page.tsx	40	  DropdownMenuTrigger,	  DropdownMenuTrigger as _DropdownMenuTrigger,
+src\app\support\sample-applications\page.tsx	42	import { toast } from 'sonner';	import { toast as _toast } from 'sonner';
+src\app\tags\page.tsx	34	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\app\tags\page.tsx	58	  CheckCircle2,	  CheckCircle2 as _CheckCircle2,
+src\app\tags\page.tsx	59	  X,	  X as _X,
+src\app\tags\page.tsx	61	  Settings,	  Settings as _Settings,
+src\app\tags\page.tsx	141	  const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');	  const [_viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+src\app\tags\page.tsx	141	  const [_viewMode, setViewMode] = useState<'list' | 'tree'>('list');	  const [_viewMode, _setViewMode] = useState<'list' | 'tree'>('list');
+src\app\tags\page.tsx	149	  const [versionDialogOpen, setVersionDialogOpen] = useState(false);	  const [_versionDialogOpen, setVersionDialogOpen] = useState(false);
+src\app\tags\page.tsx	153	  const [viewingTagVersions, setViewingTagVersions] = useState<Tag | null>(null);	  const [_viewingTagVersions, setViewingTagVersions] = useState<Tag | null>(null);
+src\app\tasks\page.tsx	24	  Select,	  Select as _Select,
+src\app\tasks\page.tsx	25	  SelectContent,	  SelectContent as _SelectContent,
+src\app\tasks\page.tsx	26	  SelectItem,	  SelectItem as _SelectItem,
+src\app\tasks\page.tsx	27	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\app\tasks\page.tsx	28	  SelectValue,	  SelectValue as _SelectValue,
+src\app\tasks\page.tsx	39	  ArrowRight,	  ArrowRight as _ArrowRight,
+src\app\tasks\page.tsx	40	  Send,	  Send as _Send,
+src\app\tasks\planning\page.tsx	17	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\app\templates\page.tsx	34	  Building,	  Building as _Building,
+src\app\templates\page.tsx	125	        } catch (e) {	        } catch (_e) {
+src\app\tender-crawl\page.tsx	25	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\app\tender-crawl\page.tsx	35	  Filter,	  Filter as _Filter,
+src\app\tender-crawl\page.tsx	36	  Download,	  Download as _Download,
+src\app\tender-crawl\page.tsx	66	  const router = useRouter();	  const _router = useRouter();
+src\app\tender-crawl\sources\page.tsx	8	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\app\tender-crawl\sources\page.tsx	30	  Select,	  Select as _Select,
+src\app\tender-crawl\sources\page.tsx	31	  SelectContent,	  SelectContent as _SelectContent,
+src\app\tender-crawl\sources\page.tsx	32	  SelectItem,	  SelectItem as _SelectItem,
+src\app\tender-crawl\sources\page.tsx	33	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\app\tender-crawl\sources\page.tsx	34	  SelectValue,	  SelectValue as _SelectValue,
+src\app\tender-crawl\sources\page.tsx	53	  Eye,	  Eye as _Eye,
+src\app\tender-crawl\sources\page.tsx	98	  const router = useRouter();	  const _router = useRouter();
+src\app\workflows\[id]\design\page.tsx	9	import { Badge } from '@/components/ui/badge';	import { Badge as _Badge } from '@/components/ui/badge';
+src\app\workflows\[id]\design\page.tsx	25	  Popover,	  Popover as _Popover,
+src\app\workflows\[id]\design\page.tsx	26	  PopoverContent,	  PopoverContent as _PopoverContent,
+src\app\workflows\[id]\design\page.tsx	27	  PopoverTrigger,	  PopoverTrigger as _PopoverTrigger,
+src\app\workflows\[id]\design\page.tsx	29	import { Textarea } from '@/components/ui/textarea';	import { Textarea as _Textarea } from '@/components/ui/textarea';
+src\app\workflows\[id]\design\page.tsx	34	  Plus,	  Plus as _Plus,
+src\app\workflows\[id]\design\page.tsx	36	  Trash2,	  Trash2 as _Trash2,
+src\app\workflows\page.tsx	36	  Edit,	  Edit as _Edit,
+src\app\workflows\page.tsx	40	  FileText,	  FileText as _FileText,
+src\components\app-header.tsx	29	  Calendar,	  Calendar as _Calendar,
+src\components\app-header.tsx	31	  Calculator,	  Calculator as _Calculator,
+src\components\app-header.tsx	32	  LayoutDashboard,	  LayoutDashboard as _LayoutDashboard,
+src\components\app-header.tsx	34	  Moon,	  Moon as _Moon,
+src\components\app-header.tsx	35	  Sun,	  Sun as _Sun,
+src\components\app-header.tsx	37	  HelpCircle,	  HelpCircle as _HelpCircle,
+src\components\app-header.tsx	57	  const router = useRouter();	  const _router = useRouter();
+src\components\app-header.tsx	58	  const [searchOpen, setSearchOpen] = React.useState(false);	  const [_searchOpen, setSearchOpen] = React.useState(false);
+src\components\app-header.tsx	72	        const navItem = mainNavItems.find(item => 	        const _navItem = mainNavItems.find(item => 
+src\components\bid-document-purchases\purchase-form.tsx	161	  const [loading, setLoading] = useState(false);	  const [_loading, setLoading] = useState(false);
+src\components\bid-document-purchases\purchase-form.tsx	161	  const [_loading, setLoading] = useState(false);	  const [_loading, _setLoading] = useState(false);
+src\components\bid\create-bid-document-dialog.tsx	36	  ChevronDown,	  ChevronDown as _ChevronDown,
+src\components\bid\create-bid-document-dialog.tsx	37	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\components\bid\create-bid-document-dialog.tsx	38	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\components\bid\document-overview-panel.tsx	10	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\components\bid\document-review-panel.tsx	14	import { ScrollArea } from '@/components/ui/scroll-area';	import { ScrollArea as _ScrollArea } from '@/components/ui/scroll-area';
+src\components\bid\document-review-panel.tsx	15	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\components\bid\editor\editor-content.tsx	3	import { useState } from 'react';	import { useState as _useState } from 'react';
+src\components\bid\editor\editor-content.tsx	5	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';
+src\components\bid\editor\editor-content.tsx	5	import { Card, CardContent, CardHeader as _CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\components\bid\editor\editor-content.tsx	15	  Clock, 	  Clock as _Clock, 
+src\components\bid\editor\editor-content.tsx	16	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\components\bid\generation-progress-display.tsx	3	import { useState, useEffect, useCallback } from 'react';	import { useState, useEffect, useCallback as _useCallback } from 'react';
+src\components\bid\version-compare.tsx	30	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\components\bid\version-compare.tsx	41	  Eye,	  Eye as _Eye,
+src\components\bid\version-compare.tsx	100	  const router = useRouter();	  const _router = useRouter();
+src\components\bid\version-compare.tsx	151	    } catch (error) {	    } catch (_error) {
+src\components\bid\version-compare.tsx	177	    } catch (error) {	    } catch (_error) {
+src\components\bid\version-compare.tsx	196	    } catch (error) {	    } catch (_error) {
+src\components\company\company-contacts-manager.tsx	24	  Select,	  Select as _Select,
+src\components\company\company-contacts-manager.tsx	25	  SelectContent,	  SelectContent as _SelectContent,
+src\components\company\company-contacts-manager.tsx	26	  SelectItem,	  SelectItem as _SelectItem,
+src\components\company\company-contacts-manager.tsx	27	  SelectTrigger,	  SelectTrigger as _SelectTrigger,
+src\components\company\company-contacts-manager.tsx	28	  SelectValue,	  SelectValue as _SelectValue,
+src\components\company\company-contacts-manager.tsx	136	    } catch (error) {	    } catch (_error) {
+src\components\company\company-contacts-manager.tsx	205	    } catch (error) {	    } catch (_error) {
+src\components\company\company-contacts-manager.tsx	257	    } catch (error) {	    } catch (_error) {
+src\components\company\company-file-list.tsx	131	  companyId,	  _companyId,
+src\components\company\company-file-list.tsx	139	  const [deletingFileId, setDeletingFileId] = useState<number | null>(null);	  const [_deletingFileId, setDeletingFileId] = useState<number | null>(null);
+src\components\company\company-file-list.tsx	191	    } catch (error) {	    } catch (_error) {
+src\components\company\company-file-uploader.tsx	23	  FileText, 	  FileText as _FileText, 
+src\components\company\company-file-uploader.tsx	27	  Calendar,	  Calendar as _Calendar,
+src\components\company\company-selector.tsx	24	  Search,	  Search as _Search,
+src\components\dashboard\project-dashboard.tsx	20	  PieChart,	  PieChart as _PieChart,
+src\components\dashboard\project-dashboard.tsx	21	  Pie,	  Pie as _Pie,
+src\components\dashboard\project-dashboard.tsx	22	  Cell,	  Cell as _Cell,
+src\components\dashboard\project-dashboard.tsx	23	  BarChart,	  BarChart as _BarChart,
+src\components\dashboard\project-dashboard.tsx	24	  Bar,	  Bar as _Bar,
+src\components\dashboard\project-dashboard.tsx	33	  Users,	  Users as _Users,
+src\components\dashboard\project-dashboard.tsx	83	const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];	const _COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
+src\components\document\file-preview.tsx	7	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\document\file-preview.tsx	7	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\document\file-preview.tsx	7	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\document\file-preview.tsx	7	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\components\document\file-preview.tsx	9	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\components\document\file-preview.tsx	80	export function FilePreview({ fileId, fileName, fileUrl, onDownload }: FilePreviewProps) {	export function FilePreview({ fileId, _fileName, fileUrl, onDownload }: FilePreviewProps) {
+src\components\document\file-preview.tsx	80	export function FilePreview({ fileId, _fileName, fileUrl, onDownload }: FilePreviewProps) {	export function FilePreview({ fileId, _fileName, _fileUrl, onDownload }: FilePreviewProps) {
+src\components\document\file-preview.tsx	87	  const [totalPages, setTotalPages] = React.useState(1);	  const [totalPages, _setTotalPages] = React.useState(1);
+src\components\editor\ai-inline-editor.tsx	9	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\components\editor\ai-inline-editor.tsx	28	  Popover,	  Popover as _Popover,
+src\components\editor\ai-inline-editor.tsx	29	  PopoverContent,	  PopoverContent as _PopoverContent,
+src\components\editor\ai-inline-editor.tsx	30	  PopoverTrigger,	  PopoverTrigger as _PopoverTrigger,
+src\components\editor\ai-inline-editor.tsx	41	  ChevronDown,	  ChevronDown as _ChevronDown,
+src\components\editor\ai-inline-editor.tsx	227	            } catch (e) {	            } catch (_e) {
+src\components\global-search.tsx	8	  DialogHeader,	  DialogHeader as _DialogHeader,
+src\components\global-search.tsx	9	  DialogTitle,	  DialogTitle as _DialogTitle,
+src\components\image-generation-dialog.tsx	19	import { Input } from '@/components/ui/input';	import { Input as _Input } from '@/components/ui/input';
+src\components\image-generation-dialog.tsx	82	  const [referenceImages, setReferenceImages] = useState<string[]>([]);	  const [referenceImages, _setReferenceImages] = useState<string[]>([]);
+src\components\image-selector.tsx	8	import { useState } from 'react';	import { useState as _useState } from 'react';
+src\components\image-selector.tsx	9	import { Button } from '@/components/ui/button';	import { Button as _Button } from '@/components/ui/button';
+src\components\layout\app-layout.tsx	275	function NavChildItem({ child, pathname, level = 1 }: { child: NavItem; pathname: string; level?: number }) {	function NavChildItem({ child, pathname, _level = 1 }: { child: NavItem; pathname: string; level?: number }) {
+src\components\matrix\matrix-dashboard.tsx	31	  FileText,	  FileText as _FileText,
+src\components\matrix\matrix-dashboard.tsx	34	  CheckCircle,	  CheckCircle as _CheckCircle,
+src\components\matrix\matrix-dashboard.tsx	35	  Clock,	  Clock as _Clock,
+src\components\matrix\matrix-dashboard.tsx	37	  Eye,	  Eye as _Eye,
+src\components\matrix\matrix-dashboard.tsx	38	  Download,	  Download as _Download,
+src\components\mobile-nav.tsx	12	  User,	  User as _User,
+src\components\parse\document-reader.tsx	5	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+src\components\parse\parse-dashboard.tsx	6	import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\parse\parse-dashboard.tsx	6	import { Tabs as _Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\parse\parse-dashboard.tsx	6	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';
+src\components\parse\parse-dashboard.tsx	6	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger } from '@/components/ui/tabs';	import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+src\components\parse\parse-dashboard.tsx	9	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\components\parse\parse-dashboard.tsx	26	  DialogTrigger,	  DialogTrigger as _DialogTrigger,
+src\components\parse\parse-dashboard.tsx	31	  FileText,	  FileText as _FileText,
+src\components\parse\parse-dashboard.tsx	36	  Clock,	  Clock as _Clock,
+src\components\parse\parse-dashboard.tsx	40	  X,	  X as _X,
+src\components\parse\parse-dashboard.tsx	41	  Search,	  Search as _Search,
+src\components\parse\parse-dashboard.tsx	228	  const formatDate = (dateStr: string | null) => {	  const _formatDate = (dateStr: string | null) => {
+src\components\project\process-records.tsx	37	import { Separator } from '@/components/ui/separator';	import { Separator as _Separator } from '@/components/ui/separator';
+src\components\support\application-reviews.tsx	23	  Clock,	  Clock as _Clock,
+src\components\support\application-reviews.tsx	25	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\components\tags\advanced-search-panel.tsx	29	import { Switch } from '@/components/ui/switch';	import { Switch as _Switch } from '@/components/ui/switch';
+src\components\tags\advanced-search-panel.tsx	127	  const entityTypeOptions = [	  const _entityTypeOptions = [
+src\components\tags\advanced-search-panel.tsx	266	  const toggleEntityType = (entityType: string) => {	  const _toggleEntityType = (entityType: string) => {
+src\components\tags\favorites-panel.tsx	6	import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';	import { Card, CardContent, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+src\components\tags\statistics-panel.tsx	15	  Users,	  Users as _Users,
+src\components\tags\statistics-panel.tsx	20	import { cn } from '@/lib/utils';	import { cn as _cn } from '@/lib/utils';
+src\components\templates\template-category-manager.tsx	42	  Palette,	  Palette as _Palette,
+src\components\tender-alert-panel.tsx	16	  Building2,	  Building2 as _Building2,
+src\components\tender-alert-panel.tsx	18	  Trash2,	  Trash2 as _Trash2,
+src\components\tender-alert-panel.tsx	19	  AlertCircle,	  AlertCircle as _AlertCircle,
+src\components\tender-alert-panel.tsx	20	  FileText,	  FileText as _FileText,
+src\components\ui\tree.tsx	5	import { ChevronRight } from 'lucide-react';	import { ChevronRight as _ChevronRight } from 'lucide-react';
+src\db\reset.ts	85	async function recreateSchema(): Promise<void> {	async function _recreateSchema(): Promise<void> {
+src\db\schema.ts	2317	export const meetingMinutesRelations = relations(meetingMinutes, ({ one, many }) => ({	export const meetingMinutesRelations = relations(meetingMinutes, ({ one, _many }) => ({
+src\db\schema.ts	2328	export const contactRecordsRelations = relations(contactRecords, ({ one, many }) => ({	export const contactRecordsRelations = relations(contactRecords, ({ one, _many }) => ({
+src\db\schema.ts	2497	function decimal(name: string, options: { precision: number; scale: number }) {	function decimal(name: string, _options: { precision: number; scale: number }) {
+src\db\schema.ts	5688	export const orgTemplatesRelations = relations(orgTemplates, ({ one, many }) => ({	export const orgTemplatesRelations = relations(orgTemplates, ({ one, _many }) => ({
+src\db\seed.ts	24	import { eq } from 'drizzle-orm';	import { eq as _eq } from 'drizzle-orm';
+src\db\seed.ts	125	    if (result.rowCount && result.rowCount > 0) count++;	    if (result.rowCount && result.rowCount > 0) _count++;
+src\db\seed.ts	137	  const techDept = depts.find(d => d.code === 'TECH');	  const _techDept = depts.find(d => d.code === 'TECH');
+src\hooks\use-bid.ts	60	    mutationFn: ({ id, data, documentId }: { id: number; data: any; documentId: number }) => 	    mutationFn: ({ id, data, _documentId }: { id: number; data: any; documentId: number }) => 
+src\hooks\use-bid.ts	71	    mutationFn: ({ id, documentId }: { id: number; documentId: number }) => bidService.deleteChapter(id),	    mutationFn: ({ id, _documentId }: { id: number; documentId: number }) => bidService.deleteChapter(id),
+src\hooks\use-stream-llm.ts	136	            } catch (e) {	            } catch (_e) {
+src\lib\ai-governance\service.ts	8	import { eq, and, desc, avg, count } from 'drizzle-orm';	import { eq, and, desc, avg, count as _count } from 'drizzle-orm';
+src\lib\ai\ai-service.ts	20	import { Config, LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';	import { Config as _Config, LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';
+src\lib\ai\ai-service.ts	20	import { Config as _Config, LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';	import { Config as _Config, LLMClient as _LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';
+src\lib\ai\ai-service.ts	20	import { Config as _Config, LLMClient as _LLMClient, HeaderUtils, type Message } from 'coze-coding-dev-sdk';	import { Config as _Config, LLMClient as _LLMClient, HeaderUtils as _HeaderUtils, type Message } from 'coze-coding-dev-sdk';
+src\lib\ai\recommendation-service.ts	6	import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\alert\alert-service.ts	6	import { db } from '@/db/index';	import { db as _db } from '@/db/index';
+src\lib\alert\service.ts	10	  competitors,	  competitors as _competitors,
+src\lib\alert\service.ts	11	  bidDecisions,	  bidDecisions as _bidDecisions,
+src\lib\alert\service.ts	13	import { eq, and, lte, gte, lt, desc, sql } from 'drizzle-orm';	import { eq, and, lte, gte, lt, desc as _desc, sql } from 'drizzle-orm';
+src\lib\alert\service.ts	13	import { eq, and, lte, gte, lt, desc as _desc, sql } from 'drizzle-orm';	import { eq, and, lte, gte, lt, desc as _desc, sql as _sql } from 'drizzle-orm';
+src\lib\analytics\report-service.ts	8	import { sql, eq, and, gte, lte, desc, count } from 'drizzle-orm';	import { sql, eq as _eq, and, gte, lte, desc, count } from 'drizzle-orm';
+src\lib\analytics\report-service.ts	8	import { sql, eq as _eq, and, gte, lte, desc, count } from 'drizzle-orm';	import { sql, eq as _eq, and, gte, lte, desc as _desc, count } from 'drizzle-orm';
+src\lib\analytics\report-service.ts	208	    startDate?: Date,	    _startDate?: Date,
+src\lib\analytics\report-service.ts	209	    endDate?: Date	    _endDate?: Date
+src\lib\analytics\report-service.ts	232	    startDate?: Date,	    _startDate?: Date,
+src\lib\analytics\report-service.ts	233	    endDate?: Date	    _endDate?: Date
+src\lib\analytics\report-service.ts	252	    startDate?: Date,	    _startDate?: Date,
+src\lib\analytics\report-service.ts	253	    endDate?: Date	    _endDate?: Date
+src\lib\analytics\report-service.ts	272	    startDate?: Date,	    _startDate?: Date,
+src\lib\analytics\report-service.ts	273	    endDate?: Date	    _endDate?: Date
+src\lib\analytics\report-service.ts	293	    startDate?: Date,	    _startDate?: Date,
+src\lib\analytics\report-service.ts	294	    endDate?: Date	    _endDate?: Date
+src\lib\analytics\report-service.ts	323	    const { startDate, endDate, filters } = options;	    const { startDate, endDate, _filters } = options;
+src\lib\analytics\report-service.ts	355	  static formatForChart(data: any, chartType: 'bar' | 'line' | 'pie' | 'table'): any {	  static formatForChart(data: any, _chartType: 'bar' | 'line' | 'pie' | 'table'): any {
+src\lib\api\docs-generator.ts	6	import { NextResponse } from 'next/server';	import { NextResponse as _NextResponse } from 'next/server';
+src\lib\api\error-handler.ts	322	type AsyncHandler<T = unknown> = (	type AsyncHandler<_T = unknown> = (
+src\lib\api\validators.ts	1	import { NextRequest } from 'next/server';	import { NextRequest as _NextRequest } from 'next/server';
+src\lib\api\version-control.ts	141	    defaultVersion = LATEST_VERSION,	    _defaultVersion = LATEST_VERSION,
+src\lib\approval\annotation.ts	6	import { db } from '@/db';	import { db as _db } from '@/db';
+src\lib\approval\annotation.ts	7	import { approvalRecords, users } from '@/db/schema';	import { approvalRecords as _approvalRecords, users } from '@/db/schema';
+src\lib\approval\annotation.ts	7	import { approvalRecords as _approvalRecords, users } from '@/db/schema';	import { approvalRecords as _approvalRecords, users as _users } from '@/db/schema';
+src\lib\approval\annotation.ts	8	import { eq, and, desc } from 'drizzle-orm';	import { eq as _eq, and, desc } from 'drizzle-orm';
+src\lib\approval\annotation.ts	8	import { eq as _eq, and, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, desc } from 'drizzle-orm';
+src\lib\approval\annotation.ts	8	import { eq as _eq, and as _and, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, desc as _desc } from 'drizzle-orm';
+src\lib\approval\annotation.ts	55	export async function getNodeAnnotations(nodeId: number) {	export async function getNodeAnnotations(_nodeId: number) {
+src\lib\approval\annotation.ts	117	export async function getProjectIssues(projectId: number) {	export async function getProjectIssues(_projectId: number) {
+src\lib\approval\annotation.ts	138	export async function getIssueStats(projectId: number) {	export async function getIssueStats(_projectId: number) {
+src\lib\approval\stats.ts	6	import { approvalRecords, users } from '@/db/schema';	import { approvalRecords, users as _users } from '@/db/schema';
+src\lib\approval\stats.ts	7	import { eq, and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';	import { eq as _eq, and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	7	import { eq as _eq, and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	7	import { eq as _eq, and as _and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, gte, lte, count as _count, sql, avg, desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	7	import { eq as _eq, and as _and, gte, lte, count as _count, sql, avg, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg, desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	7	import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg as _avg, desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	7	import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg as _avg, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg as _avg, desc as _desc } from 'drizzle-orm';
+src\lib\approval\stats.ts	112	  orgId: number,	  _orgId: number,
+src\lib\approval\stats.ts	113	  dateRange: DateRange	  _dateRange: DateRange
+src\lib\approval\stats.ts	124	  orgId: number,	  _orgId: number,
+src\lib\approval\stats.ts	125	  dateRange?: DateRange	  _dateRange?: DateRange
+src\lib\audit\audit-service.ts	7	import { auditLogs, AuditActionType, AuditAction } from '@/lib/db/schema/audit-logs';	import { auditLogs, AuditActionType as _AuditActionType, AuditAction } from '@/lib/db/schema/audit-logs';
+src\lib\audit\audit-service.ts	9	import { eq, and, or, gte, lte, inArray, desc, sql, count } from 'drizzle-orm';	import { eq, and, or as _or, gte, lte, inArray, desc, sql, count } from 'drizzle-orm';
+src\lib\audit\audit-service.ts	9	import { eq, and, or as _or, gte, lte, inArray, desc, sql, count } from 'drizzle-orm';	import { eq, and, or as _or, gte, lte, inArray, desc, sql as _sql, count } from 'drizzle-orm';
+src\lib\audit\audit-service.ts	10	import { cache } from '@/lib/cache';	import { cache as _cache } from '@/lib/cache';
+src\lib\audit\middleware.ts	137	    getDescription: (req, body) => `更新用户信息`,	    getDescription: (_req, body) => `更新用户信息`,
+src\lib\audit\middleware.ts	137	    getDescription: (_req, body) => `更新用户信息`,	    getDescription: (_req, _body) => `更新用户信息`,
+src\lib\audit\middleware.ts	183	    getDescription: (req, body) => `导出文档`,	    getDescription: (_req, body) => `导出文档`,
+src\lib\audit\middleware.ts	183	    getDescription: (_req, body) => `导出文档`,	    getDescription: (_req, _body) => `导出文档`,
+src\lib\audit\middleware.ts	188	    getDescription: (req, body) => `下载文档`,	    getDescription: (_req, body) => `下载文档`,
+src\lib\audit\middleware.ts	188	    getDescription: (_req, body) => `下载文档`,	    getDescription: (_req, _body) => `下载文档`,
+src\lib\audit\service.ts	7	import { auditLogs, users } from '@/db/schema';	import { auditLogs, users as _users } from '@/db/schema';
+src\lib\audit\service.ts	8	import { eq, and, gte, lte, like, or, desc, sql, inArray } from 'drizzle-orm';	import { eq, and, gte, lte, like, or as _or, desc, sql, inArray } from 'drizzle-orm';
+src\lib\auth\jwt.ts	99	  } catch (error) {	  } catch (_error) {
+src\lib\auth\jwt.ts	334	  } catch (error) {	  } catch (_error) {
+src\lib\auth\middleware.ts	8	import { hasPermission, hasAnyPermission, hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';	import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';
+src\lib\auth\middleware.ts	8	import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';	import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions as _hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';
+src\lib\auth\middleware.ts	8	import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions as _hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';	import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions as _hasAllPermissions, canAccessApi as _canAccessApi, getUserRoles } from '@/lib/auth/permission';
+src\lib\auth\middleware.ts	23	function getCachedPermissions(userId: number): Set<string> | null {	function _getCachedPermissions(userId: number): Set<string> | null {
+src\lib\auth\middleware.ts	34	function setCachedPermissions(userId: number, permissions: Set<string>): void {	function _setCachedPermissions(userId: number, permissions: Set<string>): void {
+src\lib\auth\middleware.ts	94	      } catch (error) {	      } catch (_error) {
+src\lib\auth\middleware.ts	98	  } catch (error) {	  } catch (_error) {
+src\lib\auth\middleware.ts	207	export async function requireAuth(request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {	export async function requireAuth(_request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
+src\lib\auth\permission.ts	8	import { users, roles, permissions, userRoles, rolePermissions } from '@/db/schema';	import { users as _users, roles, permissions, userRoles, rolePermissions } from '@/db/schema';
+src\lib\auth\permission.ts	9	import { eq, and, inArray, isNull } from 'drizzle-orm';	import { eq, and, inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\auth\project-middleware.ts	9	import { canAccessDocument, getUserMaxSecurityLevel } from '@/lib/document/security';	import { canAccessDocument, getUserMaxSecurityLevel as _getUserMaxSecurityLevel } from '@/lib/document/security';
+src\lib\auth\rbac-middleware.ts	7	import RBACService, { DEFAULT_ROLES, DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';	import RBACService, { DEFAULT_ROLES as _DEFAULT_ROLES, DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';
+src\lib\auth\rbac-middleware.ts	7	import RBACService, { DEFAULT_ROLES as _DEFAULT_ROLES, DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';	import RBACService, { DEFAULT_ROLES as _DEFAULT_ROLES, DEFAULT_PERMISSIONS as _DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';
+src\lib\auth\resource-permission.ts	14	  fileVersions,	  fileVersions as _fileVersions,
+src\lib\auth\resource-permission.ts	21	  users,	  users as _users,
+src\lib\auth\resource-permission.ts	23	import { eq, and, or, inArray, isNull } from 'drizzle-orm';	import { eq, and, or as _or, inArray, isNull } from 'drizzle-orm';
+src\lib\auth\resource-permission.ts	23	import { eq, and, or as _or, inArray, isNull } from 'drizzle-orm';	import { eq, and, or as _or, inArray as _inArray, isNull } from 'drizzle-orm';
+src\lib\auth\resource-permission.ts	23	import { eq, and, or as _or, inArray as _inArray, isNull } from 'drizzle-orm';	import { eq, and, or as _or, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\auth\resource-permission.ts	24	import { hasPermission, getUserRoles } from './permission';	import { hasPermission, getUserRoles as _getUserRoles } from './permission';
+src\lib\authorization\service.ts	14	  companies,	  companies as _companies,
+src\lib\authorization\service.ts	15	  users,	  users as _users,
+src\lib\authorization\service.ts	17	import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';
+src\lib\authorization\service.ts	17	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
+src\lib\batch\batch-operation-service.ts	7	import { db } from '@/db/index';	import { db as _db } from '@/db/index';
+src\lib\batch\batch-operation-service.ts	9	import { pushProjectUpdate } from '@/lib/realtime/websocket-server';	import { pushProjectUpdate as _pushProjectUpdate } from '@/lib/realtime/websocket-server';
+src\lib\batch\batch-operation-service.ts	347	    options: BatchOperationOptions	    _options: BatchOperationOptions
+src\lib\bid-attendance\service.ts	12	  projects,	  projects as _projects,
+src\lib\bid-notification-collection\service.ts	11	  projects,	  projects as _projects,
+src\lib\bid-printing\service.ts	137	  const [projectInfo] = await db	  const [_projectInfo] = await db
+src\lib\bid-seal\service.ts	11	  projects,	  projects as _projects,
+src\lib\bid\ai-generator.ts	9	import { bidChapters, aiGenerationLogs, knowledgeItems } from '@/db/schema';	import { bidChapters as _bidChapters, aiGenerationLogs, knowledgeItems } from '@/db/schema';
+src\lib\bid\ai-generator.ts	14	  getLLMByProvider,	  getLLMByProvider as _getLLMByProvider,
+src\lib\bid\approval.ts	13	  users,	  users as _users,
+src\lib\bid\approval.ts	18	import { ApprovalLevel, ApprovalStatus } from '@/types/bid';	import { ApprovalLevel, ApprovalStatus as _ApprovalStatus } from '@/types/bid';
+src\lib\bid\approval.ts	19	import { createAuditLog } from '@/lib/audit/service';	import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
+src\lib\bid\approval.ts	21	  getDocumentById,	  getDocumentById as _getDocumentById,
+src\lib\bid\approval.ts	22	  updateDocumentStatus,	  updateDocumentStatus as _updateDocumentStatus,
+src\lib\bid\documents-service.ts	19	import { eq, and, desc, count, sum, sql, isNull } from 'drizzle-orm';	import { eq, and, desc, count, sum as _sum, sql, isNull } from 'drizzle-orm';
+src\lib\bid\documents-service.ts	24	  ApprovalStatus,	  ApprovalStatus as _ApprovalStatus,
+src\lib\bid\documents-service.ts	37	import { createAuditLog } from '@/lib/audit/service';	import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
+src\lib\bid\documents-service.ts	553	  return await db.transaction(async (tx) => {	  return await db.transaction(async (_tx) => {
+src\lib\bid\reviewer.ts	6	import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\bid\reviewer.ts	230	  customHeaders?: Record<string, string>	  _customHeaders?: Record<string, string>
+src\lib\bid\reviewer.ts	351	  customHeaders?: Record<string, string>	  _customHeaders?: Record<string, string>
+src\lib\bid\reviewer.ts	410	  chapterCount: number	  _chapterCount: number
+src\lib\bid\template.ts	38	  const query = db.select().from(bidTemplates);	  const _query = db.select().from(bidTemplates);
+src\lib\bidding-platform\sync-service.ts	9	import { eq, and, isNotNull } from 'drizzle-orm';	import { eq, and as _and, isNotNull } from 'drizzle-orm';
+src\lib\bidding-platform\sync-service.ts	9	import { eq, and as _and, isNotNull } from 'drizzle-orm';	import { eq, and as _and, isNotNull as _isNotNull } from 'drizzle-orm';
+src\lib\cache\redis-client.ts	275	    const pattern = `${key}:*`;	    const _pattern = `${key}:*`;
+src\lib\cache\redis-client.ts	296	  subscribe: async (channel: string, callback: (message: string) => void) => {	  subscribe: async (channel: string, _callback: (message: string) => void) => {
+src\lib\cache\redis-client.ts	312	  generationChapter: (documentId: string, chapterId: number) => `generation:chapter:${documentId}:chapters`, // 简化实现，使用统一的key	  generationChapter: (documentId: string, _chapterId: number) => `generation:chapter:${documentId}:chapters`, // 简化实现，使用统一的key
+src\lib\collaboration\use-collaboration.tsx	53	  username,	  _username,
+src\lib\collaboration\websocket.ts	400	  for (const [userId, user] of room.users) {	  for (const [userId, _user] of room.users) {
+src\lib\company-sync\service.ts	19	  projects,	  projects as _projects,
+src\lib\company-sync\service.ts	26	  bidChapters,	  bidChapters as _bidChapters,
+src\lib\company-sync\service.ts	27	  docFrameworks,	  docFrameworks as _docFrameworks,
+src\lib\company-sync\service.ts	28	  users,	  users as _users,
+src\lib\company-sync\service.ts	37	  inArray,	  inArray as _inArray,
+src\lib\company-sync\service.ts	41	  isNull,	  isNull as _isNull,
+src\lib\company\service.ts	11	  users,	  users as _users,
+src\lib\company\service.ts	12	  files,	  files as _files,
+src\lib\company\service.ts	27	  NewCompany,	  NewCompany as _NewCompany,
+src\lib\company\service.ts	29	  NewCompanyFile,	  NewCompanyFile as _NewCompanyFile,
+src\lib\cost\service.ts	18	  type NewCostReport,	  type _NewCostReport,
+src\lib\cost\service.ts	469	  const trend = await getCostTrend(	  const _trend = await getCostTrend(
+src\lib\dashboard\service.ts	11	  projectPhases,	  projectPhases as _projectPhases,
+src\lib\dashboard\service.ts	13	  bidChapters,	  bidChapters as _bidChapters,
+src\lib\dashboard\service.ts	19	import { eq, and, or, desc, asc, count, sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';	import { eq, and, or as _or, desc, asc, count, sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
+src\lib\dashboard\service.ts	19	import { eq, and, or as _or, desc, asc, count, sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';	import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
+src\lib\dashboard\service.ts	19	import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';	import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull as _isNull, isNotNull } from 'drizzle-orm';
+src\lib\dashboard\service.ts	20	import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, subDays, subMonths, format } from 'date-fns';	import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek, subDays, subMonths, format } from 'date-fns';
+src\lib\dashboard\service.ts	20	import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek, subDays, subMonths, format } from 'date-fns';	import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek as _endOfWeek, subDays, subMonths, format } from 'date-fns';
+src\lib\dashboard\service.ts	475	  const { status, role, limit = 10 } = options;	  const { status, _role, limit = 10 } = options;
+src\lib\db\index-manager.ts	310	    } catch (error) {	    } catch (_error) {
+src\lib\e-sign\service.ts	30	import { eq, and, desc, sql, lte, gte, inArray, isNull, or } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte, inArray, isNull, or } from 'drizzle-orm';
+src\lib\e-sign\service.ts	30	import { eq, and, desc, sql, lte as _lte, gte, inArray, isNull, or } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray, isNull, or } from 'drizzle-orm';
+src\lib\e-sign\service.ts	30	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray, isNull, or } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull, or } from 'drizzle-orm';
+src\lib\e-sign\service.ts	30	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull, or } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or } from 'drizzle-orm';
+src\lib\e-sign\service.ts	30	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or as _or } from 'drizzle-orm';
+src\lib\e-sign\service.ts	445	  signers: Signer[]	  _signers: Signer[]
+src\lib\e-sign\service.ts	463	  signers: Signer[]	  _signers: Signer[]
+src\lib\e-sign\service.ts	481	  signers: Signer[]	  _signers: Signer[]
+src\lib\e-sign\service.ts	543	  const conditions = companyId ? [eq(signTasks.configId, sealConfigs.id), eq(sealConfigs.companyId, companyId)] : [];	  const _conditions = companyId ? [eq(signTasks.configId, sealConfigs.id), eq(sealConfigs.companyId, companyId)] : [];
+src\lib\encryption\encryption-service.ts	303	export function withEncryption<T extends Record<string, any>>(fields: string[]) {	export function withEncryption<_T extends Record<string, any>>(fields: string[]) {
+src\lib\encryption\encryption-service.ts	336	export function withDecryption<T extends Record<string, any>>(fields: string[]) {	export function withDecryption<_T extends Record<string, any>>(fields: string[]) {
+src\lib\esign\service.ts	7	import { projects, bidDocuments } from '@/db/schema';	import { projects as _projects, bidDocuments } from '@/db/schema';
+src\lib\esign\service.ts	8	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\lib\esign\service.ts	58	  async getUserCertificates(userId: number): Promise<DigitalCertificate[]> {	  async getUserCertificates(_userId: number): Promise<DigitalCertificate[]> {
+src\lib\esign\service.ts	83	  async applyCertificate(data: {	  async applyCertificate(_data: {
+src\lib\esign\service.ts	99	  async renewCertificate(certificateId: string): Promise<boolean> {	  async renewCertificate(_certificateId: string): Promise<boolean> {
+src\lib\esign\service.ts	107	  async revokeCertificate(certificateId: string, reason: string): Promise<boolean> {	  async revokeCertificate(_certificateId: string, reason: string): Promise<boolean> {
+src\lib\esign\service.ts	107	  async revokeCertificate(_certificateId: string, reason: string): Promise<boolean> {	  async revokeCertificate(_certificateId: string, _reason: string): Promise<boolean> {
+src\lib\esign\service.ts	121	  async getCompanySeals(companyId: number): Promise<ElectronicSeal[]> {	  async getCompanySeals(_companyId: number): Promise<ElectronicSeal[]> {
+src\lib\esign\service.ts	151	  async generateSealImage(params: {	  async generateSealImage(_params: {
+src\lib\esign\service.ts	165	  async deactivateSeal(sealId: string): Promise<void> {	  async deactivateSeal(_sealId: string): Promise<void> {
+src\lib\esign\service.ts	223	  async verifySignature(signedDocumentId: string): Promise<{	  async verifySignature(_signedDocumentId: string): Promise<{
+src\lib\esign\service.ts	262	  }[], certificateId: string, sealId?: string): Promise<SignedDocument[]> {	  }[], _certificateId: string, sealId?: string): Promise<SignedDocument[]> {
+src\lib\esign\service.ts	262	  }[], _certificateId: string, sealId?: string): Promise<SignedDocument[]> {	  }[], _certificateId: string, _sealId?: string): Promise<SignedDocument[]> {
+src\lib\esign\service.ts	265	    for (const doc of documents) {	    for (const _doc of documents) {
+src\lib\esign\service.ts	296	  async getSignRecords(documentId: number): Promise<SignedDocument[]> {	  async getSignRecords(_documentId: number): Promise<SignedDocument[]> {
+src\lib\export\import-export-service.ts	6	import { cache } from '@/lib/cache';	import { cache as _cache } from '@/lib/cache';
+src\lib\export\import-export-service.ts	57	      const columns = Object.keys(data[0]);	      const _columns = Object.keys(data[0]);
+src\lib\export\import-export-service.ts	94	    options: ExportOptions = { format: ExportFormat.JSON }	    _options: ExportOptions = { format: ExportFormat.JSON }
+src\lib\export\import-export-service.ts	149	    options: ImportOptions = { format: ExportFormat.JSON }	    _options: ImportOptions = { format: ExportFormat.JSON }
+src\lib\export\import-export-service.ts	216	    const startIndexForHeaders = startIndex === 0 ? 0 : 1;	    const _startIndexForHeaders = startIndex === 0 ? 0 : 1;
+src\lib\file\service.ts	9	import { eq, and, like, desc, asc, inArray, sql, count, isNull } from 'drizzle-orm';	import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull } from 'drizzle-orm';
+src\lib\file\service.ts	9	import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull } from 'drizzle-orm';	import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull as _isNull } from 'drizzle-orm';
+src\lib\file\service.ts	189	  userId: number	  _userId: number
+src\lib\file\service.ts	197	    projectId,	    projectId as _projectId,
+src\lib\file\service.ts	280	      } catch (error) {	      } catch (_error) {
+src\lib\file\service.ts	294	  userId: number	  _userId: number
+src\lib\guarantee\service.ts	10	  users,	  users as _users,
+src\lib\guarantee\service.ts	15	import { eq, and, desc, sql, lte, gte, inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull } from 'drizzle-orm';
+src\lib\guarantee\service.ts	15	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\image-generation\service.ts	9	  projects,	  projects as _projects,
+src\lib\image-generation\service.ts	10	  bidDocuments,	  bidDocuments as _bidDocuments,
+src\lib\image\service.ts	16	import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';	import { eq, desc, asc, and, or, like, sql, inArray as _inArray } from 'drizzle-orm';
+src\lib\image\service.ts	17	import { ImageGenerationClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { ImageGenerationClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\image\service.ts	83	  const startTime = Date.now();	  const _startTime = Date.now();
+src\lib\interpretation\service.ts	15	  files,	  files as _files,
+src\lib\interpretation\service.ts	17	import { eq, and, desc, like, sql, inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, like as _like, sql, inArray, isNull } from 'drizzle-orm';
+src\lib\interpretation\service.ts	17	import { eq, and, desc, like as _like, sql, inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\interpretation\service.ts	18	import { LLMClient, FetchClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, FetchClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\knowledge\approval.ts	15	import { eq, and, desc, inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, inArray as _inArray, isNull } from 'drizzle-orm';
+src\lib\knowledge\approval.ts	15	import { eq, and, desc, inArray as _inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\knowledge\approval.ts	209	  const firstReviewer = await db	  const _firstReviewer = await db
+src\lib\knowledge\import.ts	6	import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\knowledge\import.ts	8	import { knowledgeItems, knowledgeCategories, knowledgeVersions } from '@/db/schema';	import { knowledgeItems, knowledgeCategories as _knowledgeCategories, knowledgeVersions } from '@/db/schema';
+src\lib\knowledge\import.ts	289	  reviewNotes?: string	  _reviewNotes?: string
+src\lib\llm\adapters\coze.ts	147	          totalContent += text;	          _totalContent += text;
+src\lib\llm\adapters\deepseek.ts	273	        const errorText = await response.text();	        const _errorText = await response.text();
+src\lib\llm\adapters\deepseek.ts	369	      const errorMessage = error instanceof Error ? error.message : 'Unknown error';	      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
+src\lib\llm\adapters\deepseek.ts	459	    } catch (error) {	    } catch (_error) {
+src\lib\llm\adapters\ollama.ts	214	        const errorText = await response.text();	        const _errorText = await response.text();
+src\lib\llm\adapters\ollama.ts	293	      const errorMessage = error instanceof Error ? error.message : 'Unknown error';	      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
+src\lib\llm\adapters\openai-compatible.ts	274	        const errorText = await response.text();	        const _errorText = await response.text();
+src\lib\llm\adapters\openai-compatible.ts	360	      const errorMessage = error instanceof Error ? error.message : 'Unknown error';	      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
+src\lib\llm\adapters\openai-compatible.ts	452	    } catch (error) {	    } catch (_error) {
+src\lib\llm\adapters\qwen.ts	271	        const errorText = await response.text();	        const _errorText = await response.text();
+src\lib\llm\adapters\qwen.ts	357	      const errorMessage = error instanceof Error ? error.message : 'Unknown error';	      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
+src\lib\llm\adapters\qwen.ts	449	    } catch (error) {	    } catch (_error) {
+src\lib\llm\adapters\spark.ts	253	    let rejectConnect: (err: Error) => void;	    let _rejectConnect: (err: Error) => void;
+src\lib\llm\adapters\wenxin.ts	273	        const errorText = await response.text();	        const _errorText = await response.text();
+src\lib\llm\adapters\wenxin.ts	347	    } catch (error) {	    } catch (_error) {
+src\lib\llm\adapters\wenxin.ts	363	    const model = options?.model || this.config.defaultEmbeddingModel || 'embedding-v1';	    const _model = options?.model || this.config.defaultEmbeddingModel || 'embedding-v1';
+src\lib\llm\factory.ts	325	    for (const [_, adapter] of this.adapters) {	    for (const [__, adapter] of this.adapters) {
+src\lib\llm\model-service.ts	8	import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';	import { eq, desc, asc, and, or, like, sql as _sql, inArray } from 'drizzle-orm';
+src\lib\llm\service.ts	15	import { eq, desc, asc, and, like, sql } from 'drizzle-orm';	import { eq, desc, asc, and, like as _like, sql } from 'drizzle-orm';
+src\lib\matrix\generator.ts	6	import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\matrix\generator.ts	8	import { responseMatrices, responseItems, parseItems, parseTasks } from '@/db/schema';	import { responseMatrices, responseItems, parseItems, parseTasks as _parseTasks } from '@/db/schema';
+src\lib\matrix\generator.ts	9	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\lib\matrix\generator.ts	93	  const { projectId, taskId, name, description, userId, customHeaders } = params;	  const { projectId, taskId, name, description, userId, _customHeaders } = params;
+src\lib\matrix\generator.ts	253	  userId: number	  _userId: number
+src\lib\middleware\security.ts	133	  } catch (error) {	  } catch (_error) {
+src\lib\middleware\security.ts	219	      } catch (error) {	      } catch (_error) {
+src\lib\middleware\security.ts	322	  sessionToken?: string	  _sessionToken?: string
+src\lib\notification\service.ts	7	import { reminderRules, users } from '@/db/schema';	import { reminderRules as _reminderRules, users } from '@/db/schema';
+src\lib\notification\service.ts	8	import { eq, and } from 'drizzle-orm';	import { eq, and as _and } from 'drizzle-orm';
+src\lib\notification\service.ts	50	  async send(to: string, subject: string, html: string): Promise<boolean> {	  async send(to: string, subject: string, _html: string): Promise<boolean> {
+src\lib\notification\service.ts	284	    message: MessagePayload,	    _message: MessagePayload,
+src\lib\notification\service.ts	285	    channels: NotificationChannel[]	    _channels: NotificationChannel[]
+src\lib\offline\storage.ts	134	async function deleteData(storeName: string, key: number | string): Promise<void> {	async function _deleteData(storeName: string, key: number | string): Promise<void> {
+src\lib\opening\service.ts	11	  projects,	  projects as _projects,
+src\lib\opening\service.ts	12	  users,	  users as _users,
+src\lib\parse\extractors.ts	7	import type { ParseItemType, ParseResultItem } from './service';	import type { ParseItemType as _ParseItemType, ParseResultItem } from './service';
+src\lib\parse\service.ts	6	import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';	import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+src\lib\parse\service.ts	53	  parseType: 'full' | 'section' | 'custom' = 'full',	  _parseType: 'full' | 'section' | 'custom' = 'full',
+src\lib\partner-application\service.ts	12	  users,	  users as _users,
+src\lib\partner-application\service.ts	13	  companies,	  companies as _companies,
+src\lib\partner-application\service.ts	15	import { eq, and, desc, asc, like, or, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, count, sql as _sql } from 'drizzle-orm';
+src\lib\performance-bond\service.ts	11	  projects,	  projects as _projects,
+src\lib\performance\lazy-components.tsx	16	function createLazyComponent<T extends React.ComponentType<any>>(	function _createLazyComponent<T extends React.ComponentType<any>>(
+src\lib\price-application\service.ts	11	  authorizationManufacturers,	  authorizationManufacturers as _authorizationManufacturers,
+src\lib\price-application\service.ts	12	  users,	  users as _users,
+src\lib\price-application\service.ts	14	import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';
+src\lib\price-application\service.ts	14	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
+src\lib\project-discussion\service.ts	14	  files,	  files as _files,
+src\lib\project-discussion\service.ts	24	import { eq, and, desc, sql, inArray, isNull, isNotNull, or, like } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull, or, like } from 'drizzle-orm';
+src\lib\project-discussion\service.ts	24	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull, or, like } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or, like } from 'drizzle-orm';
+src\lib\project-discussion\service.ts	24	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or, like } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or as _or, like } from 'drizzle-orm';
+src\lib\project-discussion\service.ts	24	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or as _or, like } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or as _or, like as _like } from 'drizzle-orm';
+src\lib\project-discussion\service.ts	184	export async function editMessage(id: number, content: string, userId: number): Promise<DiscussionMessage> {	export async function editMessage(id: number, content: string, _userId: number): Promise<DiscussionMessage> {
+src\lib\project-org\service.ts	24	  type NewArchivedOrgTemplate,	  type _NewArchivedOrgTemplate,
+src\lib\project-org\service.ts	27	import { eq, and, desc, sql, inArray, isNull, isNotNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray as _inArray, isNull, isNotNull } from 'drizzle-orm';
+src\lib\project-org\service.ts	27	import { eq, and, desc, sql, inArray as _inArray, isNull, isNotNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray as _inArray, isNull, isNotNull as _isNotNull } from 'drizzle-orm';
+src\lib\project-sync\service.ts	55	  operatorId: number	  _operatorId: number
+src\lib\project-sync\service.ts	257	  } catch (e) {	  } catch (_e) {
+src\lib\project-sync\service.ts	265	  } catch (e) {	  } catch (_e) {
+src\lib\project-sync\service.ts	273	  } catch (e) {	  } catch (_e) {
+src\lib\project\member.ts	8	import { eq, and, inArray } from 'drizzle-orm';	import { eq, and, inArray as _inArray } from 'drizzle-orm';
+src\lib\project\member.ts	17	const SECURITY_LEVEL_WEIGHT: Record<SecurityLevel, number> = {	const _SECURITY_LEVEL_WEIGHT: Record<SecurityLevel, number> = {
+src\lib\project\member.ts	350	  const result = await db	  const _result = await db
+src\lib\project\reminder.ts	11	  users,	  users as _users,
+src\lib\project\reminder.ts	14	import { eq, and, lt, gt, isNull, inArray, between } from 'drizzle-orm';	import { eq, and, lt, gt, isNull as _isNull, inArray, between } from 'drizzle-orm';
+src\lib\project\reminder.ts	14	import { eq, and, lt, gt, isNull as _isNull, inArray, between } from 'drizzle-orm';	import { eq, and, lt, gt, isNull as _isNull, inArray as _inArray, between } from 'drizzle-orm';
+src\lib\project\service.ts	39	import { createAuditLog } from '@/lib/audit/service';	import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
+src\lib\project\service.ts	229	  userId: number	  _userId: number
+src\lib\project\service.ts	240	    startDateFrom,	    startDateFrom as _startDateFrom,
+src\lib\project\service.ts	241	    startDateTo,	    startDateTo as _startDateTo,
+src\lib\project\service.ts	242	    endDateFrom,	    endDateFrom as _endDateFrom,
+src\lib\project\service.ts	243	    endDateTo,	    endDateTo as _endDateTo,
+src\lib\project\service.ts	387	  userId: number	  _userId: number
+src\lib\project\service.ts	882	export async function getProjectStats(userId: number): Promise<{	export async function getProjectStats(_userId: number): Promise<{
+src\lib\quote-analysis\service.ts	15	  projects,	  projects as _projects,
+src\lib\quote-analysis\service.ts	27	import { eq, and, desc, sql, lte, gte, inArray, isNull, or, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte, inArray, isNull, or, ilike } from 'drizzle-orm';
+src\lib\quote-analysis\service.ts	27	import { eq, and, desc, sql, lte as _lte, gte, inArray, isNull, or, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray, isNull, or, ilike } from 'drizzle-orm';
+src\lib\quote-analysis\service.ts	27	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray, isNull, or, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull, or, ilike } from 'drizzle-orm';
+src\lib\quote-analysis\service.ts	27	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull, or, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or, ilike } from 'drizzle-orm';
+src\lib\quote-analysis\service.ts	27	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or as _or, ilike } from 'drizzle-orm';
+src\lib\quote-analysis\service.ts	28	import { LLMClient } from 'coze-coding-dev-sdk';	import { LLMClient as _LLMClient } from 'coze-coding-dev-sdk';
+src\lib\quote\service.ts	7	import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors, projects } from '@/db/schema';	import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors as _competitors, projects } from '@/db/schema';
+src\lib\quote\service.ts	7	import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors as _competitors, projects } from '@/db/schema';	import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors as _competitors, projects as _projects } from '@/db/schema';
+src\lib\quote\service.ts	8	import { eq, and, gte, lte, desc, sql, avg } from 'drizzle-orm';	import { eq, and, gte as _gte, lte, desc, sql, avg } from 'drizzle-orm';
+src\lib\quote\service.ts	8	import { eq, and, gte as _gte, lte, desc, sql, avg } from 'drizzle-orm';	import { eq, and, gte as _gte, lte as _lte, desc, sql, avg } from 'drizzle-orm';
+src\lib\quote\service.ts	8	import { eq, and, gte as _gte, lte as _lte, desc, sql, avg } from 'drizzle-orm';	import { eq, and, gte as _gte, lte as _lte, desc, sql as _sql, avg } from 'drizzle-orm';
+src\lib\quote\service.ts	8	import { eq, and, gte as _gte, lte as _lte, desc, sql as _sql, avg } from 'drizzle-orm';	import { eq, and, gte as _gte, lte as _lte, desc, sql as _sql, avg as _avg } from 'drizzle-orm';
+src\lib\quote\service.ts	239	  async estimateDirectCosts(projectId: number): Promise<{	  async estimateDirectCosts(_projectId: number): Promise<{
+src\lib\quote\service.ts	395	  private async analyzeCompetitors(industry?: string): Promise<{	  private async analyzeCompetitors(_industry?: string): Promise<{
+src\lib\realtime\websocket-server.ts	202	export function getUserOnlineStatus(userId: string): boolean {	export function getUserOnlineStatus(_userId: string): boolean {
+src\lib\recycle-bin\service.ts	18	import { eq, and, desc, inArray, lte, gte, isNull, sql } from 'drizzle-orm';	import { eq, and, desc, inArray as _inArray, lte, gte, isNull, sql } from 'drizzle-orm';
+src\lib\recycle-bin\service.ts	200	  deletedBy: number	  _deletedBy: number
+src\lib\recycle-bin\service.ts	900	  const now = new Date();	  const _now = new Date();
+src\lib\report\service.ts	9	  projectMilestones,	  projectMilestones as _projectMilestones,
+src\lib\report\service.ts	14	import { eq, and, or, desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';	import { eq, and, or as _or, desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';
+src\lib\report\service.ts	14	import { eq, and, or as _or, desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';	import { eq, and, or as _or, desc as _desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';
+src\lib\report\service.ts	14	import { eq, and, or as _or, desc as _desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';	import { eq, and, or as _or, desc as _desc, gte, lte, between as _between, sql, count, sum } from 'drizzle-orm';
+src\lib\report\service.ts	533	        ...(conditions.length > 0 ? conditions.map(c => eq(projects.status, projects.status)) : [])	        ...(conditions.length > 0 ? conditions.map(_c => eq(projects.status, projects.status)) : [])
+src\lib\review\config.ts	8	import { eq, and, desc, inArray, isNull } from 'drizzle-orm';	import { eq, and, desc, inArray, isNull as _isNull } from 'drizzle-orm';
+src\lib\review\report.ts	7	import { bidDocuments, bidChapters, reviewReports, documentReviews, complianceChecks } from '@/db/schema';	import { bidDocuments, bidChapters, reviewReports, documentReviews, complianceChecks as _complianceChecks } from '@/db/schema';
+src\lib\review\report.ts	8	import { eq, desc, and } from 'drizzle-orm';	import { eq, desc, and as _and } from 'drizzle-orm';
+src\lib\review\report.ts	213	  chapters: typeof bidChapters.$inferSelect[]	  _chapters: typeof bidChapters.$inferSelect[]
+src\lib\review\report.ts	331	  customHeaders?: Record<string, string>	  _customHeaders?: Record<string, string>
+src\lib\sample-application\service.ts	13	  authorizationManufacturers,	  authorizationManufacturers as _authorizationManufacturers,
+src\lib\sample-application\service.ts	14	  users,	  users as _users,
+src\lib\sample-application\service.ts	16	import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';
+src\lib\sample-application\service.ts	16	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
+src\lib\scheduler\scheduler-service.ts	7	import { db } from '@/db/index';	import { db as _db } from '@/db/index';
+src\lib\scheduler\scheduler-service.ts	8	import { cache } from '@/lib/cache';	import { cache as _cache } from '@/lib/cache';
+src\lib\scheduler\scheduler-service.ts	9	import { sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';	import { sendNotificationToUser as _sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';
+src\lib\scheduler\scheduler-service.ts	9	import { sendNotificationToUser as _sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';	import { sendNotificationToUser as _sendNotificationToUser, NotificationType as _NotificationType } from '@/lib/realtime/websocket-server';
+src\lib\scheme\service.ts	13	  schemeFiles,	  schemeFiles as _schemeFiles,
+src\lib\scheme\service.ts	14	  schemeGenerationLogs,	  schemeGenerationLogs as _schemeGenerationLogs,
+src\lib\scheme\service.ts	16	  schemeShares,	  schemeShares as _schemeShares,
+src\lib\scheme\service.ts	18	import { docFrameworks, docFrameworkChapters, users } from '@/db/schema';	import { docFrameworks as _docFrameworks, docFrameworkChapters, users } from '@/db/schema';
+src\lib\scheme\service.ts	28	  count,	  count as _count,
+src\lib\scheme\service.ts	29	  isNull,	  isNull as _isNull,
+src\lib\scheme\service.ts	735	function buildChapterTree(chapters: any[], parentId: number | null = null): any[] {	function _buildChapterTree(chapters: any[], parentId: number | null = null): any[] {
+src\lib\scheme\service.ts	750	  userId: number	  _userId: number
+src\lib\search\search-service.ts	9	import { sql, or, and, ilike, desc } from 'drizzle-orm';	import { sql, or, and as _and, ilike, desc } from 'drizzle-orm';
+src\lib\search\search-service.ts	418	  static async generateSuggestions(query: string): Promise<string[]> {	  static async generateSuggestions(_query: string): Promise<string[]> {
+src\lib\search\search-service.ts	451	  static async getPopularSearches(limit: number = 10): Promise<string[]> {	  static async getPopularSearches(_limit: number = 10): Promise<string[]> {
+src\lib\search\search-service.ts	459	  static async getSearchHistory(userId: string, limit: number = 10): Promise<string[]> {	  static async getSearchHistory(userId: string, _limit: number = 10): Promise<string[]> {
+src\lib\search\service.ts	13	  departments,	  departments as _departments,
+src\lib\search\service.ts	15	import { eq, or, and, ilike, sql, desc, inArray } from 'drizzle-orm';	import { eq, or, and, ilike, sql as _sql, desc, inArray } from 'drizzle-orm';
+src\lib\search\service.ts	15	import { eq, or, and, ilike, sql as _sql, desc, inArray } from 'drizzle-orm';	import { eq, or, and, ilike, sql as _sql, desc as _desc, inArray } from 'drizzle-orm';
+src\lib\search\service.ts	15	import { eq, or, and, ilike, sql as _sql, desc as _desc, inArray } from 'drizzle-orm';	import { eq, or, and, ilike, sql as _sql, desc as _desc, inArray as _inArray } from 'drizzle-orm';
+src\lib\search\service.ts	67	    userId,	    userId as _userId,
+src\lib\search\service.ts	374	export async function getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {	export async function getSearchHistory(userId: number, _limit: number = 10): Promise<string[]> {
+src\lib\services\batch-generate-service.ts	6	import { db } from '@/db';	import { db as _db } from '@/db';
+src\lib\services\batch-generate-service.ts	7	import { bidDocuments, bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';
+src\lib\services\batch-generate-service.ts	7	import { bidDocuments as _bidDocuments, bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidDocumentInterpretations as _bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';
+src\lib\services\batch-generate-service.ts	7	import { bidDocuments as _bidDocuments, bidDocumentInterpretations as _bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidDocumentInterpretations as _bidDocumentInterpretations, documentGenerationHistories as _documentGenerationHistories } from '@/db/schema';
+src\lib\services\batch-generate-service.ts	8	import { eq, inArray } from 'drizzle-orm';	import { eq as _eq, inArray } from 'drizzle-orm';
+src\lib\services\batch-generate-service.ts	8	import { eq as _eq, inArray } from 'drizzle-orm';	import { eq as _eq, inArray as _inArray } from 'drizzle-orm';
+src\lib\services\batch-generate-service.ts	10	import { generationProgressService } from './generation-progress-service';	import { generationProgressService as _generationProgressService } from './generation-progress-service';
+src\lib\services\batch-generate-service.ts	170	      const promises = chunk.map(async (item, chunkIndex) => {	      const promises = chunk.map(async (item, _chunkIndex) => {
+src\lib\services\company-framework-service.ts	11	  files,	  files as _files,
+src\lib\services\company-framework-service.ts	14	import { and, eq, inArray, desc, isNull, asc } from 'drizzle-orm';	import { and, eq, inArray, desc, isNull as _isNull, asc } from 'drizzle-orm';
+src\lib\services\company-framework-service.ts	17	  NewCompanyDocumentFramework,	  NewCompanyDocumentFramework as _NewCompanyDocumentFramework,
+src\lib\services\company-framework-service.ts	19	  NewCompanyFrameworkChapter,	  NewCompanyFrameworkChapter as _NewCompanyFrameworkChapter,
+src\lib\services\generation-history-service.ts	8	import { eq, and, desc, inArray } from 'drizzle-orm';	import { eq, and as _and, desc, inArray } from 'drizzle-orm';
+src\lib\services\generation-notification-service.ts	7	import { bidDocuments, documentGenerationHistories, users, projects } from '@/db/schema';	import { bidDocuments, documentGenerationHistories as _documentGenerationHistories, users, projects } from '@/db/schema';
+src\lib\services\generation-progress-service-v2.ts	6	import { db } from '@/db';	import { db as _db } from '@/db';
+src\lib\services\generation-progress-service-v2.ts	7	import { bidDocuments, bidChapters, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidChapters, documentGenerationHistories } from '@/db/schema';
+src\lib\services\generation-progress-service-v2.ts	7	import { bidDocuments as _bidDocuments, bidChapters, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidChapters as _bidChapters, documentGenerationHistories } from '@/db/schema';
+src\lib\services\generation-progress-service-v2.ts	7	import { bidDocuments as _bidDocuments, bidChapters as _bidChapters, documentGenerationHistories } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidChapters as _bidChapters, documentGenerationHistories as _documentGenerationHistories } from '@/db/schema';
+src\lib\services\generation-progress-service-v2.ts	8	import { eq, and } from 'drizzle-orm';	import { eq as _eq, and } from 'drizzle-orm';
+src\lib\services\generation-progress-service-v2.ts	8	import { eq as _eq, and } from 'drizzle-orm';	import { eq as _eq, and as _and } from 'drizzle-orm';
+src\lib\services\generation-progress-service-v2.ts	9	import redis, { RedisKeys, getRedisClient, isUsingMemoryFallback } from '@/lib/cache';	import redis, { RedisKeys, getRedisClient as _getRedisClient, isUsingMemoryFallback } from '@/lib/cache';
+src\lib\services\generation-progress-service.ts	6	import { db } from '@/db';	import { db as _db } from '@/db';
+src\lib\services\generation-progress-service.ts	7	import { bidDocuments, bidChapters } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidChapters } from '@/db/schema';
+src\lib\services\generation-progress-service.ts	7	import { bidDocuments as _bidDocuments, bidChapters } from '@/db/schema';	import { bidDocuments as _bidDocuments, bidChapters as _bidChapters } from '@/db/schema';
+src\lib\services\generation-progress-service.ts	8	import { eq } from 'drizzle-orm';	import { eq as _eq } from 'drizzle-orm';
+src\lib\services\one-click-generate-service.ts	10	  bidDocumentFramework,	  bidDocumentFramework as _bidDocumentFramework,
+src\lib\services\one-click-generate-service.ts	15	  partnerMaterials,	  partnerMaterials as _partnerMaterials,
+src\lib\services\one-click-generate-service.ts	781	  async getPendingReviews(projectId?: number) {	  async getPendingReviews(_projectId?: number) {
+src\lib\services\one-click-generate-service.ts	866	    const project = await db	    const _project = await db
+src\lib\services\resume-generate-service.ts	8	import { eq, and, inArray } from 'drizzle-orm';	import { eq, and as _and, inArray } from 'drizzle-orm';
+src\lib\services\resume-generate-service.ts	8	import { eq, and as _and, inArray } from 'drizzle-orm';	import { eq, and as _and, inArray as _inArray } from 'drizzle-orm';
+src\lib\services\resume-generate-service.ts	10	import { oneClickGenerateService, OneClickGenerateParams } from './one-click-generate-service';	import { oneClickGenerateService as _oneClickGenerateService, OneClickGenerateParams } from './one-click-generate-service';
+src\lib\services\resume-generate-service.ts	154	      const result = await this.continueGeneration(	      const _result = await this.continueGeneration(
+src\lib\services\version-compare-service.ts	8	import { eq, and, desc, inArray } from 'drizzle-orm';	import { eq, and as _and, desc, inArray } from 'drizzle-orm';
+src\lib\services\version-compare-service.ts	8	import { eq, and as _and, desc, inArray } from 'drizzle-orm';	import { eq, and as _and, desc, inArray as _inArray } from 'drizzle-orm';
+src\lib\services\version-compare-service.ts	368	    const modified = 0;	    const _modified = 0;
+src\lib\session\service.ts	7	import { sessions, users } from '@/db/schema';	import { sessions, users as _users } from '@/db/schema';
+src\lib\session\service.ts	8	import { eq, and, gt, lt, isNull, desc, inArray } from 'drizzle-orm';	import { eq, and, gt, lt, isNull as _isNull, desc, inArray } from 'drizzle-orm';
+src\lib\session\service.ts	8	import { eq, and, gt, lt, isNull as _isNull, desc, inArray } from 'drizzle-orm';	import { eq, and, gt, lt, isNull as _isNull, desc, inArray as _inArray } from 'drizzle-orm';
+src\lib\session\service.ts	138	  const result = await db	  const _result = await db
+src\lib\storage\oss-client.ts	300	  async listFiles(prefix: string = '', maxKeys: number = 100): Promise<{	  async listFiles(prefix: string = '', _maxKeys: number = 100): Promise<{
+src\lib\storage\oss-client.ts	340	    } catch (error) {	    } catch (_error) {
+src\lib\stream-utils.ts	81	          } catch (e) {	          } catch (_e) {
+src\lib\stream-utils.ts	98	        } catch (e) {	        } catch (_e) {
+src\lib\task-planning\service.ts	9	  projects,	  projects as _projects,
+src\lib\task-planning\service.ts	10	  users,	  users as _users,
+src\lib\task-planning\service.ts	13	import { eq, and, desc, inArray } from 'drizzle-orm';	import { eq, and, desc, inArray as _inArray } from 'drizzle-orm';
+src\lib\task-planning\service.ts	238	  } catch (e) {	  } catch (_e) {
+src\lib\tender-crawl\service.ts	21	import { eq, and, desc, sql, lte, gte, inArray, isNull, or, like, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull, or, like, ilike } from 'drizzle-orm';
+src\lib\tender-crawl\service.ts	21	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull, or, like, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull, or, like, ilike } from 'drizzle-orm';
+src\lib\tender-crawl\service.ts	21	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull, or, like, ilike } from 'drizzle-orm';	import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull, or, like as _like, ilike } from 'drizzle-orm';
+src\lib\tender-subscription\service.ts	12	  users,	  users as _users,
+src\lib\tender-subscription\service.ts	14	import { eq, and, desc, sql, inArray, or, like, gte, lte, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, or as _or, like, gte, lte, isNull } from 'drizzle-orm';
+src\lib\tender-subscription\service.ts	14	import { eq, and, desc, sql, inArray, or as _or, like, gte, lte, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, or as _or, like as _like, gte, lte, isNull } from 'drizzle-orm';
+src\lib\tender-subscription\service.ts	14	import { eq, and, desc, sql, inArray, or as _or, like as _like, gte, lte, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, or as _or, like as _like, gte as _gte, lte, isNull } from 'drizzle-orm';
+src\lib\tender-subscription\service.ts	14	import { eq, and, desc, sql, inArray, or as _or, like as _like, gte as _gte, lte, isNull } from 'drizzle-orm';	import { eq, and, desc, sql, inArray, or as _or, like as _like, gte as _gte, lte, isNull as _isNull } from 'drizzle-orm';
+src\lib\tender-subscription\service.ts	21	  NewTenderAlert,	  NewTenderAlert as _NewTenderAlert,
+src\lib\tender-subscription\time-extraction.ts	9	import { eq, isNull, and, gt } from 'drizzle-orm';	import { eq, isNull, and as _and, gt } from 'drizzle-orm';
+src\lib\tender-subscription\time-extraction.ts	9	import { eq, isNull, and as _and, gt } from 'drizzle-orm';	import { eq, isNull, and as _and, gt as _gt } from 'drizzle-orm';
+src\lib\tender\service.ts	8	import { eq, and, or, like, desc } from 'drizzle-orm';	import { eq as _eq, and, or, like, desc } from 'drizzle-orm';
+src\lib\tender\service.ts	8	import { eq as _eq, and, or, like, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, or, like, desc } from 'drizzle-orm';
+src\lib\tender\service.ts	8	import { eq as _eq, and as _and, or, like, desc } from 'drizzle-orm';	import { eq as _eq, and as _and, or, like, desc as _desc } from 'drizzle-orm';
+src\lib\tender\service.ts	205	  async getUserSubscriptions(userId: number): Promise<TenderSubscription[]> {	  async getUserSubscriptions(_userId: number): Promise<TenderSubscription[]> {
+src\lib\tender\service.ts	213	  async updateSubscription(id: number, data: Partial<TenderSubscription>): Promise<void> {	  async updateSubscription(_id: number, data: Partial<TenderSubscription>): Promise<void> {
+src\lib\tender\service.ts	213	  async updateSubscription(_id: number, data: Partial<TenderSubscription>): Promise<void> {	  async updateSubscription(_id: number, _data: Partial<TenderSubscription>): Promise<void> {
+src\lib\tender\service.ts	220	  async deleteSubscription(id: number): Promise<void> {	  async deleteSubscription(_id: number): Promise<void> {
+src\lib\unified-application\service.ts	12	  users,	  users as _users,
+src\lib\unified-application\service.ts	14	import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, like, or, inArray, count, sql } from 'drizzle-orm';
+src\lib\unified-application\service.ts	14	import { eq, and, desc, asc as _asc, like, or, inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';
+src\lib\unified-application\service.ts	14	import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';	import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
+src\lib\upload\chunked-upload.ts	6	import { mkdir, writeFile, readFile, unlink, stat, rename } from 'fs/promises';	import { mkdir, writeFile, readFile, unlink, stat as _stat, rename } from 'fs/promises';
+src\lib\upload\chunked-upload.ts	6	import { mkdir, writeFile, readFile, unlink, stat as _stat, rename } from 'fs/promises';	import { mkdir, writeFile, readFile, unlink, stat as _stat, rename as _rename } from 'fs/promises';
+src\lib\upload\chunked-upload.ts	71	  mimeType: string	  _mimeType: string
+src\lib\upload\chunked-upload.ts	139	  } catch (error) {	  } catch (_error) {
+src\lib\upload\chunked-upload.ts	157	  chunkHash: string	  _chunkHash: string
+src\lib\upload\chunked-upload.ts	231	  const writeStream = await writeFile(targetPath, Buffer.alloc(0));	  const _writeStream = await writeFile(targetPath, Buffer.alloc(0));
+src\lib\workflow\workflow-engine.ts	6	import { db } from '@/db/index';	import { db as _db } from '@/db/index';
+src\lib\workflow\workflow-engine.ts	424	    instance: WorkflowInstance	    _instance: WorkflowInstance
+src\middleware.ts	14	const protectedRoutes = ['/dashboard', '/projects', '/documents'];	const _protectedRoutes = ['/dashboard', '/projects', '/documents'];
+src\middleware.ts	15	const publicRoutes = ['/login', '/register', '/api/auth'];	const _publicRoutes = ['/login', '/register', '/api/auth'];
+src\middleware.ts	16	const apiRoutes = ['/api/'];	const _apiRoutes = ['/api/'];
+src\middleware.ts	155	    const response = new NextResponse(null, { status: 204 });	    const _response = new NextResponse(null, { status: 204 });
+src\server\index.ts	9	import { initWebSocket, pushProjectUpdate, pushDocumentUpload } from '@/lib/realtime/websocket-server';	import { initWebSocket, pushProjectUpdate as _pushProjectUpdate, pushDocumentUpload } from '@/lib/realtime/websocket-server';
+src\server\index.ts	9	import { initWebSocket, pushProjectUpdate as _pushProjectUpdate, pushDocumentUpload } from '@/lib/realtime/websocket-server';	import { initWebSocket, pushProjectUpdate as _pushProjectUpdate, pushDocumentUpload as _pushDocumentUpload } from '@/lib/realtime/websocket-server';

@@ -8,7 +8,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { checkCompanyPermission } from '@/lib/auth/resource-permission';
 import { db } from '@/db';
 import { companyContacts, companyContactRoles } from '@/db/schema';
-import { eq, and, asc, desc } from 'drizzle-orm';
+import { eq, and as _and, asc, desc } from 'drizzle-orm';
 
 // ============================================
 // GET - 获取对接人列表

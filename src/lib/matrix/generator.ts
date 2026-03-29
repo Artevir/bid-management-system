@@ -3,10 +3,10 @@
  * 根据解析项自动生成响应矩阵
  */
 
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
-import { responseMatrices, responseItems, parseItems, parseTasks } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { responseMatrices, responseItems, parseItems, parseTasks as _parseTasks } from '@/db/schema';
+import { eq, and as _and } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -90,7 +90,7 @@ export async function generateResponseSuggestion(
 export async function generateResponseMatrix(
   params: MatrixGenerationParams
 ): Promise<MatrixGenerationResult> {
-  const { projectId, taskId, name, description, userId, customHeaders } = params;
+  const { projectId, taskId, name, description, userId, _customHeaders } = params;
 
   // 1. 获取解析任务的解析项
   const taskParseItems = await db
@@ -250,7 +250,7 @@ export async function batchGenerateResponses(
 export async function updateMatrixItemResponse(
   itemId: number,
   response: string,
-  userId: number
+  _userId: number
 ): Promise<void> {
   await db
     .update(responseItems)

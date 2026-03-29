@@ -7,11 +7,11 @@ import { getSession } from '@/lib/auth/session';
 import {
   createSubscription,
   getSubscriptions,
-  getSubscriptionById,
-  updateSubscription,
-  deleteSubscription,
+  getSubscriptionById as _getSubscriptionById,
+  updateSubscription as _updateSubscription,
+  deleteSubscription as _deleteSubscription,
   type CreateSubscriptionParams,
-  type UpdateSubscriptionParams,
+  type _UpdateSubscriptionParams,
 } from '@/lib/tender-subscription/service';
 
 // GET /api/tender-subscriptions - 获取订阅列表

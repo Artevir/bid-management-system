@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label as _Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,7 +15,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
+  DialogFooter as _DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Users,
-  Search,
+  Search as _Search,
   Plus,
   MoreHorizontal,
   Edit,
@@ -43,11 +43,11 @@ import {
   MessageSquare,
   Send,
   RefreshCw,
-  Sparkles,
+  Sparkles as _Sparkles,
   User,
   Briefcase,
   DollarSign,
-  UserCheck,
+  UserCheck as _UserCheck,
   FileCheck,
   Cog,
   Scale,

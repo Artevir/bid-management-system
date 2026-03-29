@@ -40,10 +40,10 @@ import {
   Loader2,
   AlertCircle,
   Eye,
-  FolderOpen,
+  FolderOpen as _FolderOpen,
   Calendar,
-  Building2,
-  MapPin,
+  Building2 as _Building2,
+  MapPin as _MapPin,
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { NoProjectState } from '@/components/ui/empty-state';

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, withDocumentPermission } from '@/lib/auth/middleware';
+import { withAuth as _withAuth, withDocumentPermission } from '@/lib/auth/middleware';
 import { moveToRecycleBin, permanentDelete } from '@/lib/recycle-bin/service';
 import { db } from '@/db';
 import { bidDocuments } from '@/db/schema';

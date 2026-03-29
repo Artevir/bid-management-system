@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState as _useState } from 'react';
 import { ChapterTree } from '@/types/bid';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AIInlineEditor } from '@/components/editor/ai-inline-editor';
@@ -12,8 +12,8 @@ import {
   Save, 
   RefreshCw, 
   Pause, 
-  Clock, 
-  CheckCircle,
+  Clock as _Clock, 
+  CheckCircle as _CheckCircle,
   FileText 
 } from 'lucide-react';
 

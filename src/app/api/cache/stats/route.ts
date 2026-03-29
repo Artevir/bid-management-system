@@ -11,7 +11,7 @@ import { CacheService } from '@/lib/cache/service';
  * 获取缓存统计信息
  * GET /api/cache/stats
  */
-async function getCacheStats(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getCacheStats(_request: NextRequest, _userId: number): Promise<NextResponse> {
   const stats = CacheService.getStats();
   
   return NextResponse.json({
@@ -28,7 +28,7 @@ async function getCacheStats(request: NextRequest, userId: number): Promise<Next
  * 清空缓存
  * POST /api/cache/stats
  */
-async function clearCache(request: NextRequest, userId: number): Promise<NextResponse> {
+async function clearCache(_request: NextRequest, _userId: number): Promise<NextResponse> {
   CacheService.clearAll();
   
   return NextResponse.json({

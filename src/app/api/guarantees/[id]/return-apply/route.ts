@@ -7,9 +7,9 @@ import { withAuth } from '@/lib/auth/middleware';
 import {
   getGuaranteeById,
   applyForReturn,
-  approveReturn,
-  completeReturn,
-  rejectReturn,
+  approveReturn as _approveReturn,
+  completeReturn as _completeReturn,
+  rejectReturn as _rejectReturn,
 } from '@/lib/guarantee/service';
 
 // POST - 申请退还保证金

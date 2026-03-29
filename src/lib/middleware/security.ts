@@ -130,7 +130,7 @@ export function safeJsonParse<T>(
     }
 
     return { success: true, data };
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: 'JSON解析失败' };
   }
 }
@@ -216,7 +216,7 @@ export function createSecurityMiddleware(options: {
             );
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // 解析错误，继续处理
       }
     }
@@ -319,7 +319,7 @@ export function generateSecureToken(length: number = 32): string {
  */
 export function validateCsrfToken(
   request: NextRequest,
-  sessionToken?: string
+  _sessionToken?: string
 ): boolean {
   const headerToken = request.headers.get('x-csrf-token');
   const bodyToken = request.headers.get('x-requested-with') === 'XMLHttpRequest'

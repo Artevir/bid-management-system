@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { db } from '@/db';
-import { projects, tenderInfos, users, departments } from '@/db/schema';
+import { projects, tenderInfos, users, departments as _departments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 // POST /api/tender-crawl/tenders/[id]/create-project - 招标信息转项目

@@ -16,16 +16,16 @@ import {
   companyFiles,
   companyDocumentFrameworks,
   companyFrameworkChapters,
-  projects,
+  projects as _projects,
   bidArchives,
   bidDocumentPurchases,
   bidPrintings,
   bidSealApplications,
   authorizationManufacturers,
   partnerApplications,
-  bidChapters,
-  docFrameworks,
-  users,
+  bidChapters as _bidChapters,
+  docFrameworks as _docFrameworks,
+  users as _users,
 } from '@/db/schema';
 import {
   eq,
@@ -34,11 +34,11 @@ import {
   like,
   desc,
   asc,
-  inArray,
+  inArray as _inArray,
   sql,
   count,
   isNotNull,
-  isNull,
+  isNull as _isNull,
 } from 'drizzle-orm';
 
 // ============================================

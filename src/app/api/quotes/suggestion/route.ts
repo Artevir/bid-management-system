@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
-import { quoteStrategyService, historicalAnalysisService, costModelService } from '@/lib/quote/service';
+import { quoteStrategyService, historicalAnalysisService as _historicalAnalysisService, costModelService as _costModelService } from '@/lib/quote/service';
 
 // GET /api/quotes/suggestion - 获取报价建议
 export async function GET(req: NextRequest) {

@@ -23,12 +23,12 @@ import {
 } from 'recharts';
 import {
   FolderOpen,
-  FileText,
+  FileText as _FileText,
   Clock,
   AlertTriangle,
   CheckCircle,
   TrendingUp,
-  Users,
+  Users as _Users,
   Building2,
   Calendar,
   ArrowUpRight,
@@ -79,7 +79,7 @@ interface MilestoneStatus {
   overdue: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const _COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function DashboardPage() {
   const [overview, setOverview] = useState<DashboardOverview | null>(null);

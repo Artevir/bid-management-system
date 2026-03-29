@@ -11,7 +11,7 @@ import {
   projectOrgs,
   projectOrgMembers,
   users,
-  files,
+  files as _files,
   projects,
   type ProjectDiscussion,
   type NewProjectDiscussion,
@@ -21,7 +21,7 @@ import {
   type NewDiscussionFile,
   type PermissionLevel,
 } from '@/db/schema';
-import { eq, and, desc, sql, inArray, isNull, isNotNull, or, like } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, isNull as _isNull, isNotNull as _isNotNull, or as _or, like as _like } from 'drizzle-orm';
 
 // ============================================
 // 讨论区管理
@@ -181,7 +181,7 @@ export async function sendMessage(data: NewDiscussionMessage): Promise<Discussio
   return message;
 }
 
-export async function editMessage(id: number, content: string, userId: number): Promise<DiscussionMessage> {
+export async function editMessage(id: number, content: string, _userId: number): Promise<DiscussionMessage> {
   const [message] = await db
     .update(discussionMessages)
     .set({

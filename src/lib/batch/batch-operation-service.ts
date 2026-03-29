@@ -4,9 +4,9 @@
  * 使用任务队列处理大量数据
  */
 
-import { db } from '@/db/index';
+import { db as _db } from '@/db/index';
 import { cache } from '@/lib/cache';
-import { pushProjectUpdate } from '@/lib/realtime/websocket-server';
+import { pushProjectUpdate as _pushProjectUpdate } from '@/lib/realtime/websocket-server';
 
 // ============================================
 // 批量操作类型
@@ -344,7 +344,7 @@ export class BatchOperationService {
     taskId: string,
     resourceType: string,
     ids: string[],
-    options: BatchOperationOptions
+    _options: BatchOperationOptions
   ): Promise<void> {
     const task = this.tasks.get(taskId);
     if (!task) return;

@@ -31,7 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Separator as _Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,10 +55,10 @@ import {
   Hash,
   ChevronRight,
   ChevronDown,
-  CheckCircle2,
-  X,
+  CheckCircle2 as _CheckCircle2,
+  X as _X,
   Loader2,
-  Settings,
+  Settings as _Settings,
   Layers,
   Star,
   StarOff,
@@ -138,7 +138,7 @@ export default function TagsManagementPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+  const [_viewMode, _setViewMode] = useState<'list' | 'tree'>('list');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showSidePanel, setShowSidePanel] = useState(true);
   
@@ -146,11 +146,11 @@ export default function TagsManagementPage() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [_versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [deletingItem, setDeletingItem] = useState<{ type: 'category' | 'tag'; id: number; name: string } | null>(null);
-  const [viewingTagVersions, setViewingTagVersions] = useState<Tag | null>(null);
+  const [_viewingTagVersions, setViewingTagVersions] = useState<Tag | null>(null);
   
   // Form States
   const [categoryForm, setCategoryForm] = useState({

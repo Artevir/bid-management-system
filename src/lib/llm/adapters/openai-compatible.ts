@@ -271,7 +271,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
+        const _errorText = await response.text();
         yield {
           content: '',
           done: true,
@@ -357,7 +357,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const _errorMessage = error instanceof Error ? error.message : 'Unknown error';
       yield {
         content: '',
         done: true,
@@ -449,7 +449,7 @@ export class OpenAICompatibleAdapter implements LLMAdapter {
             totalTokens: data.usage?.total_tokens || 0,
           },
         }));
-    } catch (error) {
+    } catch (_error) {
       // 如果批量接口不支持，回退到逐个处理
       const results: EmbeddingResult[] = [];
       for (const text of texts) {

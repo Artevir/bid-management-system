@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  BarChart3,
+  BarChart3 as _BarChart3,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -30,7 +30,7 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Cpu,
+  Cpu as _Cpu,
   MessageSquare,
   Settings,
   RefreshCw,

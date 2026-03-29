@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
@@ -27,11 +27,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -50,7 +50,7 @@ import {
   AlertCircle,
   Download,
   Trash2,
-  Eye,
+  Eye as _Eye,
   Edit,
   Zap,
 } from 'lucide-react';
@@ -95,7 +95,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function CrawlSourcesPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [sources, setSources] = useState<CrawlSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);

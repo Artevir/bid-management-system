@@ -7,11 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { departments } from '@/db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc as _desc, asc } from 'drizzle-orm';
 import { withAuth, withAdmin } from '@/lib/auth/middleware';
 
 // 获取部门列表
-async function getDepartments(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getDepartments(_request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const deptList = await db.query.departments.findMany({
       orderBy: [asc(departments.sortOrder), asc(departments.name)],
@@ -25,7 +25,7 @@ async function getDepartments(request: NextRequest, userId: number): Promise<Nex
 }
 
 // 创建部门
-async function createDepartment(request: NextRequest, userId: number): Promise<NextResponse> {
+async function createDepartment(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { name, code, parentId, description, level, sortOrder } = body;

@@ -5,8 +5,8 @@
  */
 
 import { db } from '@/db';
-import { users, roles, permissions, userRoles, rolePermissions } from '@/db/schema';
-import { eq, and, inArray, isNull } from 'drizzle-orm';
+import { users as _users, roles, permissions, userRoles, rolePermissions } from '@/db/schema';
+import { eq, and, inArray, isNull as _isNull } from 'drizzle-orm';
 import { userPermissionCache, userMenuCache, userRoleCache, invalidateUserCache } from '@/lib/cache/service';
 
 // 权限类型

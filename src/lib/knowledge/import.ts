@@ -3,9 +3,9 @@
  * 支持从文档、URL等导入知识条目
  */
 
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
-import { knowledgeItems, knowledgeCategories, knowledgeVersions } from '@/db/schema';
+import { knowledgeItems, knowledgeCategories as _knowledgeCategories, knowledgeVersions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { KnowledgeEmbeddingService } from '@/lib/embedding/service';
 
@@ -286,7 +286,7 @@ export async function reviewKnowledgeItem(
   itemId: number,
   status: 'approved' | 'rejected',
   reviewerId: number,
-  reviewNotes?: string
+  _reviewNotes?: string
 ): Promise<void> {
   const updateData: Record<string, unknown> = {
     status,

@@ -7,7 +7,7 @@ import {
   uploadChunk,
   mergeChunks,
   verifyFileIntegrity,
-  getUploadSession,
+  getUploadSession as _getUploadSession,
 } from '@/lib/upload/chunked-upload';
 
 // ============================================

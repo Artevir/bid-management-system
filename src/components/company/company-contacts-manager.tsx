@@ -21,11 +21,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select';
 import {
   Table,
@@ -133,7 +133,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
       } else {
         toast.error(result.error || '加载失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('加载对接人数据失败');
     } finally {
       setLoading(false);
@@ -202,7 +202,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
       } else {
         toast.error(result.error || '删除失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('删除失败');
     }
   };
@@ -254,7 +254,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
       } else {
         toast.error(result.error || '保存失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('保存失败');
     } finally {
       setSaving(false);

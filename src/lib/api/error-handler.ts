@@ -319,7 +319,7 @@ export function paginated<T>(
 
 import { NextRequest } from 'next/server';
 
-type AsyncHandler<T = unknown> = (
+type AsyncHandler<_T = unknown> = (
   request: NextRequest,
   context?: { params: Record<string, string> }
 ) => Promise<Response>;

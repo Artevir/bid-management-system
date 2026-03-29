@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { projectTags } from '@/db/schema';
-import { eq, like, asc, count, sql } from 'drizzle-orm';
+import { eq, like, asc, count as _count, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // GET /api/project-tags - 获取标签列表

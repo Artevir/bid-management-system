@@ -13,7 +13,7 @@ import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
 // GET - 获取所有角色
 // ============================================
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const allRoles = await RBACService.getAllRoles();
 

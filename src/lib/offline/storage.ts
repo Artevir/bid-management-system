@@ -131,7 +131,7 @@ async function getAllData<T>(storeName: string): Promise<T[]> {
 }
 
 // 通用删除操作
-async function deleteData(storeName: string, key: number | string): Promise<void> {
+async function _deleteData(storeName: string, key: number | string): Promise<void> {
   const database = await initOfflineDB();
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(storeName, 'readwrite');

@@ -16,7 +16,7 @@ import { companyFrameworkService, type CreateChapterData } from '@/lib/services/
 async function getFramework(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; frameworkId: string }> },
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { frameworkId: fwId } = await params;
@@ -47,7 +47,7 @@ async function getFramework(
 async function updateFramework(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; frameworkId: string }> },
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { id, frameworkId: fwId } = await params;
@@ -111,7 +111,7 @@ async function updateFramework(
 async function deleteFramework(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; frameworkId: string }> },
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { frameworkId: fwId } = await params;

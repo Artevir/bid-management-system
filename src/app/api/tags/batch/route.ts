@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { unifiedTags, entityTags, tagCategories } from '@/db/schema';
+import { unifiedTags, entityTags, tagCategories as _tagCategories } from '@/db/schema';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 

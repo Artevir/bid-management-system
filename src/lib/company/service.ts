@@ -8,8 +8,8 @@ import {
   companies,
   companyFiles,
   companyFileTypeEnum,
-  users,
-  files,
+  users as _users,
+  files as _files,
 } from '@/db/schema';
 import {
   eq,
@@ -24,9 +24,9 @@ import {
 } from 'drizzle-orm';
 import type {
   Company,
-  NewCompany,
+  NewCompany as _NewCompany,
   CompanyFile,
-  NewCompanyFile,
+  NewCompanyFile as _NewCompanyFile,
 } from '@/db/schema';
 
 // ============================================

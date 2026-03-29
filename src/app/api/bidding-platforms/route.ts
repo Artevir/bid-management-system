@@ -12,7 +12,7 @@ import {
   platformTypeEnum,
   platformStatusEnum,
 } from '@/db/bidding-platform-schema';
-import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';
+import { eq, desc as _desc, asc, and, or, like, sql, inArray as _inArray } from 'drizzle-orm';
 import {
   syncCreateCrawlSource,
   syncUpdateCrawlSource,

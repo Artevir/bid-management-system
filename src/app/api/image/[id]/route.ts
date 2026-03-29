@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { getImageById, updateImage, deleteImage, incrementDownloadCount } from '@/lib/image/service';
+import { getImageById, updateImage, deleteImage, incrementDownloadCount as _incrementDownloadCount } from '@/lib/image/service';
 
 // GET /api/image/[id]
 export async function GET(

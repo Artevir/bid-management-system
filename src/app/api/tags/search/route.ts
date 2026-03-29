@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { unifiedTags, tagCategories, entityTags, users } from '@/db/schema';
-import { eq, like, desc, asc, and, or, inArray, isNull, sql, not, between, gte, lte } from 'drizzle-orm';
-import { getCurrentUser } from '@/lib/auth/jwt';
+import { eq, like, desc, asc, and, or, inArray, isNull, sql, not as _not, between, gte, lte } from 'drizzle-orm';
+import { getCurrentUser as _getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================
 // POST: 高级搜索

@@ -5,11 +5,11 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -38,12 +38,12 @@ import {
 import {
   LayoutTemplate,
   Plus,
-  Search,
+  Search as _Search,
   RefreshCw,
   Star,
   Building,
   FileText,
-  MoreHorizontal,
+  MoreHorizontal as _MoreHorizontal,
   Eye,
   Edit,
   Copy,
@@ -65,7 +65,7 @@ interface Template {
 }
 
 export default function BidTemplatesPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');

@@ -11,9 +11,9 @@ import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 // 路由配置
 // ============================================
 
-const protectedRoutes = ['/dashboard', '/projects', '/documents'];
-const publicRoutes = ['/login', '/register', '/api/auth'];
-const apiRoutes = ['/api/'];
+const _protectedRoutes = ['/dashboard', '/projects', '/documents'];
+const _publicRoutes = ['/login', '/register', '/api/auth'];
+const _apiRoutes = ['/api/'];
 
 // ============================================
 // 性能监控中间件
@@ -152,7 +152,7 @@ export function middleware(request: NextRequest) {
 
   // 3. OPTIONS 请求（预检）
   if (request.method === 'OPTIONS') {
-    const response = new NextResponse(null, { status: 204 });
+    const _response = new NextResponse(null, { status: 204 });
     return handleCORS(request);
   }
 

@@ -41,7 +41,7 @@ async function getOverview(
 
 async function getTrend(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -61,8 +61,8 @@ async function getTrend(
 // ============================================
 
 async function getDeptStats(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const stats = await getDepartmentStats();
@@ -101,7 +101,7 @@ async function getActivities(
 
 async function getMilestones(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -124,7 +124,7 @@ async function getMilestones(
 
 async function getDocs(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -147,7 +147,7 @@ async function getDocs(
 
 async function getReviews(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

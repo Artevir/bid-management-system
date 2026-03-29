@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as _Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -79,7 +79,7 @@ export function ImageGenerationDialog({
   const [type, setType] = useState<'text_to_image' | 'image_to_image'>('text_to_image');
   const [size, setSize] = useState<'2K' | '4K'>('2K');
   const [watermark, setWatermark] = useState(true);
-  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [referenceImages, _setReferenceImages] = useState<string[]>([]);
 
   // 处理生成
   const handleGenerate = async () => {

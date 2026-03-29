@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - 获取可导入的政采单位统计
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const platforms = await db.select().from(biddingPlatforms);
     

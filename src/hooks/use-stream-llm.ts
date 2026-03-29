@@ -133,7 +133,7 @@ export function useStreamLLM(options: UseStreamLLMOptions = {}) {
             try {
               const data = JSON.parse(line.slice(6)) as StreamMessage;
               handleMessage(data);
-            } catch (e) {
+            } catch (_e) {
               console.error('Failed to parse SSE message:', line);
             }
           }

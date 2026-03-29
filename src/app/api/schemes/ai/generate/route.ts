@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 }
 
 // 模拟内容生成（实际应调用 LLM 服务）
-async function generateContent(prompt: string, mode: string): Promise<string> {
+async function generateContent(_prompt: string, _mode: string): Promise<string> {
   // 这里应该集成真实的 LLM 服务
   // 参考 /skills/public/prod/llm 技能文档
   

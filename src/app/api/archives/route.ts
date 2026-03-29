@@ -8,11 +8,11 @@ import { db } from '@/db';
 import { 
   bidArchives, 
   bidArchiveDocuments, 
-  bidArchiveFiles,
+  bidArchiveFiles as _bidArchiveFiles,
   projects, 
   bidDocuments, 
   companies, 
-  users 
+  users as _users 
 } from '@/db/schema';
 import { 
   eq, 
@@ -22,9 +22,9 @@ import {
   and, 
   or, 
   inArray, 
-  isNull, 
+  isNull as _isNull, 
   sql,
-  count,
+  count as _count,
 } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
 // 辅助函数
 // ============================================
 
-async function getArchiveTree(companyId: string | null, keyword: string | null) {
+async function getArchiveTree(_companyId: string | null, _keyword: string | null) {
   // 1. 获取所有公司
   const companyList = await db
     .select()

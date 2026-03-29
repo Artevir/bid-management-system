@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { db } from '@/db';
 import { notifications, users } from '@/db/schema';
-import { eq, and, desc, sql, inArray, isNull, ne } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, isNull as _isNull, ne as _ne } from 'drizzle-orm';
 
 // 获取当前用户ID
 async function getCurrentUserId(): Promise<number | null> {

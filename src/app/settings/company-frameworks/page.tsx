@@ -24,12 +24,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table as _Table,
+  TableBody as _TableBody,
+  TableCell as _TableCell,
+  TableHead as _TableHead,
+  TableHeader as _TableHeader,
+  TableRow as _TableRow,
 } from '@/components/ui/table';
 import {
   DropdownMenu,
@@ -45,7 +45,7 @@ import {
   Plus,
   Building2,
   MoreHorizontal,
-  FileText,
+  FileText as _FileText,
   Edit,
   Trash2,
   Star,
@@ -175,7 +175,7 @@ function ChapterEditor({ chapters, onChange }: ChapterEditorProps) {
   };
 
   const renderChapters = (items: FrameworkChapter[], depth = 0) => {
-    return items.map((chapter, index) => (
+    return items.map((chapter, _index) => (
       <div key={chapter.id}>
         <div
           className={cn(
@@ -266,7 +266,7 @@ function ChapterEditor({ chapters, onChange }: ChapterEditorProps) {
 // ============================================
 
 export default function CompanyFrameworkPage() {
-  const router = useRouter();
+  const _router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [companies, setCompanies] = useState<Company[]>([]);

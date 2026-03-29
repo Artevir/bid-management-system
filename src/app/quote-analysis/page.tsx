@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import _Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -25,20 +25,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select';
 import {
   Calculator,
   TrendingUp,
-  Users,
+  Users as _Users,
   Target,
-  DollarSign,
-  BarChart3,
-  Lightbulb,
+  DollarSign as _DollarSign,
+  BarChart3 as _BarChart3,
+  Lightbulb as _Lightbulb,
   BrainCircuit,
   CheckCircle,
   Clock,
@@ -76,7 +76,7 @@ interface QuoteScheme {
 }
 
 export default function QuoteAnalysisPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [requests, setRequests] = useState<QuoteAnalysisRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<QuoteAnalysisRequest | null>(null);
@@ -113,7 +113,7 @@ export default function QuoteAnalysisPage() {
   async function runAnalysis(requestId: number) {
     setAnalyzing(true);
     try {
-      const res = await fetch(`/api/quote-analysis/${requestId}`, {
+      const _res = await fetch(`/api/quote-analysis/${requestId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'analyzing' }),

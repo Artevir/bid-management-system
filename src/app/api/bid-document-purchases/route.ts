@@ -14,7 +14,7 @@ import {
   users,
 } from '@/db/schema';
 import { biddingPlatforms } from '@/db/bidding-platform-schema';
-import { eq, desc, asc, and, or, like, sql } from 'drizzle-orm';
+import { eq, desc, asc as _asc, and, or, like, sql } from 'drizzle-orm';
 
 // ============================================
 // GET - 查询购买招标文件安排列表
@@ -22,7 +22,7 @@ import { eq, desc, asc, and, or, like, sql } from 'drizzle-orm';
 
 async function getPurchases(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -189,7 +189,7 @@ async function createPurchase(
 
 async function updatePurchase(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -325,7 +325,7 @@ async function updatePurchase(
 
 async function deletePurchase(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

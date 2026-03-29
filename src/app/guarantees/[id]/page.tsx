@@ -30,17 +30,17 @@ import {
   Loader2,
   AlertCircle,
   DollarSign,
-  Calendar,
+  Calendar as _Calendar,
   Building2,
-  FileText,
+  FileText as _FileText,
   ArrowUpRight,
   ArrowDownLeft,
-  Clock,
-  CheckCircle,
-  XCircle,
+  Clock as _Clock,
+  CheckCircle as _CheckCircle,
+  XCircle as _XCircle,
   RefreshCw,
   CreditCard,
-  Banknote,
+  Banknote as _Banknote,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 

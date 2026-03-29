@@ -4,7 +4,7 @@
  */
 
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
-import type { ParseItemType, ParseResultItem } from './service';
+import type { ParseItemType as _ParseItemType, ParseResultItem } from './service';
 
 // ============================================
 // 章节解析

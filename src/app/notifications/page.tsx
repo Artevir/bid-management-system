@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea as _ScrollArea } from '@/components/ui/scroll-area';
 import {
   Bell,
   BellOff,
@@ -22,14 +22,14 @@ import {
   CheckCheck,
   Trash2,
   ArrowLeft,
-  Filter,
-  Settings,
+  Filter as _Filter,
+  Settings as _Settings,
   FileText,
   Workflow,
   CheckCircle,
   Clock,
   Building2,
-  AlertCircle,
+  AlertCircle as _AlertCircle,
   AtSign,
   Calendar,
   ChevronRight,

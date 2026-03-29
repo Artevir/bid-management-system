@@ -7,9 +7,9 @@ import { getSession } from '@/lib/auth/session';
 import {
   createSealConfig,
   getSealConfigs,
-  getSealConfigById,
-  updateSealConfig,
-  deleteSealConfig,
+  getSealConfigById as _getSealConfigById,
+  updateSealConfig as _updateSealConfig,
+  deleteSealConfig as _deleteSealConfig,
   SEAL_PROVIDERS,
 } from '@/lib/e-sign/service';
 

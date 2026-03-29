@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -34,12 +34,12 @@ import {
 import {
   FolderTree,
   Plus,
-  Search,
+  Search as _Search,
   MoreHorizontal,
   Edit,
   Trash2,
   Tag,
-  FileText,
+  FileText as _FileText,
   Folder,
 } from 'lucide-react';
 
@@ -64,7 +64,7 @@ export default function PromptCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
   const [type, setType] = useState<string>('all');
-  const [treeView, setTreeView] = useState(true);
+  const [_treeView, _setTreeView] = useState(true);
   
   // Dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);

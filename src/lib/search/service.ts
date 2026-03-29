@@ -10,9 +10,9 @@ import {
   bidChapters,
   knowledgeItems,
   users,
-  departments,
+  departments as _departments,
 } from '@/db/schema';
-import { eq, or, and, ilike, sql, desc, inArray } from 'drizzle-orm';
+import { eq, or, and, ilike, sql as _sql, desc as _desc, inArray as _inArray } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -64,7 +64,7 @@ export async function globalSearch(params: SearchParams): Promise<SearchResponse
     types,
     projectId,
     departmentId,
-    userId,
+    userId as _userId,
     page = 1,
     pageSize = 20,
   } = params;
@@ -371,7 +371,7 @@ export async function searchSuggestions(keyword: string, limit: number = 10): Pr
 /**
  * 搜索历史记录
  */
-export async function getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {
+export async function getSearchHistory(userId: number, _limit: number = 10): Promise<string[]> {
   // 这里可以扩展为从数据库读取用户搜索历史
   // 目前返回空数组
   return [];

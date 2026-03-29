@@ -28,14 +28,14 @@ import {
   Calendar,
   User,
   Building,
-  Phone,
-  MessageSquare,
-  FileText,
-  DollarSign,
+  Phone as _Phone,
+  MessageSquare as _MessageSquare,
+  FileText as _FileText,
+  DollarSign as _DollarSign,
   Edit,
   Send,
   CheckCircle,
-  XCircle,
+  XCircle as _XCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';

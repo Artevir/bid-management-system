@@ -12,10 +12,10 @@ import {
   bidDocumentFramework,
   bidInterpretationLogs,
   bidTimeReminders,
-  files,
+  files as _files,
 } from '@/db/schema';
-import { eq, and, desc, like, sql, inArray, isNull } from 'drizzle-orm';
-import { LLMClient, FetchClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
+import { LLMClient, FetchClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import crypto from 'crypto';
 
 // ============================================

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { checkCompanyPermission, checkCompanyFilePermission } from '@/lib/auth/resource-permission';
+import { checkCompanyPermission, checkCompanyFilePermission as _checkCompanyFilePermission } from '@/lib/auth/resource-permission';
 import {
   getCompanyFileList,
   createCompanyFile,

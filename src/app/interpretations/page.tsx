@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -84,7 +84,7 @@ const statusConfig = {
 };
 
 export default function InterpretationsPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, parsing: 0, completed: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
@@ -170,7 +170,7 @@ export default function InterpretationsPage() {
           clearInterval(interval);
           fetchData();
         }
-      } catch (error) {
+      } catch (_error) {
         clearInterval(interval);
       }
     }, 2000);

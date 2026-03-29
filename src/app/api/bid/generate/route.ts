@@ -17,7 +17,7 @@ import { getChapterDetail, updateChapter } from '@/lib/bid/documents-service';
 import { db } from '@/db';
 import { bidDocuments, projects, responseItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { createStreamResponse, createSSEEncoder } from '@/lib/stream-utils';
+import { createStreamResponse, createSSEEncoder as _createSSEEncoder } from '@/lib/stream-utils';
 import {
   getLLM,
   createCozeAdapterWithHeaders,
@@ -431,7 +431,7 @@ async function optimizeContentStream(
 
 async function acceptContent(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -470,7 +470,7 @@ export async function POST(request: NextRequest) {
         try {
           const userId = 1; // TODO: 从session获取
           return await optimizeContentStream(request, userId);
-        } catch (error) {
+        } catch (_error) {
           return NextResponse.json({ error: '优化内容失败' }, { status: 500 });
         }
       }
@@ -483,7 +483,7 @@ export async function POST(request: NextRequest) {
         try {
           const userId = 1; // TODO: 从session获取
           return await generateContentStream(request, userId);
-        } catch (error) {
+        } catch (_error) {
           return NextResponse.json({ error: '生成内容失败' }, { status: 500 });
         }
       }

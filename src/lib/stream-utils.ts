@@ -78,7 +78,7 @@ export function createStreamResponse(
         signal.addEventListener('abort', () => {
           try {
             controller.close();
-          } catch (e) {
+          } catch (_e) {
             // 忽略已经关闭的错误
           }
         });
@@ -95,7 +95,7 @@ export function createStreamResponse(
       } finally {
         try {
           controller.close();
-        } catch (e) {
+        } catch (_e) {
           // 忽略已经关闭的错误
         }
       }

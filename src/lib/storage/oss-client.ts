@@ -297,7 +297,7 @@ export class OSSClient {
    * @param prefix 前缀
    * @param maxKeys 最大数量
    */
-  async listFiles(prefix: string = '', maxKeys: number = 100): Promise<{
+  async listFiles(prefix: string = '', _maxKeys: number = 100): Promise<{
     files: Array<{
       key: string;
       size: number;
@@ -337,7 +337,7 @@ export class OSSClient {
 
       const cached = await cache.get(`oss:${key}`);
       return !!cached;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

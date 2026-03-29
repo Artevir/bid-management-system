@@ -43,7 +43,7 @@ async function getPendingList(
 
 async function getDetail(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -93,7 +93,7 @@ async function getMyRequests(
 
 async function getConfig(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -190,7 +190,7 @@ async function processApproval(
 
 async function updateConfig(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
+import { Separator as _Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
@@ -210,9 +210,9 @@ export default function CreatePartnerApplicationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          materials: materials.map(({ id, ...m }) => m),
-          fees: fees.map(({ id, ...f }) => f),
-          todos: todos.map(({ id, ...t }) => t),
+          materials: materials.map(({ _id, ...m }) => m),
+          fees: fees.map(({ _id, ...f }) => f),
+          todos: todos.map(({ _id, ...t }) => t),
         }),
       });
 

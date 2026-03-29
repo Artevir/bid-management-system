@@ -62,7 +62,7 @@ interface VersionCompareResult {
 
 async function getVersions(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -221,7 +221,7 @@ async function rollbackVersion(
 
 async function compareVersions(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

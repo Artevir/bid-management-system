@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
+import { Progress as _Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -44,12 +44,12 @@ import {
   ArrowLeft,
   Edit,
   Trash2,
-  Building2,
+  Building2 as _Building2,
   MapPin,
-  Phone,
-  Mail,
+  Phone as _Phone,
+  Mail as _Mail,
   CreditCard,
-  Calendar,
+  Calendar as _Calendar,
   Users,
   FileText,
   Star,
@@ -167,7 +167,7 @@ export default function CompanyDetailPage({
         toast.error('获取公司信息失败');
         router.push('/companies');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('加载失败');
       router.push('/companies');
     } finally {
@@ -188,7 +188,7 @@ export default function CompanyDetailPage({
       } else {
         toast.error(data.error || '删除失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('删除失败');
     } finally {
       setDeleting(false);

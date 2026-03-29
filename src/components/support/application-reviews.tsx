@@ -20,9 +20,9 @@ import {
 import {
   CheckCircle,
   XCircle,
-  Clock,
+  Clock as _Clock,
   Loader2,
-  AlertCircle,
+  AlertCircle as _AlertCircle,
   FileCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';

@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { sessions, users } from '@/db/schema';
-import { eq, and, gt, lt, isNull, desc, inArray } from 'drizzle-orm';
+import { sessions, users as _users } from '@/db/schema';
+import { eq, and, gt, lt, isNull as _isNull, desc, inArray as _inArray } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { cookies } from 'next/headers';
 
@@ -135,7 +135,7 @@ export async function revokeOtherSessions(
   userId: number,
   currentSessionId: number
 ): Promise<number> {
-  const result = await db
+  const _result = await db
     .delete(sessions)
     .where(
       and(

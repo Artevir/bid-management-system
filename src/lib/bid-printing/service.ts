@@ -134,7 +134,7 @@ export async function pushToTaskCenter(id: number, userId: number): Promise<{
   }
 
   // 获取项目信息
-  const [projectInfo] = await db
+  const [_projectInfo] = await db
     .select()
     .from(projects)
     .where(eq(projects.id, printing.projectId))

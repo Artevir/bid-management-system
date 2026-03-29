@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import {
   getAlerts,
-  getAlertById,
-  markAlertAsRead,
+  getAlertById as _getAlertById,
+  markAlertAsRead as _markAlertAsRead,
   markAlertsAsRead,
-  dismissAlert,
+  dismissAlert as _dismissAlert,
   getUnreadAlertCount,
   type AlertType,
 } from '@/lib/tender-subscription/service';

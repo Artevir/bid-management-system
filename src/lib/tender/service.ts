@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { projects, competitors } from '@/db/schema';
-import { eq, and, or, like, desc } from 'drizzle-orm';
+import { eq as _eq, and as _and, or, like, desc as _desc } from 'drizzle-orm';
 
 // ============================================
 // 招标信息类型定义
@@ -202,7 +202,7 @@ export class TenderSubscriptionService {
   /**
    * 获取用户订阅列表
    */
-  async getUserSubscriptions(userId: number): Promise<TenderSubscription[]> {
+  async getUserSubscriptions(_userId: number): Promise<TenderSubscription[]> {
     // TODO: 实现数据库查询
     return [];
   }
@@ -210,14 +210,14 @@ export class TenderSubscriptionService {
   /**
    * 更新订阅
    */
-  async updateSubscription(id: number, data: Partial<TenderSubscription>): Promise<void> {
+  async updateSubscription(_id: number, _data: Partial<TenderSubscription>): Promise<void> {
     // TODO: 实现数据库更新
   }
 
   /**
    * 删除订阅
    */
-  async deleteSubscription(id: number): Promise<void> {
+  async deleteSubscription(_id: number): Promise<void> {
     // TODO: 实现数据库删除
   }
 

@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { companyFrameworkService } from '@/lib/services/company-framework-service';
-import frameworkMergeService, { type FrameworkMergeOptions, type MergedChapter, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';
+import frameworkMergeService, { type FrameworkMergeOptions, type MergedChapter as _MergedChapter, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';
 import { db } from '@/db';
 import { companies } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -18,7 +18,7 @@ import { getDocumentFramework } from '@/lib/interpretation/service';
 
 async function previewMerge(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -143,7 +143,7 @@ function convertFrameworkToChapters(frameworkData: any[]): BaseChapter[] {
 
 async function getAvailableFrameworks(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

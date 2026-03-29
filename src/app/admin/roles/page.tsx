@@ -91,7 +91,7 @@ export default function RolesPage() {
         const permsData = await permsRes.json();
         setPermissions(permsData.permissions || []);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('加载数据失败');
     } finally {
       setLoading(false);
@@ -142,7 +142,7 @@ export default function RolesPage() {
 
       setDialogOpen(false);
       fetchData();
-    } catch (err) {
+    } catch (_err) {
       setError('操作失败，请稍后重试');
     }
   };
@@ -159,7 +159,7 @@ export default function RolesPage() {
       } else {
         setError(data.error || '删除失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('删除失败');
     }
   };
@@ -172,7 +172,7 @@ export default function RolesPage() {
         const data = await response.json();
         setSelectedPermissions(data.permissionIds || []);
       }
-    } catch (err) {
+    } catch (_err) {
       setSelectedPermissions([]);
     }
     setPermissionDialogOpen(true);
@@ -192,7 +192,7 @@ export default function RolesPage() {
         setPermissionDialogOpen(false);
         fetchData();
       }
-    } catch (err) {
+    } catch (_err) {
       setError('保存权限失败');
     }
   };

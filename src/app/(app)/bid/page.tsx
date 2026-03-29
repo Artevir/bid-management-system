@@ -50,7 +50,7 @@ import {
 import { 
   useDocuments, 
   useSubmitApproval, 
-  useDeleteChapter 
+  useDeleteChapter as _useDeleteChapter 
 } from '@/hooks/use-bid';
 import { useProjects } from '@/hooks/use-project';
 import { bidService } from '@/lib/api/bid-service';
@@ -68,7 +68,7 @@ export default function BidDocumentsPage() {
 
   // --- 服务端状态 (React Query) ---
   const { data: documents = [], isLoading: loadingDocs } = useDocuments(0); // 0 表示获取全部，或按需调整
-  const { data: projects = [], isLoading: loadingProjects } = useProjects();
+  const { data: projects = [], isLoading: _loadingProjects } = useProjects();
   
   const submitApprovalMutation = useSubmitApproval();
 
@@ -89,7 +89,7 @@ export default function BidDocumentsPage() {
       setCreateDialogOpen(false);
       toast.success('文档创建成功');
       router.push(`/bid/${res.documentId}/edit`);
-    } catch (error) {
+    } catch (_error) {
       // 错误已由 ApiClient 处理
     }
   }
@@ -101,7 +101,7 @@ export default function BidDocumentsPage() {
       toast.success('文档已删除');
       // React Query 会自动失效缓存并重新获取 (如果配置了 onSuccess)
       // 此处简单起见可以手动调用 reload 或在 Mutation 中配置
-    } catch (error) {}
+    } catch (_error) {}
   }
 
   async function handleSubmitForApproval(id: number) {

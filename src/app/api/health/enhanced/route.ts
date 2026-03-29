@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { sql } from 'drizzle-orm';
-import { getCacheStats, memoryCache, clearAllCache } from '@/lib/cache';
+import { getCacheStats, memoryCache as _memoryCache, clearAllCache } from '@/lib/cache';
 
 // 告警阈值配置
 const ALERT_THRESHOLDS = {
@@ -50,7 +50,7 @@ interface HealthAlert {
  * 增强版健康检查API
  * GET /api/health/enhanced
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   const alerts: HealthAlert[] = [];
   const checks: Record<string, {
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
       status: 'healthy',
       latency: 0,
     };
-  } catch (error) {
+  } catch (_error) {
     checks.filesystem = {
       status: 'unhealthy',
       error: 'Filesystem check failed',

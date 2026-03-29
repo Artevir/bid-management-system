@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -48,8 +48,8 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  Car,
-  UserCheck,
+  Car as _Car,
+  UserCheck as _UserCheck,
   X,
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
@@ -237,7 +237,7 @@ export default function BidAttendancesPage() {
       if (statsResult.success) {
         setStats(statsResult.stats);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('加载数据失败');
     } finally {
       setLoading(false);
@@ -448,7 +448,7 @@ export default function BidAttendancesPage() {
       } else {
         setError(result.error || '保存失败');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('保存失败');
     } finally {
       setSaving(false);
@@ -471,7 +471,7 @@ export default function BidAttendancesPage() {
       } else {
         alert(result.error || '删除失败');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('删除失败');
     }
   };
@@ -492,7 +492,7 @@ export default function BidAttendancesPage() {
       } else {
         alert(result.error || '推送失败');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('推送失败');
     } finally {
       setPushingTaskId(null);
@@ -515,7 +515,7 @@ export default function BidAttendancesPage() {
       } else {
         alert(result.error || '更新状态失败');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('更新状态失败');
     }
   };

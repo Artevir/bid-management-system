@@ -6,7 +6,7 @@
 import { db } from '@/db';
 import { biddingPlatforms, type BiddingPlatform, type NewBiddingPlatform } from '@/db/bidding-platform-schema';
 import { crawlSources, users } from '@/db/schema';
-import { eq, and, isNotNull } from 'drizzle-orm';
+import { eq, and as _and, isNotNull as _isNotNull } from 'drizzle-orm';
 
 // ============================================
 // 类型映射

@@ -16,16 +16,16 @@ import {
   deleteConfig,
   toggleConfigStatus,
   getAllRules,
-  getRuleById,
+  getRuleById as _getRuleById,
   createRule,
   updateRule,
   deleteRule,
   getAllTemplates,
-  getTemplateById,
+  getTemplateById as _getTemplateById,
   createTemplate,
   updateTemplate,
   deleteTemplate,
-  getDefaultTemplate,
+  getDefaultTemplate as _getDefaultTemplate,
   getAvailableReviewers,
 } from '@/lib/review/config';
 
@@ -34,8 +34,8 @@ import {
 // ============================================
 
 async function listConfigs(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const configs = await getAllConfigs();
@@ -56,7 +56,7 @@ async function listConfigs(
 
 async function getConfig(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -109,7 +109,7 @@ async function createConfigHandler(
 
 async function updateConfigHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -137,7 +137,7 @@ async function updateConfigHandler(
 
 async function deleteConfigHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -165,7 +165,7 @@ async function deleteConfigHandler(
 
 async function toggleStatusHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -192,8 +192,8 @@ async function toggleStatusHandler(
 // ============================================
 
 async function listRules(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const rules = await getAllRules();
@@ -230,7 +230,7 @@ async function createRuleHandler(
 
 async function updateRuleHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -254,7 +254,7 @@ async function updateRuleHandler(
 
 async function deleteRuleHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -281,8 +281,8 @@ async function deleteRuleHandler(
 // ============================================
 
 async function listTemplates(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const templates = await getAllTemplates();
@@ -319,7 +319,7 @@ async function createTemplateHandler(
 
 async function updateTemplateHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -343,7 +343,7 @@ async function updateTemplateHandler(
 
 async function deleteTemplateHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -370,8 +370,8 @@ async function deleteTemplateHandler(
 // ============================================
 
 async function listReviewers(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const reviewers = await getAvailableReviewers();

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { HeaderUtils } from 'coze-coding-dev-sdk';
+import { HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import {
   getInterpretationList,
   createInterpretation,

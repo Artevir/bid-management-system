@@ -35,7 +35,7 @@ import {
   FileText,
   Users,
   Building2,
-  Gavel,
+  Gavel as _Gavel,
   Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -240,7 +240,7 @@ const MOCK_API_ENDPOINTS: ApiEndpoint[] = [
 ];
 
 export default function ApiDocsPage() {
-  const [endpoints, setEndpoints] = useState<ApiEndpoint[]>(MOCK_API_ENDPOINTS);
+  const [endpoints, _setEndpoints] = useState<ApiEndpoint[]>(MOCK_API_ENDPOINTS);
   const [filteredEndpoints, setFilteredEndpoints] = useState<ApiEndpoint[]>(MOCK_API_ENDPOINTS);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');

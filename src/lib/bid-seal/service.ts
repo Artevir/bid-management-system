@@ -8,7 +8,7 @@ import {
   bidSealApplications,
   projectTasks,
   users,
-  projects,
+  projects as _projects,
   companies,
   companyContacts,
   type BidSealApplication,

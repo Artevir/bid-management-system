@@ -12,7 +12,7 @@ import {
   users,
   notifications,
 } from '@/db/schema';
-import { eq, and, desc, inArray, isNull } from 'drizzle-orm';
+import { eq, and, desc, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -206,7 +206,7 @@ export async function submitApprovalRequest(
     .where(eq(knowledgeItems.id, itemId));
 
   // 7. 发送通知给第一个审批人
-  const firstReviewer = await db
+  const _firstReviewer = await db
     .select({ name: users.realName })
     .from(users)
     .where(eq(users.id, reviewers[0]))

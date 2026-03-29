@@ -83,7 +83,7 @@ const typeColors: Record<string, string> = {
 };
 
 export default function SearchPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [keyword, setKeyword] = useState('');
   const [searchType, setSearchType] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -195,7 +195,7 @@ export default function SearchPage() {
   };
 
   // 高亮关键词
-  const highlightKeyword = (text: string, key: string) => {
+  const highlightKeyword = (text: string, _key: string) => {
     if (!keyword || !text) return text;
 
     const parts = text.split(new RegExp(`(${keyword})`, 'gi'));
@@ -370,7 +370,7 @@ export default function SearchPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {results?.data.map((result, index) => {
+              {results?.data.map((result, _index) => {
                 const TypeIcon = typeIcons[result.type] || File;
 
                 return (

@@ -14,7 +14,7 @@ interface InitUploadRequest {
 
 async function initUpload(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body: InitUploadRequest = await request.json();

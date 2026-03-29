@@ -17,8 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Send,
-  Plus,
-  Trash2,
+  Plus as _Plus,
+  Trash2 as _Trash2,
   Settings,
   Loader2,
   Copy,
@@ -54,7 +54,7 @@ interface LLMConfig {
 }
 
 // 对话接口
-interface Conversation {
+interface _Conversation {
   id: number;
   title: string;
   messages: Message[];

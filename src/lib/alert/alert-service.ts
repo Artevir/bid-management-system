@@ -3,7 +3,7 @@
  * 支持多种预警类型的创建、发送和管理
  */
 
-import { db } from '@/db/index';
+import { db as _db } from '@/db/index';
 import { cache } from '@/lib/cache';
 import { sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';
 

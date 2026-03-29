@@ -9,7 +9,7 @@ import {
   sendMessage,
   searchMessages,
 } from '@/lib/project-discussion/service';
-import { checkProjectPermission } from '@/lib/project-org/service';
+import { checkProjectPermission as _checkProjectPermission } from '@/lib/project-org/service';
 
 // GET /api/project-discussions - 获取用户讨论区列表或讨论区消息
 export async function GET(request: NextRequest) {

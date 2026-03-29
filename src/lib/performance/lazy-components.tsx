@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /**
  * 创建懒加载组件的工具函数
  */
-function createLazyComponent<T extends React.ComponentType<any>>(
+function _createLazyComponent<T extends React.ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   loadingComponent: React.ReactNode = <Skeleton className="w-full h-[400px]" />
 ) {

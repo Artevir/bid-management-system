@@ -6,12 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { roles, rolePermissions, permissions } from '@/db/schema';
-import { eq, inArray, desc } from 'drizzle-orm';
-import { withAuth, withAdmin, clearPermissionCache } from '@/lib/auth/middleware';
+import { roles, rolePermissions as _rolePermissions, permissions as _permissions } from '@/db/schema';
+import { eq, inArray as _inArray, desc } from 'drizzle-orm';
+import { withAuth, withAdmin, clearPermissionCache as _clearPermissionCache } from '@/lib/auth/middleware';
 
 // 获取角色列表
-async function getRoles(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getRoles(_request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const roleList = await db.query.roles.findMany({
       orderBy: [desc(roles.createdAt)],
@@ -39,7 +39,7 @@ async function getRoles(request: NextRequest, userId: number): Promise<NextRespo
 }
 
 // 创建角色
-async function createRole(request: NextRequest, userId: number): Promise<NextResponse> {
+async function createRole(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { name, code, description, level = 1 } = body;

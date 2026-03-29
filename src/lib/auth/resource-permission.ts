@@ -11,17 +11,17 @@
 import { db } from '@/db';
 import {
   files,
-  fileVersions,
+  fileVersions as _fileVersions,
   bidDocuments,
   bidChapters,
   companies,
   companyFiles,
   projectMembers,
   projects,
-  users,
+  users as _users,
 } from '@/db/schema';
-import { eq, and, or, inArray, isNull } from 'drizzle-orm';
-import { hasPermission, getUserRoles } from './permission';
+import { eq, and, or as _or, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
+import { hasPermission, getUserRoles as _getUserRoles } from './permission';
 
 // ============================================
 // 类型定义

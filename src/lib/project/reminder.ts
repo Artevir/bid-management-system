@@ -8,10 +8,10 @@ import {
   projects,
   projectMilestones,
   projectMembers,
-  users,
+  users as _users,
   notifications,
 } from '@/db/schema';
-import { eq, and, lt, gt, isNull, inArray, between } from 'drizzle-orm';
+import { eq, and, lt, gt, isNull as _isNull, inArray as _inArray, between } from 'drizzle-orm';
 import { addDays, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 
 // ============================================

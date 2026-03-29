@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { chapterTemplateCategories, chapterTemplates } from '@/db/schema';
-import { eq, asc, desc, count, sql } from 'drizzle-orm';
+import { eq, asc, desc as _desc, count, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

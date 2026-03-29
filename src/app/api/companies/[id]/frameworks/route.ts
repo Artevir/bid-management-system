@@ -15,7 +15,7 @@ import { companyFrameworkService, type CreateChapterData } from '@/lib/services/
 async function getFrameworks(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { id } = await params;

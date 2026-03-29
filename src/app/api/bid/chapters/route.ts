@@ -16,7 +16,7 @@ import { parseResourceId } from '@/lib/api/validators';
 // 获取章节树
 async function getChapters(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const documentIdStr = searchParams.get('documentId');
@@ -30,7 +30,7 @@ async function getChapters(
 // 创建章节
 async function createNewChapter(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   const body = await request.json();
   const {

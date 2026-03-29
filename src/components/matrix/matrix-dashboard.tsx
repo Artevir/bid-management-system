@@ -28,14 +28,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
   Loader2,
-  FileText,
+  FileText as _FileText,
   Plus,
   Sparkles,
-  CheckCircle,
-  Clock,
+  CheckCircle as _CheckCircle,
+  Clock as _Clock,
   Edit,
-  Eye,
-  Download,
+  Eye as _Eye,
+  Download as _Download,
 } from 'lucide-react';
 
 // 矩阵状态类型

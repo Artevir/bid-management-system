@@ -23,21 +23,21 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import {
   Plus,
   Search,
-  Settings,
+  Settings as _Settings,
   Trash2,
   Star,
   CheckCircle,
   XCircle,
   Cpu,
   Edit,
-  Copy,
+  Copy as _Copy,
   MessageSquare,
-  BookOpen,
+  BookOpen as _BookOpen,
   BarChart3,
 } from 'lucide-react';
 

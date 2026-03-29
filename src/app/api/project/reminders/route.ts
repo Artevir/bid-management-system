@@ -17,8 +17,8 @@ import {
 
 // 获取待发送提醒
 async function getReminders(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const reminders = await getPendingReminders();
@@ -36,7 +36,7 @@ async function getReminders(
 // 获取项目提醒配置
 async function getConfig(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -57,8 +57,8 @@ async function getConfig(
 
 // 触发提醒检查（手动或定时任务调用）
 async function triggerCheck(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const result = await checkAndSendMilestoneReminders();
@@ -77,7 +77,7 @@ async function triggerCheck(
 // 触发单个里程碑提醒
 async function triggerSingle(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -103,7 +103,7 @@ async function triggerSingle(
 // 更新提醒天数
 async function updateReminderDays(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -125,7 +125,7 @@ async function updateReminderDays(
 // 批量设置项目提醒天数
 async function batchUpdateReminderDays(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();

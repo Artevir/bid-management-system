@@ -31,7 +31,7 @@ import {
   Eye,
   ArrowRight,
   LayoutTemplate,
-  Building,
+  Building as _Building,
   Star,
   Sparkles,
   FolderOpen,
@@ -122,7 +122,7 @@ export default function TemplatesPage() {
       if (createForm.content) {
         try {
           content = JSON.parse(createForm.content);
-        } catch (e) {
+        } catch (_e) {
           alert('模板内容JSON格式错误');
           return;
         }

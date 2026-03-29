@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { promptCategories } from '@/db/schema';
-import { eq, like, desc, asc, and } from 'drizzle-orm';
+import { eq, like, desc as _desc, asc, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

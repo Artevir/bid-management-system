@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescription as _DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,17 +22,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu as _DropdownMenu,
+  DropdownMenuContent as _DropdownMenuContent,
+  DropdownMenuItem as _DropdownMenuItem,
+  DropdownMenuSeparator as _DropdownMenuSeparator,
+  DropdownMenuTrigger as _DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator as _Separator } from '@/components/ui/separator';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,8 +52,8 @@ import {
   ChevronRight,
   ChevronDown,
   Search,
-  Plus,
-  MoreVertical,
+  Plus as _Plus,
+  MoreVertical as _MoreVertical,
   Edit,
   Trash2,
   Download,
@@ -64,7 +64,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ArrowRight,
+  ArrowRight as _ArrowRight,
   Package,
   Loader2,
   RefreshCw,
@@ -148,8 +148,8 @@ export default function ArchivesPage() {
 }
 
 function ArchivesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const _router = useRouter();
+  const _searchParams = useSearchParams();
 
   // State
   const [tree, setTree] = useState<ArchiveItem[]>([]);
@@ -160,10 +160,10 @@ function ArchivesContent() {
 
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
+  const [_viewMode, _setViewMode] = useState<'tree' | 'list'>('tree');
 
   // Dialogs
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [_detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 

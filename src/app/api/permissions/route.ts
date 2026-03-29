@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { permissions } from '@/db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc as _desc, asc } from 'drizzle-orm';
 import { withAuth, withAdmin, clearPermissionCache } from '@/lib/auth/middleware';
 
 // 权限树节点
@@ -61,14 +61,14 @@ function buildPermissionTree(
 }
 
 // 获取权限列表
-async function getPermissions(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getPermissions(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const tree = searchParams.get('tree') === 'true';
     const type = searchParams.get('type'); // 'menu' or 'api'
 
     // 构建查询条件
-    let query = db.query.permissions.findMany({
+    const query = db.query.permissions.findMany({
       orderBy: [asc(permissions.sortOrder)],
     });
 
@@ -92,7 +92,7 @@ async function getPermissions(request: NextRequest, userId: number): Promise<Nex
 }
 
 // 创建权限
-async function createPermission(request: NextRequest, userId: number): Promise<NextResponse> {
+async function createPermission(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const {

@@ -55,7 +55,7 @@ async function generateMatrix(
 // 批量生成响应建议
 async function generateResponses(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { historicalQuotes, competitors, competitorBids } from '@/db/schema';
-import { eq, and, gte, lte, sql, desc, isNotNull } from 'drizzle-orm';
+import { historicalQuotes, competitors, competitorBids as _competitorBids } from '@/db/schema';
+import { eq, and, gte as _gte, lte as _lte, sql as _sql, desc, isNotNull } from 'drizzle-orm';
 
 /**
  * 智能报价分析API
@@ -140,7 +140,7 @@ function calculateStatistics(data: any[], budget: number) {
 /**
  * 生成报价建议
  */
-function generateRecommendations(stats: any, budget: number, data: any[]) {
+function generateRecommendations(stats: any, _budget: number, _data: any[]) {
   const recommendations = [];
   
   // 基本建议
@@ -207,7 +207,7 @@ function generateRecommendations(stats: any, budget: number, data: any[]) {
 /**
  * 分析竞争对手
  */
-async function analyzeCompetitors(industry: string | null, region: string | null) {
+async function analyzeCompetitors(_industry: string | null, _region: string | null) {
   try {
     const conditions = [eq(competitors.status, 'active')];
     

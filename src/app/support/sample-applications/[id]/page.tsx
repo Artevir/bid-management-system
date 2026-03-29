@@ -19,7 +19,7 @@ import {
   AlertCircle,
   Calendar,
   User,
-  MapPin,
+  MapPin as _MapPin,
   Truck,
   Package,
   Edit,

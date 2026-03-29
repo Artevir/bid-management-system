@@ -27,7 +27,7 @@ import { eq } from 'drizzle-orm';
 
 async function getSealApplicationsHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -176,7 +176,7 @@ async function createSealApplicationHandler(
 
 async function updateSealApplicationHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -271,7 +271,7 @@ async function updateSealApplicationHandler(
 
 async function deleteSealApplicationHandler(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

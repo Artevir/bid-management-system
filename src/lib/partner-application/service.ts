@@ -9,10 +9,10 @@ import {
   partnerFees,
   partnerReviews,
   partnerTodos,
-  users,
-  companies,
+  users as _users,
+  companies as _companies,
 } from '@/db/schema';
-import { eq, and, desc, asc, like, or, count, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, like, or, count, sql as _sql } from 'drizzle-orm';
 
 // 生成随机ID
 function generateRandomId(length: number = 6): string {

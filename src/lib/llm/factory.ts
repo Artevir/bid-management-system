@@ -322,7 +322,7 @@ export class LLMFactory {
     }
     
     // 检查其他适配器
-    for (const [_, adapter] of this.adapters) {
+    for (const [__, adapter] of this.adapters) {
       if (adapter !== this.defaultAdapter && await adapter.isAvailable()) {
         return adapter;
       }

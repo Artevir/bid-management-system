@@ -5,11 +5,11 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge as _Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -19,14 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  BarChart3,
-  PieChart,
+  BarChart3 as _BarChart3,
+  PieChart as _PieChart,
   TrendingUp,
   FileText,
   CheckCircle,
-  Clock,
-  Users,
-  Calendar,
+  Clock as _Clock,
+  Users as _Users,
+  Calendar as _Calendar,
   RefreshCw,
   Download,
 } from 'lucide-react';
@@ -67,12 +67,12 @@ interface ProjectDocumentStatistics {
 }
 
 export default function BidStatisticsPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const params = useParams();
   const documentId = params.id as string;
   const [stats, setStats] = useState<DocumentStatistics | null>(null);
-  const [projectStats, setProjectStats] = useState<ProjectDocumentStatistics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [_projectStats, _setProjectStats] = useState<ProjectDocumentStatistics | null>(null);
+  const [_loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<string>('all');
 
   useEffect(() => {

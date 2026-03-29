@@ -3,9 +3,9 @@
  * 实现审核意见、批注标记、问题闭环管理
  */
 
-import { db } from '@/db';
-import { approvalRecords, users } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { db as _db } from '@/db';
+import { approvalRecords as _approvalRecords, users as _users } from '@/db/schema';
+import { eq as _eq, and as _and, desc as _desc } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -52,7 +52,7 @@ export interface CreateAnnotationParams {
 /**
  * 获取审核节点的批注列表
  */
-export async function getNodeAnnotations(nodeId: number) {
+export async function getNodeAnnotations(_nodeId: number) {
   // 注意：这里假设有一个annotations表
   // 实际实现中需要创建该表或在approvalRecords表中存储
   // 这里简化实现，返回模拟数据
@@ -114,7 +114,7 @@ export async function dismissAnnotation(
 /**
  * 获取项目的问题列表
  */
-export async function getProjectIssues(projectId: number) {
+export async function getProjectIssues(_projectId: number) {
   // 查询所有未解决的批注问题
   // 实际实现需要关联项目表
   return [];
@@ -135,7 +135,7 @@ export async function batchResolveIssues(
 /**
  * 获取问题统计
  */
-export async function getIssueStats(projectId: number) {
+export async function getIssueStats(_projectId: number) {
   return {
     total: 0,
     open: 0,

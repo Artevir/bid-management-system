@@ -128,7 +128,7 @@ function getFileIcon(ext?: string) {
 
 export function CompanyFileList({
   files,
-  companyId,
+  _companyId,
   onDeleteFile,
   onRefresh,
   className,
@@ -136,7 +136,7 @@ export function CompanyFileList({
   const [filterType, setFilterType] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
-  const [deletingFileId, setDeletingFileId] = useState<number | null>(null);
+  const [_deletingFileId, setDeletingFileId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<CompanyFile | null>(null);
 
@@ -188,7 +188,7 @@ export function CompanyFileList({
       await onDeleteFile(fileToDelete.id);
       toast.success('文件删除成功');
       if (onRefresh) onRefresh();
-    } catch (error) {
+    } catch (_error) {
       toast.error('文件删除失败');
     } finally {
       setDeletingFileId(null);

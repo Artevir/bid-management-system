@@ -7,13 +7,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { sql } from 'drizzle-orm';
 import { getCacheStats } from '@/lib/cache';
-import { memoryCache } from '@/lib/cache';
+import { memoryCache as _memoryCache } from '@/lib/cache';
 
 /**
  * 健康检查API
  * GET /api/health
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   const checks: Record<string, { status: string; latency?: number; error?: string }> = {};
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   // 检查缓存
   try {
-    const cacheStats = getCacheStats();
+    const _cacheStats = getCacheStats();
     checks.cache = {
       status: 'healthy',
       latency: 0,

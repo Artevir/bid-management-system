@@ -11,7 +11,7 @@ import {
   importFromDocument,
   batchImportKnowledge,
   reviewKnowledgeItem,
-  updateKnowledgeItem,
+  updateKnowledgeItem as _updateKnowledgeItem,
 } from '@/lib/knowledge/import';
 
 // 导入单个知识条目

@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { bidDocuments, bidChapters, documentGenerationHistories, users } from '@/db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and as _and, desc, inArray as _inArray } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -365,7 +365,7 @@ export const versionCompareService = {
     const changes: TextChange[] = [];
     let added = 0;
     let removed = 0;
-    let modified = 0;
+    const _modified = 0;
 
     // 使用最长公共子序列算法（简化版）
     const lcs = this.computeLCS(lines1, lines2);

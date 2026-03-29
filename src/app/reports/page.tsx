@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -41,17 +41,17 @@ import {
   ArrowLeft,
   Download,
   TrendingUp,
-  TrendingDown,
+  TrendingDown as _TrendingDown,
   DollarSign,
   Clock,
   Target,
   FileText,
-  Users,
+  Users as _Users,
   MapPin,
   Building2,
-  Calendar,
+  Calendar as _Calendar,
   BarChart3,
-  PieChartIcon,
+  PieChartIcon as _PieChartIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -176,7 +176,7 @@ export default function ReportsPage() {
   };
 
   // 进度饼图数据
-  const progressPieData = reportData ? [
+  const _progressPieData = reportData ? [
     { name: '未开始', value: reportData.projectProgress.notStarted, color: '#94a3b8' },
     { name: '进行中', value: reportData.projectProgress.inProgress, color: '#3b82f6' },
     { name: '已完成', value: reportData.projectProgress.completed, color: '#22c55e' },
@@ -184,7 +184,7 @@ export default function ReportsPage() {
   ].filter(d => d.value > 0) : [];
 
   // 文档状态饼图数据
-  const docPieData = reportData ? [
+  const _docPieData = reportData ? [
     { name: '草稿', value: reportData.documentStats.draft, color: '#94a3b8' },
     { name: '审核中', value: reportData.documentStats.inReview, color: '#f59e0b' },
     { name: '已通过', value: reportData.documentStats.approved, color: '#22c55e' },

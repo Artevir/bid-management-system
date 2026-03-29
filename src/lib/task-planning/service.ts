@@ -6,11 +6,11 @@
 import { db } from '@/db';
 import {
   bidDocumentInterpretations,
-  projects,
-  users,
+  projects as _projects,
+  users as _users,
   projectMembers,
 } from '@/db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and, desc, inArray as _inArray } from 'drizzle-orm';
 import { getLLM } from '@/lib/llm';
 
 // ============================================
@@ -235,7 +235,7 @@ export async function generateTaskPlan(input: TaskPlanningInput): Promise<TaskPl
   try {
     const result: TaskPlanResult = JSON.parse(jsonMatch[1]);
     return result;
-  } catch (e) {
+  } catch (_e) {
     throw new Error('AI响应JSON解析失败');
   }
 }

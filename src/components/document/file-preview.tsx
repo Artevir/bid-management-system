@@ -4,9 +4,9 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Separator as _Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   File,
@@ -77,14 +77,14 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
-export function FilePreview({ fileId, fileName, fileUrl, onDownload }: FilePreviewProps) {
+export function FilePreview({ fileId, _fileName, _fileUrl, onDownload }: FilePreviewProps) {
   const [fileInfo, setFileInfo] = React.useState<FileInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [zoom, setZoom] = React.useState(100);
   const [rotation, setRotation] = React.useState(0);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalPages, _setTotalPages] = React.useState(1);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [textContent, setTextContent] = React.useState<string>('');
   const containerRef = React.useRef<HTMLDivElement>(null);

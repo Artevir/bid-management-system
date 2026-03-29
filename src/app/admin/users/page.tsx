@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -109,7 +109,7 @@ export default function UsersPage() {
         const rolesData = await rolesRes.json();
         setRoles(rolesData.roles || []);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('加载数据失败');
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ export default function UsersPage() {
 
       setDialogOpen(false);
       fetchData();
-    } catch (err) {
+    } catch (_err) {
       setError('操作失败，请稍后重试');
     }
   };
@@ -189,7 +189,7 @@ export default function UsersPage() {
       if (response.ok) {
         fetchData();
       }
-    } catch (err) {
+    } catch (_err) {
       setError('删除失败');
     }
   };
@@ -202,7 +202,7 @@ export default function UsersPage() {
         const data = await response.json();
         setSelectedRoles(data.roleIds || []);
       }
-    } catch (err) {
+    } catch (_err) {
       setSelectedRoles([]);
     }
     setRoleDialogOpen(true);
@@ -221,7 +221,7 @@ export default function UsersPage() {
       if (response.ok) {
         setRoleDialogOpen(false);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('保存角色失败');
     }
   };

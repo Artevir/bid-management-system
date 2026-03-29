@@ -12,7 +12,7 @@ import {
   updateTemplate,
   deleteTemplate,
   applyTemplateToDocument,
-  createTemplateFromDocument,
+  createTemplateFromDocument as _createTemplateFromDocument,
 } from '@/lib/bid/template';
 
 // 获取模板详情

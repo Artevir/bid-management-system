@@ -4,9 +4,9 @@
  */
 
 import cron, { type ScheduledTask as CronScheduledTask } from 'node-cron';
-import { db } from '@/db/index';
-import { cache } from '@/lib/cache';
-import { sendNotificationToUser, NotificationType } from '@/lib/realtime/websocket-server';
+import { db as _db } from '@/db/index';
+import { cache as _cache } from '@/lib/cache';
+import { sendNotificationToUser as _sendNotificationToUser, NotificationType as _NotificationType } from '@/lib/realtime/websocket-server';
 
 // ============================================
 // 调度任务类型

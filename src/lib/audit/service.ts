@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { auditLogs, users } from '@/db/schema';
-import { eq, and, gte, lte, like, or, desc, sql, inArray } from 'drizzle-orm';
+import { auditLogs, users as _users } from '@/db/schema';
+import { eq, and, gte, lte, like, or as _or, desc, sql, inArray } from 'drizzle-orm';
 
 // 操作类型
 export type AuditAction =

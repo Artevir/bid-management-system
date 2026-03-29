@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors, projects } from '@/db/schema';
-import { eq, and, gte, lte, desc, sql, avg } from 'drizzle-orm';
+import { historicalQuotes, bidOpenings, bidOpeningQuotes, competitors as _competitors, projects as _projects } from '@/db/schema';
+import { eq, and, gte as _gte, lte as _lte, desc, sql as _sql, avg as _avg } from 'drizzle-orm';
 
 // ============================================
 // 报价建议类型定义
@@ -236,7 +236,7 @@ export class CostModelService {
   /**
    * 估算直接成本
    */
-  async estimateDirectCosts(projectId: number): Promise<{
+  async estimateDirectCosts(_projectId: number): Promise<{
     materialCost: number;
     laborCost: number;
     equipmentCost: number;
@@ -392,7 +392,7 @@ export class QuoteStrategyService {
   /**
    * 分析竞争对手报价
    */
-  private async analyzeCompetitors(industry?: string): Promise<{
+  private async analyzeCompetitors(_industry?: string): Promise<{
     avgPrice: number;
     sampleSize: number;
     priceDistribution: number[];

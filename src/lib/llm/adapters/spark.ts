@@ -250,7 +250,7 @@ export class SparkAdapter implements LLMAdapter {
     
     const ws = new WebSocket(url);
     let resolveConnect: () => void;
-    let rejectConnect: (err: Error) => void;
+    let _rejectConnect: (err: Error) => void;
     const connectPromise = new Promise<void>((resolve, reject) => {
       resolveConnect = resolve;
       rejectConnect = reject;

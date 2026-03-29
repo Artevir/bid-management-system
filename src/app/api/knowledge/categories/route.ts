@@ -8,12 +8,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { knowledgeCategories } from '@/db/schema';
-import { eq, isNull } from 'drizzle-orm';
+import { eq, isNull as _isNull } from 'drizzle-orm';
 
 // 获取知识分类树
 async function getCategoryTree(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     // 获取所有分类
@@ -43,7 +43,7 @@ async function getCategoryTree(
 // 创建知识分类
 async function createCategory(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();

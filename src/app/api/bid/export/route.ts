@@ -10,7 +10,7 @@ import { exportDocument, ExportOptions } from '@/lib/bid/export';
 // 导出文档
 async function handleExport(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const payload = await request.json();
@@ -54,7 +54,7 @@ async function handleExport(
 // 获取导出预览
 async function handlePreview(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

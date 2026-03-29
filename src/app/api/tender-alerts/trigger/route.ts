@@ -12,7 +12,7 @@ import {
 import { batchExtractTimeNodes } from '@/lib/tender-subscription/time-extraction';
 import { db } from '@/db';
 import { tenderInfos } from '@/db/schema';
-import { eq, isNull, and, gt } from 'drizzle-orm';
+import { eq, isNull as _isNull, and, gt } from 'drizzle-orm';
 
 // POST /api/tender-alerts/trigger - 触发预警检查
 export async function POST(req: NextRequest) {

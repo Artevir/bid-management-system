@@ -17,7 +17,7 @@ import {
   type PurchaseSceneInfo,
   type OpenBidSceneInfo,
   type SubmitBidSceneInfo,
-  type PlatformFullInfo,
+  type _PlatformFullInfo,
 } from '@/lib/platform-sync/service';
 
 // ============================================

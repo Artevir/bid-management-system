@@ -9,7 +9,7 @@ import { getSession } from '@/lib/auth/session';
 import {
   getAvailableInterpretations,
   generateTaskPlan,
-  getInterpretationForPlanning,
+  getInterpretationForPlanning as _getInterpretationForPlanning,
 } from '@/lib/task-planning/service';
 
 // GET - 获取可用的文件解读列表

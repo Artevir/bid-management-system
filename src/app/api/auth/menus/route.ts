@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { getUserMenus } from '@/lib/auth/permission';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 获取当前用户
     const currentUser = await getCurrentUser();

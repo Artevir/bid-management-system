@@ -13,7 +13,7 @@ import {
 
 async function listMinutes(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -71,7 +71,7 @@ async function createMinute(
 
 async function updateMinute(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -96,7 +96,7 @@ async function updateMinute(
 
 async function deleteMinute(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tagCategories, unifiedTags, users } from '@/db/schema';
-import { eq, like, desc, asc, and, or, inArray, isNull } from 'drizzle-orm';
+import { eq, like, desc as _desc, asc, and, or as _or, inArray as _inArray, isNull } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

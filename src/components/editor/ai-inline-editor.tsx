@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Input as _Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -25,9 +25,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+  Popover as _Popover,
+  PopoverContent as _PopoverContent,
+  PopoverTrigger as _PopoverTrigger,
 } from '@/components/ui/popover';
 import {
   Sparkles,
@@ -38,7 +38,7 @@ import {
   Plus,
   MessageSquare,
   Bot,
-  ChevronDown,
+  ChevronDown as _ChevronDown,
   X,
 } from 'lucide-react';
 
@@ -224,7 +224,7 @@ export function AIInlineEditor({
               } else if (data.type === 'error') {
                 alert(data.error || '生成失败');
               }
-            } catch (e) {
+            } catch (_e) {
               // 可能是纯文本
               const textContent = line.slice(6);
               if (textContent && !textContent.startsWith('{')) {

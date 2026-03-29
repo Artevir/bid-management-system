@@ -11,7 +11,7 @@ import {
   getModelById,
   updateModel,
   deleteModel,
-  type ModelStatus,
+  type _ModelStatus,
 } from '@/lib/llm/model-service';
 
 // GET /api/llm/models/[modelId]

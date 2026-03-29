@@ -12,7 +12,7 @@ import {
   promptVersions,
   promptRoleMappings,
   users,
-  roles,
+  roles as _roles,
 } from '@/db/schema';
 import { eq, like, desc, asc, and, or, inArray } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';

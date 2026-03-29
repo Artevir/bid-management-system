@@ -13,7 +13,7 @@ import {
 
 async function listRecords(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -78,7 +78,7 @@ async function createRecord(
 
 async function updateRecord(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -106,7 +106,7 @@ async function updateRecord(
 
 async function deleteRecord(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

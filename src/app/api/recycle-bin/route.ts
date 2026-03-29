@@ -16,7 +16,7 @@ import {
 // 获取回收站列表
 async function getList(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

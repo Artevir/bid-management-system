@@ -33,9 +33,9 @@ import {
   Layers,
   Merge,
   ChevronRight,
-  ChevronDown,
-  CheckCircle,
-  AlertCircle,
+  ChevronDown as _ChevronDown,
+  CheckCircle as _CheckCircle,
+  AlertCircle as _AlertCircle,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';

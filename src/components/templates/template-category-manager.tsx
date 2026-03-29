@@ -39,7 +39,7 @@ import {
   Trash2,
   FolderOpen,
   Loader2,
-  Palette,
+  Palette as _Palette,
 } from 'lucide-react';
 
 interface TemplateCategory {

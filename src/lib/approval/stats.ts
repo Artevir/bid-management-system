@@ -3,8 +3,8 @@
  */
 
 import { db } from '@/db';
-import { approvalRecords, users } from '@/db/schema';
-import { eq, and, gte, lte, count, sql, avg, desc } from 'drizzle-orm';
+import { approvalRecords, users as _users } from '@/db/schema';
+import { eq as _eq, and as _and, gte, lte, count as _count, sql as _sql, avg as _avg, desc as _desc } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -109,8 +109,8 @@ export async function getApprovalOverview(
  * 获取审核效率趋势
  */
 export async function getApprovalTrend(
-  orgId: number,
-  dateRange: DateRange
+  _orgId: number,
+  _dateRange: DateRange
 ): Promise<DailyStats[]> {
   // 按日期分组统计
   // 简化实现，返回空数组
@@ -121,8 +121,8 @@ export async function getApprovalTrend(
  * 获取审核人效率排名
  */
 export async function getReviewerRanking(
-  orgId: number,
-  dateRange?: DateRange
+  _orgId: number,
+  _dateRange?: DateRange
 ): Promise<ReviewerStats[]> {
   // 统计每个审核人的效率
   // 简化实现，返回空数组

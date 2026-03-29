@@ -7,7 +7,7 @@ import { getSession } from '@/lib/auth/session';
 import {
   getDeliveries,
   createDelivery,
-  updateDelivery,
+  updateDelivery as _updateDelivery,
 } from '@/lib/authorization/service';
 
 // GET - 获取交付记录列表

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,7 @@ import {
   HardDrive,
   Clock,
   CheckCircle,
-  XCircle,
+  XCircle as _XCircle,
   AlertCircle,
   Trash2,
   Download,
@@ -42,7 +42,7 @@ import {
   refreshCache,
   getOfflineStorageInfo,
   clearAllCache,
-  recordOfflineOperation,
+  recordOfflineOperation as _recordOfflineOperation,
 } from '@/lib/offline/sync';
 import type { SyncStatus } from '@/lib/offline/sync';
 
@@ -134,7 +134,7 @@ export default function OfflineSettingsPage() {
         toast.success('没有需要同步的数据');
       }
       await fetchStorageInfo();
-    } catch (error) {
+    } catch (_error) {
       toast.error('同步失败');
     } finally {
       setSyncing(false);
@@ -153,7 +153,7 @@ export default function OfflineSettingsPage() {
       await refreshCache();
       toast.success('缓存已刷新');
       await fetchStorageInfo();
-    } catch (error) {
+    } catch (_error) {
       toast.error('刷新缓存失败');
     } finally {
       setRefreshing(false);
@@ -167,7 +167,7 @@ export default function OfflineSettingsPage() {
       toast.success('缓存已清除');
       await fetchStorageInfo();
       setClearDialogOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('清除缓存失败');
     }
   };

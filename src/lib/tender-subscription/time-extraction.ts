@@ -6,7 +6,7 @@
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
 import { tenderInfos } from '@/db/schema';
-import { eq, isNull, and, gt } from 'drizzle-orm';
+import { eq, isNull, and as _and, gt as _gt } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

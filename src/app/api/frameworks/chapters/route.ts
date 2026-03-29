@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { docFrameworkChapters, docFrameworks } from '@/db/schema';
-import { eq, and, asc, desc, inArray, isNull, sql } from 'drizzle-orm';
+import { eq, and, asc, desc as _desc, inArray, isNull, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

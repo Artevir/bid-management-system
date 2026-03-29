@@ -3,7 +3,7 @@
  * 提供内容检查、合规检查、格式检查等功能
  */
 
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
 import {
   bidDocuments,
@@ -227,7 +227,7 @@ async function reviewCompliance(
 async function reviewFormat(
   documentId: number,
   chapters: typeof bidChapters.$inferSelect[],
-  customHeaders?: Record<string, string>
+  _customHeaders?: Record<string, string>
 ): Promise<ReviewIssue[]> {
   const issues: ReviewIssue[] = [];
 
@@ -348,7 +348,7 @@ async function reviewContent(
 async function reviewCompleteness(
   documentId: number,
   chapters: typeof bidChapters.$inferSelect[],
-  customHeaders?: Record<string, string>
+  _customHeaders?: Record<string, string>
 ): Promise<ReviewIssue[]> {
   const issues: ReviewIssue[] = [];
 
@@ -407,7 +407,7 @@ async function reviewCompleteness(
  */
 function calculateScore(
   statistics: { total: number; errors: number; warnings: number; infos: number },
-  chapterCount: number
+  _chapterCount: number
 ): number {
   const baseScore = 100;
   const errorPenalty = 10;

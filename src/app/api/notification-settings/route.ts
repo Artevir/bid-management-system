@@ -16,7 +16,7 @@ async function getCurrentUserId(): Promise<number | null> {
 }
 
 // GET /api/notification-settings - 获取通知设置
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -85,7 +85,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const _body = await req.json();
     
     // 这里可以将设置存储到用户配置表中
     // 目前只返回成功响应，实际项目中应该持久化

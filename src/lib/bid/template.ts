@@ -35,7 +35,7 @@ export async function getTemplates(params?: {
   isActive?: boolean;
   search?: string;
 }): Promise<typeof bidTemplates.$inferSelect[]> {
-  let query = db.select().from(bidTemplates);
+  const _query = db.select().from(bidTemplates);
 
   const conditions = [];
 

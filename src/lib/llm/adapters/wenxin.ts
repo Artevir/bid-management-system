@@ -270,7 +270,7 @@ export class WenxinAdapter implements LLMAdapter {
       );
       
       if (!response.ok) {
-        const errorText = await response.text();
+        const _errorText = await response.text();
         yield {
           content: '',
           done: true,
@@ -344,7 +344,7 @@ export class WenxinAdapter implements LLMAdapter {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       yield {
         content: '',
         done: true,
@@ -360,7 +360,7 @@ export class WenxinAdapter implements LLMAdapter {
     text: string,
     options?: EmbeddingOptions
   ): Promise<EmbeddingResult> {
-    const model = options?.model || this.config.defaultEmbeddingModel || 'embedding-v1';
+    const _model = options?.model || this.config.defaultEmbeddingModel || 'embedding-v1';
     
     try {
       const token = await this.getAccessToken();

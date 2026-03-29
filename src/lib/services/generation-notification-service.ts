@@ -4,7 +4,7 @@
  */
 
 import { db } from '@/db';
-import { bidDocuments, documentGenerationHistories, users, projects } from '@/db/schema';
+import { bidDocuments, documentGenerationHistories as _documentGenerationHistories, users, projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { emailService, wechatService } from '@/lib/notification/service';
 import { GenerationProgress } from './generation-progress-service-v2';

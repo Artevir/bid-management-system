@@ -38,9 +38,9 @@ import {
   Search,
   Loader2,
   AlertCircle,
-  Eye,
+  Eye as _Eye,
   Printer,
-  Calendar,
+  Calendar as _Calendar,
   Building2,
   User,
   Send,
@@ -48,7 +48,7 @@ import {
   Ban,
   CheckCircle,
   Clock,
-  FileText,
+  FileText as _FileText,
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
@@ -149,7 +149,7 @@ interface Contact {
 }
 
 export default function BidPrintingsPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [printings, setPrintings] = useState<Printing[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -172,8 +172,8 @@ export default function BidPrintingsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // 详情/编辑对话框
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedPrinting, setSelectedPrinting] = useState<Printing | null>(null);
+  const [_detailDialogOpen, _setDetailDialogOpen] = useState(false);
+  const [_selectedPrinting, _setSelectedPrinting] = useState<Printing | null>(null);
 
   // 表单数据
   const [formData, setFormData] = useState({

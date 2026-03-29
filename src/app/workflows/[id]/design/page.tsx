@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Badge as _Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -22,18 +22,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+  Popover as _Popover,
+  PopoverContent as _PopoverContent,
+  PopoverTrigger as _PopoverTrigger,
 } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea as _Textarea } from '@/components/ui/textarea';
 import {
   ArrowLeft,
   Save,
   Play,
-  Plus,
+  Plus as _Plus,
   MousePointer,
-  Trash2,
+  Trash2 as _Trash2,
   Circle,
   Square,
   Diamond,

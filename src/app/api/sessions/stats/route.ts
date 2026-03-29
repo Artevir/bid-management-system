@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAdmin } from '@/lib/auth/middleware';
 import { getSessionStats } from '@/lib/session/service';
 
-async function getStats(request: NextRequest, userId: number): Promise<NextResponse> {
+async function getStats(_request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const stats = await getSessionStats();
     return NextResponse.json({ stats });

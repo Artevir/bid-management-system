@@ -16,12 +16,12 @@ import {
   users,
   auditLogs,
 } from '@/db/schema';
-import { eq, and, desc, count, sum, sql, isNull } from 'drizzle-orm';
+import { eq, and, desc, count, sum as _sum, sql, isNull } from 'drizzle-orm';
 import {
   BidDocStatus,
   ChapterType,
   ApprovalLevel,
-  ApprovalStatus,
+  ApprovalStatus as _ApprovalStatus,
   DocumentOverview,
   DocumentDetail,
   ChapterSummary,
@@ -34,7 +34,7 @@ import {
   UpdateChapterParams,
   DocumentStatistics,
 } from '@/types/bid';
-import { createAuditLog } from '@/lib/audit/service';
+import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
 import { AppError } from '@/lib/api/error-handler';
 
 // ============================================
@@ -550,7 +550,7 @@ export async function generateChaptersFromMatrix(
     requirement: '其他要求',
   };
 
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (_tx) => {
     for (const [type, sectionTitle] of Object.entries(typeGroups)) {
       const typeItems = items.filter((i) => i.type === type);
       if (typeItems.length === 0) continue;

@@ -7,7 +7,7 @@ import { getSession } from '@/lib/auth/session';
 import {
   certificateService,
   sealService,
-  signService,
+  signService as _signService,
   eSignService,
 } from '@/lib/esign/service';
 

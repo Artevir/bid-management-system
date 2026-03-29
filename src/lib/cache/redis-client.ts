@@ -272,7 +272,7 @@ export const redis = {
   },
   hgetall: async (key: string) => {
     const result: any = {};
-    const pattern = `${key}:*`;
+    const _pattern = `${key}:*`;
     for (const fullKey of memoryCache.keys()) {
       if (fullKey.startsWith(key + ':')) {
         const field = fullKey.slice(key.length + 1);
@@ -293,7 +293,7 @@ export const redis = {
     console.log(`[Redis PubSub] Channel: ${channel}, Message: ${message}`);
     return 1;
   },
-  subscribe: async (channel: string, callback: (message: string) => void) => {
+  subscribe: async (channel: string, _callback: (message: string) => void) => {
     console.log(`[Redis PubSub] Subscribed to: ${channel}`);
     // 简化实现，实际需要 Redis 支持
     return {
@@ -309,7 +309,7 @@ export const RedisKeys = {
   generationStatus: (documentId: string) => `generation:status:${documentId}`,
   generationChapters: (documentId: string) => `generation:chapters:${documentId}`,
   generationCheckpoint: (documentId: string) => `generation:checkpoint:${documentId}`,
-  generationChapter: (documentId: string, chapterId: number) => `generation:chapter:${documentId}:chapters`, // 简化实现，使用统一的key
+  generationChapter: (documentId: string, _chapterId: number) => `generation:chapter:${documentId}:chapters`, // 简化实现，使用统一的key
 } as const;
 
 export const getRedisClient = () => redis;

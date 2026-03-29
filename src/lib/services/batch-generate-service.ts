@@ -3,11 +3,11 @@
  * 支持同时生成多个文档
  */
 
-import { db } from '@/db';
-import { bidDocuments, bidDocumentInterpretations, documentGenerationHistories } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { db as _db } from '@/db';
+import { bidDocuments as _bidDocuments, bidDocumentInterpretations as _bidDocumentInterpretations, documentGenerationHistories as _documentGenerationHistories } from '@/db/schema';
+import { eq as _eq, inArray as _inArray } from 'drizzle-orm';
 import { oneClickGenerateService, type OneClickGenerateParams } from './one-click-generate-service';
-import { generationProgressService } from './generation-progress-service';
+import { generationProgressService as _generationProgressService } from './generation-progress-service';
 
 // ============================================
 // 类型定义
@@ -167,7 +167,7 @@ export const batchGenerateService = {
     }
 
     for (const chunk of chunks) {
-      const promises = chunk.map(async (item, chunkIndex) => {
+      const promises = chunk.map(async (item, _chunkIndex) => {
         const index = result.results.findIndex(
           (r) => r.projectId === item.projectId && r.documentName === item.documentName
         );

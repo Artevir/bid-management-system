@@ -58,7 +58,7 @@ export async function GET(
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(': heartbeat\n\n'));
-        } catch (error) {
+        } catch (_error) {
           clearInterval(heartbeat);
           unsubscribe();
         }
@@ -70,7 +70,7 @@ export async function GET(
         unsubscribe();
         try {
           controller.close();
-        } catch (error) {
+        } catch (_error) {
           // 忽略关闭错误
         }
       });

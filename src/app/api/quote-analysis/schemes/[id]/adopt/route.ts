@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
-import { adoptQuoteScheme, getQuoteSchemesByRequestId } from '@/lib/quote-analysis/service';
+import { adoptQuoteScheme, getQuoteSchemesByRequestId as _getQuoteSchemesByRequestId } from '@/lib/quote-analysis/service';
 
 // POST /api/quote-analysis/schemes/[id]/adopt - 采纳报价方案
 export async function POST(

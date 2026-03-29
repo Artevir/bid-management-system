@@ -7,9 +7,9 @@ import { getSession } from '@/lib/auth/session';
 import {
   createOpening,
   getOpenings,
-  getOpeningById,
-  updateOpening,
-  deleteOpening,
+  getOpeningById as _getOpeningById,
+  updateOpening as _updateOpening,
+  deleteOpening as _deleteOpening,
   getOpeningStatistics,
   getCompetitorWinRate,
   getUpcomingOpenings,

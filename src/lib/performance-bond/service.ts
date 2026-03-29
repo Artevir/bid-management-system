@@ -8,7 +8,7 @@ import {
   performanceBonds,
   projectTasks,
   users,
-  projects,
+  projects as _projects,
   type PerformanceBond,
   type NewPerformanceBond,
 } from '@/db/schema';

@@ -10,9 +10,9 @@ import {
   bidArchiveDocuments,
   projects, 
   bidDocuments, 
-  companies 
+  companies as _companies 
 } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray as _inArray } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================
@@ -81,8 +81,8 @@ export async function POST(request: NextRequest) {
 
     // 获取公司信息（从项目关联的公司获取，这里假设项目可能有关联公司）
     // 注：根据现有数据模型，项目通过 department 关联公司，这里简化处理
-    let companyId = null;
-    let companyName = null;
+    const companyId = null;
+    const companyName = null;
 
     // 创建归档记录
     const [archive] = await db

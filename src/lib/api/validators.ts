@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest as _NextRequest } from 'next/server';
 import { AppError } from './error-handler';
 
 /**

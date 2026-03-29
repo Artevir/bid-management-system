@@ -21,7 +21,7 @@ import {
   Building2,
   Check,
   ChevronsUpDown,
-  Search,
+  Search as _Search,
   Star,
   MapPin,
   Phone,

@@ -22,13 +22,13 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
+  Calendar as _CalendarIcon,
   Clock,
-  AlertTriangle,
+  AlertTriangle as _AlertTriangle,
   CheckCircle,
   FileText,
   Target,
-  Plus,
+  Plus as _Plus,
 } from 'lucide-react';
 
 // ============================================
@@ -75,7 +75,7 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [viewType, setViewType] = useState<'month' | 'week'>('month');
+  const [_viewType, _setViewType] = useState<'month' | 'week'>('month');
   const [filterType, setFilterType] = useState<string>('all');
 
   useEffect(() => {
@@ -184,7 +184,7 @@ export default function CalendarPage() {
   };
 
   // 过滤事件
-  const filteredEvents = useMemo(() => {
+  const _filteredEvents = useMemo(() => {
     if (filterType === 'all') return events;
     return events.filter(e => e.type === filterType);
   }, [events, filterType]);

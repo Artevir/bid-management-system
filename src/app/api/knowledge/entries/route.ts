@@ -13,7 +13,7 @@ import { eq, and, or, ilike, desc } from 'drizzle-orm';
 // 获取知识条目列表
 async function getEntries(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

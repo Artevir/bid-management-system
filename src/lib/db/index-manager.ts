@@ -307,7 +307,7 @@ export class IndexManager {
       `);
 
       return result.rows || [];
-    } catch (error) {
+    } catch (_error) {
       console.warn('[Index] pg_stat_statements 扩展未启用');
       return [];
     }

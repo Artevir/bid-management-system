@@ -6,12 +6,12 @@
  */
 
 import { db } from '@/db';
-import { bidChapters, aiGenerationLogs, knowledgeItems } from '@/db/schema';
+import { bidChapters as _bidChapters, aiGenerationLogs, knowledgeItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { KnowledgeEmbeddingService } from '@/lib/embedding/service';
 import {
   getLLM,
-  getLLMByProvider,
+  getLLMByProvider as _getLLMByProvider,
   createCozeAdapterWithHeaders,
   ChatMessage,
   LLMAdapter,

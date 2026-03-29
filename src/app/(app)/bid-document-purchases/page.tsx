@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +43,7 @@ import {
   Building2,
   Users,
   MapPin,
-  Phone,
+  Phone as _Phone,
   Calendar,
   AlertTriangle,
   Loader2,
@@ -140,7 +140,7 @@ export default function BidDocumentPurchasesPage() {
       } else {
         toast.error(result.error || '获取数据失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('获取数据失败');
     } finally {
       setLoading(false);
@@ -193,7 +193,7 @@ export default function BidDocumentPurchasesPage() {
       } else {
         toast.error(result.error || '删除失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('删除失败');
     }
   };
@@ -214,7 +214,7 @@ export default function BidDocumentPurchasesPage() {
       } else {
         toast.error(result.error || '更新失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('更新失败');
     }
   };
@@ -234,7 +234,7 @@ export default function BidDocumentPurchasesPage() {
       } else {
         toast.error(result.error || '推送失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('推送失败');
     } finally {
       setPushingId(null);
@@ -262,7 +262,7 @@ export default function BidDocumentPurchasesPage() {
       } else {
         toast.error(result.error || '操作失败');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('操作失败');
     }
   };

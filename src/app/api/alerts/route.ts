@@ -8,7 +8,7 @@ import {
   alertService,
   qualificationAlertService,
   deadlineAlertService,
-  complianceCheckService,
+  complianceCheckService as _complianceCheckService,
 } from '@/lib/alert/service';
 
 // GET /api/alerts - 获取预警列表
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/alerts/check - 执行预警检查
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {

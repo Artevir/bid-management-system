@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -22,7 +22,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -32,9 +32,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Users,
+  Users as _Users,
   UserPlus,
-  Settings,
+  Settings as _Settings,
   Plus,
   RefreshCw,
   Edit,
@@ -46,8 +46,8 @@ import {
   Shield,
   User,
   MessageSquare,
-  FileText,
-  ChevronRight,
+  FileText as _FileText,
+  ChevronRight as _ChevronRight,
   Loader2,
 } from 'lucide-react';
 
@@ -91,14 +91,14 @@ interface ProjectOrg {
 }
 
 function ProjectOrgContent() {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
 
   const [templates, setTemplates] = useState<OrgTemplate[]>([]);
   const [projectOrg, setProjectOrg] = useState<ProjectOrg | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [_showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<OrgTemplate | null>(null);
 
@@ -168,7 +168,7 @@ function ProjectOrgContent() {
     );
   };
 
-  const getTypeLabel = (type: string) => {
+  const _getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
       standard: '标准投标模板',
       complex: '复杂项目模板',

@@ -27,7 +27,7 @@ import {
   AlertCircle,
   Calendar,
   Building2,
-  MapPin,
+  MapPin as _MapPin,
   User,
   Clock,
   FileText,
@@ -619,7 +619,7 @@ export default function ProjectDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {project.phases.map((phase, index) => (
+                  {project.phases.map((phase, _index) => (
                     <div
                       key={phase.id}
                       className="flex items-start gap-4 p-4 border rounded-lg"

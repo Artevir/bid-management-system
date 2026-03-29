@@ -7,13 +7,13 @@ import { getSession } from '@/lib/auth/session';
 import {
   createSignTask,
   getSignTasks,
-  getSignTaskById,
-  updateSignTask,
-  cancelSignTask,
+  getSignTaskById as _getSignTaskById,
+  updateSignTask as _updateSignTask,
+  cancelSignTask as _cancelSignTask,
   initiateSignTask,
   getSignStatistics,
   createSigner,
-  getSignersByTaskId,
+  getSignersByTaskId as _getSignersByTaskId,
 } from '@/lib/e-sign/service';
 
 // GET /api/e-sign/tasks - 获取签署任务列表

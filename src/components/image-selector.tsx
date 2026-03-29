@@ -5,8 +5,8 @@
  * 用于从多个图片中选择一张或多张
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState as _useState } from 'react';
+import { Button as _Button } from '@/components/ui/button';
 import { ImagePreview } from '@/components/image-preview';
 import { Check } from 'lucide-react';
 

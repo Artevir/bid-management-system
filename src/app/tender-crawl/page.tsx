@@ -22,7 +22,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Search,
@@ -32,8 +32,8 @@ import {
   Building2,
   MapPin,
   Plus,
-  Filter,
-  Download,
+  Filter as _Filter,
+  Download as _Download,
   Eye,
   Globe,
   Zap,
@@ -63,7 +63,7 @@ interface CrawlSource {
 }
 
 export default function TenderCrawlPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [tenders, setTenders] = useState<TenderInfo[]>([]);
   const [sources, setSources] = useState<CrawlSource[]>([]);
   const [loading, setLoading] = useState(true);

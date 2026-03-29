@@ -6,12 +6,12 @@
 import { db } from '@/db';
 import {
   projects,
-  projectMilestones,
+  projectMilestones as _projectMilestones,
   bidDocuments,
   users,
   departments,
 } from '@/db/schema';
-import { eq, and, or, desc, gte, lte, between, sql, count, sum } from 'drizzle-orm';
+import { eq, and, or as _or, desc as _desc, gte, lte, between as _between, sql, count, sum } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -530,7 +530,7 @@ export async function getUserPerformance(
     .where(
       and(
         departmentId ? eq(users.departmentId, departmentId) : undefined,
-        ...(conditions.length > 0 ? conditions.map(c => eq(projects.status, projects.status)) : [])
+        ...(conditions.length > 0 ? conditions.map(_c => eq(projects.status, projects.status)) : [])
       )
     )
     .limit(limit);

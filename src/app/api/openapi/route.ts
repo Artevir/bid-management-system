@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateOpenAPISpec } from '@/lib/api/docs-generator';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const spec = generateOpenAPISpec();
 

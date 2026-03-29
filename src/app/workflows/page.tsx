@@ -33,11 +33,11 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Plus,
   Search,
-  Edit,
+  Edit as _Edit,
   Trash2,
   Play,
   Settings,
-  FileText,
+  FileText as _FileText,
   ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';

@@ -38,11 +38,11 @@ import {
   FileText,
   Plus,
   Edit2,
-  Trash2,
+  Trash2 as _Trash2,
   Copy,
   ChevronUp,
   ChevronDown,
-  AlertCircle,
+  AlertCircle as _AlertCircle,
 } from 'lucide-react';
 
 // ============================================

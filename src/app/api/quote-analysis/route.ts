@@ -7,8 +7,8 @@ import { getSession } from '@/lib/auth/session';
 import {
   createQuoteAnalysisRequest,
   getQuoteAnalysisRequests,
-  getQuoteAnalysisRequestById,
-  updateQuoteAnalysisRequest,
+  getQuoteAnalysisRequestById as _getQuoteAnalysisRequestById,
+  updateQuoteAnalysisRequest as _updateQuoteAnalysisRequest,
   performQuoteAnalysis,
   getQuoteAnalysisStatistics,
 } from '@/lib/quote-analysis/service';

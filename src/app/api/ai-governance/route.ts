@@ -24,7 +24,7 @@ import {
 
 async function listEvaluationSets(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -41,7 +41,7 @@ async function listEvaluationSets(
 
 async function getEvaluationSet(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -90,7 +90,7 @@ async function createEvalSet(
 
 async function startTestRun(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -119,7 +119,7 @@ async function startTestRun(
 
 async function getRunResult(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -144,7 +144,7 @@ async function getRunResult(
 
 async function getRunDetail(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -169,7 +169,7 @@ async function getRunDetail(
 
 async function getCaseResults(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -190,7 +190,7 @@ async function getCaseResults(
 
 async function getModelHistory(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -216,7 +216,7 @@ async function getModelHistory(
 
 async function getModelMetrics(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -236,8 +236,8 @@ async function getModelMetrics(
 }
 
 async function getOverview(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const overview = await getQualityOverview();

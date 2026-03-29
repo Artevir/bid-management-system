@@ -36,7 +36,7 @@ import {
 } from 'drizzle-orm';
 import { AppError } from '@/lib/api/error-handler';
 import { ProjectStatus } from '@/types/project';
-import { createAuditLog } from '@/lib/audit/service';
+import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
 
 // ============================================
 // 项目查询参数类型
@@ -226,7 +226,7 @@ export interface ProjectMilestoneItem {
  */
 export async function getProjectList(
   params: ProjectQueryParams,
-  userId: number
+  _userId: number
 ): Promise<{ items: ProjectListItem[]; total: number }> {
   const {
     page = 1,
@@ -237,10 +237,10 @@ export async function getProjectList(
     region,
     departmentId,
     ownerId,
-    startDateFrom,
-    startDateTo,
-    endDateFrom,
-    endDateTo,
+    startDateFrom as _startDateFrom,
+    startDateTo as _startDateTo,
+    endDateFrom as _endDateFrom,
+    endDateTo as _endDateTo,
     tags,
     sortBy = 'createdAt',
     sortOrder = 'desc',
@@ -384,7 +384,7 @@ export async function getProjectList(
  */
 export async function getProjectById(
   projectId: number,
-  userId: number
+  _userId: number
 ): Promise<ProjectDetail | null> {
   // 查询项目基本信息
   const projectResult = await db
@@ -879,7 +879,7 @@ export async function deleteProject(
 /**
  * 获取项目统计数据
  */
-export async function getProjectStats(userId: number): Promise<{
+export async function getProjectStats(_userId: number): Promise<{
   total: number;
   byStatus: Record<ProjectStatus, number>;
   byIndustry: { industry: string; count: number }[];

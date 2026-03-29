@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import RBACService, { DEFAULT_ROLES, DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';
+import RBACService, { DEFAULT_ROLES as _DEFAULT_ROLES, DEFAULT_PERMISSIONS as _DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';
 import { cache } from '@/lib/cache';
 import { verifyAccessToken } from '@/lib/auth/jwt';
 

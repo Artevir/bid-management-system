@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { projectTags, projectTagRelations } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and as _and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 interface RouteParams {

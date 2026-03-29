@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -34,17 +34,17 @@ import {
   ChevronRight,
   ChevronDown,
   MoreVertical,
-  Edit,
+  Edit as _Edit,
   Trash2,
   FileText,
-  Folder,
+  Folder as _Folder,
   Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
+  DropdownMenuSeparator as _DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -88,7 +88,7 @@ const stageConfig: Record<string, { label: string; color: string }> = {
 
 export default function SchemeEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
+  const _router = useRouter();
   const schemeId = parseInt(id, 10);
 
   const [scheme, setScheme] = useState<Scheme | null>(null);

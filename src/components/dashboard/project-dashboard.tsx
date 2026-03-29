@@ -17,11 +17,11 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
+  PieChart as _PieChart,
+  Pie as _Pie,
+  Cell as _Cell,
+  BarChart as _BarChart,
+  Bar as _Bar,
   Legend,
 } from 'recharts';
 import {
@@ -30,7 +30,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Users,
+  Users as _Users,
   FileText,
   Target,
   Activity,
@@ -80,7 +80,7 @@ interface DashboardStats {
   }>;
 }
 
-const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
+const _COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
 
 const chartConfig = {
   tasks: {

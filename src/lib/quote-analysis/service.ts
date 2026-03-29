@@ -12,7 +12,7 @@ import {
   quoteHistoryComparisons,
   historicalQuotes,
   competitors,
-  projects,
+  projects as _projects,
   type QuoteAnalysisRequest,
   type NewQuoteAnalysisRequest,
   type QuoteFactor,
@@ -24,8 +24,8 @@ import {
   type QuoteHistoryComparison,
   type NewQuoteHistoryComparison,
 } from '@/db/schema';
-import { eq, and, desc, sql, lte, gte, inArray, isNull, or, ilike } from 'drizzle-orm';
-import { LLMClient } from 'coze-coding-dev-sdk';
+import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or as _or, ilike } from 'drizzle-orm';
+import { LLMClient as _LLMClient } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 报价分析请求管理
@@ -427,7 +427,7 @@ async function predictCompetitorQuotes(request: QuoteAnalysisRequest): Promise<C
 
     let predictedQuote = '';
     let confidence = 50;
-    let avgDeviation = '0%';
+    const avgDeviation = '0%';
 
     if (historicalData.length > 0) {
       // 基于历史数据计算预测

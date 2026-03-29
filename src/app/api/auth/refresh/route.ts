@@ -10,7 +10,7 @@ import {
   setTokenCookies,
 } from '@/lib/auth/jwt';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // 从Cookie获取刷新令牌
     const refreshToken = await getRefreshTokenFromCookie();

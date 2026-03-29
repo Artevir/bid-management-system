@@ -134,7 +134,7 @@ export const auditMiddlewares = {
       const match = req.url.match(/\/api\/users\/(\d+)/);
       return match ? parseInt(match[1]) : 0;
     },
-    getDescription: (req, body) => `更新用户信息`,
+    getDescription: (_req, _body) => `更新用户信息`,
   }),
 
   // 用户删除审计
@@ -180,12 +180,12 @@ export const auditMiddlewares = {
 
   // 文档导出审计
   exportDocument: createAuditMiddleware('export', 'document', {
-    getDescription: (req, body) => `导出文档`,
+    getDescription: (_req, _body) => `导出文档`,
   }),
 
   // 文档下载审计
   downloadDocument: createAuditMiddleware('download', 'document', {
-    getDescription: (req, body) => `下载文档`,
+    getDescription: (_req, _body) => `下载文档`,
   }),
 };
 

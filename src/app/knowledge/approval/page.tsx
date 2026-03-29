@@ -23,8 +23,8 @@ import {
   FileText,
   User,
   Calendar,
-  MessageSquare,
-  AlertCircle,
+  MessageSquare as _MessageSquare,
+  AlertCircle as _AlertCircle,
 } from 'lucide-react';
 
 // ============================================

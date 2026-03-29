@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, getAccessTokenFromCookie } from '@/lib/auth/jwt';
-import { hasPermission, hasAnyPermission, hasAllPermissions, canAccessApi, getUserRoles } from '@/lib/auth/permission';
+import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions as _hasAllPermissions, canAccessApi as _canAccessApi, getUserRoles } from '@/lib/auth/permission';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -20,7 +20,7 @@ const CACHE_TTL = 60 * 1000; // 60秒缓存
 /**
  * 获取缓存的权限
  */
-function getCachedPermissions(userId: number): Set<string> | null {
+function _getCachedPermissions(userId: number): Set<string> | null {
   const cached = permissionCache.get(userId);
   if (cached && cached.expireAt > Date.now()) {
     return cached.permissions;
@@ -31,7 +31,7 @@ function getCachedPermissions(userId: number): Set<string> | null {
 /**
  * 设置权限缓存
  */
-function setCachedPermissions(userId: number, permissions: Set<string>): void {
+function _setCachedPermissions(userId: number, permissions: Set<string>): void {
   permissionCache.set(userId, {
     permissions,
     expireAt: Date.now() + CACHE_TTL,
@@ -91,11 +91,11 @@ export async function withOptionalAuth(
       try {
         const payload = await verifyAccessToken(accessToken);
         userId = payload.userId;
-      } catch (error) {
+      } catch (_error) {
         // 令牌无效，但继续执行（可选认证）
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // 获取token过程出错也忽略，继续执行
   }
     
@@ -204,7 +204,7 @@ export async function withChapterPermission(
     withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
 }
 
-export async function requireAuth(request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
+export async function requireAuth(_request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
   try {
     const accessToken = await getAccessTokenFromCookie();
     if (!accessToken) {

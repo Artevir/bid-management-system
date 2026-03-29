@@ -88,7 +88,7 @@ async function createTask(
 
 async function updateTask(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -113,7 +113,7 @@ async function updateTask(
 
 async function deleteTask(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);

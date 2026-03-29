@@ -13,7 +13,7 @@ import {
   projects,
   bidDocuments,
 } from '@/db/schema';
-import { eq, and, asc, inArray, sql } from 'drizzle-orm';
+import { eq, and, asc, inArray as _inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================

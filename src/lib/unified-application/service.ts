@@ -9,9 +9,9 @@ import {
   sampleApplications,
   priceApplications,
   partnerApplications,
-  users,
+  users as _users,
 } from '@/db/schema';
-import { eq, and, desc, asc, like, or, inArray, count, sql } from 'drizzle-orm';
+import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

@@ -4,8 +4,8 @@
  */
 
 import { db } from '@/db';
-import { bidDocuments, bidChapters, reviewReports, documentReviews, complianceChecks } from '@/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { bidDocuments, bidChapters, reviewReports, documentReviews, complianceChecks as _complianceChecks } from '@/db/schema';
+import { eq, desc, and as _and } from 'drizzle-orm';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
 
 // ============================================
@@ -210,7 +210,7 @@ function determineCategory(issue: any): string {
  */
 function generateStatistics(
   issues: ReportIssue[],
-  chapters: typeof bidChapters.$inferSelect[]
+  _chapters: typeof bidChapters.$inferSelect[]
 ): ReportStatistics {
   const byCategory: Record<string, number> = {};
   const byChapterMap = new Map<number, { chapterTitle: string; count: number }>();
@@ -328,7 +328,7 @@ ${warningIssues.slice(0, 5).map((i) => `- ${i.location.chapterTitle || '整体'}
 async function generateRecommendations(
   issues: ReportIssue[],
   statistics: ReportStatistics,
-  customHeaders?: Record<string, string>
+  _customHeaders?: Record<string, string>
 ): Promise<ReportRecommendation[]> {
   const recommendations: ReportRecommendation[] = [];
 

@@ -52,7 +52,7 @@ export interface SyncResult {
 export async function syncProjectFromInterpretation(
   projectId: number,
   interpretationId: number,
-  operatorId: number
+  _operatorId: number
 ): Promise<SyncResult> {
   // 获取解读信息
   const [interpretation] = await db
@@ -254,7 +254,7 @@ export async function getProjectFullInfo(projectId: number): Promise<ProjectFull
     if (interpretation.qualificationRequirements) {
       qualificationRequirements = JSON.parse(interpretation.qualificationRequirements);
     }
-  } catch (e) {
+  } catch (_e) {
     qualificationRequirements = interpretation.qualificationRequirements;
   }
 
@@ -262,7 +262,7 @@ export async function getProjectFullInfo(projectId: number): Promise<ProjectFull
     if (interpretation.personnelRequirements) {
       personnelRequirements = JSON.parse(interpretation.personnelRequirements);
     }
-  } catch (e) {
+  } catch (_e) {
     personnelRequirements = interpretation.personnelRequirements;
   }
 
@@ -270,7 +270,7 @@ export async function getProjectFullInfo(projectId: number): Promise<ProjectFull
     if (interpretation.docRequirements) {
       docRequirements = JSON.parse(interpretation.docRequirements);
     }
-  } catch (e) {
+  } catch (_e) {
     docRequirements = interpretation.docRequirements;
   }
 

@@ -7,12 +7,12 @@ import { db } from '@/db';
 import {
   bidGuarantees,
   projects,
-  users,
+  users as _users,
   projectTasks,
   type BidGuarantee,
   type NewBidGuarantee,
 } from '@/db/schema';
-import { eq, and, desc, sql, lte, gte, inArray, isNull } from 'drizzle-orm';
+import { eq, and, desc, sql, lte, gte, inArray as _inArray, isNull as _isNull } from 'drizzle-orm';
 
 // ============================================
 // 保证金管理

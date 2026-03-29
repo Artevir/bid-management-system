@@ -15,7 +15,7 @@ import {
   type CostRecord,
   type NewCostRecord,
   type CostReport,
-  type NewCostReport,
+  type _NewCostReport,
 } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 
@@ -466,7 +466,7 @@ export async function getCostTrend(
  */
 export async function generateCostReport(projectId: number, userId: number): Promise<CostReport> {
   const summary = await getCostSummary(projectId);
-  const trend = await getCostTrend(
+  const _trend = await getCostTrend(
     projectId,
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 最近30天
     new Date()

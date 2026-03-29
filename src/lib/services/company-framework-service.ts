@@ -8,15 +8,15 @@ import {
   companyDocumentFrameworks,
   companyFrameworkChapters,
   companies,
-  files,
+  files as _files,
   users,
 } from '@/db/schema';
-import { and, eq, inArray, desc, isNull, asc } from 'drizzle-orm';
+import { and, eq, inArray, desc, isNull as _isNull, asc } from 'drizzle-orm';
 import type {
   CompanyDocumentFramework,
-  NewCompanyDocumentFramework,
+  NewCompanyDocumentFramework as _NewCompanyDocumentFramework,
   CompanyFrameworkChapter,
-  NewCompanyFrameworkChapter,
+  NewCompanyFrameworkChapter as _NewCompanyFrameworkChapter,
 } from '@/db/schema';
 
 // ============================================

@@ -14,7 +14,7 @@ import { KnowledgeEmbeddingService } from '@/lib/embedding/service';
 // 语义搜索知识条目
 async function searchKnowledge(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -104,7 +104,7 @@ async function searchKnowledge(
 // 为知识条目生成向量嵌入
 async function generateEmbedding(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const body = await request.json();

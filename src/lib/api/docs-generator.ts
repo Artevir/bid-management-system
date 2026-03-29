@@ -3,7 +3,7 @@
  * 基于路由自动生成OpenAPI规范
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse as _NextResponse } from 'next/server';
 
 // ============================================
 // OpenAPI规范类型

@@ -15,7 +15,7 @@ import {
   projects,
   users,
 } from '@/db/schema';
-import { eq, and, desc, inArray, lte, gte, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, inArray as _inArray, lte, gte, isNull, sql } from 'drizzle-orm';
 
 // 回收站保留天数
 const RECYCLE_BIN_RETENTION_DAYS = 30;
@@ -197,7 +197,7 @@ export async function restoreFromRecycleBin(
  */
 export async function permanentDelete(
   recycleBinId: number,
-  deletedBy: number
+  _deletedBy: number
 ): Promise<{ success: boolean; message: string }> {
   try {
     // 获取回收站记录
@@ -897,7 +897,7 @@ export async function getRecycleBinStats(userId: number): Promise<{
   byType: Record<ResourceType, number>;
   expiringSoon: number; // 即将过期（7天内）
 }> {
-  const now = new Date();
+  const _now = new Date();
   const sevenDaysLater = new Date();
   sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 

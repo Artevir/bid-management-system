@@ -12,7 +12,7 @@ import {
   llmPromptTemplates,
 } from '@/db/llm-schema';
 import { users } from '@/db/schema';
-import { eq, desc, asc, and, like, sql } from 'drizzle-orm';
+import { eq, desc, asc, and, like as _like, sql } from 'drizzle-orm';
 import { LLMClient, Config, type Message } from 'coze-coding-dev-sdk';
 
 // ============================================

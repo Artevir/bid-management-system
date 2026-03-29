@@ -6,7 +6,7 @@
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import { initWebSocket, pushProjectUpdate, pushDocumentUpload } from '@/lib/realtime/websocket-server';
+import { initWebSocket, pushProjectUpdate as _pushProjectUpdate, pushDocumentUpload as _pushDocumentUpload } from '@/lib/realtime/websocket-server';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || '0.0.0.0';

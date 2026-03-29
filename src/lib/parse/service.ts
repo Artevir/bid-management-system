@@ -3,7 +3,7 @@
  * 使用LLM进行文档智能解析和信息抽取
  */
 
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
 import { parseTasks, parseResults, parseItems, files } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -50,7 +50,7 @@ export interface DocumentParseResult {
  */
 export async function parseDocumentWithLLM(
   documentContent: string,
-  parseType: 'full' | 'section' | 'custom' = 'full',
+  _parseType: 'full' | 'section' | 'custom' = 'full',
   customHeaders?: Record<string, string>
 ): Promise<DocumentParseResult> {
   const config = new Config();

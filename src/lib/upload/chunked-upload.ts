@@ -3,7 +3,7 @@
  * 支持大文件的分片上传、断点续传、进度追踪
  */
 
-import { mkdir, writeFile, readFile, unlink, stat, rename } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, stat as _stat, rename as _rename } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -68,7 +68,7 @@ const uploadSessions = new Map<string, UploadSession>();
 export async function createUploadSession(
   filename: string,
   fileSize: number,
-  mimeType: string
+  _mimeType: string
 ): Promise<UploadSession> {
   // 验证文件大小
   if (fileSize > MAX_FILE_SIZE) {
@@ -136,7 +136,7 @@ export async function deleteUploadSession(sessionId: string): Promise<void> {
   // 清理临时文件
   try {
     await unlink(path.join(session.tempDir, 'metadata.json'));
-  } catch (error) {
+  } catch (_error) {
     // 忽略错误
   }
 
@@ -154,7 +154,7 @@ export async function uploadChunk(
   sessionId: string,
   chunkNumber: number,
   chunkData: Buffer,
-  chunkHash: string
+  _chunkHash: string
 ): Promise<{ success: boolean; message: string }> {
   const session = getUploadSession(sessionId);
   if (!session) {
@@ -228,7 +228,7 @@ export async function mergeChunks(
   await mkdir(targetDir, { recursive: true });
 
   // 合并分片
-  const writeStream = await writeFile(targetPath, Buffer.alloc(0));
+  const _writeStream = await writeFile(targetPath, Buffer.alloc(0));
 
   for (let i = 1; i <= session.totalChunks; i++) {
     const chunkPath = path.join(session.tempDir, `chunk_${i}`);

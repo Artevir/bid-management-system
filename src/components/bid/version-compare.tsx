@@ -27,7 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger as _DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Plus,
@@ -38,7 +38,7 @@ import {
   FileText,
   History,
   RotateCcw,
-  Eye,
+  Eye as _Eye,
   AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -97,7 +97,7 @@ interface VersionCompareProps {
 }
 
 export function VersionCompare({ documentId, onCreateVersion }: VersionCompareProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const { toast } = useToast();
   const [versions, setVersions] = useState<Version[]>([]);
   const [version1Id, setVersion1Id] = useState<string>('');
@@ -148,7 +148,7 @@ export function VersionCompare({ documentId, onCreateVersion }: VersionComparePr
         fetchVersions();
         onCreateVersion?.();
       }
-    } catch (error) {
+    } catch (_error) {
       toast({ title: '创建失败', variant: 'destructive' });
     } finally {
       setCreating(false);
@@ -174,7 +174,7 @@ export function VersionCompare({ documentId, onCreateVersion }: VersionComparePr
       } else {
         toast({ title: data.error || '对比失败', variant: 'destructive' });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({ title: '对比失败', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -193,7 +193,7 @@ export function VersionCompare({ documentId, onCreateVersion }: VersionComparePr
         setRestoreDialogOpen(false);
         fetchVersions();
       }
-    } catch (error) {
+    } catch (_error) {
       toast({ title: '恢复失败', variant: 'destructive' });
     }
   };

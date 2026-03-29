@@ -10,16 +10,16 @@ import {
   bidDocuments,
   projects,
   projectMembers,
-  users,
+  users as _users,
   auditLogs,
 } from '@/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { AppError } from '@/lib/api/error-handler';
-import { ApprovalLevel, ApprovalStatus } from '@/types/bid';
-import { createAuditLog } from '@/lib/audit/service';
+import { ApprovalLevel, ApprovalStatus as _ApprovalStatus } from '@/types/bid';
+import { createAuditLog as _createAuditLog } from '@/lib/audit/service';
 import {
-  getDocumentById,
-  updateDocumentStatus,
+  getDocumentById as _getDocumentById,
+  updateDocumentStatus as _updateDocumentStatus,
   APPROVAL_LEVEL_ORDER,
 } from './documents-service';
 

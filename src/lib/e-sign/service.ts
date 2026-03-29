@@ -27,7 +27,7 @@ import {
   type SignLog,
   type NewSignLog,
 } from '@/db/schema';
-import { eq, and, desc, sql, lte, gte, inArray, isNull, or } from 'drizzle-orm';
+import { eq, and, desc, sql, lte as _lte, gte as _gte, inArray as _inArray, isNull as _isNull, or as _or } from 'drizzle-orm';
 
 // ============================================
 // 签章配置管理
@@ -442,7 +442,7 @@ async function callThirdPartySignService(
 async function callFadadaService(
   config: SealConfig,
   task: SignTask,
-  signers: Signer[]
+  _signers: Signer[]
 ): Promise<string> {
   // TODO: 实现法大大API调用
   // 1. 创建签署流程
@@ -460,7 +460,7 @@ async function callFadadaService(
 async function callEsignService(
   config: SealConfig,
   task: SignTask,
-  signers: Signer[]
+  _signers: Signer[]
 ): Promise<string> {
   // TODO: 实现e签宝API调用
   // 1. 创建签署流程
@@ -478,7 +478,7 @@ async function callEsignService(
 async function callQiyuesuoService(
   config: SealConfig,
   task: SignTask,
-  signers: Signer[]
+  _signers: Signer[]
 ): Promise<string> {
   // TODO: 实现契约锁API调用
   // 1. 创建签署流程
@@ -540,7 +540,7 @@ export async function getSignStatistics(companyId?: number): Promise<{
   totalSeals: number;
   activeSeals: number;
 }> {
-  const conditions = companyId ? [eq(signTasks.configId, sealConfigs.id), eq(sealConfigs.companyId, companyId)] : [];
+  const _conditions = companyId ? [eq(signTasks.configId, sealConfigs.id), eq(sealConfigs.companyId, companyId)] : [];
 
   const tasks = await db
     .select()

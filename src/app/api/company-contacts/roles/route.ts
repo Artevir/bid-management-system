@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { companyContactRoles, users, type ContactRoleType } from '@/db/schema';
+import { companyContactRoles, users as _users, type ContactRoleType } from '@/db/schema';
 import { eq, asc } from 'drizzle-orm';
 
 // 预设角色

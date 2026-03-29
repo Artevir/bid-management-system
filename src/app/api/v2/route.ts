@@ -10,7 +10,7 @@ import { LATEST_VERSION, getVersionInfo, setVersionHeaders } from '@/lib/api/ver
 // 版本信息端点
 // ============================================
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const versionInfo = getVersionInfo(LATEST_VERSION);
 
   const response = NextResponse.json({

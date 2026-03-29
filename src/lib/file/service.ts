@@ -6,7 +6,7 @@
 import { S3Storage } from 'coze-coding-dev-sdk';
 import { db } from '@/db';
 import { files, fileVersions, fileCategories, projectFiles, auditLogs } from '@/db/schema';
-import { eq, and, like, desc, asc, inArray, sql, count, isNull } from 'drizzle-orm';
+import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull as _isNull } from 'drizzle-orm';
 import { DocumentSecurityLevel } from '@/types/document';
 
 // 初始化 S3 存储
@@ -186,7 +186,7 @@ export async function uploadFile(
  */
 export async function getFileList(
   params: FileQueryParams,
-  userId: number
+  _userId: number
 ): Promise<{ items: FileListItem[]; total: number }> {
   const {
     page = 1,
@@ -194,7 +194,7 @@ export async function getFileList(
     keyword,
     categoryId,
     securityLevel,
-    projectId,
+    projectId as _projectId,
     uploaderId,
     status = 'active',
     sortBy = 'createdAt',
@@ -277,7 +277,7 @@ export async function getFileList(
           expireTime: 3600, // 1小时有效
         });
         return { ...item, signedUrl } as FileListItem;
-      } catch (error) {
+      } catch (_error) {
         return item as FileListItem;
       }
     })
@@ -291,7 +291,7 @@ export async function getFileList(
  */
 export async function getFileById(
   fileId: number,
-  userId: number
+  _userId: number
 ): Promise<FileDetail | null> {
   // 查询文件基本信息
   const fileResult = await db

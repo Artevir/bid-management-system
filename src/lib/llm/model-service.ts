@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { llmModels } from '@/db/llm-schema';
-import { eq, desc, asc, and, or, like, sql, inArray } from 'drizzle-orm';
+import { eq, desc, asc, and, or, like, sql as _sql, inArray } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

@@ -5,7 +5,7 @@
 
 import { db } from '@/db';
 import { documentGenerationHistories, bidDocuments, bidDocumentInterpretations, users } from '@/db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
+import { eq, and as _and, desc, inArray } from 'drizzle-orm';
 
 // ============================================
 // 类型定义

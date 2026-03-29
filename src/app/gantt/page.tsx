@@ -19,18 +19,18 @@ import {
 } from '@/components/ui/popover';
 import {
   ArrowLeft,
-  Calendar,
+  Calendar as _Calendar,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
   ZoomOut,
   Play,
   Pause,
-  Settings,
+  Settings as _Settings,
   List,
   BarChart3,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast as _toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // 类型定义
@@ -498,7 +498,7 @@ export default function GanttChartPage() {
                 </div>
 
                 {/* 任务行 */}
-                {tasks.map((task, index) => {
+                {tasks.map((task, _index) => {
                   const position = getTaskPosition(task);
 
                   return (

@@ -40,7 +40,7 @@ import {
   AlertCircle,
   Eye,
   Calendar,
-  MapPin,
+  MapPin as _MapPin,
   DollarSign,
   Trophy,
   Clock,

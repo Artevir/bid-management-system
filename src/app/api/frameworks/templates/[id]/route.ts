@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { chapterTemplates } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc as _asc } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 // ============================================
@@ -36,7 +36,7 @@ export async function GET(
     if (template.placeholders) {
       try {
         placeholders = JSON.parse(template.placeholders);
-      } catch (e) {
+      } catch (_e) {
         // 忽略解析错误
       }
     }
@@ -44,7 +44,7 @@ export async function GET(
     if (template.childrenConfig) {
       try {
         childrenConfig = JSON.parse(template.childrenConfig);
-      } catch (e) {
+      } catch (_e) {
         // 忽略解析错误
       }
     }

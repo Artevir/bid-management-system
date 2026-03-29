@@ -397,7 +397,7 @@ function broadcastToRoom(
 
   const messageStr = JSON.stringify(message);
 
-  for (const [userId, user] of room.users) {
+  for (const [userId, _user] of room.users) {
     if (excludeUserId && userId === excludeUserId) continue;
 
     const connections = userConnections.get(userId);

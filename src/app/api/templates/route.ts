@@ -16,7 +16,7 @@ import {
 // 获取模板列表
 async function listTemplates(
   request: NextRequest,
-  userId: number
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -73,8 +73,8 @@ async function createTemplateHandler(
 
 // 获取分类和行业列表
 async function getCategoriesAndIndustries(
-  request: NextRequest,
-  userId: number
+  _request: NextRequest,
+  _userId: number
 ): Promise<NextResponse> {
   try {
     const [categories, industries] = await Promise.all([

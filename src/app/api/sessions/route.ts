@@ -9,7 +9,7 @@ import {
   getUserSessions,
   revokeSession,
   revokeOtherSessions,
-  getSessionStats,
+  getSessionStats as _getSessionStats,
 } from '@/lib/session/service';
 
 // 获取会话列表

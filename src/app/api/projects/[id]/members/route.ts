@@ -5,10 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, withPermission } from '@/lib/auth/middleware';
+import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
 import {
   getProjectMembers,
-  addProjectMember,
+  addProjectMember as _addProjectMember,
   batchAddProjectMembers,
   ProjectRole,
 } from '@/lib/project/member';

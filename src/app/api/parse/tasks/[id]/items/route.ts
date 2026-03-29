@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { getParseItems, confirmParseItem, ParseItemType } from '@/lib/parse/service';
+import { getParseItems, confirmParseItem as _confirmParseItem, ParseItemType } from '@/lib/parse/service';
 
 // 获取解析项列表
 async function getItems(
