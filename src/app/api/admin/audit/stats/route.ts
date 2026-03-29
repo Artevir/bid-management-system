@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    const startDate = searchParams.get('startDate') 
+    let startDate = searchParams.get('startDate') 
       ? new Date(searchParams.get('startDate')!) 
       : undefined;
-    const endDate = searchParams.get('endDate') 
+    let endDate = searchParams.get('endDate') 
       ? new Date(searchParams.get('endDate')!) 
       : undefined;
 
