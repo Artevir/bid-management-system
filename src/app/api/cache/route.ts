@@ -11,9 +11,9 @@ import {
   cacheExists,
   cacheTTL,
   getCacheStats,
-  invalidateProjectCache,
   invalidateCompanyCache,
-  invalidateUserCache,
+  invalidateProjectRedisCache,
+  invalidateUserRedisCache,
 } from '@/lib/cache';
 
 // ============================================
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest) {
             { status: 400 }
           );
         }
-        await invalidateProjectCache(projectId);
+        await invalidateProjectRedisCache(projectId);
         return NextResponse.json({
           success: true,
           message: '项目缓存已失效',
@@ -170,7 +170,7 @@ export async function DELETE(request: NextRequest) {
             { status: 400 }
           );
         }
-        await invalidateUserCache(userId);
+        await invalidateUserRedisCache(userId);
         return NextResponse.json({
           success: true,
           message: '用户缓存已失效',
