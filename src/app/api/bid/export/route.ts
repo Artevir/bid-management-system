@@ -13,8 +13,8 @@ async function handleExport(
   userId: number
 ): Promise<NextResponse> {
   try {
-    const body = await request.json();
-    const { documentId, format, includeToc } = body;
+    const payload = await request.json();
+    const { documentId, format, includeToc } = payload;
 
     if (!documentId || !format) {
       return NextResponse.json({ error: '缺少必填参数' }, { status: 400 });
@@ -30,14 +30,14 @@ async function handleExport(
 
     // 返回文件内容
     const parts: any[] = [];
-    if (Buffer.isBuffer(result.content) || result.content instanceof Uint8Array) {
+    if (Buffer.isBuffer(result.content) || (result.content as any) instanceof Uint8Array) {
       parts.push(Uint8Array.from(result.content as any));
     } else {
       parts.push(result.content as any);
     }
-    const body = new Blob(parts, { type: result.mimeType });
+    const responseBody = new Blob(parts, { type: result.mimeType });
 
-    return new NextResponse(body, {
+    return new NextResponse(responseBody, {
       status: 200,
       headers: {
         'Content-Type': result.mimeType,
