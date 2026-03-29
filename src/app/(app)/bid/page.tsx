@@ -88,7 +88,7 @@ export default function BidDocumentsPage() {
       
       setCreateDialogOpen(false);
       toast.success('文档创建成功');
-      router.push(`/bid/${res.data.documentId}/edit`);
+      router.push(`/bid/${res.documentId}/edit`);
     } catch (error) {
       // 错误已由 ApiClient 处理
     }
