@@ -542,7 +542,12 @@ async function exportAsDocx(instance: any, framework: any, chapters: any[]) {
   // 生成文档buffer
   const buffer = await Packer.toBuffer(doc);
 
-  return new NextResponse(new Uint8Array(buffer), {
+  const bytes = Uint8Array.from(buffer as any);
+  const body = new Blob([bytes], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+
+  return new NextResponse(body, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'Content-Disposition': `attachment; filename="${encodeURIComponent(instance.name)}.docx"`,
