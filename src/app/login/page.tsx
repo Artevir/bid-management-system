@@ -37,10 +37,23 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
-        setError(data.error || '登录失败');
+        const errorMessage =
+          typeof data?.error === 'string'
+            ? data.error
+            : typeof data?.error?.message === 'string'
+              ? data.error.message
+              : typeof data?.message === 'string'
+                ? data.message
+                : '登录失败';
+        setError(errorMessage);
         return;
       }
 
@@ -138,7 +151,7 @@ export default function LoginPage() {
                 {error && (
                   <Alert variant="destructive" className="animate-shake">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
                   </Alert>
                 )}
 
