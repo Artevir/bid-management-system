@@ -414,7 +414,7 @@ export class SearchService {
   /**
    * 生成搜索建议
    */
-  private static async generateSuggestions(query: string): Promise<string[]> {
+  static async generateSuggestions(query: string): Promise<string[]> {
     // TODO: 基于搜索历史和热门搜索生成建议
     // 这里简化为空数组
     return [];
