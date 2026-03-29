@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
     const mimeType = ImportExportService.getMimeType(format);
 
     // 返回文件
-    const body = new Blob([buffer], { type: mimeType });
+    const bytes = Uint8Array.from(buffer);
+    const body = new Blob([bytes], { type: mimeType });
     return new NextResponse(body, {
       headers: {
         'Content-Type': mimeType,
