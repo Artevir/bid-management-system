@@ -34,11 +34,23 @@ class ApiClient {
         return response as any;
       }
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
         // 全局错误处理
-        const errorMessage = data.error || data.message || '请求失败';
+        const errorMessage =
+          typeof data?.error === 'string'
+            ? data.error
+            : typeof data?.error?.message === 'string'
+              ? data.error.message
+              : typeof data?.message === 'string'
+                ? data.message
+                : '请求失败';
         
         if (response.status === 401) {
           // 可以在这里触发登出逻辑
