@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   useDocument, 
   useChapters, 
@@ -18,6 +19,7 @@ import { bidService } from '@/lib/api/bid-service';
 import { toast } from 'sonner';
 
 export default function BidEditorPage() {
+  const queryClient = useQueryClient();
   const params = useParams();
   const documentId = parseInt(params.id as string);
 
