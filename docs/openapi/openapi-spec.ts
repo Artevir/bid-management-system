@@ -18,6 +18,13 @@ extendZodWithOpenApi(z);
 
 export const registry = new OpenAPIRegistry();
 
+registry.registerComponent('securitySchemes', 'BearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+  description: 'JWT 认证令牌',
+});
+
 // ============================================
 // 定义通用 Schema
 // ============================================
@@ -112,16 +119,6 @@ export function generateOpenAPIDocument() {
         BearerAuth: [],
       },
     ],
-    components: {
-      securitySchemes: {
-        BearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'JWT 认证令牌',
-        },
-      },
-    },
     tags: [
       {
         name: '认证',

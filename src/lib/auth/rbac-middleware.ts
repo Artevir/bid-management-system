@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import RBACService, { DEFAULT_ROLES, DEFAULT_PERMISSIONS } from '@/lib/auth/rbac-service';
 import { cache } from '@/lib/cache';
+import { verifyAccessToken } from '@/lib/auth/jwt';
 
 // ============================================
 // 权限装饰器/检查函数
@@ -138,25 +139,14 @@ export async function checkAllPermissions(
 /**
  * 从请求中获取用户ID
  */
-async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+export async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   try {
     // 1. 从 Authorization Header 获取 JWT Token
     const authHeader = request.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      // TODO: 验证 JWT Token 并提取 userId
-      // 这里需要实现 JWT 验证逻辑
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // return decoded.userId;
-      
-      // 临时实现：从 token 中提取 userId
-      // 实际应该验证 JWT 签名
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        return decoded.userId || null;
-      } catch {
-        return null;
-      }
+      const payload = await verifyAccessToken(token);
+      return payload.userId ? String(payload.userId) : null;
     }
 
     // 2. 从 Cookie 获取 Session
