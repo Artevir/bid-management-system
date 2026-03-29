@@ -23,7 +23,7 @@ async function generateChapterContent(
   request: NextRequest,
   userId: number,
   params: any
-): Promise<NextResponse> {
+): Promise<Response> {
   const chapterId = parseIdFromParams(params, 'id', '章节');
   const body = await request.json();
   const {
