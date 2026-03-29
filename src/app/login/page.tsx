@@ -25,7 +25,12 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
         // --- 核心修复：无论对象还是字符串，最终都渲染为字符串 ---
@@ -61,7 +66,7 @@ export default function LoginPage() {
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{String(error)}</AlertDescription>
           </Alert>
         )}
 

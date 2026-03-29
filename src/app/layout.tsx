@@ -3,6 +3,8 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import AppLayout from '@/components/layout/app-layout';
 import { ReactQueryProvider } from '@/components/providers/react-query-provider';
+import { SonnerPatchProvider } from '@/components/providers/sonner-patch-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: {
@@ -30,6 +32,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased">
         <ReactQueryProvider>
+          <SonnerPatchProvider />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -40,6 +43,7 @@ export default function RootLayout({
               {children}
             </AppLayout>
           </ThemeProvider>
+          <Toaster />
         </ReactQueryProvider>
       </body>
     </html>
