@@ -3,8 +3,6 @@
  * 处理请求拦截、响应拦截、错误处理及全局配置
  */
 
-import { toast } from 'sonner';
-
 export interface ApiResponse<T = any> {
   success: boolean;
   data: T;
@@ -91,7 +89,13 @@ class ApiClient {
           console.error('认证失效，请重新登录');
           // 这里先不 toast，避免和登录页局部错误提示重复
         } else {
-          toast.error(errorMessage);
+          if (typeof window !== 'undefined') {
+            try {
+              const mod: any = await import('sonner');
+              mod.toast?.error?.(errorMessage);
+            } catch {
+            }
+          }
         }
 
         throw new Error(errorMessage);
