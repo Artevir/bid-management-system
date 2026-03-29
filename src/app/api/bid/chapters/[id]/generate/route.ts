@@ -13,8 +13,7 @@ import {
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { withChapterPermission } from '@/lib/auth/middleware';
-import { getLLM, createCozeAdapterWithHeaders, ChatMessage } from '@/lib/llm';
-import { extractForwardHeaders } from '@/lib/llm/factory';
+import { getLLM, createCozeAdapterWithHeaders, ChatMessage, LLMFactory, extractForwardHeaders } from '@/lib/llm';
 import { createStreamResponse } from '@/lib/stream-utils';
 import { retrieveRelevantKnowledge } from '@/lib/bid/ai-generator';
 import { AppError } from '@/lib/api/error-handler';
@@ -94,7 +93,11 @@ async function generateChapterContent(
 
   // 调用 LLM (流式)
   const forwardHeaders = extractForwardHeaders(request.headers);
-  const llm = getLLM(forwardHeaders);
+  const config = LLMFactory.getInstance().getConfig();
+  const llm =
+    config.defaultProvider === 'coze' && Object.keys(forwardHeaders).length > 0
+      ? createCozeAdapterWithHeaders(forwardHeaders)
+      : getLLM();
   
   if (stream) {
     return createStreamResponse(async (controller, encoder) => {
