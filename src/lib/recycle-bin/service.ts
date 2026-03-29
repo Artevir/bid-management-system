@@ -88,7 +88,11 @@ export async function moveToRecycleBin(
       .limit(1);
 
     if (existingItem.length > 0) {
-      return { success: false, message: '资源已在回收站中' };
+      return {
+        success: true,
+        recycleBinId: existingItem[0].id,
+        message: '资源已在回收站中',
+      };
     }
 
     // 计算过期时间

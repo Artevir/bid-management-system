@@ -77,9 +77,24 @@ async function deleteDoc(
   const permanent = searchParams.get('permanent') === 'true';
 
   if (permanent) {
-    await permanentDelete('document', documentId, userId);
+    const moved = await moveToRecycleBin({
+      resourceType: 'document',
+      resourceId: documentId,
+      deletedBy: userId,
+    });
+    if (!moved.recycleBinId) {
+      throw AppError.badRequest(moved.message);
+    }
+    await permanentDelete(moved.recycleBinId, userId);
   } else {
-    await moveToRecycleBin('document', documentId, userId);
+    const moved = await moveToRecycleBin({
+      resourceType: 'document',
+      resourceId: documentId,
+      deletedBy: userId,
+    });
+    if (!moved.success) {
+      throw AppError.badRequest(moved.message);
+    }
   }
 
   return success(null, permanent ? '文档已永久删除' : '文档已移至回收站');
