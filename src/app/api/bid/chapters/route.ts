@@ -71,11 +71,13 @@ async function createNewChapter(
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const documentId = parseResourceId(searchParams.get('documentId'), '文档');
-  return withDocumentPermission('read', () => documentId)(request, (req, userId) => getChapters(req, userId));
+  const readMiddleware = await withDocumentPermission('read', () => documentId);
+  return readMiddleware(request, (req, userId) => getChapters(req, userId));
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.clone().json().catch(() => ({}));
   const documentId = parseResourceId(body.documentId?.toString(), '文档');
-  return withDocumentPermission('edit', () => documentId)(request, (req, userId) => createNewChapter(req, userId));
+  const editMiddleware = await withDocumentPermission('edit', () => documentId);
+  return editMiddleware(request, (req, userId) => createNewChapter(req, userId));
 }
