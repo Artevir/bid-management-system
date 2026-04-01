@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Search, RefreshCw, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface AuditLog {
   id: number;
@@ -102,7 +103,7 @@ export default function AuditLogsPage() {
         setLogs(data.logs);
         setPagination(data.pagination);
       } else {
-        setError(data.error || '加载失败');
+        setError(extractErrorMessage(data, '加载失败'));
       }
     } catch (_err) {
       setError('加载审计日志失败');
@@ -177,7 +178,7 @@ export default function AuditLogsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Loader2, Building2, FileText, Upload, AlertTriangle } from 'lucide-react';
 import { CompanyFileUploader, CompanyFileList } from '@/components/company';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 公司文件类型
 interface CompanyFile {
@@ -109,7 +110,7 @@ export default function CompanyFilesPage({
 
     if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.error || '删除失败');
+      throw new Error(extractErrorMessage(data, '删除失败'));
     }
   };
 

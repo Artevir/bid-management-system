@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 合同签订状态
 const CONTRACT_STATUS = [
@@ -226,7 +227,7 @@ export default function ContractSigningsPage() {
       if (result.success) {
         setContracts(result.data);
       } else {
-        setError(result.error || '加载数据失败');
+        setError(extractErrorMessage(result, '加载数据失败'));
       }
       
       // 加载统计
@@ -449,7 +450,7 @@ export default function ContractSigningsPage() {
         resetForm();
         loadData();
       } else {
-        setError(result.error || '保存失败');
+        setError(extractErrorMessage(result, '保存失败'));
       }
     } catch (_err) {
       setError('保存失败');
@@ -472,7 +473,7 @@ export default function ContractSigningsPage() {
       if (result.success) {
         loadData();
       } else {
-        alert(result.error || '删除失败');
+        alert(extractErrorMessage(result, '删除失败'));
       }
     } catch (_err) {
       alert('删除失败');
@@ -493,7 +494,7 @@ export default function ContractSigningsPage() {
         alert('已推送到任务中心');
         loadData();
       } else {
-        alert(result.error || '推送失败');
+        alert(extractErrorMessage(result, '推送失败'));
       }
     } catch (_err) {
       alert('推送失败');
@@ -531,7 +532,7 @@ export default function ContractSigningsPage() {
           alert('合同已签订，项目已完结！');
         }
       } else {
-        alert(result.error || '更新状态失败');
+        alert(extractErrorMessage(result, '更新状态失败'));
       }
     } catch (_err) {
       alert('更新状态失败');
@@ -694,7 +695,7 @@ export default function ContractSigningsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
@@ -875,7 +876,7 @@ export default function ContractSigningsPage() {
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

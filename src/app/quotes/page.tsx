@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { extractErrorMessage } from '@/lib/error-message';
 import {
   Calculator,
   TrendingUp,
@@ -123,7 +124,7 @@ export default function QuoteAnalysisPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '分析失败');
+        throw new Error(extractErrorMessage(data, '分析失败'));
       }
 
       setAnalysis(data.analysis);
@@ -281,7 +282,7 @@ export default function QuoteAnalysisPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>分析失败</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{String(error)}</AlertDescription>
         </Alert>
       )}
 

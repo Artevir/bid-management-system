@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 角色类型
 interface ContactRole {
@@ -131,7 +132,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
         setContacts(result.data || []);
         setRoles(result.roles || []);
       } else {
-        toast.error(result.error || '加载失败');
+        toast.error(extractErrorMessage(result, '加载失败'));
       }
     } catch (_error) {
       toast.error('加载对接人数据失败');
@@ -200,7 +201,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
         toast.success('删除成功');
         loadData();
       } else {
-        toast.error(result.error || '删除失败');
+        toast.error(extractErrorMessage(result, '删除失败'));
       }
     } catch (_error) {
       toast.error('删除失败');
@@ -252,7 +253,7 @@ export function CompanyContactsManager({ companyId, readOnly = false }: CompanyC
         setDialogOpen(false);
         loadData();
       } else {
-        toast.error(result.error || '保存失败');
+        toast.error(extractErrorMessage(result, '保存失败'));
       }
     } catch (_error) {
       toast.error('保存失败');

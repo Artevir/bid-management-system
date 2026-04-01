@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Pencil, Trash2, Search, Loader2, AlertCircle, Shield, ShieldCheck } from 'lucide-react';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface Role {
   id: number;
@@ -136,7 +137,7 @@ export default function RolesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || '操作失败');
+        setError(extractErrorMessage(data, '操作失败'));
         return;
       }
 
@@ -157,7 +158,7 @@ export default function RolesPage() {
       if (response.ok) {
         fetchData();
       } else {
-        setError(data.error || '删除失败');
+        setError(extractErrorMessage(data, '删除失败'));
       }
     } catch (_err) {
       setError('删除失败');
@@ -252,7 +253,7 @@ export default function RolesPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

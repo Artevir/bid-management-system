@@ -26,6 +26,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -110,7 +111,7 @@ export function ApplicationReviews({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '审核提交失败');
+        throw new Error(extractErrorMessage(data, '审核提交失败'));
       }
 
       toast.success('审核已提交');

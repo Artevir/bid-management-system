@@ -64,6 +64,7 @@ import {
   Award,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -186,7 +187,7 @@ export default function CompanyDetailPage({
         toast.success('公司已删除');
         router.push('/companies');
       } else {
-        toast.error(data.error || '删除失败');
+        toast.error(extractErrorMessage(data, '删除失败'));
       }
     } catch (_error) {
       toast.error('删除失败');

@@ -43,6 +43,7 @@ import {
   Banknote as _Banknote,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 const GUARANTEE_TYPES: Record<string, string> = {
   cash: '现金',
@@ -163,7 +164,7 @@ export default function GuaranteeDetailPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '标记缴纳失败');
+        throw new Error(extractErrorMessage(data, '标记缴纳失败'));
       }
 
       setPayDialogOpen(false);
@@ -191,7 +192,7 @@ export default function GuaranteeDetailPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '标记退还失败');
+        throw new Error(extractErrorMessage(data, '标记退还失败'));
       }
 
       setReturnDialogOpen(false);
@@ -268,7 +269,7 @@ export default function GuaranteeDetailPage() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{String(error)}</AlertDescription>
         </Alert>
       )}
 

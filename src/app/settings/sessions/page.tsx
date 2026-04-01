@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, RefreshCw, Monitor, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { extractErrorMessage } from '@/lib/error-message';
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,7 @@ export default function SessionsPage() {
       if (response.ok) {
         setSessions(data.sessions);
       } else {
-        setError(data.error || '加载失败');
+        setError(extractErrorMessage(data, '加载失败'));
       }
     } catch (_err) {
       setError('加载会话列表失败');
@@ -81,7 +82,7 @@ export default function SessionsPage() {
         setConfirmDialogOpen(false);
         setSelectedSessionId(null);
       } else {
-        setError(data.error || '撤销失败');
+        setError(extractErrorMessage(data, '撤销失败'));
       }
     } catch (_err) {
       setError('撤销会话失败');
@@ -106,7 +107,7 @@ export default function SessionsPage() {
         setSessions(sessions.filter((s) => s.isCurrent));
         alert(data.message);
       } else {
-        setError(data.error || '撤销失败');
+        setError(extractErrorMessage(data, '撤销失败'));
       }
     } catch (_err) {
       setError('撤销会话失败');
@@ -155,7 +156,7 @@ export default function SessionsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

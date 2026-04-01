@@ -51,6 +51,7 @@ import {
   Users,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 const OPENING_STATUS: Record<string, { label: string; color: string }> = {
   pending: { label: '待开标', color: 'yellow' },
@@ -213,7 +214,7 @@ export default function OpeningDetailPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '添加报价失败');
+        throw new Error(extractErrorMessage(data, '添加报价失败'));
       }
 
       setAddQuoteDialogOpen(false);
@@ -324,7 +325,7 @@ export default function OpeningDetailPage() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{String(error)}</AlertDescription>
         </Alert>
       )}
 
@@ -595,7 +596,7 @@ export default function OpeningDetailPage() {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
               </Alert>
             )}
 

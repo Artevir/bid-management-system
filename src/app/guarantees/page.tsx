@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 保证金类型
 const GUARANTEE_TYPES = [
@@ -296,7 +297,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '创建保证金失败');
+        throw new Error(extractErrorMessage(data, '创建保证金失败'));
       }
 
       setCreateDialogOpen(false);
@@ -325,7 +326,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '标记缴纳失败');
+        throw new Error(extractErrorMessage(data, '标记缴纳失败'));
       }
 
       setPayDialogOpen(false);
@@ -355,7 +356,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '申请退还失败');
+        throw new Error(extractErrorMessage(data, '申请退还失败'));
       }
 
       setReturnApplyDialogOpen(false);
@@ -385,7 +386,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '标记退还失败');
+        throw new Error(extractErrorMessage(data, '标记退还失败'));
       }
 
       setReturnDialogOpen(false);
@@ -413,7 +414,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '推送失败');
+        throw new Error(extractErrorMessage(data, '推送失败'));
       }
 
       fetchGuarantees();
@@ -431,7 +432,7 @@ export default function GuaranteesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '取消推送失败');
+        throw new Error(extractErrorMessage(data, '取消推送失败'));
       }
 
       fetchGuarantees();
@@ -569,7 +570,7 @@ export default function GuaranteesPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 
@@ -875,7 +876,7 @@ export default function GuaranteesPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

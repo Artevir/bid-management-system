@@ -58,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -203,7 +204,7 @@ export default function AuthorizationApplicationsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       toast.success('授权申请已删除');

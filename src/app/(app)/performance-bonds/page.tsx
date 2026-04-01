@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 履约保证金状态
 const BOND_STATUS = [
@@ -204,7 +205,7 @@ export default function PerformanceBondsPage() {
       if (result.success) {
         setBonds(result.data);
       } else {
-        setError(result.error || '加载数据失败');
+        setError(extractErrorMessage(result, '加载数据失败'));
       }
       
       // 加载统计
@@ -385,7 +386,7 @@ export default function PerformanceBondsPage() {
         resetForm();
         loadData();
       } else {
-        setError(result.error || '保存失败');
+        setError(extractErrorMessage(result, '保存失败'));
       }
     } catch (_err) {
       setError('保存失败');
@@ -605,7 +606,7 @@ export default function PerformanceBondsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
@@ -781,7 +782,7 @@ export default function PerformanceBondsPage() {
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 开标状态
 const OPENING_STATUS = [
@@ -201,7 +202,7 @@ export default function OpeningsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '创建开标记录失败');
+        throw new Error(extractErrorMessage(data, '创建开标记录失败'));
       }
 
       setDialogOpen(false);
@@ -297,7 +298,7 @@ export default function OpeningsPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 
@@ -494,7 +495,7 @@ export default function OpeningsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

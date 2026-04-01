@@ -41,6 +41,7 @@ import {
   Loader2,
   Palette as _Palette,
 } from 'lucide-react';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface TemplateCategory {
   id: number;
@@ -130,7 +131,7 @@ export function TemplateCategoryManager() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || '操作失败');
+        throw new Error(extractErrorMessage(data, '操作失败'));
       }
 
       setDialogOpen(false);
@@ -152,7 +153,7 @@ export function TemplateCategoryManager() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       setDeleteDialogOpen(false);

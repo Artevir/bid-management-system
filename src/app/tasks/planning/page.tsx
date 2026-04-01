@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 文件解读数据类型
 interface Interpretation {
@@ -176,7 +177,7 @@ export default function TaskPlanningPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '生成任务计划失败');
+        throw new Error(extractErrorMessage(data, '生成任务计划失败'));
       }
 
       const result = await response.json();
@@ -321,7 +322,7 @@ export default function TaskPlanningPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 

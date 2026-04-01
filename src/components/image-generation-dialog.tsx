@@ -29,6 +29,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // ============================================
 // 类型定义
@@ -108,7 +109,7 @@ export function ImageGenerationDialog({
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || '生成失败');
+        throw new Error(extractErrorMessage(data, '生成失败'));
       }
 
       const result = data.data as ImageGeneratedResult;

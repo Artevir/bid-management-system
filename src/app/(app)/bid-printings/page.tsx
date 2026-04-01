@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 打印状态
 const PRINTING_STATUS = [
@@ -352,7 +353,7 @@ export default function BidPrintingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '创建打印安排失败');
+        throw new Error(extractErrorMessage(data, '创建打印安排失败'));
       }
 
       setCreateDialogOpen(false);
@@ -379,7 +380,7 @@ export default function BidPrintingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '更新状态失败');
+        throw new Error(extractErrorMessage(data, '更新状态失败'));
       }
 
       fetchPrintings();
@@ -402,7 +403,7 @@ export default function BidPrintingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '推送失败');
+        throw new Error(extractErrorMessage(data, '推送失败'));
       }
 
       fetchPrintings();
@@ -420,7 +421,7 @@ export default function BidPrintingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '取消推送失败');
+        throw new Error(extractErrorMessage(data, '取消推送失败'));
       }
 
       fetchPrintings();
@@ -440,7 +441,7 @@ export default function BidPrintingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       fetchPrintings();
@@ -547,7 +548,7 @@ export default function BidPrintingsPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 
@@ -932,7 +933,7 @@ export default function BidPrintingsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

@@ -42,6 +42,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // ============================================
 // 类型定义
@@ -134,7 +135,7 @@ export default function ImageGenerationsPage() {
         toast.success('删除成功');
         fetchRecords();
       } else {
-        toast.error(data.error || '删除失败');
+        toast.error(extractErrorMessage(data, '删除失败'));
       }
     } catch (error) {
       console.error('删除记录失败:', error);

@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 审批状态
 const APPROVAL_STATUS: Record<string, { label: string; color: string }> = {
@@ -156,7 +157,7 @@ export default function MobileApprovalPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '操作失败');
+        throw new Error(extractErrorMessage(data, '操作失败'));
       }
 
       toast.success(
@@ -270,7 +271,7 @@ export default function MobileApprovalPage() {
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{String(error)}</AlertDescription>
           </Alert>
         )}
 

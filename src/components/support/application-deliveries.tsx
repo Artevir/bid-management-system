@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Truck, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -106,7 +107,7 @@ export function ApplicationDeliveries({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '创建失败');
+        throw new Error(extractErrorMessage(data, '创建失败'));
       }
 
       toast.success('交付记录已创建');

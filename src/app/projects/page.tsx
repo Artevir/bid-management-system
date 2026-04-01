@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { NoProjectState } from '@/components/ui/empty-state';
+import { extractErrorMessage } from '@/lib/error-message';
 import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_COLORS,
@@ -243,7 +244,7 @@ export default function ProjectsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '创建项目失败');
+        throw new Error(extractErrorMessage(data, '创建项目失败'));
       }
 
       // 关闭对话框并刷新列表
@@ -332,7 +333,7 @@ export default function ProjectsPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 
@@ -709,7 +710,7 @@ export default function ProjectsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

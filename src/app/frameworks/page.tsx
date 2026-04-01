@@ -76,6 +76,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // ============================================
 // Types
@@ -469,7 +470,7 @@ function DocFrameworksContent() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || '解析失败');
+        throw new Error(extractErrorMessage(data, '解析失败'));
       }
 
       setParsedChapters(data.chapters || []);

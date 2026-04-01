@@ -36,6 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Plus, Edit, Trash2, Loader2, Building2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface Manufacturer {
   id: number;
@@ -151,7 +152,7 @@ export function ApplicationManufacturers({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '操作失败');
+        throw new Error(extractErrorMessage(data, '操作失败'));
       }
 
       toast.success(editingManufacturer ? '厂家已更新' : '厂家已添加');
@@ -174,7 +175,7 @@ export function ApplicationManufacturers({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       toast.success('厂家已删除');

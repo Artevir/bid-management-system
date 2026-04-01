@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 状态映射
 const STATUS_LABELS: Record<string, string> = {
@@ -137,7 +138,7 @@ export default function PriceApplicationDetailPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '提交失败');
+        throw new Error(extractErrorMessage(data, '提交失败'));
       }
 
       fetchApplication();
@@ -166,7 +167,7 @@ export default function PriceApplicationDetailPage() {
         </Button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || '价格申请不存在'}</AlertDescription>
+          <AlertDescription>{String(error || '价格申请不存在')}</AlertDescription>
         </Alert>
       </div>
     );

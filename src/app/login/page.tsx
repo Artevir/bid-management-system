@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { extractErrorMessage } from '@/lib/error-message';
 import { 
   AlertCircle, 
   Loader2, 
@@ -37,10 +38,15 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
-        setError(data.error || '登录失败');
+        setError(extractErrorMessage(data, '登录失败'));
         return;
       }
 
@@ -138,7 +144,7 @@ export default function LoginPage() {
                 {error && (
                   <Alert variant="destructive" className="animate-shake">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{String(error)}</AlertDescription>
                   </Alert>
                 )}
 

@@ -29,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Plus, ClipboardList, Loader2, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -111,7 +112,7 @@ export function ApplicationTodos({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '创建失败');
+        throw new Error(extractErrorMessage(data, '创建失败'));
       }
 
       toast.success('待办事项已创建');
@@ -140,7 +141,7 @@ export function ApplicationTodos({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '更新失败');
+        throw new Error(extractErrorMessage(data, '更新失败'));
       }
 
       toast.success('状态已更新');
@@ -160,7 +161,7 @@ export function ApplicationTodos({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       toast.success('待办事项已删除');

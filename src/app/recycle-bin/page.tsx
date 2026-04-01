@@ -55,6 +55,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 资源类型配置
 const RESOURCE_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -137,7 +138,7 @@ function RecycleBinContent() {
         setItems(result.data);
         setTotalPages(result.pagination.totalPages);
       } else {
-        toast.error(result.error || '获取回收站列表失败');
+        toast.error(extractErrorMessage(result, '获取回收站列表失败'));
       }
     } catch (error) {
       console.error('Fetch recycle bin error:', error);
@@ -182,7 +183,7 @@ function RecycleBinContent() {
         fetchItems();
         fetchStats();
       } else {
-        toast.error(result.error || '恢复失败');
+        toast.error(extractErrorMessage(result, '恢复失败'));
       }
     } catch (error) {
       console.error('Restore error:', error);
@@ -207,7 +208,7 @@ function RecycleBinContent() {
         fetchItems();
         fetchStats();
       } else {
-        toast.error(result.error || '删除失败');
+        toast.error(extractErrorMessage(result, '删除失败'));
       }
     } catch (error) {
       console.error('Delete error:', error);

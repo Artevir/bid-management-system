@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BidDocumentPurchaseForm, type BidDocumentPurchaseFormData } from '@/components/bid-document-purchases/purchase-form';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 购买安排类型
 interface BidDocumentPurchase {
@@ -138,7 +139,7 @@ export default function BidDocumentPurchasesPage() {
         setPurchases(result.data);
         setStats(result.stats);
       } else {
-        toast.error(result.error || '获取数据失败');
+        toast.error(extractErrorMessage(result, '获取数据失败'));
       }
     } catch (_error) {
       toast.error('获取数据失败');
@@ -191,7 +192,7 @@ export default function BidDocumentPurchasesPage() {
         toast.success('删除成功');
         fetchPurchases();
       } else {
-        toast.error(result.error || '删除失败');
+        toast.error(extractErrorMessage(result, '删除失败'));
       }
     } catch (_error) {
       toast.error('删除失败');
@@ -212,7 +213,7 @@ export default function BidDocumentPurchasesPage() {
         toast.success('状态更新成功');
         fetchPurchases();
       } else {
-        toast.error(result.error || '更新失败');
+        toast.error(extractErrorMessage(result, '更新失败'));
       }
     } catch (_error) {
       toast.error('更新失败');
@@ -232,7 +233,7 @@ export default function BidDocumentPurchasesPage() {
         toast.success('已推送到任务中心');
         fetchPurchases();
       } else {
-        toast.error(result.error || '推送失败');
+        toast.error(extractErrorMessage(result, '推送失败'));
       }
     } catch (_error) {
       toast.error('推送失败');
@@ -260,7 +261,7 @@ export default function BidDocumentPurchasesPage() {
         setShowFormDialog(false);
         fetchPurchases();
       } else {
-        toast.error(result.error || '操作失败');
+        toast.error(extractErrorMessage(result, '操作失败'));
       }
     } catch (_error) {
       toast.error('操作失败');

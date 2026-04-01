@@ -29,6 +29,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 默认材料模板
 const DEFAULT_MATERIALS = [
@@ -218,7 +219,7 @@ export default function CreatePartnerApplicationPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '创建失败');
+        throw new Error(extractErrorMessage(data, '创建失败'));
       }
 
       const application = await response.json();
@@ -254,7 +255,7 @@ export default function CreatePartnerApplicationPage() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{String(error)}</AlertDescription>
         </Alert>
       )}
 

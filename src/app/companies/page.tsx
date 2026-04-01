@@ -54,6 +54,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 公司数据类型
 interface Company {
@@ -176,7 +177,7 @@ export default function CompaniesPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '删除失败');
+        throw new Error(extractErrorMessage(data, '删除失败'));
       }
 
       toast.success('公司已删除');

@@ -32,6 +32,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Pencil, Trash2, Search, Loader2, AlertCircle, UserCog } from 'lucide-react';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface User {
   id: number;
@@ -170,7 +171,7 @@ export default function UsersPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || '操作失败');
+        setError(extractErrorMessage(data, '操作失败'));
         return;
       }
 
@@ -266,7 +267,7 @@ export default function UsersPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

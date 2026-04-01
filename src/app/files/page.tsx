@@ -49,6 +49,7 @@ import {
   FileCategoryType as _FileCategoryType,
   DocumentSecurityLevel,
 } from '@/types/document';
+import { extractErrorMessage } from '@/lib/error-message';
 
 interface FileItem {
   id: number;
@@ -187,7 +188,7 @@ export default function FilesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '文件上传失败');
+        throw new Error(extractErrorMessage(data, '文件上传失败'));
       }
 
       // 关闭对话框并刷新列表
@@ -208,7 +209,7 @@ export default function FilesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '获取下载链接失败');
+        throw new Error(extractErrorMessage(data, '获取下载链接失败'));
       }
 
       // 使用 fetch + blob 模式下载
@@ -238,7 +239,7 @@ export default function FilesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '删除文件失败');
+        throw new Error(extractErrorMessage(data, '删除文件失败'));
       }
 
       fetchFiles();
@@ -310,7 +311,7 @@ export default function FilesPage() {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{String(error)}</AlertDescription>
               </Alert>
             )}
 
@@ -529,7 +530,7 @@ export default function FilesPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 

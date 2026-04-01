@@ -35,6 +35,7 @@ import { ApplicationManufacturers } from '@/components/support/application-manuf
 import { ApplicationReviews } from '@/components/support/application-reviews';
 import { ApplicationDeliveries } from '@/components/support/application-deliveries';
 import { ApplicationTodos } from '@/components/support/application-todos';
+import { extractErrorMessage } from '@/lib/error-message';
 
 // 状态映射
 const STATUS_LABELS: Record<string, string> = {
@@ -172,7 +173,7 @@ export default function AuthorizationApplicationDetailPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '提交失败');
+        throw new Error(extractErrorMessage(data, '提交失败'));
       }
 
       fetchApplication();
@@ -201,7 +202,7 @@ export default function AuthorizationApplicationDetailPage() {
         </Button>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || '授权申请不存在'}</AlertDescription>
+          <AlertDescription>{String(error || '授权申请不存在')}</AlertDescription>
         </Alert>
       </div>
     );
