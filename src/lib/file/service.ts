@@ -194,7 +194,7 @@ export async function getFileList(
     keyword,
     categoryId,
     securityLevel,
-    projectId as _projectId,
+    projectId: _projectId,
     uploaderId,
     status = 'active',
     sortBy = 'createdAt',
