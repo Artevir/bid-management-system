@@ -138,7 +138,7 @@ export function withVersionMiddleware(
   const {
     supportedVersions = API_VERSIONS,
     requireVersion = false,
-    _defaultVersion = LATEST_VERSION,
+    defaultVersion: _defaultVersion = LATEST_VERSION,
   } = options;
 
   return async function versionMiddleware(
