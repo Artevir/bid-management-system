@@ -90,7 +90,7 @@ export async function generateResponseSuggestion(
 export async function generateResponseMatrix(
   params: MatrixGenerationParams
 ): Promise<MatrixGenerationResult> {
-  const { projectId, taskId, name, description, userId, _customHeaders } = params;
+  const { projectId, taskId, name, description, userId, customHeaders: _customHeaders } = params;
 
   // 1. 获取解析任务的解析项
   const taskParseItems = await db
