@@ -50,7 +50,7 @@ interface UseCollaborationOptions {
 export function useCollaboration({
   documentId,
   userId,
-  _username,
+  username: _username,
   onEdit,
   onLock,
   onUnlock,
