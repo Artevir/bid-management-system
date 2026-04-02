@@ -16,6 +16,7 @@ import {
 } from '@/db/schema';
 import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
 import { LLMClient, FetchClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+import { getDefaultConfig } from '@/lib/llm/service';
 import crypto from 'crypto';
 
 // ============================================
@@ -308,7 +309,7 @@ export function calculateFileMd5(buffer: Buffer): string {
   return crypto.createHash('md5').update(buffer).digest('hex');
 }
 
-function getCozeCustomHeaders(forwardedHeaders?: Record<string, string>) {
+async function resolveCozeHeaders(forwardedHeaders?: Record<string, string>) {
   const envHeadersStr = process.env.COZE_CUSTOM_HEADERS;
   let envHeaders: Record<string, string> | undefined;
 
@@ -320,10 +321,19 @@ function getCozeCustomHeaders(forwardedHeaders?: Record<string, string>) {
     }
   }
 
-  const headers = { ...(envHeaders || {}), ...(forwardedHeaders || {}) };
+  const defaultConfig = await getDefaultConfig();
+
+  const headers: Record<string, string> = {
+    ...(envHeaders || {}),
+    ...(forwardedHeaders || {}),
+  };
+
+  if (defaultConfig?.apiKey && !headers.Authorization) {
+    headers.Authorization = `Bearer ${defaultConfig.apiKey}`;
+  }
 
   if (Object.keys(headers).length === 0) {
-    throw new Error('LLM 未配置：请在 .env.production 设置 COZE_CUSTOM_HEADERS（JSON字符串）');
+    throw new Error('LLM 未配置：请在系统「LLM配置」中设置默认配置，或在 .env.production 设置 COZE_CUSTOM_HEADERS');
   }
 
   return headers;
@@ -336,7 +346,8 @@ export async function parseDocumentWithLLM(
   documentUrl: string,
   customHeaders?: Record<string, string>
 ): Promise<ParseResult> {
-  const headers = getCozeCustomHeaders(customHeaders);
+  const headers = await resolveCozeHeaders(customHeaders);
+  const defaultConfig = await getDefaultConfig();
   const config = new Config();
   const fetchClient = new FetchClient(config, headers);
 
@@ -462,8 +473,8 @@ export async function parseDocumentWithLLM(
 
   try {
     const response = await llmClient.invoke(messages, {
-      model: process.env.LLM_DEFAULT_MODEL || 'doubao-seed-1-8-251228',
-      temperature: 0.3,
+      model: defaultConfig?.modelId || process.env.LLM_DEFAULT_MODEL || 'doubao-seed-1-8-251228',
+      temperature: defaultConfig?.defaultTemperature ? Number(defaultConfig.defaultTemperature) : 0.3,
     });
 
     // 解析JSON响应
