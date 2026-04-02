@@ -64,7 +64,7 @@ export async function globalSearch(params: SearchParams): Promise<SearchResponse
     types,
     projectId,
     departmentId,
-    userId as _userId,
+    userId: _userId,
     page = 1,
     pageSize = 20,
   } = params;
