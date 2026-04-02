@@ -287,11 +287,15 @@ export async function setTokenCookies(
   refreshToken: string
 ): Promise<void> {
   const cookieStore = await cookies();
+  const secure =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production';
   
   // 访问令牌Cookie（短期）
   cookieStore.set('accessToken', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'strict',
     maxAge: parseTime(JWT_EXPIRES_IN),
     path: '/',
@@ -300,7 +304,7 @@ export async function setTokenCookies(
   // 刷新令牌Cookie（长期）
   cookieStore.set('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'strict',
     maxAge: parseTime(JWT_REFRESH_EXPIRES_IN),
     path: '/',
