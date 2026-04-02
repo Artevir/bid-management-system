@@ -122,7 +122,7 @@ async function seedPermissions() {
   let count = 0;
   for (const perm of perms) {
     const result = await db.insert(permissions).values(perm).onConflictDoNothing();
-    if (result.rowCount && result.rowCount > 0) _count++;
+    if (result.rowCount && result.rowCount > 0) count++;
   }
   
   console.log(`   ✓ 已创建 ${perms.length} 个权限`);
