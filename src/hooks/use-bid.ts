@@ -57,7 +57,7 @@ export const useCreateChapter = () => {
 export const useUpdateChapter = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data, _documentId }: { id: number; data: any; documentId: number }) => 
+    mutationFn: ({ id, data, documentId: _documentId }: { id: number; data: any; documentId: number }) => 
       bidService.updateChapter(id, data),
     onSuccess: (_, { documentId }) => {
       queryClient.invalidateQueries({ queryKey: ['bid-chapters', documentId] });
@@ -68,7 +68,7 @@ export const useUpdateChapter = () => {
 export const useDeleteChapter = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, _documentId }: { id: number; documentId: number }) => bidService.deleteChapter(id),
+    mutationFn: ({ id, documentId: _documentId }: { id: number; documentId: number }) => bidService.deleteChapter(id),
     onSuccess: (_, { documentId }) => {
       queryClient.invalidateQueries({ queryKey: ['bid-chapters', documentId] });
       toast.success('章节已删除');
