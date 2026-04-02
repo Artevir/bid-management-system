@@ -308,6 +308,27 @@ export function calculateFileMd5(buffer: Buffer): string {
   return crypto.createHash('md5').update(buffer).digest('hex');
 }
 
+function getCozeCustomHeaders(forwardedHeaders?: Record<string, string>) {
+  const envHeadersStr = process.env.COZE_CUSTOM_HEADERS;
+  let envHeaders: Record<string, string> | undefined;
+
+  if (envHeadersStr) {
+    try {
+      envHeaders = JSON.parse(envHeadersStr);
+    } catch {
+      envHeaders = undefined;
+    }
+  }
+
+  const headers = { ...(envHeaders || {}), ...(forwardedHeaders || {}) };
+
+  if (Object.keys(headers).length === 0) {
+    throw new Error('LLM 未配置：请在 .env.production 设置 COZE_CUSTOM_HEADERS（JSON字符串）');
+  }
+
+  return headers;
+}
+
 /**
  * 使用LLM解析招标文件
  */
@@ -315,8 +336,9 @@ export async function parseDocumentWithLLM(
   documentUrl: string,
   customHeaders?: Record<string, string>
 ): Promise<ParseResult> {
+  const headers = getCozeCustomHeaders(customHeaders);
   const config = new Config();
-  const fetchClient = new FetchClient(config, customHeaders);
+  const fetchClient = new FetchClient(config, headers);
 
   // 先获取文档内容
   const fetchResponse = await fetchClient.fetch(documentUrl);
@@ -328,7 +350,7 @@ export async function parseDocumentWithLLM(
     .join('\n');
 
   // 使用LLM解析
-  const llmClient = new LLMClient(config, customHeaders);
+  const llmClient = new LLMClient(config, headers);
 
   const systemPrompt = `你是一个专业的招标文件解析专家。你的任务是从招标文件中提取关键信息，并以JSON格式返回。
 
@@ -440,7 +462,7 @@ export async function parseDocumentWithLLM(
 
   try {
     const response = await llmClient.invoke(messages, {
-      model: 'doubao-seed-1-8-251228',
+      model: process.env.LLM_DEFAULT_MODEL || 'doubao-seed-1-8-251228',
       temperature: 0.3,
     });
 
