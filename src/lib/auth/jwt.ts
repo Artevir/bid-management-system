@@ -182,6 +182,7 @@ export async function createSession(
   expiresAt.setSeconds(expiresAt.getSeconds() + parseTime(JWT_REFRESH_EXPIRES_IN));
   
   // 插入会话记录
+  const now = new Date();
   const [session] = await db
     .insert(sessions)
     .values({
@@ -190,7 +191,17 @@ export async function createSession(
       ipAddress,
       userAgent,
       expiresAt,
-      lastAccessedAt: new Date(),
+      lastAccessedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: sessions.userId,
+      set: {
+        tokenHash,
+        ipAddress,
+        userAgent,
+        expiresAt,
+        lastAccessedAt: now,
+      },
     })
     .returning();
   
