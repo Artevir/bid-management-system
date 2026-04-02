@@ -128,7 +128,7 @@ function getFileIcon(ext?: string) {
 
 export function CompanyFileList({
   files,
-  _companyId,
+  companyId: _companyId,
   onDeleteFile,
   onRefresh,
   className,
