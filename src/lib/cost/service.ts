@@ -15,7 +15,6 @@ import {
   type CostRecord,
   type NewCostRecord,
   type CostReport,
-  type _NewCostReport,
 } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 
