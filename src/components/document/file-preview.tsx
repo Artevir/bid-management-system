@@ -77,7 +77,7 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
-export function FilePreview({ fileId, _fileName, _fileUrl, onDownload }: FilePreviewProps) {
+export function FilePreview({ fileId, fileName: _fileName, fileUrl: _fileUrl, onDownload }: FilePreviewProps) {
   const [fileInfo, setFileInfo] = React.useState<FileInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
