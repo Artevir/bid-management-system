@@ -144,7 +144,7 @@ export class CozeAdapter implements LLMAdapter {
       for await (const chunk of stream) {
         if (chunk.content) {
           const text = chunk.content.toString();
-          _totalContent += text;
+          totalContent += text;
           yield {
             content: text,
             done: false,
