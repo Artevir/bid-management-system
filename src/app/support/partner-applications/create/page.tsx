@@ -211,9 +211,9 @@ export default function CreatePartnerApplicationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          materials: materials.map(({ _id, ...m }) => m),
-          fees: fees.map(({ _id, ...f }) => f),
-          todos: todos.map(({ _id, ...t }) => t),
+          materials: materials.map(({ id: _id, ...m }) => m),
+          fees: fees.map(({ id: _id, ...f }) => f),
+          todos: todos.map(({ id: _id, ...t }) => t),
         }),
       });
 
