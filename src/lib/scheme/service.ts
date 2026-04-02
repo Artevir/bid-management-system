@@ -737,7 +737,7 @@ function _buildChapterTree(chapters: any[], parentId: number | null = null): any
     .filter((c) => c.parentId === parentId)
     .map((c) => ({
       ...c,
-      children: buildChapterTree(chapters, c.id),
+      children: _buildChapterTree(chapters, c.id),
     }));
 }
 
