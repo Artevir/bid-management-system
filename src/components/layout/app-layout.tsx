@@ -272,7 +272,7 @@ const adminNavigation: NavItem[] = [
 ];
 
 // 子菜单项组件（支持三级导航）
-function NavChildItem({ child, pathname, _level = 1 }: { child: NavItem; pathname: string; level?: number }) {
+function NavChildItem({ child, pathname, level: _level = 1 }: { child: NavItem; pathname: string; level?: number }) {
   const hasChildren = child.children && child.children.length > 0;
   const isDirectActive = pathname === child.href;
   const isChildActive = hasChildren && child.children!.some(c => pathname === c.href);
