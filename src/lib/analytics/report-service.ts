@@ -320,7 +320,7 @@ export class ReportService {
       filters?: Record<string, any>;
     } = {}
   ): Promise<any> {
-    const { startDate, endDate, _filters } = options;
+    const { startDate, endDate, filters: _filters } = options;
 
     switch (type) {
       case ReportType.PROJECT_STATISTICS:
