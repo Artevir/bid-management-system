@@ -11,7 +11,6 @@ import {
   updateSubscription as _updateSubscription,
   deleteSubscription as _deleteSubscription,
   type CreateSubscriptionParams,
-  type _UpdateSubscriptionParams,
 } from '@/lib/tender-subscription/service';
 
 // GET /api/tender-subscriptions - 获取订阅列表
