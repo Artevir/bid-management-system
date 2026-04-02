@@ -103,6 +103,13 @@
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-darwin-arm64": "4.2.1",
+    "@tailwindcss/oxide-darwin-x64": "4.2.1",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.2.1",
+    "@tailwindcss/oxide-linux-x64-musl": "4.2.1",
+    "@tailwindcss/oxide-win32-x64-msvc": "4.2.1"
+  },
   "devDependencies": {
     "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@axe-core/playwright": "^4.11.1",
