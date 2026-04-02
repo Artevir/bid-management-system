@@ -472,7 +472,7 @@ export async function getUserProjects(
     limit?: number;
   } = {}
 ) {
-  const { status, _role, limit = 10 } = options;
+  const { status, role: _role, limit = 10 } = options;
 
   // 获取用户参与的项目
   const memberProjects = await db
