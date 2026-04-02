@@ -2314,7 +2314,7 @@ export const projectTasks = pgTable('project_tasks', {
 // 过程记录关系定义
 // ============================================
 
-export const meetingMinutesRelations = relations(meetingMinutes, ({ one, _many }) => ({
+export const meetingMinutesRelations = relations(meetingMinutes, ({ one }) => ({
   project: one(projects, {
     fields: [meetingMinutes.projectId],
     references: [projects.id],
@@ -2325,7 +2325,7 @@ export const meetingMinutesRelations = relations(meetingMinutes, ({ one, _many }
   }),
 }));
 
-export const contactRecordsRelations = relations(contactRecords, ({ one, _many }) => ({
+export const contactRecordsRelations = relations(contactRecords, ({ one }) => ({
   project: one(projects, {
     fields: [contactRecords.projectId],
     references: [projects.id],
@@ -5685,7 +5685,7 @@ export const discussionFiles = pgTable('discussion_files', {
 // 项目组织架构关系定义
 // ============================================
 
-export const orgTemplatesRelations = relations(orgTemplates, ({ one, _many }) => ({
+export const orgTemplatesRelations = relations(orgTemplates, ({ one }) => ({
   creator: one(users, {
     fields: [orgTemplates.createdBy],
     references: [users.id],
