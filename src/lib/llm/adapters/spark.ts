@@ -253,7 +253,7 @@ export class SparkAdapter implements LLMAdapter {
     let _rejectConnect: (err: Error) => void;
     const connectPromise = new Promise<void>((resolve, reject) => {
       resolveConnect = resolve;
-      rejectConnect = reject;
+      _rejectConnect = reject;
     });
     
     const messageQueue: SparkResponse[] = [];
