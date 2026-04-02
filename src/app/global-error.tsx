@@ -6,11 +6,11 @@ export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  error?: Error & { digest?: string };
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (error) console.error(error);
   }, [error]);
 
   return (
@@ -19,9 +19,9 @@ export default function GlobalError({
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="max-w-2xl w-full space-y-4">
             <div className="text-xl font-semibold">应用发生错误</div>
-            <div className="text-sm break-words">{error.digest ? `digest: ${error.digest}` : null}</div>
+            <div className="text-sm break-words">{error?.digest ? `digest: ${error.digest}` : null}</div>
             <pre className="text-sm whitespace-pre-wrap break-words rounded-md border p-4 overflow-auto">
-              {error.message}
+              {error?.message || '未知错误'}
             </pre>
             <button
               type="button"
@@ -36,4 +36,3 @@ export default function GlobalError({
     </html>
   );
 }
-
