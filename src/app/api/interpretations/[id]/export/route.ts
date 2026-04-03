@@ -413,10 +413,11 @@ export async function GET(
 
     if (format === 'json') {
       const jsonStr = JSON.stringify({ success: true, data: exportData }, null, 2);
-      return new NextResponse(jsonStr, {
+      const encoder = new TextEncoder();
+      return new NextResponse(encoder.encode(jsonStr), {
         headers: {
-          'Content-Type': 'application/json',
-          'Content-Disposition': `attachment; filename="${filename}.json"`,
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}.json"`,
         },
       });
     }
@@ -428,7 +429,7 @@ export async function GET(
       return new NextResponse(body, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}.xlsx"`,
         },
       });
     }
@@ -440,17 +441,18 @@ export async function GET(
       return new NextResponse(body, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'Content-Disposition': `attachment; filename="${filename}.docx"`,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}.docx"`,
         },
       });
     }
 
     if (format === 'txt') {
       const content = generateTxt(exportData);
-      return new NextResponse(content, {
+      const encoder = new TextEncoder();
+      return new NextResponse(encoder.encode(content), {
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
-          'Content-Disposition': `attachment; filename="${filename}.txt"`,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}.txt"`,
         },
       });
     }
@@ -462,7 +464,7 @@ export async function GET(
       return new NextResponse(body, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${filename}.pdf"`,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}.pdf"`,
         },
       });
     }
