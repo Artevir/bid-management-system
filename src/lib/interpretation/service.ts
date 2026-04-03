@@ -15,8 +15,8 @@ import {
   files as _files,
 } from '@/db/schema';
 import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
-import { LLMClient, FetchClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
-import { getDefaultConfig } from '@/lib/llm/service';
+import { extractTextFromDocumentBuffer } from '@/lib/document/text-extractor';
+import { generateWithDefaultLLM } from '@/lib/llm/db-runtime';
 import crypto from 'crypto';
 
 // ============================================
@@ -332,59 +332,33 @@ export function calculateFileMd5(buffer: Buffer): string {
   return crypto.createHash('md5').update(buffer).digest('hex');
 }
 
-async function resolveCozeHeaders(forwardedHeaders?: Record<string, string>) {
-  const envHeadersStr = process.env.COZE_CUSTOM_HEADERS;
-  let envHeaders: Record<string, string> | undefined;
-
-  if (envHeadersStr) {
-    try {
-      envHeaders = JSON.parse(envHeadersStr);
-    } catch {
-      envHeaders = undefined;
-    }
-  }
-
-  const defaultConfig = await getDefaultConfig();
-
-  const headers: Record<string, string> = {
-    ...(envHeaders || {}),
-    ...(forwardedHeaders || {}),
-  };
-
-  if (defaultConfig?.apiKey && !headers.Authorization) {
-    headers.Authorization = `Bearer ${defaultConfig.apiKey}`;
-  }
-
-  if (Object.keys(headers).length === 0) {
-    throw new Error('LLM 未配置：请在系统「LLM配置」中设置默认配置，或在 .env.production 设置 COZE_CUSTOM_HEADERS');
-  }
-
-  return headers;
-}
-
 /**
  * 使用LLM解析招标文件
  */
 export async function parseDocumentWithLLM(
   documentUrl: string,
+  documentExt: DocumentExt,
   customHeaders?: Record<string, string>
 ): Promise<ParseResult> {
-  const headers = await resolveCozeHeaders(customHeaders);
-  const defaultConfig = await getDefaultConfig();
-  const config = new Config();
-  const fetchClient = new FetchClient(config, headers);
+  const cookie = customHeaders?.cookie || (customHeaders as any)?.Cookie;
+  const fetchHeaders: Record<string, string> = {};
+  if (cookie) fetchHeaders.cookie = cookie;
 
-  // 先获取文档内容
-  const fetchResponse = await fetchClient.fetch(documentUrl);
-  
-  // 提取文本内容
-  const textContent = fetchResponse.content
-    .filter(item => item.type === 'text')
-    .map(item => item.text)
-    .join('\n');
+  const res = await fetch(documentUrl, {
+    headers: fetchHeaders,
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`文档读取失败: ${res.status} ${text}`.slice(0, 400));
+  }
 
-  // 使用LLM解析
-  const llmClient = new LLMClient(config, headers);
+  const arrayBuffer = await res.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const textContent = await extractTextFromDocumentBuffer(buffer, documentExt);
+  if (!textContent) {
+    throw new Error('文档解析失败：无法提取文本内容');
+  }
 
   const systemPrompt = `你是一个专业的招标文件解析专家。你的任务是从招标文件中提取关键信息，并以JSON格式返回。
 
@@ -495,10 +469,7 @@ export async function parseDocumentWithLLM(
   ];
 
   try {
-    const response = await llmClient.invoke(messages, {
-      model: defaultConfig?.modelId || process.env.LLM_DEFAULT_MODEL || 'doubao-seed-1-8-251228',
-      temperature: defaultConfig?.defaultTemperature ? Number(defaultConfig.defaultTemperature) : 0.3,
-    });
+    const response = await generateWithDefaultLLM(messages as any);
 
     // 解析JSON响应
     const jsonMatch = response.content.match(/\{[\s\S]*\}/);
@@ -539,7 +510,7 @@ export async function executeInterpretation(
       .where(eq(bidDocumentInterpretations.id, id));
 
     // 执行LLM解析
-    const parseResult = await parseDocumentWithLLM(interpretation.documentUrl, customHeaders);
+    const parseResult = await parseDocumentWithLLM(interpretation.documentUrl, interpretation.documentExt as DocumentExt, customHeaders);
 
     // 更新进度
     await db

@@ -4094,10 +4094,10 @@ export const bidDocumentInterpretations = pgTable('bid_document_interpretations'
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   documentMd5Idx: uniqueIndex('bid_interpret_doc_md5_idx').on(table.documentMd5),
-  statusIdx: uniqueIndex('bid_interpret_status_idx').on(table.status),
-  uploaderIdx: uniqueIndex('bid_interpret_uploader_idx').on(table.uploaderId),
-  projectIdx: uniqueIndex('bid_interpret_project_idx').on(table.projectId),
-  createdAtIdx: uniqueIndex('bid_interpret_created_at_idx').on(table.createdAt),
+  statusIdx: index('bid_interpret_status_idx').on(table.status),
+  uploaderIdx: index('bid_interpret_uploader_idx').on(table.uploaderId),
+  projectIdx: index('bid_interpret_project_idx').on(table.projectId),
+  createdAtIdx: index('bid_interpret_created_at_idx').on(table.createdAt),
 }));
 
 // ============================================
@@ -4142,8 +4142,8 @@ export const bidTechnicalSpecs = pgTable('bid_technical_specs', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_tech_spec_interpretation_idx').on(table.interpretationId),
-  categoryIdx: uniqueIndex('bid_tech_spec_category_idx').on(table.specCategory),
+  interpretationIdx: index('bid_tech_spec_interpretation_idx').on(table.interpretationId),
+  categoryIdx: index('bid_tech_spec_category_idx').on(table.specCategory),
 }));
 
 // ============================================
@@ -4195,8 +4195,8 @@ export const bidScoringItems = pgTable('bid_scoring_items', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_scoring_item_interpretation_idx').on(table.interpretationId),
-  categoryIdx: uniqueIndex('bid_scoring_item_category_idx').on(table.scoringCategory),
+  interpretationIdx: index('bid_scoring_item_interpretation_idx').on(table.interpretationId),
+  categoryIdx: index('bid_scoring_item_category_idx').on(table.scoringCategory),
 }));
 
 // ============================================
@@ -4247,8 +4247,8 @@ export const bidRequirementChecklist = pgTable('bid_requirement_checklist', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_checklist_interpretation_idx').on(table.interpretationId),
-  categoryIdx: uniqueIndex('bid_checklist_category_idx').on(table.checklistCategory),
+  interpretationIdx: index('bid_checklist_interpretation_idx').on(table.interpretationId),
+  categoryIdx: index('bid_checklist_category_idx').on(table.checklistCategory),
 }));
 
 // ============================================
