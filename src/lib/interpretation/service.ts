@@ -401,7 +401,9 @@ export async function parseDocumentWithLLM(
   const buffer = await loadDocumentBuffer(documentUrl);
   const textContent = await extractTextFromDocumentBuffer(buffer, documentExt);
   if (!textContent) {
-    throw new Error('文档解析失败：无法提取文本内容');
+    throw new Error(
+      `文档解析失败：无法提取文本内容（${documentExt}）。建议优先上传 .docx/.pdf；若为 .doc 请在服务器安装 libreoffice（soffice）或 wvText/catdoc 以启用文本提取。`
+    );
   }
 
   const systemPrompt = `你是一个专业的招标文件解析专家。你的任务是从招标文件中提取关键信息，并以JSON格式返回。

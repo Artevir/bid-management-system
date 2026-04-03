@@ -12,6 +12,50 @@ function normalizeWhitespace(text: string) {
 
 const execFileAsync = promisify(execFile);
 
+async function tryExecToStdout(command: string, args: string[]) {
+  try {
+    const { stdout } = await execFileAsync(command, args, {
+      timeout: 60000,
+      maxBuffer: 20 * 1024 * 1024,
+    });
+    return normalizeWhitespace(String(stdout || ''));
+  } catch {
+    return '';
+  }
+}
+
+async function extractDocViaExternalTools(docPath: string, tmpDir: string) {
+  const directStdoutTools: Array<[string, string[]]> = [
+    ['antiword', [docPath]],
+    ['catdoc', [docPath]],
+    ['wvText', [docPath, '-']],
+  ];
+
+  for (const [cmd, args] of directStdoutTools) {
+    const text = await tryExecToStdout(cmd, args);
+    if (text) return text;
+  }
+
+  const basename = path.basename(docPath, path.extname(docPath));
+  const outTxt = path.join(tmpDir, `${basename}.txt`);
+
+  const sofficeCandidates: string[] = ['soffice', 'libreoffice'];
+  for (const cmd of sofficeCandidates) {
+    try {
+      await execFileAsync(cmd, ['--headless', '--convert-to', 'txt:Text', '--outdir', tmpDir, docPath], {
+        timeout: 120000,
+        maxBuffer: 20 * 1024 * 1024,
+      });
+      if (fs.existsSync(outTxt)) {
+        const text = normalizeWhitespace(fs.readFileSync(outTxt, 'utf8'));
+        if (text) return text;
+      }
+    } catch {}
+  }
+
+  return '';
+}
+
 export async function extractTextFromDocumentBuffer(
   buffer: Buffer,
   ext: DocumentExt
@@ -50,15 +94,7 @@ export async function extractTextFromDocumentBuffer(
       const normalized = normalizeWhitespace(String(text || ''));
       if (normalized) return normalized;
 
-      try {
-        const { stdout } = await execFileAsync('antiword', [tmpPath], {
-          timeout: 30000,
-          maxBuffer: 10 * 1024 * 1024,
-        });
-        return normalizeWhitespace(String(stdout || ''));
-      } catch {
-        return '';
-      }
+      return await extractDocViaExternalTools(tmpPath, tmpDir);
     } finally {
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
