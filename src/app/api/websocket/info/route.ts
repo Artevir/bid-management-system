@@ -10,11 +10,16 @@ import { NextRequest, NextResponse } from 'next/server';
 // ============================================
 
 export async function GET(_request: NextRequest) {
-  const protocol = process.env.COZE_PROJECT_DOMAIN_DEFAULT?.startsWith('https') 
-    ? 'wss' 
-    : 'ws';
-  
-  const wsUrl = `${protocol}://${process.env.COZE_PROJECT_DOMAIN_DEFAULT}/socket.io`;
+  const raw = process.env.COZE_PROJECT_DOMAIN_DEFAULT?.trim().replace(/^[`'"]+|[`'"]+$/g, '');
+  const baseUrl = raw
+    ? raw.startsWith('http://') || raw.startsWith('https://')
+      ? raw.replace(/\/+$/, '')
+      : `http://${raw.replace(/\/+$/, '')}`
+    : 'http://localhost:5000';
+
+  const url = new URL(baseUrl);
+  const wsProtocol = url.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl = `${wsProtocol}://${url.host}/socket.io`;
 
   return NextResponse.json({
     url: wsUrl,
@@ -36,6 +41,6 @@ export async function GET(_request: NextRequest) {
       document_upload: '文档上传',
       auth_success: '认证成功',
     },
-    documentation: `${process.env.COZE_PROJECT_DOMAIN_DEFAULT}/api-docs#websocket`,
+    documentation: `${url.origin}/api-docs#websocket`,
   });
 }

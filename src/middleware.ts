@@ -7,8 +7,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const env = typeof process !== 'undefined' ? process.env : undefined;
-const cozeProjectDomainDefault = env?.COZE_PROJECT_DOMAIN_DEFAULT;
+const cozeProjectDomainDefaultRaw = env?.COZE_PROJECT_DOMAIN_DEFAULT;
 const nodeEnv = env?.NODE_ENV;
+
+function normalizeEnvUrlLike(value?: string) {
+  const v = value?.trim().replace(/^[`'"]+|[`'"]+$/g, '');
+  return v ? v.replace(/\/+$/, '') : undefined;
+}
+
+function toAllowedOrigins(value?: string) {
+  const v = normalizeEnvUrlLike(value);
+  if (!v) return [];
+  if (v.startsWith('http://') || v.startsWith('https://')) return [v];
+  return [`http://${v}`, `https://${v}`];
+}
 
 // ============================================
 // 速率限制
@@ -85,7 +97,7 @@ export function middleware(request: NextRequest) {
     // CORS
     const origin = request.headers.get('origin');
     const allowedOrigins = [
-      cozeProjectDomainDefault,
+      ...toAllowedOrigins(cozeProjectDomainDefaultRaw),
       'http://localhost:3000',
       'http://localhost:5000',
     ].filter(Boolean) as string[];
