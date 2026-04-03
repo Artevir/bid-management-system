@@ -650,87 +650,91 @@ export async function executeInterpretation(
  * 保存解析结果到数据库
  */
 async function saveParseResult(id: number, result: ParseResult): Promise<void> {
-  // 更新主表
-  await db
-    .update(bidDocumentInterpretations)
-    .set({
-      projectName: result.basicInfo?.projectName as string,
-      projectCode: result.basicInfo?.projectCode as string,
-      tenderOrganization: result.basicInfo?.tenderOrganization as string,
-      tenderAgent: result.basicInfo?.tenderAgent as string,
-      projectBudget: result.basicInfo?.projectBudget as string,
-      basicInfo: JSON.stringify(result.basicInfo),
-      timeNodes: JSON.stringify(result.timeNodes),
-      submissionRequirements: JSON.stringify(result.submissionRequirements),
-      feeInfo: JSON.stringify(result.feeInfo),
-      qualificationRequirements: JSON.stringify(result.qualificationRequirements),
-      personnelRequirements: JSON.stringify(result.personnelRequirements),
-      docRequirements: JSON.stringify(result.docRequirements),
-      otherRequirements: JSON.stringify(result.otherRequirements),
-      specCount: result.technicalSpecs?.length || 0,
-      scoringCount: result.scoringItems?.length || 0,
-      updatedAt: new Date(),
-    })
-    .where(eq(bidDocumentInterpretations.id, id));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bidDocumentInterpretations)
+      .set({
+        projectName: result.basicInfo?.projectName as string,
+        projectCode: result.basicInfo?.projectCode as string,
+        tenderOrganization: result.basicInfo?.tenderOrganization as string,
+        tenderAgent: result.basicInfo?.tenderAgent as string,
+        projectBudget: result.basicInfo?.projectBudget as string,
+        basicInfo: JSON.stringify(result.basicInfo),
+        timeNodes: JSON.stringify(result.timeNodes),
+        submissionRequirements: JSON.stringify(result.submissionRequirements),
+        feeInfo: JSON.stringify(result.feeInfo),
+        qualificationRequirements: JSON.stringify(result.qualificationRequirements),
+        personnelRequirements: JSON.stringify(result.personnelRequirements),
+        docRequirements: JSON.stringify(result.docRequirements),
+        otherRequirements: JSON.stringify(result.otherRequirements),
+        specCount: result.technicalSpecs?.length || 0,
+        scoringCount: result.scoringItems?.length || 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(bidDocumentInterpretations.id, id));
 
-  // 保存技术规格
-  if (result.technicalSpecs && result.technicalSpecs.length > 0) {
-    for (let i = 0; i < result.technicalSpecs.length; i++) {
-      const spec = result.technicalSpecs[i];
-      await db.insert(bidTechnicalSpecs).values({
-        interpretationId: id,
-        specCategory: spec.specCategory,
-        specSubCategory: spec.specSubCategory,
-        specName: spec.specName,
-        specValue: spec.specValue,
-        specUnit: spec.specUnit,
-        specRequirement: spec.specRequirement,
-        minValue: spec.minValue,
-        maxValue: spec.maxValue,
-        allowableDeviation: spec.allowableDeviation,
-        isKeyParam: spec.isKeyParam || false,
-        isMandatory: spec.isMandatory !== false,
-        originalText: spec.originalText,
-        pageNumber: spec.pageNumber,
-        sortOrder: i,
-      });
+    await tx.delete(bidTechnicalSpecs).where(eq(bidTechnicalSpecs.interpretationId, id));
+    await tx.delete(bidScoringItems).where(eq(bidScoringItems.interpretationId, id));
+    await tx.delete(bidRequirementChecklist).where(eq(bidRequirementChecklist.interpretationId, id));
+    await tx.delete(bidDocumentFramework).where(eq(bidDocumentFramework.interpretationId, id));
+
+    if (result.technicalSpecs && result.technicalSpecs.length > 0) {
+      for (let i = 0; i < result.technicalSpecs.length; i++) {
+        const spec = result.technicalSpecs[i];
+        await tx.insert(bidTechnicalSpecs).values({
+          interpretationId: id,
+          specCategory: spec.specCategory,
+          specSubCategory: spec.specSubCategory,
+          specName: spec.specName,
+          specValue: spec.specValue,
+          specUnit: spec.specUnit,
+          specRequirement: spec.specRequirement,
+          minValue: spec.minValue,
+          maxValue: spec.maxValue,
+          allowableDeviation: spec.allowableDeviation,
+          isKeyParam: spec.isKeyParam || false,
+          isMandatory: spec.isMandatory !== false,
+          originalText: spec.originalText,
+          pageNumber: spec.pageNumber,
+          sortOrder: i,
+        });
+      }
     }
-  }
 
-  // 保存评分细则
-  if (result.scoringItems && result.scoringItems.length > 0) {
-    for (let i = 0; i < result.scoringItems.length; i++) {
-      const item = result.scoringItems[i];
-      await db.insert(bidScoringItems).values({
-        interpretationId: id,
-        scoringCategory: item.scoringCategory,
-        scoringSubCategory: item.scoringSubCategory,
-        itemName: item.itemName,
-        itemDescription: item.itemDescription,
-        serialNumber: item.serialNumber,
-        maxScore: item.maxScore,
-        minScore: item.minScore || 0,
-        scoringMethod: item.scoringMethod,
-        scoringCriteria: item.scoringCriteria,
-        deductionRules: item.deductionRules ? JSON.stringify(item.deductionRules) : null,
-        bonusRules: item.bonusRules ? JSON.stringify(item.bonusRules) : null,
-        originalText: item.originalText,
-        pageNumber: item.pageNumber,
-        sortOrder: i,
-      });
+    if (result.scoringItems && result.scoringItems.length > 0) {
+      for (let i = 0; i < result.scoringItems.length; i++) {
+        const item = result.scoringItems[i];
+        await tx.insert(bidScoringItems).values({
+          interpretationId: id,
+          scoringCategory: item.scoringCategory,
+          scoringSubCategory: item.scoringSubCategory,
+          itemName: item.itemName,
+          itemDescription: item.itemDescription,
+          serialNumber: item.serialNumber,
+          maxScore: item.maxScore,
+          minScore: item.minScore || 0,
+          scoringMethod: item.scoringMethod,
+          scoringCriteria: item.scoringCriteria,
+          deductionRules: item.deductionRules ? JSON.stringify(item.deductionRules) : null,
+          bonusRules: item.bonusRules ? JSON.stringify(item.bonusRules) : null,
+          originalText: item.originalText,
+          pageNumber: item.pageNumber,
+          sortOrder: i,
+        });
+      }
     }
-  }
 
-  // 保存文档框架
-  if (result.documentFramework && result.documentFramework.length > 0) {
-    await saveFrameworkItems(id, result.documentFramework);
-  }
+    if (result.documentFramework && result.documentFramework.length > 0) {
+      await saveFrameworkItemsTx(tx as any, id, result.documentFramework);
+    }
+  });
 }
 
 /**
  * 递归保存文档框架
  */
-async function saveFrameworkItems(
+async function saveFrameworkItemsTx(
+  tx: any,
   interpretationId: number,
   items: FrameworkItem[],
   parentId?: number
@@ -738,7 +742,7 @@ async function saveFrameworkItems(
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     
-    const result = await db.insert(bidDocumentFramework).values({
+    const result = await tx.insert(bidDocumentFramework).values({
       interpretationId,
       chapterNumber: item.chapterNumber,
       chapterTitle: item.chapterTitle,
@@ -755,7 +759,7 @@ async function saveFrameworkItems(
 
     // 递归保存子章节
     if (item.children && item.children.length > 0) {
-      await saveFrameworkItems(interpretationId, item.children, result[0].id);
+      await saveFrameworkItemsTx(tx, interpretationId, item.children, result[0].id);
     }
   }
 }
