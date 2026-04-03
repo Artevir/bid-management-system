@@ -4,19 +4,23 @@
  */
 
 import { S3Storage } from 'coze-coding-dev-sdk';
+import fs from 'fs';
+import path from 'path';
 import { db } from '@/db';
 import { files, fileVersions, fileCategories, projectFiles, auditLogs } from '@/db/schema';
 import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull as _isNull } from 'drizzle-orm';
 import { DocumentSecurityLevel } from '@/types/document';
 
-// 初始化 S3 存储
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  accessKey: '',
-  secretKey: '',
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
+const hasBucketStorage = Boolean(process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME);
+const bucketStorage = hasBucketStorage
+  ? new S3Storage({
+      endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+      accessKey: '',
+      secretKey: '',
+      bucketName: process.env.COZE_BUCKET_NAME,
+      region: 'cn-beijing',
+    })
+  : null;
 
 // ============================================
 // 类型定义
@@ -112,12 +116,19 @@ export async function uploadFile(
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
   const storagePath = `uploads/${timestamp}_${sanitizedFileName}`;
 
-  // 上传到对象存储
-  const actualKey = await storage.uploadFile({
-    fileContent,
-    fileName: storagePath,
-    contentType: mimeType,
-  });
+  let actualKey: string;
+  if (bucketStorage) {
+    actualKey = await bucketStorage.uploadFile({
+      fileContent,
+      fileName: storagePath,
+      contentType: mimeType,
+    });
+  } else {
+    const absolutePath = path.resolve(process.cwd(), storagePath);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, fileContent);
+    actualKey = storagePath;
+  }
 
   // 计算文件哈希（用于去重）
   const crypto = await import('crypto');
@@ -271,10 +282,13 @@ export async function getFileList(
   // 生成签名URL
   const items = await Promise.all(
     result.map(async (item) => {
+      if (!bucketStorage) {
+        return { ...item, signedUrl: `/api/files/${item.id}/raw` } as FileListItem;
+      }
       try {
-        const signedUrl = await storage.generatePresignedUrl({
+        const signedUrl = await bucketStorage.generatePresignedUrl({
           key: item.name,
-          expireTime: 3600, // 1小时有效
+          expireTime: 3600,
         });
         return { ...item, signedUrl } as FileListItem;
       } catch (_error) {
@@ -323,13 +337,17 @@ export async function getFileById(
 
   // 生成当前版本签名URL
   let signedUrl: string | undefined;
-  try {
-    signedUrl = await storage.generatePresignedUrl({
-      key: file.path,
-      expireTime: 3600,
-    });
-  } catch (error) {
-    console.error('Generate signed URL error:', error);
+  if (!bucketStorage) {
+    signedUrl = `/api/files/${fileId}/raw`;
+  } else {
+    try {
+      signedUrl = await bucketStorage.generatePresignedUrl({
+        key: file.path,
+        expireTime: 3600,
+      });
+    } catch (error) {
+      console.error('Generate signed URL error:', error);
+    }
   }
 
   return {
@@ -393,11 +411,12 @@ export async function getFileDownloadUrl(
 
   const file = fileResult[0];
 
-  // 生成签名URL
-  const signedUrl = await storage.generatePresignedUrl({
-    key: file.path,
-    expireTime,
-  });
+  const url = bucketStorage
+    ? await bucketStorage.generatePresignedUrl({
+        key: file.path,
+        expireTime,
+      })
+    : `/api/files/${fileId}/raw`;
 
   // 记录下载审计日志
   await db.insert(auditLogs).values({
@@ -409,7 +428,7 @@ export async function getFileDownloadUrl(
   });
 
   return {
-    url: signedUrl,
+    url,
     fileName: file.originalName,
   };
 }

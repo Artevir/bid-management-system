@@ -228,7 +228,7 @@ export default function InterpretationUploadPage() {
       if (!uploadResponse.ok || !uploadResult?.success || !uploadResult?.fileId) {
         throw new Error(uploadResult?.error || uploadResult?.message || '文件上传失败');
       }
-      const documentUrl = `${globalThis.location?.origin || ''}/api/files/${uploadResult.fileId}/download`;
+      const documentUrl = `${globalThis.location?.origin || ''}/api/files/${uploadResult.fileId}/raw`;
 
       setFiles((prev) =>
         prev.map((f, i) => (i === index ? { ...f, progress: 60 } : f))
