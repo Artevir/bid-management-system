@@ -134,7 +134,30 @@ export async function createInterpretation(
     .limit(1);
 
   if (existing.length > 0) {
-    throw new Error('该招标文件已上传并解读过，请勿重复上传');
+    const item = existing[0];
+    if (item.status === 'completed') {
+      throw new Error('该招标文件已上传并解读过，请勿重复上传');
+    }
+
+    await db
+      .update(bidDocumentInterpretations)
+      .set({
+        documentName: params.documentName,
+        documentUrl: params.documentUrl,
+        documentExt: params.documentExt,
+        documentSize: params.documentSize,
+        documentPageCount: params.documentPageCount,
+        uploaderId: params.uploaderId,
+        projectId: params.projectId,
+        status: 'pending',
+        parseProgress: 0,
+        parseError: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(bidDocumentInterpretations.id, item.id));
+
+    await createInterpretationLog(item.id, 'reupload', '重新上传招标文件（覆盖未完成记录）', params.uploaderId);
+    return item.id;
   }
 
   const result = await db
