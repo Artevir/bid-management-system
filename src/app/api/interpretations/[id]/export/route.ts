@@ -13,7 +13,7 @@ import {
   getDocumentFramework,
 } from '@/lib/interpretation/service';
 import * as XLSX from 'xlsx';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, IParagraphOptions } from 'docx';
 
 function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
   return {
@@ -107,8 +107,6 @@ function generateExcel(exportData: any, filename: string): Buffer {
   
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
 }
-
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, IParagraphOptions, TableRowChild } from 'docx';
 
 async function generateWord(exportData: any, filename: string): Promise<Buffer> {
   const children: (Paragraph | Table)[] = [];
