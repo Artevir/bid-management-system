@@ -18,6 +18,9 @@ import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'd
 import { extractTextFromDocumentBuffer } from '@/lib/document/text-extractor';
 import { generateWithDefaultLLM } from '@/lib/llm/db-runtime';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { S3Storage } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -332,6 +335,61 @@ export function calculateFileMd5(buffer: Buffer): string {
   return crypto.createHash('md5').update(buffer).digest('hex');
 }
 
+async function loadDocumentBuffer(documentUrl: string): Promise<Buffer> {
+  const urlMatch = documentUrl.match(/\/api\/files\/(\d+)\/(raw|download)(\?.*)?$/);
+  if (urlMatch) {
+    const fileId = parseInt(urlMatch[1], 10);
+    const [file] = await db
+      .select({
+        path: _files.path,
+        originalName: _files.originalName,
+        mimeType: _files.mimeType,
+      })
+      .from(_files)
+      .where(eq(_files.id, fileId))
+      .limit(1);
+
+    if (!file) {
+      throw new Error('文档读取失败: 文件不存在');
+    }
+
+    if (process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME) {
+      const storage = new S3Storage({
+        endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+        accessKey: '',
+        secretKey: '',
+        bucketName: process.env.COZE_BUCKET_NAME,
+        region: 'cn-beijing',
+      });
+      const signedUrl = await storage.generatePresignedUrl({
+        key: file.path,
+        expireTime: 3600,
+      });
+      const res = await fetch(signedUrl, { cache: 'no-store' });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`文档读取失败: ${res.status} ${text}`.slice(0, 400));
+      }
+      return Buffer.from(await res.arrayBuffer());
+    }
+
+    const absolutePath = path.resolve(process.cwd(), file.path);
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads') + path.sep;
+    if (!absolutePath.startsWith(uploadsRoot)) {
+      throw new Error('文档读取失败: 非法文件路径');
+    }
+
+    return fs.readFileSync(absolutePath);
+  }
+
+  const res = await fetch(documentUrl, { cache: 'no-store' });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`文档读取失败: ${res.status} ${text}`.slice(0, 400));
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
 /**
  * 使用LLM解析招标文件
  */
@@ -340,21 +398,7 @@ export async function parseDocumentWithLLM(
   documentExt: DocumentExt,
   customHeaders?: Record<string, string>
 ): Promise<ParseResult> {
-  const cookie = customHeaders?.cookie || (customHeaders as any)?.Cookie;
-  const fetchHeaders: Record<string, string> = {};
-  if (cookie) fetchHeaders.cookie = cookie;
-
-  const res = await fetch(documentUrl, {
-    headers: fetchHeaders,
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`文档读取失败: ${res.status} ${text}`.slice(0, 400));
-  }
-
-  const arrayBuffer = await res.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const buffer = await loadDocumentBuffer(documentUrl);
   const textContent = await extractTextFromDocumentBuffer(buffer, documentExt);
   if (!textContent) {
     throw new Error('文档解析失败：无法提取文本内容');
