@@ -509,21 +509,53 @@ export async function parseDocumentWithLLM(
 4. 技术参数要注明是否为关键参数
 5. 对不确定的内容，请标注"待确认"`;
 
+  const parseJson = (content: string) => {
+    const fenced = content.match(/```json\s*([\s\S]*?)\s*```/i);
+    const candidate = fenced?.[1] || content;
+    const jsonMatch = candidate.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      return null;
+    }
+  };
+
   const messages = [
     { role: 'system' as const, content: systemPrompt },
-    { role: 'user' as const, content: `请解析以下招标文件内容：\n\n${textContent}` },
+    {
+      role: 'user' as const,
+      content:
+        `请解析以下招标文件内容。\n` +
+        `要求：只输出一个 JSON 对象，不要输出任何解释、前后缀、Markdown；如果必须用代码块，请用 \`\`\`json 包裹。\n\n` +
+        textContent,
+    },
   ];
 
   try {
     const response = await generateWithDefaultLLM(messages as any);
 
-    // 解析JSON响应
-    const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]) as ParseResult;
-    }
+    const parsed = parseJson(response.content);
+    if (parsed) return parsed as ParseResult;
 
-    throw new Error('无法解析LLM响应');
+    const repairMessages = [
+      {
+        role: 'system' as const,
+        content:
+          '你是一个严格的 JSON 修复器。只输出一个合法的 JSON 对象，不要输出任何多余字符。',
+      },
+      {
+        role: 'user' as const,
+        content:
+          '把下面内容转换成一个合法 JSON 对象（保留字段结构，补齐缺失引号/逗号/括号，去掉解释文字）。只输出 JSON：\n\n' +
+          response.content,
+      },
+    ];
+    const repaired = await generateWithDefaultLLM(repairMessages as any, { temperature: 0 });
+    const repairedParsed = parseJson(repaired.content);
+    if (repairedParsed) return repairedParsed as ParseResult;
+
+    throw new Error(`无法解析LLM响应: ${(response.content || '').slice(0, 300)}`);
   } catch (error) {
     console.error('LLM parse error:', error);
     throw error;

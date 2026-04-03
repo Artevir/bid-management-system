@@ -76,5 +76,10 @@ export async function generateWithDefaultLLM(
   options?: GenerateOptions
 ) {
   const { adapter, model, options: baseOptions } = await getDefaultLLMFromDb();
-  return adapter.generate(messages, { model, ...baseOptions, ...(options || {}) });
+  const result = await adapter.generate(messages, { model, ...baseOptions, ...(options || {}) });
+  if (result.finishReason === 'error' || !result.content) {
+    const extra = result.extra ? JSON.stringify(result.extra).slice(0, 800) : '';
+    throw new Error(extra ? `LLM 调用失败: ${extra}` : 'LLM 调用失败');
+  }
+  return result;
 }
