@@ -107,17 +107,96 @@ export default function InterpretationUploadPage() {
     [handleFiles]
   );
 
+  const md5ArrayBuffer = (buffer: ArrayBuffer): string => {
+    const rotateLeft = (x: number, c: number) => (x << c) | (x >>> (32 - c));
+    const add = (a: number, b: number) => (a + b) >>> 0;
+    const toHex = (n: number) => n.toString(16).padStart(8, '0');
+
+    const bytes = new Uint8Array(buffer);
+    const originalBitLen = bytes.length * 8;
+    const withPaddingLen = (((bytes.length + 9 + 63) >> 6) << 6) >>> 0;
+    const padded = new Uint8Array(withPaddingLen);
+    padded.set(bytes);
+    padded[bytes.length] = 0x80;
+
+    const view = new DataView(padded.buffer);
+    view.setUint32(withPaddingLen - 8, originalBitLen >>> 0, true);
+    view.setUint32(withPaddingLen - 4, Math.floor(originalBitLen / 0x100000000) >>> 0, true);
+
+    let a0 = 0x67452301;
+    let b0 = 0xefcdab89;
+    let c0 = 0x98badcfe;
+    let d0 = 0x10325476;
+
+    const k = new Uint32Array(64);
+    for (let i = 0; i < 64; i++) k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000) >>> 0;
+    const s = [
+      7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+      5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+      4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+      6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+    ];
+
+    for (let offset = 0; offset < withPaddingLen; offset += 64) {
+      const m = new Uint32Array(16);
+      for (let i = 0; i < 16; i++) {
+        m[i] = view.getUint32(offset + i * 4, true);
+      }
+
+      let A = a0;
+      let B = b0;
+      let C = c0;
+      let D = d0;
+
+      for (let i = 0; i < 64; i++) {
+        let F: number;
+        let g: number;
+        if (i < 16) {
+          F = (B & C) | (~B & D);
+          g = i;
+        } else if (i < 32) {
+          F = (D & B) | (~D & C);
+          g = (5 * i + 1) % 16;
+        } else if (i < 48) {
+          F = B ^ C ^ D;
+          g = (3 * i + 5) % 16;
+        } else {
+          F = C ^ (B | ~D);
+          g = (7 * i) % 16;
+        }
+
+        const tmp = D;
+        D = C;
+        C = B;
+        const sum = add(add(add(A, F >>> 0), k[i]), m[g]);
+        B = add(B, rotateLeft(sum, s[i]) >>> 0);
+        A = tmp;
+      }
+
+      a0 = add(a0, A);
+      b0 = add(b0, B);
+      c0 = add(c0, C);
+      d0 = add(d0, D);
+    }
+
+    const toLittleEndianHex = (n: number) => {
+      const hex = toHex(n);
+      return hex.match(/../g)!.reverse().join('');
+    };
+
+    return `${toLittleEndianHex(a0)}${toLittleEndianHex(b0)}${toLittleEndianHex(c0)}${toLittleEndianHex(d0)}`;
+  };
+
   const calculateMd5 = async (file: File): Promise<string> => {
-    // 简单的文件标识，生产环境应使用 spark-md5 等库
     const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('MD5', buffer).catch(() => null);
-    if (hashBuffer) {
+    const subtle = globalThis.crypto?.subtle;
+    if (subtle?.digest) {
+      const hashBuffer = await subtle.digest('MD5', buffer);
       return Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
     }
-    // 备用方案：使用文件名+大小+修改时间作为标识
-    return btoa(`${file.name}-${file.size}-${file.lastModified}`).slice(0, 32);
+    return md5ArrayBuffer(buffer);
   };
 
   const uploadFile = async (index: number) => {
