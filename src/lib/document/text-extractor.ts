@@ -42,13 +42,40 @@ async function extractDocViaExternalTools(docPath: string, tmpDir: string) {
   const sofficeCandidates: string[] = ['soffice', 'libreoffice'];
   for (const cmd of sofficeCandidates) {
     try {
-      await execFileAsync(cmd, ['--headless', '--convert-to', 'txt:Text', '--outdir', tmpDir, docPath], {
-        timeout: 120000,
-        maxBuffer: 20 * 1024 * 1024,
-      });
+      await execFileAsync(
+        cmd,
+        [
+          '--headless',
+          '--nologo',
+          '--nolockcheck',
+          '--norestore',
+          '--nodefault',
+          '--convert-to',
+          'txt',
+          '--outdir',
+          tmpDir,
+          docPath,
+        ],
+        {
+          env: { ...process.env, HOME: tmpDir },
+          timeout: 120000,
+          maxBuffer: 20 * 1024 * 1024,
+        }
+      );
       if (fs.existsSync(outTxt)) {
         const text = normalizeWhitespace(fs.readFileSync(outTxt, 'utf8'));
         if (text) return text;
+      }
+
+      const candidates = fs
+        .readdirSync(tmpDir)
+        .filter((name) => name.toLowerCase().endsWith('.txt'))
+        .map((name) => path.join(tmpDir, name));
+      for (const filePath of candidates) {
+        try {
+          const text = normalizeWhitespace(fs.readFileSync(filePath, 'utf8'));
+          if (text) return text;
+        } catch {}
       }
     } catch {}
   }
