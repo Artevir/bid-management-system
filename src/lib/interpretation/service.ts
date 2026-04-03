@@ -583,6 +583,9 @@ export async function executeInterpretation(
   }
 
   const startTime = Date.now();
+  const extractAccuracy = process.env.INTERPRETATION_EXTRACT_ACCURACY
+    ? Number(process.env.INTERPRETATION_EXTRACT_ACCURACY)
+    : 85;
 
   try {
     // 更新状态为解析中
@@ -618,7 +621,7 @@ export async function executeInterpretation(
       .set({
         status: 'completed',
         parseProgress: 100,
-        extractAccuracy: 85,
+        extractAccuracy,
         parseDuration: duration,
         updatedAt: new Date(),
       })
