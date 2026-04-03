@@ -10,6 +10,7 @@ import {
   CheckCircle,
   BookOpen,
   User as _User,
+  Cpu,
   Menu,
   Plus,
   Search,
@@ -50,6 +51,8 @@ const menuItems = [
   { href: '/calendar', label: '投标日历', icon: Menu },
   { href: '/quotes', label: '智能报价', icon: FileText },
   { href: '/ai-governance', label: 'AI治理', icon: BookOpen },
+  { href: '/llm', label: 'LLM配置', icon: Cpu },
+  { href: '/llm/models', label: '模型管理', icon: Cpu },
   { href: '/monitoring', label: '系统监控', icon: CheckCircle },
 ];
 
