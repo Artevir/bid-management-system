@@ -129,29 +129,6 @@ function generateExcel(exportData: any, filename: string): Uint8Array {
   
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })) as unknown as Uint8Array;
 }
-    const data = exportData.checklist.map((item: any) => ({
-      类别: item.category || '',
-      项目: item.itemName || '',
-      要求: item.requirement || '',
-      是否具备: item.isMet ? '是' : '否',
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '核对清单');
-  }
-  
-  if (exportData.framework?.length) {
-    const data = exportData.framework.map((item: any) => ({
-      章节: item.chapter || '',
-      标题: item.title || '',
-      关键内容: item.keyContent || '',
-      页码: item.pageNum || '',
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '文档框架');
-  }
-  
-  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })) as unknown as Uint8Array;
-}
 
 async function generateWord(exportData: any, filename: string): Promise<Uint8Array> {
   const children: (Paragraph | Table)[] = [];
