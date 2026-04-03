@@ -296,7 +296,7 @@ export async function GET(
 
     if (format === 'excel') {
       const buffer = generateExcel(exportData, filename);
-      return new NextResponse(buffer, {
+      return new Response(buffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
@@ -306,7 +306,7 @@ export async function GET(
 
     if (format === 'word') {
       const buffer = await generateWord(exportData, filename);
-      return new NextResponse(buffer, {
+      return new Response(buffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'Content-Disposition': `attachment; filename="${filename}.docx"`,
