@@ -47,6 +47,10 @@ import {
   Trash2,
   RefreshCw,
   Download,
+  FileJson,
+  FileSpreadsheet,
+  FileText as FileWord,
+} from 'lucide-react';
   Clock,
   AlertCircle,
   CheckCircle,
@@ -360,8 +364,20 @@ export default function InterpretationsPage() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                   <Link href={`/api/interpretations/${item.id}/export?format=json`} target="_blank">
-                                    <Download className="w-4 h-4 mr-2" />
-                                    导出结果
+                                    <FileJson className="w-4 h-4 mr-2" />
+                                    导出 JSON
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/api/interpretations/${item.id}/export?format=excel`} target="_blank">
+                                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                                    导出 Excel
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/api/interpretations/${item.id}/export?format=word`} target="_blank">
+                                    <FileWord className="w-4 h-4 mr-2" />
+                                    导出 Word
                                   </Link>
                                 </DropdownMenuItem>
                               </>

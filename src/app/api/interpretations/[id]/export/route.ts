@@ -12,6 +12,237 @@ import {
   getChecklist,
   getDocumentFramework,
 } from '@/lib/interpretation/service';
+import * as XLSX from 'xlsx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
+
+function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
+  return {
+    interpretation: {
+      id: interpretation.id,
+      documentName: interpretation.documentName,
+      projectName: interpretation.projectName,
+      projectCode: interpretation.projectCode,
+      tenderOrganization: interpretation.tenderOrganization,
+      tenderAgent: interpretation.tenderAgent,
+      projectBudget: interpretation.projectBudget,
+      status: interpretation.status,
+      extractAccuracy: interpretation.extractAccuracy,
+      createdAt: interpretation.createdAt,
+    },
+    basicInfo: interpretation.basicInfo,
+    timeNodes: interpretation.timeNodes,
+    submissionRequirements: interpretation.submissionRequirements,
+    feeInfo: interpretation.feeInfo,
+    qualificationRequirements: interpretation.qualificationRequirements,
+    personnelRequirements: interpretation.personnelRequirements,
+    docRequirements: interpretation.docRequirements,
+    otherRequirements: interpretation.otherRequirements,
+    technicalSpecs,
+    scoringItems,
+    checklist,
+    framework,
+  };
+}
+
+function generateExcel(exportData: any, filename: string): Buffer {
+  const wb = XLSX.utils.book_new();
+  
+  if (exportData.interpretation) {
+    const basicData = [['', '']];
+    Object.entries(exportData.interpretation).forEach(([k, v]) => {
+      basicData.push([k, String(v ?? '')]);
+    });
+    if (exportData.basicInfo) {
+      Object.entries(exportData.basicInfo).forEach(([k, v]) => {
+        basicData.push([k, String(v ?? '')]);
+      });
+    }
+    const ws = XLSX.utils.aoa_to_sheet(basicData);
+    XLSX.utils.book_append_sheet(wb, ws, '基本信息');
+  }
+  
+  if (exportData.technicalSpecs?.length) {
+    const data = exportData.technicalSpecs.map((item: any) => ({
+      类别: item.category || '',
+      名称: item.name || '',
+      要求: item.requirement || '',
+      备注: item.note || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, '技术规格');
+  }
+  
+  if (exportData.scoringItems?.length) {
+    const data = exportData.scoringItems.map((item: any) => ({
+      类别: item.category || '',
+      项目: item.itemName || '',
+      分值: item.score || '',
+      评分标准: item.criteria || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, '评分细则');
+  }
+  
+  if (exportData.checklist?.length) {
+    const data = exportData.checklist.map((item: any) => ({
+      类别: item.category || '',
+      项目: item.itemName || '',
+      要求: item.requirement || '',
+      是否具备: item.isMet ? '是' : '否',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, '核对清单');
+  }
+  
+  if (exportData.framework?.length) {
+    const data = exportData.framework.map((item: any) => ({
+      章节: item.chapter || '',
+      标题: item.title || '',
+      关键内容: item.keyContent || '',
+      页码: item.pageNum || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, '文档框架');
+  }
+  
+  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+}
+
+async function generateWord(exportData: any, filename: string): Promise<Buffer> {
+  const children: Paragraph[] = [];
+  
+  children.push(new Paragraph({
+    text: exportData.interpretation?.projectName || '标书解读结果',
+    heading: HeadingLevel.HEADING_1,
+    spacing: { after: 200 },
+  }));
+  
+  if (exportData.interpretation) {
+    children.push(new Paragraph({
+      text: '基本信息',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 },
+    }));
+    
+    const infoRows = Object.entries(exportData.interpretation).map(([k, v]) => 
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ text: k, bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: String(v ?? '') })] }),
+        ],
+      })
+    );
+    
+    children.push(new Table({
+      rows: infoRows,
+      width: { size: 100, type: WidthType.PERCENTAGE },
+    }));
+  }
+  
+  if (exportData.technicalSpecs?.length) {
+    children.push(new Paragraph({
+      text: '技术规格',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 },
+    }));
+    
+    const specRows = [
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ text: '类别', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '名称', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '要求', bold: true })] }),
+        ],
+      }),
+      ...exportData.technicalSpecs.map((item: any) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.category || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.name || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.requirement || '' })] }),
+          ],
+        })
+      ),
+    ];
+    
+    children.push(new Table({
+      rows: specRows,
+      width: { size: 100, type: WidthType.PERCENTAGE },
+    }));
+  }
+  
+  if (exportData.scoringItems?.length) {
+    children.push(new Paragraph({
+      text: '评分细则',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 },
+    }));
+    
+    const scoreRows = [
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ text: '类别', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '项目', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '分值', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '评分标准', bold: true })] }),
+        ],
+      }),
+      ...exportData.scoringItems.map((item: any) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.category || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.itemName || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: String(item.score ?? '') })] }),
+            new TableCell({ children: [new Paragraph({ text: item.criteria || '' })] }),
+          ],
+        })
+      ),
+    ];
+    
+    children.push(new Table({
+      rows: scoreRows,
+      width: { size: 100, type: WidthType.PERCENTAGE },
+    }));
+  }
+  
+  if (exportData.checklist?.length) {
+    children.push(new Paragraph({
+      text: '核对清单',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 },
+    }));
+    
+    const checkRows = [
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ text: '项目', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '要求', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ text: '是否具备', bold: true })] }),
+        ],
+      }),
+      ...exportData.checklist.map((item: any) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.itemName || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.requirement || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.isMet ? '是' : '否' })] }),
+          ],
+        })
+      ),
+    ];
+    
+    children.push(new Table({
+      rows: checkRows,
+      width: { size: 100, type: WidthType.PERCENTAGE },
+    }));
+  }
+  
+  const doc = new Document({
+    sections: [{ children }],
+  });
+  
+  return Buffer.from(await Packer.toBuffer(doc));
+}
 
 export async function GET(
   request: NextRequest,
@@ -48,88 +279,38 @@ export async function GET(
     }
 
     // 构建导出数据
-    const exportData = {
-      interpretation: {
-        id: interpretation.id,
-        documentName: interpretation.documentName,
-        projectName: interpretation.projectName,
-        projectCode: interpretation.projectCode,
-        tenderOrganization: interpretation.tenderOrganization,
-        tenderAgent: interpretation.tenderAgent,
-        projectBudget: interpretation.projectBudget,
-        status: interpretation.status,
-        extractAccuracy: interpretation.extractAccuracy,
-        createdAt: interpretation.createdAt,
-      },
-      basicInfo: interpretation.basicInfo,
-      timeNodes: interpretation.timeNodes,
-      submissionRequirements: interpretation.submissionRequirements,
-      feeInfo: interpretation.feeInfo,
-      qualificationRequirements: interpretation.qualificationRequirements,
-      personnelRequirements: interpretation.personnelRequirements,
-      docRequirements: interpretation.docRequirements,
-      otherRequirements: interpretation.otherRequirements,
-      technicalSpecs,
-      scoringItems,
-      checklist,
-      framework,
-    };
+    const exportData = buildExportData(interpretation, technicalSpecs, scoringItems, checklist, framework);
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${interpretation.projectName || interpretation.documentName || '解读结果'}_${timestamp}`;
 
     if (format === 'json') {
-      // JSON格式直接返回
-      return NextResponse.json({
-        success: true,
-        data: exportData,
+      const jsonStr = JSON.stringify({ success: true, data: exportData }, null, 2);
+      return new NextResponse(jsonStr, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Disposition': `attachment; filename="${filename}.json"`,
+        },
       });
     }
 
-    // 对于Excel和Word格式，返回数据让前端处理
-    // 实际项目中可以在服务端使用exceljs或docx库生成文件
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${interpretation.projectName || interpretation.documentName}_解读结果_${timestamp}`;
-
     if (format === 'excel') {
-      // 生成Excel数据结构
-      const excelData = {
-        filename: `${filename}.xlsx`,
-        sheets: [
-          {
-            name: '基本信息',
-            data: [exportData.interpretation],
-          },
-          {
-            name: '技术规格',
-            data: technicalSpecs,
-          },
-          {
-            name: '评分细则',
-            data: scoringItems,
-          },
-          {
-            name: '核对清单',
-            data: checklist,
-          },
-        ],
-      };
-
-      return NextResponse.json({
-        success: true,
-        data: excelData,
-        message: '请在前端使用Excel库生成文件',
+      const buffer = generateExcel(exportData, filename);
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="${filename}.xlsx"`,
+        },
       });
     }
 
     if (format === 'word') {
-      // 生成Word文档结构
-      const wordData = {
-        filename: `${filename}.docx`,
-        content: exportData,
-      };
-
-      return NextResponse.json({
-        success: true,
-        data: wordData,
-        message: '请在前端使用docx库生成文件',
+      const buffer = await generateWord(exportData, filename);
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${filename}.docx"`,
+        },
       });
     }
 

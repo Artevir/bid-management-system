@@ -9,6 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Table,
@@ -43,6 +49,9 @@ import {
   Link2,
   ArrowRight,
   FolderSync,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 
 interface InterpretationDetail {
@@ -354,12 +363,34 @@ export default function InterpretationDetailPage() {
           )}
           {data.status === 'completed' && (
             <>
-              <Button asChild>
-                <Link href={`/api/interpretations/${id}/export?format=json`} target="_blank">
-                  <Download className="w-4 h-4 mr-2" />
-                  导出结果
-                </Link>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button>
+                    <Download className="w-4 h-4 mr-2" />
+                    导出结果
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/api/interpretations/${id}/export?format=json`} target="_blank">
+                      <FileJson className="w-4 h-4 mr-2" />
+                      导出 JSON
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/api/interpretations/${id}/export?format=excel`} target="_blank">
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      导出 Excel
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/api/interpretations/${id}/export?format=word`} target="_blank">
+                      <FileText className="w-4 h-4 mr-2" />
+                      导出 Word
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               {/* 项目联动按钮 */}
               {data.projectId ? (
