@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import dns from 'dns';
 
 function maskDbUrl(value?: string) {
   if (!value) return '';
@@ -50,13 +51,53 @@ function findReturnNaN(searchRoot: string) {
 const cwd = process.cwd();
 const nextServerDir = path.join(cwd, '.next', 'server');
 
-const lines: string[] = [];
-lines.push(`node=${process.version}`);
-lines.push(`node_env=${process.env.NODE_ENV || ''}`);
-lines.push(`pm2_home=${process.env.PM2_HOME || ''}`);
-lines.push(`database_url=${maskDbUrl(process.env.DATABASE_URL)}`);
-lines.push(`cookie_secure=${process.env.COOKIE_SECURE || ''}`);
-lines.push(`coze_project_domain_default=${normalizeEnvUrlLike(process.env.COZE_PROJECT_DOMAIN_DEFAULT) || ''}`);
+async function resolveHost(host?: string) {
+  if (!host) return [];
+  try {
+    const results = await dns.promises.lookup(host, { all: true });
+    return results.map(r => r.address);
+  } catch {
+    return [];
+  }
+}
+
+function extractHost(value?: string) {
+  const normalized = normalizeEnvUrlLike(value);
+  if (!normalized) return undefined;
+  try {
+    const url = normalized.startsWith('http://') || normalized.startsWith('https://')
+      ? new URL(normalized)
+      : new URL(`http://${normalized}`);
+    return url.hostname;
+  } catch {
+    const host = normalized.split('/')[0];
+    return host || undefined;
+  }
+}
+
+async function main() {
+  const lines: string[] = [];
+  lines.push(`node=${process.version}`);
+  lines.push(`node_env=${process.env.NODE_ENV || ''}`);
+  lines.push(`pm2_home=${process.env.PM2_HOME || ''}`);
+  lines.push(`database_url=${maskDbUrl(process.env.DATABASE_URL)}`);
+  lines.push(`cookie_secure=${process.env.COOKIE_SECURE || ''}`);
+  lines.push(`coze_project_domain_default=${normalizeEnvUrlLike(process.env.COZE_PROJECT_DOMAIN_DEFAULT) || ''}`);
+  lines.push(`oss_endpoint=${normalizeEnvUrlLike(process.env.OSS_ENDPOINT) || ''}`);
+  lines.push(`coze_bucket_endpoint_url=${normalizeEnvUrlLike(process.env.COZE_BUCKET_ENDPOINT_URL) || ''}`);
+
+  const hostCandidates = [
+    ['coze_project_domain_default_host', extractHost(process.env.COZE_PROJECT_DOMAIN_DEFAULT)],
+    ['oss_endpoint_host', extractHost(process.env.OSS_ENDPOINT)],
+    ['coze_bucket_endpoint_host', extractHost(process.env.COZE_BUCKET_ENDPOINT_URL)],
+  ] as const;
+
+  for (const [label, host] of hostCandidates) {
+    if (!host) continue;
+    const addrs = await resolveHost(host);
+    lines.push(`${label}=${host}`);
+    for (const addr of addrs) lines.push(`${label}_addr=${addr}`);
+  }
 
 const writeTargets = [
   path.join(cwd, '.next'),
@@ -83,4 +124,7 @@ if (fs.existsSync(nextServerDir)) {
   lines.push('returnNaN_hits=0');
 }
 
-process.stdout.write(lines.join('\n') + '\n');
+  process.stdout.write(lines.join('\n') + '\n');
+}
+
+main();
