@@ -35,6 +35,9 @@ export async function getDefaultLLMFromDb(): Promise<{
   const model = config.modelId || 'default';
   const temperature = config.defaultTemperature ? Number(config.defaultTemperature) : 0.3;
   const maxTokens = typeof config.maxTokens === 'number' ? config.maxTokens : 4096;
+  const timeout = process.env.LLM_REQUEST_TIMEOUT_MS
+    ? Number(process.env.LLM_REQUEST_TIMEOUT_MS)
+    : 300000;
 
   if (provider === 'deepseek') {
     const adapter = new DeepSeekAdapter({
@@ -42,6 +45,7 @@ export async function getDefaultLLMFromDb(): Promise<{
       apiKey: config.apiKey,
       baseUrl: config.apiEndpoint || undefined,
       defaultModel: model,
+      timeout,
     });
     return { adapter, model, options: { temperature, maxTokens } };
   }
@@ -53,6 +57,7 @@ export async function getDefaultLLMFromDb(): Promise<{
       baseUrl: config.apiEndpoint || undefined,
       useOpenAICompatible: true,
       defaultModel: model,
+      timeout,
     });
     return { adapter, model, options: { temperature, maxTokens } };
   }
@@ -66,6 +71,7 @@ export async function getDefaultLLMFromDb(): Promise<{
     apiKey: config.apiKey,
     baseUrl: config.apiEndpoint,
     defaultModel: model,
+    timeout,
   });
 
   return { adapter, model, options: { temperature, maxTokens } };

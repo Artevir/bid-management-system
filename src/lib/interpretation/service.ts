@@ -406,6 +406,14 @@ export async function parseDocumentWithLLM(
     );
   }
 
+  const maxChars = process.env.LLM_INPUT_MAX_CHARS ? Number(process.env.LLM_INPUT_MAX_CHARS) : 40000;
+  const tailChars = process.env.LLM_INPUT_TAIL_CHARS ? Number(process.env.LLM_INPUT_TAIL_CHARS) : 6000;
+  const headChars = Math.max(0, maxChars - tailChars);
+  const contentForLLM =
+    textContent.length > maxChars
+      ? `${textContent.slice(0, headChars)}\n\n[...内容过长已截断...]\n\n${textContent.slice(-tailChars)}`
+      : textContent;
+
   const systemPrompt = `你是一个专业的招标文件解析专家。你的任务是从招标文件中提取关键信息，并以JSON格式返回。
 
 请按照以下格式返回JSON结果：
@@ -528,7 +536,7 @@ export async function parseDocumentWithLLM(
       content:
         `请解析以下招标文件内容。\n` +
         `要求：只输出一个 JSON 对象，不要输出任何解释、前后缀、Markdown；如果必须用代码块，请用 \`\`\`json 包裹。\n\n` +
-        textContent,
+        contentForLLM,
     },
   ];
 
