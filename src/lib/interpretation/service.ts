@@ -549,6 +549,7 @@ export async function executeInterpretation(
       .set({
         status: 'parsing',
         parseProgress: 10,
+        parseError: null,
         updatedAt: new Date(),
       })
       .where(eq(bidDocumentInterpretations.id, id));

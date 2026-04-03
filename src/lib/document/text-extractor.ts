@@ -3,10 +3,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 function normalizeWhitespace(text: string) {
   return text.replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
 }
+
+const execFileAsync = promisify(execFile);
 
 export async function extractTextFromDocumentBuffer(
   buffer: Buffer,
@@ -27,6 +31,13 @@ export async function extractTextFromDocumentBuffer(
   }
 
   if (ext === 'doc') {
+    if (buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b) {
+      const mammothMod = await import('mammoth');
+      const mammoth: any = (mammothMod as any).default || (mammothMod as any);
+      const result = await mammoth.extractRawText({ buffer });
+      return normalizeWhitespace(String(result?.value || ''));
+    }
+
     const mod = await import('word-extractor');
     const WordExtractor: any = (mod as any).default || (mod as any);
     const extractor = new WordExtractor();
@@ -36,7 +47,18 @@ export async function extractTextFromDocumentBuffer(
       fs.writeFileSync(tmpPath, buffer);
       const doc = await extractor.extract(tmpPath);
       const text = typeof doc?.getBody === 'function' ? doc.getBody() : '';
-      return normalizeWhitespace(String(text || ''));
+      const normalized = normalizeWhitespace(String(text || ''));
+      if (normalized) return normalized;
+
+      try {
+        const { stdout } = await execFileAsync('antiword', [tmpPath], {
+          timeout: 30000,
+          maxBuffer: 10 * 1024 * 1024,
+        });
+        return normalizeWhitespace(String(stdout || ''));
+      } catch {
+        return '';
+      }
     } finally {
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
