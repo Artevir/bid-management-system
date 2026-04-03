@@ -23,7 +23,7 @@
     "db:reset": "tsx src/db/reset.ts",
     "db:init": "pnpm db:push && pnpm db:sync && pnpm db:seed",
     "db:init:prod": "cross-env NODE_ENV=production pnpm db:push",
-    "doctor": "tsx src/scripts/doctor.ts",
+    "app:doctor": "tsx src/scripts/doctor.ts",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch",
