@@ -17,83 +17,47 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, Ta
 
 function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
   return {
-    interpretation: {
-      id: interpretation.id,
-      documentName: interpretation.documentName,
-      projectName: interpretation.projectName,
-      projectCode: interpretation.projectCode,
-      tenderOrganization: interpretation.tenderOrganization,
-      tenderAgent: interpretation.tenderAgent,
-      projectBudget: interpretation.projectBudget,
-      status: interpretation.status,
-      extractAccuracy: interpretation.extractAccuracy,
-      createdAt: interpretation.createdAt,
-    },
     basicInfo: interpretation.basicInfo,
-    timeNodes: interpretation.timeNodes,
-    submissionRequirements: interpretation.submissionRequirements,
     feeInfo: interpretation.feeInfo,
-    qualificationRequirements: interpretation.qualificationRequirements,
-    personnelRequirements: interpretation.personnelRequirements,
-    docRequirements: interpretation.docRequirements,
-    otherRequirements: interpretation.otherRequirements,
+    submissionRequirements: interpretation.submissionRequirements,
+    framework,
+    timeNodes: interpretation.timeNodes,
     technicalSpecs,
     scoringItems,
     checklist,
-    framework,
-    raw: {
-      documentName: interpretation.documentName,
-      projectName: interpretation.projectName,
-      projectCode: interpretation.projectCode,
-      tenderOrganization: interpretation.tenderOrganization,
-      tenderAgent: interpretation.tenderAgent,
-      projectBudget: interpretation.projectBudget,
-      tenderNumber: interpretation.tenderNumber,
-      tenderCategory: interpretation.tenderCategory,
-      announcementType: interpretation.announcementType,
-      deliveryAddress: interpretation.deliveryAddress,
-      bidBond: interpretation.bidBond,
-      budgetAmount: interpretation.budgetAmount,
-      basicInfo: interpretation.basicInfo,
-      timeNodes: interpretation.timeNodes,
-      submissionRequirements: interpretation.submissionRequirements,
-      feeInfo: interpretation.feeInfo,
-      qualificationRequirements: interpretation.qualificationRequirements,
-      personnelRequirements: interpretation.personnelRequirements,
-      docRequirements: interpretation.docRequirements,
-      otherRequirements: interpretation.otherRequirements,
-    },
   };
 }
 
 function generateExcel(exportData: any, filename: string): Uint8Array {
   const wb = XLSX.utils.book_new();
   
-  if (exportData.raw) {
+  // 第一个工作表：项目基本信息
+  if (exportData.basicInfo) {
     const basicData = [['字段', '值']];
-    Object.entries(exportData.raw).forEach(([k, v]) => {
-      if (v !== null && v !== undefined) {
-        if (typeof v === 'object') {
-          basicData.push([k, JSON.stringify(v)]);
-        } else {
-          basicData.push([k, String(v)]);
-        }
+    Object.entries(exportData.basicInfo).forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== '') {
+        basicData.push([k, String(v)]);
       }
     });
     const ws = XLSX.utils.aoa_to_sheet(basicData);
-    XLSX.utils.book_append_sheet(wb, ws, '基本信息');
+    XLSX.utils.book_append_sheet(wb, ws, '项目基本信息');
   }
   
-  if (exportData.timeNodes?.length) {
-    const data = exportData.timeNodes.map((item: any) => ({
-      标题: item.title || '',
-      时间: item.time || '',
-      说明: item.description || '',
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '时间节点');
+  // 第二个工作表：费用相关信息
+  if (exportData.feeInfo) {
+    const feeData = [['字段', '值']];
+    Object.entries(exportData.feeInfo).forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== '') {
+        feeData.push([k, String(v)]);
+      }
+    });
+    if (feeData.length > 1) {
+      const ws = XLSX.utils.aoa_to_sheet(feeData);
+      XLSX.utils.book_append_sheet(wb, ws, '费用相关信息');
+    }
   }
   
+  // 第三个工作表：投标提交要求
   if (exportData.submissionRequirements?.length) {
     const data = exportData.submissionRequirements.map((item: any) => ({
       要求类型: item.requirementType || '',
@@ -101,49 +65,33 @@ function generateExcel(exportData: any, filename: string): Uint8Array {
       份数: item.copies || '',
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '提交要求');
+    XLSX.utils.book_append_sheet(wb, ws, '投标提交要求');
   }
   
-  if (exportData.feeInfo) {
-    const feeData = [['费用项目', '金额/说明']];
-    Object.entries(exportData.feeInfo).forEach(([k, v]) => {
-      feeData.push([k, String(v ?? '')]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(feeData);
-    XLSX.utils.book_append_sheet(wb, ws, '费用信息');
-  }
-  
-  if (exportData.qualificationRequirements?.length) {
-    const data = exportData.qualificationRequirements.map((item: any) => ({
-      类别: item.category || '',
-      要求: item.requirement || '',
-      说明: item.note || '',
+  // 第四个工作表：文档框架
+  if (exportData.framework?.length) {
+    const data = exportData.framework.map((item: any) => ({
+      章节: item.chapter || '',
+      标题: item.title || '',
+      关键内容: item.keyContent || '',
+      页码: item.pageNum || '',
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '资质要求');
+    XLSX.utils.book_append_sheet(wb, ws, '文档框架');
   }
   
-  if (exportData.personnelRequirements?.length) {
-    const data = exportData.personnelRequirements.map((item: any) => ({
-      岗位: item.position || '',
-      数量: item.count || '',
-      要求: item.requirement || '',
-      备注: item.note || '',
+  // 第五个工作表：关键时间节点
+  if (exportData.timeNodes?.length) {
+    const data = exportData.timeNodes.map((item: any) => ({
+      节点名称: item.name || item.title || '',
+      时间: item.time || '',
+      地点: item.location || '',
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '人员要求');
+    XLSX.utils.book_append_sheet(wb, ws, '关键时间节点');
   }
   
-  if (exportData.docRequirements?.length) {
-    const data = exportData.docRequirements.map((item: any) => ({
-      文档类型: item.docType || '',
-      份数: item.copies || '',
-      要求: item.requirement || '',
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '文档要求');
-  }
-  
+  // 第六个工作表：技术规格要求
   if (exportData.technicalSpecs?.length) {
     const data = exportData.technicalSpecs.map((item: any) => ({
       类别: item.category || '',
@@ -152,9 +100,10 @@ function generateExcel(exportData: any, filename: string): Uint8Array {
       备注: item.note || '',
     }));
     const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, '技术规格');
+    XLSX.utils.book_append_sheet(wb, ws, '技术规格要求');
   }
   
+  // 第七个工作表：评分细则
   if (exportData.scoringItems?.length) {
     const data = exportData.scoringItems.map((item: any) => ({
       类别: item.category || '',
@@ -166,7 +115,20 @@ function generateExcel(exportData: any, filename: string): Uint8Array {
     XLSX.utils.book_append_sheet(wb, ws, '评分细则');
   }
   
+  // 第八个工作表：资质要求核对清单
   if (exportData.checklist?.length) {
+    const data = exportData.checklist.map((item: any) => ({
+      类别: item.category || '',
+      项目: item.itemName || '',
+      要求: item.requirement || '',
+      是否具备: item.isMet ? '是' : '否',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, '资质要求核对清单');
+  }
+  
+  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })) as unknown as Uint8Array;
+}
     const data = exportData.checklist.map((item: any) => ({
       类别: item.category || '',
       项目: item.itemName || '',
@@ -194,79 +156,62 @@ function generateExcel(exportData: any, filename: string): Uint8Array {
 async function generateWord(exportData: any, filename: string): Promise<Uint8Array> {
   const children: (Paragraph | Table)[] = [];
   
-  if (exportData.raw?.projectName) {
-    children.push(new Paragraph({
-      text: exportData.raw.projectName,
-      heading: HeadingLevel.HEADING_1,
-      spacing: { after: 200 },
-    }));
-  } else {
-    children.push(new Paragraph({
-      text: '标书解读结果',
-      heading: HeadingLevel.HEADING_1,
-      spacing: { after: 200 },
-    }));
-  }
+  // 使用项目名称作为标题
+  const projectName = exportData.basicInfo?.projectName || exportData.framework?.[0]?.title || '标书解读结果';
+  children.push(new Paragraph({
+    text: projectName,
+    heading: HeadingLevel.HEADING_1,
+    spacing: { after: 200 },
+  }));
   
-  if (exportData.raw) {
+  // 1. 项目基本信息
+  if (exportData.basicInfo) {
     children.push(new Paragraph({
-      text: '基本信息',
+      text: '项目基本信息',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
     
-    const infoRows = Object.entries(exportData.raw).filter(([k, v]) => v !== null && v !== undefined).map(([k, v]) => 
+    const infoRows = Object.entries(exportData.basicInfo).filter(([k, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => 
       new TableRow({
         children: [
           new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: k, bold: true })] })] }),
-          new TableCell({ children: [new Paragraph({ text: typeof v === 'object' ? JSON.stringify(v) : String(v) })] }),
+          new TableCell({ children: [new Paragraph({ text: String(v) })] }),
         ],
       })
     );
     
     if (infoRows.length > 0) {
-      children.push(new Table({
-        rows: infoRows,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      }));
+      children.push(new Table({ rows: infoRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
     }
   }
   
-  if (exportData.timeNodes?.length) {
+  // 2. 费用相关信息
+  if (exportData.feeInfo) {
     children.push(new Paragraph({
-      text: '时间节点',
+      text: '费用相关信息',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
     
-    const timeRows = [
+    const feeRows = Object.entries(exportData.feeInfo).filter(([k, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => 
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '标题', bold: true })] })] }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '时间', bold: true })] })] }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '说明', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: k, bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ text: String(v) })] }),
         ],
-      }),
-      ...exportData.timeNodes.map((item: any) =>
-        new TableRow({
-          children: [
-            new TableCell({ children: [new Paragraph({ text: item.title || '' })] }),
-            new TableCell({ children: [new Paragraph({ text: item.time || '' })] }),
-            new TableCell({ children: [new Paragraph({ text: item.description || '' })] }),
-          ],
-        })
-      ),
-    ];
+      })
+    );
     
-    children.push(new Table({
-      rows: timeRows,
-      width: { size: 100, type: WidthType.PERCENTAGE },
-    }));
+    if (feeRows.length > 0) {
+      children.push(new Table({ rows: feeRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+    }
   }
   
+  // 3. 投标提交要求
   if (exportData.submissionRequirements?.length) {
     children.push(new Paragraph({
-      text: '提交要求',
+      text: '投标提交要求',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
@@ -290,39 +235,73 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
       ),
     ];
     
-    children.push(new Table({
-      rows: subRows,
-      width: { size: 100, type: WidthType.PERCENTAGE },
-    }));
+    children.push(new Table({ rows: subRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
   }
   
-  if (exportData.feeInfo) {
+  // 4. 文档框架
+  if (exportData.framework?.length) {
     children.push(new Paragraph({
-      text: '费用信息',
+      text: '文档框架',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
     
-    const feeRows = Object.entries(exportData.feeInfo).filter(([k, v]) => v !== null && v !== undefined).map(([k, v]) => 
+    const frameRows = [
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: k, bold: true })] })] }),
-          new TableCell({ children: [new Paragraph({ text: String(v) })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '章节', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '标题', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '页码', bold: true })] })] }),
         ],
-      })
-    );
+      }),
+      ...exportData.framework.map((item: any) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.chapter || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.title || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.pageNum || '' })] }),
+          ],
+        })
+      ),
+    ];
     
-    if (feeRows.length > 0) {
-      children.push(new Table({
-        rows: feeRows,
-        width: { size: 100, type: WidthType.PERCENTAGE },
-      }));
-    }
+    children.push(new Table({ rows: frameRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
   }
   
+  // 5. 关键时间节点
+  if (exportData.timeNodes?.length) {
+    children.push(new Paragraph({
+      text: '关键时间节点',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 },
+    }));
+    
+    const timeRows = [
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '节点名称', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '时间', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '地点', bold: true })] })] }),
+        ],
+      }),
+      ...exportData.timeNodes.map((item: any) =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ text: item.name || item.title || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.time || '' })] }),
+            new TableCell({ children: [new Paragraph({ text: item.location || '' })] }),
+          ],
+        })
+      ),
+    ];
+    
+    children.push(new Table({ rows: timeRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+  }
+  
+  // 6. 技术规格要求
   if (exportData.technicalSpecs?.length) {
     children.push(new Paragraph({
-      text: '技术规格',
+      text: '技术规格要求',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
@@ -346,12 +325,10 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
       ),
     ];
     
-    children.push(new Table({
-      rows: specRows,
-      width: { size: 100, type: WidthType.PERCENTAGE },
-    }));
+    children.push(new Table({ rows: specRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
   }
   
+  // 7. 评分细则
   if (exportData.scoringItems?.length) {
     children.push(new Paragraph({
       text: '评分细则',
@@ -380,15 +357,13 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
       ),
     ];
     
-    children.push(new Table({
-      rows: scoreRows,
-      width: { size: 100, type: WidthType.PERCENTAGE },
-    }));
+    children.push(new Table({ rows: scoreRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
   }
   
+  // 8. 资质要求核对清单
   if (exportData.checklist?.length) {
     children.push(new Paragraph({
-      text: '核对清单',
+      text: '资质要求核对清单',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 300, after: 150 },
     }));
@@ -396,6 +371,7 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
     const checkRows = [
       new TableRow({
         children: [
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '类别', bold: true })] })] }),
           new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '项目', bold: true })] })] }),
           new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '要求', bold: true })] })] }),
           new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '是否具备', bold: true })] })] }),
@@ -404,6 +380,7 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
       ...exportData.checklist.map((item: any) =>
         new TableRow({
           children: [
+            new TableCell({ children: [new Paragraph({ text: item.category || '' })] }),
             new TableCell({ children: [new Paragraph({ text: item.itemName || '' })] }),
             new TableCell({ children: [new Paragraph({ text: item.requirement || '' })] }),
             new TableCell({ children: [new Paragraph({ text: item.isMet ? '是' : '否' })] }),
@@ -412,16 +389,10 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
       ),
     ];
     
-    children.push(new Table({
-      rows: checkRows,
-      width: { size: 100, type: WidthType.PERCENTAGE },
-    }));
+    children.push(new Table({ rows: checkRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
   }
   
-  const doc = new Document({
-    sections: [{ children }],
-  });
-  
+  const doc = new Document({ sections: [{ children }] });
   return Buffer.from(await Packer.toBuffer(doc)) as unknown as Uint8Array;
 }
 
