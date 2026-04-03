@@ -60,6 +60,7 @@ interface InterpretationDetail {
   parseProgress: number;
   parseError: string | null;
   extractAccuracy: number | null;
+  extractMeta?: Record<string, unknown> | null;
   specCount: number;
   scoringCount: number;
   checklistCount: number;

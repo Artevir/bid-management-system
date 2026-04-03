@@ -4052,6 +4052,7 @@ export const bidDocumentInterpretations = pgTable('bid_document_interpretations'
   parseProgress: integer('parse_progress').default(0), // 解析进度
   parseError: text('parse_error'), // 解析错误信息
   extractAccuracy: integer('extract_accuracy'), // 提取精度（百分比）
+  extractMeta: text('extract_meta'), // 提取证据/置信度等元数据（JSON）
   
   // 时间节点（提取）
   submissionDeadline: timestamp('submission_deadline'), // 投标截止时间

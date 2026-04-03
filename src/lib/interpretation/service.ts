@@ -71,6 +71,7 @@ export interface ParseResult {
   docRequirements: Record<string, unknown>;
   otherRequirements: Record<string, unknown>;
   documentFramework: FrameworkItem[];
+  evidence?: Record<string, unknown>;
 }
 
 export interface TechnicalSpecItem {
@@ -211,6 +212,7 @@ export async function getInterpretationById(id: number) {
     personnelRequirements: item.personnelRequirements ? JSON.parse(item.personnelRequirements) : null,
     docRequirements: item.docRequirements ? JSON.parse(item.docRequirements) : null,
     otherRequirements: item.otherRequirements ? JSON.parse(item.otherRequirements) : null,
+    extractMeta: item.extractMeta ? JSON.parse(item.extractMeta) : null,
     tags: item.tags ? JSON.parse(item.tags) : [],
   };
 }
@@ -390,6 +392,32 @@ async function loadDocumentBuffer(documentUrl: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
+function computeExtractAccuracy(meta: unknown): number | null {
+  if (!meta || typeof meta !== 'object') return null;
+  const scores: number[] = [];
+
+  const visit = (node: any) => {
+    if (!node) return;
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item);
+      return;
+    }
+    if (typeof node === 'object') {
+      const confidence = (node as any).confidence;
+      if (typeof confidence === 'number' && Number.isFinite(confidence)) {
+        const normalized = Math.max(0, Math.min(1, confidence));
+        scores.push(normalized);
+      }
+      for (const value of Object.values(node)) visit(value);
+    }
+  };
+
+  visit(meta);
+  if (scores.length === 0) return null;
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  return Math.round(avg * 100);
+}
+
 /**
  * 使用LLM解析招标文件
  */
@@ -515,7 +543,16 @@ export async function parseDocumentWithLLM(
 2. 资格条件要区分必须满足的和可选的
 3. 评分项要标注分值和评分方法
 4. 技术参数要注明是否为关键参数
-5. 对不确定的内容，请标注"待确认"`;
+5. 对不确定的内容，请标注"待确认"
+6. 在输出中增加 evidence 字段，用于记录每个关键字段的置信度与证据引用：
+   - confidence: 0~1 的数值
+   - quote: 从原文中摘取的一小段原句（尽量精确、可核对）
+   evidence 示例（你可以自行补全字段）： 
+   {
+     "basicInfo": {
+       "projectName": { "confidence": 0.9, "quote": "项目名称：xxx" }
+     }
+   }`;
 
   const parseJson = (content: string) => {
     const fenced = content.match(/```json\s*([\s\S]*?)\s*```/i);
@@ -583,7 +620,7 @@ export async function executeInterpretation(
   }
 
   const startTime = Date.now();
-  const extractAccuracy = process.env.INTERPRETATION_EXTRACT_ACCURACY
+  const fallbackAccuracy = process.env.INTERPRETATION_EXTRACT_ACCURACY
     ? Number(process.env.INTERPRETATION_EXTRACT_ACCURACY)
     : 85;
 
@@ -600,7 +637,12 @@ export async function executeInterpretation(
       .where(eq(bidDocumentInterpretations.id, id));
 
     // 执行LLM解析
-    const parseResult = await parseDocumentWithLLM(interpretation.documentUrl, interpretation.documentExt as DocumentExt, customHeaders);
+    const parseResult = await parseDocumentWithLLM(
+      interpretation.documentUrl,
+      interpretation.documentExt as DocumentExt,
+      customHeaders
+    );
+    const computedAccuracy = computeExtractAccuracy((parseResult as any).evidence);
 
     // 更新进度
     await db
@@ -612,7 +654,7 @@ export async function executeInterpretation(
       .where(eq(bidDocumentInterpretations.id, id));
 
     // 保存解析结果
-    await saveParseResult(id, parseResult);
+    await saveParseResult(id, parseResult, (parseResult as any).evidence);
 
     // 更新状态为完成
     const duration = Date.now() - startTime;
@@ -621,7 +663,7 @@ export async function executeInterpretation(
       .set({
         status: 'completed',
         parseProgress: 100,
-        extractAccuracy,
+        extractAccuracy: computedAccuracy ?? fallbackAccuracy,
         parseDuration: duration,
         updatedAt: new Date(),
       })
@@ -652,7 +694,7 @@ export async function executeInterpretation(
 /**
  * 保存解析结果到数据库
  */
-async function saveParseResult(id: number, result: ParseResult): Promise<void> {
+async function saveParseResult(id: number, result: ParseResult, extractMeta?: unknown): Promise<void> {
   await db.transaction(async (tx) => {
     await tx
       .update(bidDocumentInterpretations)
@@ -672,6 +714,7 @@ async function saveParseResult(id: number, result: ParseResult): Promise<void> {
         otherRequirements: JSON.stringify(result.otherRequirements),
         specCount: result.technicalSpecs?.length || 0,
         scoringCount: result.scoringItems?.length || 0,
+        extractMeta: extractMeta ? JSON.stringify(extractMeta) : null,
         updatedAt: new Date(),
       })
       .where(eq(bidDocumentInterpretations.id, id));
