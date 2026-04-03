@@ -126,9 +126,7 @@ export default function LLMConfigsPage() {
     try {
       const res = await fetch('/api/llm/configs?models=true');
       const data = await res.json();
-      if (data.models) {
-        setModels(data.models);
-      }
+      setModels(Array.isArray(data?.models) ? data.models : []);
     } catch (error) {
       console.error('加载模型列表失败:', error);
     }
@@ -147,7 +145,7 @@ export default function LLMConfigsPage() {
 
       const res = await fetch(`/api/llm/configs?${params.toString()}`);
       const data = await res.json();
-      if (data.configs) {
+      if (Array.isArray(data?.configs)) {
         // 客户端过滤搜索
         if (searchQuery) {
           setConfigs(
@@ -160,7 +158,7 @@ export default function LLMConfigsPage() {
         } else {
           setConfigs(data.configs);
         }
-      }
+      } else setConfigs([]);
     } catch (error) {
       console.error('加载配置失败:', error);
     } finally {
