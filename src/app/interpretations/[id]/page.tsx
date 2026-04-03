@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Table,
   TableBody,
@@ -134,6 +135,25 @@ export default function InterpretationDetailPage() {
   const [data, setData] = useState<InterpretationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+
+  const getEvidence = (
+    meta: Record<string, unknown> | null | undefined,
+    path: string[]
+  ): { confidence?: number; quote?: string } | null => {
+    if (!meta) return null;
+    let current: any = meta;
+    for (const key of path) {
+      if (!current || typeof current !== 'object') return null;
+      current = current[key];
+    }
+    if (!current || typeof current !== 'object') return null;
+    const confidence = (current as any).confidence;
+    const quote = (current as any).quote;
+    return {
+      confidence: typeof confidence === 'number' ? confidence : undefined,
+      quote: typeof quote === 'string' ? quote : undefined,
+    };
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -616,6 +636,130 @@ export default function InterpretationDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">证据与置信度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {data.extractMeta ? (
+                <Accordion type="single" collapsible className="w-full">
+                  {[
+                    {
+                      key: 'basicInfo.projectName',
+                      label: '项目名称',
+                      value: data.basicInfo?.projectName,
+                      path: ['basicInfo', 'projectName'],
+                    },
+                    {
+                      key: 'basicInfo.projectCode',
+                      label: '项目编号',
+                      value: data.basicInfo?.projectCode,
+                      path: ['basicInfo', 'projectCode'],
+                    },
+                    {
+                      key: 'basicInfo.tenderOrganization',
+                      label: '招标单位',
+                      value: data.basicInfo?.tenderOrganization,
+                      path: ['basicInfo', 'tenderOrganization'],
+                    },
+                    {
+                      key: 'basicInfo.tenderAgent',
+                      label: '招标代理',
+                      value: data.basicInfo?.tenderAgent,
+                      path: ['basicInfo', 'tenderAgent'],
+                    },
+                    {
+                      key: 'basicInfo.projectBudget',
+                      label: '项目预算',
+                      value: data.basicInfo?.projectBudget,
+                      path: ['basicInfo', 'projectBudget'],
+                    },
+                    {
+                      key: 'basicInfo.tenderMethod',
+                      label: '招标方式',
+                      value: data.basicInfo?.tenderMethod,
+                      path: ['basicInfo', 'tenderMethod'],
+                    },
+                    {
+                      key: 'feeInfo.documentFee',
+                      label: '招标文件费用',
+                      value: (data.feeInfo as any)?.documentFee,
+                      path: ['feeInfo', 'documentFee'],
+                    },
+                    {
+                      key: 'feeInfo.bidBond',
+                      label: '投标保证金',
+                      value: (data.feeInfo as any)?.bidBond,
+                      path: ['feeInfo', 'bidBond'],
+                    },
+                    {
+                      key: 'feeInfo.bidBondDeadline',
+                      label: '保证金截止',
+                      value: (data.feeInfo as any)?.bidBondDeadline,
+                      path: ['feeInfo', 'bidBondDeadline'],
+                    },
+                    {
+                      key: 'submissionRequirements.submissionLocation',
+                      label: '提交地点',
+                      value: (data.submissionRequirements as any)?.submissionLocation,
+                      path: ['submissionRequirements', 'submissionLocation'],
+                    },
+                    {
+                      key: 'submissionRequirements.contactPerson',
+                      label: '联系人',
+                      value: (data.submissionRequirements as any)?.contactPerson,
+                      path: ['submissionRequirements', 'contactPerson'],
+                    },
+                    {
+                      key: 'submissionRequirements.contactPhone',
+                      label: '联系电话',
+                      value: (data.submissionRequirements as any)?.contactPhone,
+                      path: ['submissionRequirements', 'contactPhone'],
+                    },
+                  ].map((item) => {
+                    const evidence = getEvidence(data.extractMeta || null, item.path);
+                    const confidencePct =
+                      typeof evidence?.confidence === 'number'
+                        ? Math.round(Math.max(0, Math.min(1, evidence.confidence)) * 100)
+                        : null;
+                    return (
+                      <AccordionItem key={item.key} value={item.key}>
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex w-full items-center justify-between gap-3 pr-2">
+                            <div className="flex items-center gap-2">
+                              <Link2 className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{item.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {item.value ? String(item.value) : '-'}
+                              </Badge>
+                              <Badge className="text-xs">
+                                {confidencePct === null ? '-' : `${confidencePct}%`}
+                              </Badge>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-2">
+                            <div className="text-sm text-muted-foreground">证据引用</div>
+                            <div className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+                              {evidence?.quote || '暂无证据'}
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              ) : (
+                <p className="text-muted-foreground text-center py-6">
+                  暂无证据数据。请重新解析生成 evidence（quote + confidence）。
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* 时间节点 */}
