@@ -4284,8 +4284,8 @@ export const bidDocumentFramework = pgTable('bid_document_framework', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_framework_interpretation_idx').on(table.interpretationId),
-  parentIdx: uniqueIndex('bid_framework_parent_idx').on(table.parentId),
+  interpretationIdx: index('bid_framework_interpretation_idx').on(table.interpretationId),
+  parentIdx: index('bid_framework_parent_idx').on(table.parentId),
 }));
 
 // ============================================
@@ -4308,9 +4308,9 @@ export const bidInterpretationLogs = pgTable('bid_interpretation_logs', {
   
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_interpret_log_interpretation_idx').on(table.interpretationId),
-  operatorIdx: uniqueIndex('bid_interpret_log_operator_idx').on(table.operatorId),
-  timeIdx: uniqueIndex('bid_interpret_log_time_idx').on(table.operationTime),
+  interpretationIdx: index('bid_interpret_log_interpretation_idx').on(table.interpretationId),
+  operatorIdx: index('bid_interpret_log_operator_idx').on(table.operatorId),
+  timeIdx: index('bid_interpret_log_time_idx').on(table.operationTime),
 }));
 
 // ============================================
@@ -4343,10 +4343,10 @@ export const bidTimeReminders = pgTable('bid_time_reminders', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  interpretationIdx: uniqueIndex('bid_time_reminder_interpretation_idx').on(table.interpretationId),
-  userIdx: uniqueIndex('bid_time_reminder_user_idx').on(table.userId),
-  targetTimeIdx: uniqueIndex('bid_time_reminder_target_time_idx').on(table.targetTime),
-  isRemindedIdx: uniqueIndex('bid_time_reminder_is_reminded_idx').on(table.isReminded),
+  interpretationIdx: index('bid_time_reminder_interpretation_idx').on(table.interpretationId),
+  userIdx: index('bid_time_reminder_user_idx').on(table.userId),
+  targetTimeIdx: index('bid_time_reminder_target_time_idx').on(table.targetTime),
+  isRemindedIdx: index('bid_time_reminder_is_reminded_idx').on(table.isReminded),
 }));
 
 // ============================================
