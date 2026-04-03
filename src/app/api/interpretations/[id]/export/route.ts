@@ -14,6 +14,7 @@ import {
 } from '@/lib/interpretation/service';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, IParagraphOptions } from 'docx';
+import PdfPrinter from 'pdfmake';
 
 function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
   return {
@@ -244,6 +245,133 @@ async function generateWord(exportData: any, filename: string): Promise<Uint8Arr
   return Buffer.from(await Packer.toBuffer(doc)) as unknown as Uint8Array;
 }
 
+function generateTxt(exportData: any): string {
+  let content = '';
+  
+  if (exportData.interpretation) {
+    content += '=== 基本信息 ===\n';
+    Object.entries(exportData.interpretation).forEach(([k, v]) => {
+      content += `${k}: ${v}\n`;
+    });
+    content += '\n';
+  }
+  
+  if (exportData.basicInfo) {
+    content += '=== 详细信息 ===\n';
+    Object.entries(exportData.basicInfo).forEach(([k, v]) => {
+      content += `${k}: ${v}\n`;
+    });
+    content += '\n';
+  }
+  
+  if (exportData.timeNodes?.length) {
+    content += '=== 时间节点 ===\n';
+    exportData.timeNodes.forEach((item: any) => {
+      content += `- ${item.title}: ${item.time}\n`;
+    });
+    content += '\n';
+  }
+  
+  if (exportData.technicalSpecs?.length) {
+    content += '=== 技术规格 ===\n';
+    exportData.technicalSpecs.forEach((item: any) => {
+      content += `[${item.category}] ${item.name}: ${item.requirement}\n`;
+    });
+    content += '\n';
+  }
+  
+  if (exportData.scoringItems?.length) {
+    content += '=== 评分细则 ===\n';
+    exportData.scoringItems.forEach((item: any) => {
+      content += `[${item.category}] ${item.itemName}: ${item.score}分 - ${item.criteria}\n`;
+    });
+    content += '\n';
+  }
+  
+  if (exportData.checklist?.length) {
+    content += '=== 核对清单 ===\n';
+    exportData.checklist.forEach((item: any) => {
+      content += `[${item.isMet ? '✓' : '✗'}] ${item.itemName}: ${item.requirement}\n`;
+    });
+    content += '\n';
+  }
+  
+  return content;
+}
+
+function generatePdf(exportData: any): Uint8Array {
+  const fonts = {
+    Helvetica: {
+      normal: 'Helvetica',
+      bold: 'Helvetica-Bold',
+      italics: 'Helvetica-Oblique',
+      bolditalics: 'Helvetica-BoldOblique',
+    },
+  };
+  
+  const pdfPrinter = new PdfPrinter(fonts);
+  
+  const content: any[] = [];
+  
+  if (exportData.interpretation) {
+    content.push({ text: '基本信息', style: 'header', pageBreak: 'before' });
+    const tableRows = Object.entries(exportData.interpretation).map(([k, v]) => [
+      { text: k, bold: true },
+      String(v ?? ''),
+    ]);
+    content.push({
+      table: { body: tableRows },
+      layout: 'lightHorizontalLines',
+    });
+  }
+  
+  if (exportData.technicalSpecs?.length) {
+    content.push({ text: '技术规格', style: 'header', pageBreak: 'before' });
+    const tableRows = [
+      [{ text: '类别', bold: true }, { text: '名称', bold: true }, { text: '要求', bold: true }],
+      ...exportData.technicalSpecs.map((item: any) => [item.category || '', item.name || '', item.requirement || '']),
+    ];
+    content.push({ table: { body: tableRows }, layout: 'lightHorizontalLines' });
+  }
+  
+  if (exportData.scoringItems?.length) {
+    content.push({ text: '评分细则', style: 'header', pageBreak: 'before' });
+    const tableRows = [
+      [{ text: '类别', bold: true }, { text: '项目', bold: true }, { text: '分值', bold: true }, { text: '评分标准', bold: true }],
+      ...exportData.scoringItems.map((item: any) => [
+        item.category || '',
+        item.itemName || '',
+        String(item.score ?? ''),
+        item.criteria || '',
+      ]),
+    ];
+    content.push({ table: { body: tableRows }, layout: 'lightHorizontalLines' });
+  }
+  
+  if (exportData.checklist?.length) {
+    content.push({ text: '核对清单', style: 'header', pageBreak: 'before' });
+    const tableRows = [
+      [{ text: '项目', bold: true }, { text: '要求', bold: true }, { text: '是否具备', bold: true }],
+      ...exportData.checklist.map((item: any) => [
+        item.itemName || '',
+        item.requirement || '',
+        item.isMet ? '是' : '否',
+      ]),
+    ];
+    content.push({ table: { body: tableRows }, layout: 'lightHorizontalLines' });
+  }
+  
+  const docDefinition: any = {
+    content,
+    styles: {
+      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
+    },
+    defaultStyle: { fontSize: 10 },
+  };
+  
+  return pdfPrinter.createPdfKitDocument(docDefinition) as unknown as Uint8Array;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -314,6 +442,28 @@ export async function GET(
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'Content-Disposition': `attachment; filename="${filename}.docx"`,
+        },
+      });
+    }
+
+    if (format === 'txt') {
+      const content = generateTxt(exportData);
+      return new NextResponse(content, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${filename}.txt"`,
+        },
+      });
+    }
+
+    if (format === 'pdf') {
+      const buffer = generatePdf(exportData);
+      const bytes = Uint8Array.from(buffer);
+      const body = new Blob([bytes], { type: 'application/pdf' });
+      return new NextResponse(body, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}.pdf"`,
         },
       });
     }

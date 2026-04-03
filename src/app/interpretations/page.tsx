@@ -379,6 +379,18 @@ export default function InterpretationsPage() {
                                     导出 Word
                                   </Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/api/interpretations/${item.id}/export?format=txt`} target="_blank">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    导出 TXT
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/api/interpretations/${item.id}/export?format=pdf`} target="_blank">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    导出 PDF
+                                  </Link>
+                                </DropdownMenuItem>
                               </>
                             )}
                             <DropdownMenuSeparator />
