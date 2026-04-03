@@ -127,7 +127,7 @@ async function generateWord(exportData: any, filename: string): Promise<Buffer> 
     const infoRows = Object.entries(exportData.interpretation).map(([k, v]) => 
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ text: k, bold: true })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: k, bold: true })] })] }),
           new TableCell({ children: [new Paragraph({ text: String(v ?? '') })] }),
         ],
       })
@@ -149,9 +149,9 @@ async function generateWord(exportData: any, filename: string): Promise<Buffer> 
     const specRows = [
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ text: '类别', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '名称', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '要求', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '类别', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '名称', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '要求', bold: true })] })] }),
         ],
       }),
       ...exportData.technicalSpecs.map((item: any) =>
@@ -181,10 +181,10 @@ async function generateWord(exportData: any, filename: string): Promise<Buffer> 
     const scoreRows = [
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ text: '类别', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '项目', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '分值', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '评分标准', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '类别', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '项目', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '分值', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '评分标准', bold: true })] })] }),
         ],
       }),
       ...exportData.scoringItems.map((item: any) =>
@@ -215,9 +215,9 @@ async function generateWord(exportData: any, filename: string): Promise<Buffer> 
     const checkRows = [
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ text: '项目', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '要求', bold: true })] }),
-          new TableCell({ children: [new Paragraph({ text: '是否具备', bold: true })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '项目', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '要求', bold: true })] })] }),
+          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: '是否具备', bold: true })] })] }),
         ],
       }),
       ...exportData.checklist.map((item: any) =>
