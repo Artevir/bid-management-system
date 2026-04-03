@@ -219,15 +219,16 @@ export default function InterpretationUploadPage() {
       const formData = new FormData();
       formData.append('file', uploadedFile.file);
       
-      const uploadResponse = await fetch('/api/upload', {
+      const uploadResponse = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
       });
 
       const uploadResult = await uploadResponse.json();
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || '文件上传失败');
+      if (!uploadResponse.ok || !uploadResult?.success || !uploadResult?.fileId) {
+        throw new Error(uploadResult?.error || uploadResult?.message || '文件上传失败');
       }
+      const documentUrl = `${globalThis.location?.origin || ''}/api/files/${uploadResult.fileId}/download`;
 
       setFiles((prev) =>
         prev.map((f, i) => (i === index ? { ...f, progress: 60 } : f))
@@ -240,7 +241,7 @@ export default function InterpretationUploadPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentName: uploadedFile.file.name,
-          documentUrl: uploadResult.data.url,
+          documentUrl,
           documentExt: ext,
           documentSize: uploadedFile.file.size,
           documentMd5: md5,
