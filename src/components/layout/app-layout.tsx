@@ -226,6 +226,17 @@ const navigation: NavItem[] = [
       { name: '对话测试', href: '/prompts/generate', icon: Sparkles },
     ],
   },
+  {
+    name: 'LLM配置',
+    href: '/llm',
+    icon: Cpu,
+    children: [
+      { name: '模型配置', href: '/llm', icon: Settings },
+      { name: '模型管理', href: '/llm/models', icon: Cpu },
+      { name: '对话测试', href: '/llm/chat', icon: MessageSquare },
+      { name: '用量统计', href: '/llm/usage', icon: BarChart3 },
+    ],
+  },
   { 
     name: 'AI图片生成', 
     href: '/image/generate', 
@@ -519,49 +530,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <FileStack className="h-4 w-4" />
             文件管理
           </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-                <span className="flex items-center gap-3">
-                  <Cpu className="h-4 w-4" />
-                  LLM配置
-                </span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link href="/llm/models" className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4" />
-                  模型管理
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/llm" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  模型配置
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/llm/chat" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  对话测试
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/llm/usage" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  用量统计
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/ai-governance" className="flex items-center gap-2">
-                  <BrainCircuit className="h-4 w-4" />
-                  AI治理
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground">
