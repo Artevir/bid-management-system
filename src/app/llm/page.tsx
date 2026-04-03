@@ -63,6 +63,12 @@ interface LLMConfig {
   creatorName: string | null;
 }
 
+// 详情接口返回（包含掩码后的 apiKey）
+interface LLMConfigDetail extends LLMConfig {
+  apiKey?: string | null;
+  apiEndpoint?: string | null;
+}
+
 // 模型接口
 interface Model {
   id: string;
@@ -186,7 +192,7 @@ export default function LLMConfigsPage() {
       try {
         const res = await fetch(`/api/llm/configs/${config.id}`);
         const data = await res.json();
-        const fullConfig: LLMConfig | null = data?.config || null;
+        const fullConfig: LLMConfigDetail | null = data?.config || null;
         setFormData({
           name: config.name,
           code: config.code || '',
