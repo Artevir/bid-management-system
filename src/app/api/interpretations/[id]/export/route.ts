@@ -108,8 +108,10 @@ function generateExcel(exportData: any, filename: string): Buffer {
   return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
 }
 
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, IParagraphOptions, TableRowChild } from 'docx';
+
 async function generateWord(exportData: any, filename: string): Promise<Buffer> {
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
   
   children.push(new Paragraph({
     text: exportData.interpretation?.projectName || '标书解读结果',
