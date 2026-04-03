@@ -164,6 +164,7 @@ export async function getAvailableModels() {
       supportsVision: m.supportsVision,
       supportsThinking: m.supportsThinking,
       isFeatured: m.isFeatured,
+      officialDocUrl: m.officialDocUrl,
     }));
   } catch (error) {
     console.warn('[LLM Service] 从数据库加载模型失败，使用硬编码列表:', error);
@@ -205,6 +206,8 @@ export async function getConfigList(params?: {
       description: llmConfigs.description,
       provider: llmConfigs.provider,
       modelId: llmConfigs.modelId,
+      apiEndpoint: llmConfigs.apiEndpoint,
+      hasApiKey: sql<boolean>`(${llmConfigs.apiKey} is not null and ${llmConfigs.apiKey} <> '')`,
       defaultTemperature: llmConfigs.defaultTemperature,
       maxTokens: llmConfigs.maxTokens,
       defaultThinking: llmConfigs.defaultThinking,

@@ -49,6 +49,8 @@ interface LLMConfig {
   description: string | null;
   provider: string;
   modelId: string;
+  apiEndpoint?: string | null;
+  hasApiKey?: boolean;
   defaultTemperature: string;
   maxTokens: number;
   defaultThinking: boolean;
@@ -67,6 +69,7 @@ interface Model {
   provider: string;
   name: string;
   description?: string;
+  officialDocUrl?: string | null;
 }
 
 // 提供商配置
@@ -178,21 +181,42 @@ export default function LLMConfigsPage() {
   };
 
   const handleEdit = (config: LLMConfig) => {
-    setEditingConfig(config);
-    setFormData({
-      name: config.name,
-      code: config.code || '',
-      description: config.description || '',
-      provider: config.provider,
-      modelId: config.modelId,
-      apiKey: '******',
-      apiEndpoint: '',
-      defaultTemperature: config.defaultTemperature,
-      maxTokens: config.maxTokens,
-      defaultThinking: config.defaultThinking,
-      defaultCaching: config.defaultCaching,
-    });
-    setDialogOpen(true);
+    (async () => {
+      setEditingConfig(config);
+      try {
+        const res = await fetch(`/api/llm/configs/${config.id}`);
+        const data = await res.json();
+        const fullConfig: LLMConfig | null = data?.config || null;
+        setFormData({
+          name: config.name,
+          code: config.code || '',
+          description: config.description || '',
+          provider: config.provider,
+          modelId: config.modelId,
+          apiKey: fullConfig?.apiKey ? String(fullConfig.apiKey) : '******',
+          apiEndpoint: fullConfig?.apiEndpoint ? String(fullConfig.apiEndpoint) : '',
+          defaultTemperature: config.defaultTemperature,
+          maxTokens: config.maxTokens,
+          defaultThinking: config.defaultThinking,
+          defaultCaching: config.defaultCaching,
+        });
+      } catch {
+        setFormData({
+          name: config.name,
+          code: config.code || '',
+          description: config.description || '',
+          provider: config.provider,
+          modelId: config.modelId,
+          apiKey: '******',
+          apiEndpoint: config.apiEndpoint ? String(config.apiEndpoint) : '',
+          defaultTemperature: config.defaultTemperature,
+          maxTokens: config.maxTokens,
+          defaultThinking: config.defaultThinking,
+          defaultCaching: config.defaultCaching,
+        });
+      }
+      setDialogOpen(true);
+    })();
   };
 
   const handleSave = async () => {
@@ -258,6 +282,7 @@ export default function LLMConfigsPage() {
 
   // 根据提供商过滤模型
   const filteredModels = models.filter((m) => m.provider === formData.provider);
+  const selectedModel = models.find((m) => m.id === formData.modelId);
 
   return (
     <div className="space-y-6">
@@ -372,6 +397,11 @@ export default function LLMConfigsPage() {
                     <span>Temperature: {config.defaultTemperature}</span>
                     <span>Max Tokens: {config.maxTokens}</span>
                   </div>
+                  {config.apiEndpoint && (
+                    <div className="text-xs text-muted-foreground break-all">
+                      API: {config.apiEndpoint}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     {config.defaultThinking && (
                       <Badge variant="outline" className="text-xs">
@@ -381,6 +411,11 @@ export default function LLMConfigsPage() {
                     {config.defaultCaching && (
                       <Badge variant="outline" className="text-xs">
                         缓存
+                      </Badge>
+                    )}
+                    {config.hasApiKey && (
+                      <Badge variant="outline" className="text-xs">
+                        Key已配置
                       </Badge>
                     )}
                   </div>
@@ -530,6 +565,20 @@ export default function LLMConfigsPage() {
               </div>
             </div>
 
+            {selectedModel?.officialDocUrl && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">官方文档：</span>
+                <Link
+                  href={selectedModel.officialDocUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  {selectedModel.officialDocUrl}
+                </Link>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="apiKey">API Key</Label>
@@ -540,7 +589,7 @@ export default function LLMConfigsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, apiKey: e.target.value })
                   }
-                  placeholder="选填，默认使用系统配置"
+                  placeholder="必填（用于服务端调用），保存后仅显示掩码"
                 />
               </div>
               <div>
@@ -551,7 +600,7 @@ export default function LLMConfigsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, apiEndpoint: e.target.value })
                   }
-                  placeholder="选填，自定义API地址"
+                  placeholder="如：https://api.openai.com 或自建网关地址"
                 />
               </div>
             </div>
