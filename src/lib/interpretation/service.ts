@@ -566,6 +566,106 @@ export async function parseDocumentWithLLM(
     }
   };
 
+  const parseJsonArray = (content: string) => {
+    const fenced = content.match(/```json\s*([\s\S]*?)\s*```/i);
+    const candidate = fenced?.[1] || content;
+    const jsonMatch = candidate.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return null;
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch {
+      return null;
+    }
+  };
+
+  const extractTechnicalSpecsWithLLM = async (fullText: string) => {
+    const chunkChars = process.env.LLM_SPECS_CHUNK_CHARS ? Number(process.env.LLM_SPECS_CHUNK_CHARS) : 12000;
+    const maxChunks = process.env.LLM_SPECS_MAX_CHUNKS ? Number(process.env.LLM_SPECS_MAX_CHUNKS) : 8;
+    const maxItemsPerChunk = process.env.LLM_SPECS_MAX_ITEMS_PER_CHUNK
+      ? Number(process.env.LLM_SPECS_MAX_ITEMS_PER_CHUNK)
+      : 50;
+
+    const chunks: string[] = [];
+    for (let i = 0; i < fullText.length; i += chunkChars) {
+      chunks.push(fullText.slice(i, i + chunkChars));
+      if (chunks.length >= maxChunks) break;
+    }
+
+    const all: TechnicalSpecItem[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const messages = [
+        {
+          role: 'system' as const,
+          content:
+            `你是一个严格的“技术参数/规格”抽取器。\n` +
+            `只输出 JSON 数组，不要输出任何解释。\n` +
+            `数组元素结构：{\n` +
+            `  "specCategory": "规格分类（例如：服务器/软件/网络/性能/安全/服务/资质/其他）",\n` +
+            `  "specSubCategory": "子分类（可选）",\n` +
+            `  "specName": "参数名称",\n` +
+            `  "specValue": "要求值（可选）",\n` +
+            `  "specUnit": "单位（可选）",\n` +
+            `  "specRequirement": "要求描述（可选）",\n` +
+            `  "isKeyParam": true/false,\n` +
+            `  "isMandatory": true/false,\n` +
+            `  "originalText": "原文摘录（尽量精确）",\n` +
+            `  "pageNumber": 1\n` +
+            `}\n` +
+            `要求：\n` +
+            `- 只抽取文档中“技术参数/规格/配置/性能指标/验收指标”等可核对项\n` +
+            `- 尽量完整，最多输出 ${maxItemsPerChunk} 条\n` +
+            `- 不要编造，不确定就写在 specRequirement 里并保留原文\n` +
+            `- 如果本段没有技术规格，输出 []`,
+        },
+        {
+          role: 'user' as const,
+          content: `这是第 ${i + 1}/${chunks.length} 段文本：\n\n${chunk}`,
+        },
+      ];
+
+      const response = await generateWithDefaultLLM(messages as any, { temperature: 0.2 });
+      const parsed = parseJsonArray(response.content);
+      if (Array.isArray(parsed)) {
+        all.push(...(parsed as any));
+        continue;
+      }
+
+      const repairMessages = [
+        {
+          role: 'system' as const,
+          content: '你是一个严格的 JSON 修复器。只输出一个合法的 JSON 数组，不要输出任何多余字符。',
+        },
+        {
+          role: 'user' as const,
+          content:
+            '把下面内容转换成一个合法 JSON 数组（补齐缺失引号/逗号/括号，去掉解释文字）。只输出 JSON：\n\n' +
+            response.content,
+        },
+      ];
+      const repaired = await generateWithDefaultLLM(repairMessages as any, { temperature: 0 });
+      const repairedParsed = parseJsonArray(repaired.content);
+      if (Array.isArray(repairedParsed)) {
+        all.push(...(repairedParsed as any));
+      }
+    }
+
+    const dedup = new Map<string, TechnicalSpecItem>();
+    for (const item of all) {
+      if (!item || typeof item !== 'object') continue;
+      const specCategory = String((item as any).specCategory || '').trim();
+      const specName = String((item as any).specName || '').trim();
+      if (!specCategory || !specName) continue;
+      const specValue = String((item as any).specValue || '').trim();
+      const specRequirement = String((item as any).specRequirement || '').trim();
+      const key = `${specCategory.toLowerCase()}|${specName.toLowerCase()}|${specValue.toLowerCase()}|${specRequirement.toLowerCase()}`;
+      if (!dedup.has(key)) dedup.set(key, item as any);
+    }
+
+    return Array.from(dedup.values());
+  };
+
   const messages = [
     { role: 'system' as const, content: systemPrompt },
     {
@@ -581,7 +681,17 @@ export async function parseDocumentWithLLM(
     const response = await generateWithDefaultLLM(messages as any);
 
     const parsed = parseJson(response.content);
-    if (parsed) return parsed as ParseResult;
+    if (parsed) {
+      const enableSecondPass = process.env.INTERPRETATION_ENABLE_SPECS_SECOND_PASS !== 'false';
+      if (enableSecondPass) {
+        const detailedSpecs = await extractTechnicalSpecsWithLLM(textContent);
+        const currentSpecs = Array.isArray((parsed as any).technicalSpecs) ? (parsed as any).technicalSpecs : [];
+        if (detailedSpecs.length > currentSpecs.length) {
+          (parsed as any).technicalSpecs = detailedSpecs;
+        }
+      }
+      return parsed as ParseResult;
+    }
 
     const repairMessages = [
       {
@@ -598,7 +708,17 @@ export async function parseDocumentWithLLM(
     ];
     const repaired = await generateWithDefaultLLM(repairMessages as any, { temperature: 0 });
     const repairedParsed = parseJson(repaired.content);
-    if (repairedParsed) return repairedParsed as ParseResult;
+    if (repairedParsed) {
+      const enableSecondPass = process.env.INTERPRETATION_ENABLE_SPECS_SECOND_PASS !== 'false';
+      if (enableSecondPass) {
+        const detailedSpecs = await extractTechnicalSpecsWithLLM(textContent);
+        const currentSpecs = Array.isArray((repairedParsed as any).technicalSpecs) ? (repairedParsed as any).technicalSpecs : [];
+        if (detailedSpecs.length > currentSpecs.length) {
+          (repairedParsed as any).technicalSpecs = detailedSpecs;
+        }
+      }
+      return repairedParsed as ParseResult;
+    }
 
     throw new Error(`无法解析LLM响应: ${(response.content || '').slice(0, 300)}`);
   } catch (error) {
