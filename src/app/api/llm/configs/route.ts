@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // 判断是获取模型列表还是配置列表
     if (searchParams.get('models') === 'true') {
-      const models = getAvailableModels();
+      const models = await getAvailableModels();
       return NextResponse.json({ models });
     }
 
