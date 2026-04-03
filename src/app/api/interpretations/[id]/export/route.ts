@@ -44,7 +44,7 @@ function buildExportData(interpretation: any, technicalSpecs: any[], scoringItem
   };
 }
 
-function generateExcel(exportData: any, filename: string): Buffer {
+function generateExcel(exportData: any, filename: string): Uint8Array {
   const wb = XLSX.utils.book_new();
   
   if (exportData.interpretation) {
@@ -105,10 +105,10 @@ function generateExcel(exportData: any, filename: string): Buffer {
     XLSX.utils.book_append_sheet(wb, ws, '文档框架');
   }
   
-  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })) as unknown as Uint8Array;
 }
 
-async function generateWord(exportData: any, filename: string): Promise<Buffer> {
+async function generateWord(exportData: any, filename: string): Promise<Uint8Array> {
   const children: (Paragraph | Table)[] = [];
   
   children.push(new Paragraph({
@@ -241,7 +241,7 @@ async function generateWord(exportData: any, filename: string): Promise<Buffer> 
     sections: [{ children }],
   });
   
-  return Buffer.from(await Packer.toBuffer(doc));
+  return Buffer.from(await Packer.toBuffer(doc)) as unknown as Uint8Array;
 }
 
 export async function GET(
