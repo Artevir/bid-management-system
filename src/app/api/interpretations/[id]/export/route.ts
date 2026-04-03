@@ -16,9 +16,42 @@ import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
 
 function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
+  // 字段名映射：英文 -> 中文
+  const fieldNameMap: Record<string, string> = {
+    projectName: '项目名称',
+    projectCode: '项目编号',
+    tenderOrganization: '招标单位',
+    tenderAgent: '招标代理',
+    projectBudget: '项目预算',
+    projectOverview: '项目概述',
+    fundSource: '资金来源',
+    projectLocation: '项目地点',
+    tenderMethod: '招标方式',
+    tenderScope: '招标范围',
+    documentFee: '招标文件费用',
+    documentFeeDeadline: '招标文件截止时间',
+    bidBond: '投标保证金',
+    bidBondMethod: '保证金缴纳方式',
+    bidBondDeadline: '保证金截止时间',
+    bidBondRefundCondition: '保证金退还条件',
+    performanceBond: '履约保证金',
+  };
+  
+  function translateFields(obj: any): any {
+    if (!obj) return null;
+    const result: any = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      const chineseName = fieldNameMap[k] || k;
+      if (v !== null && v !== undefined && v !== '') {
+        result[chineseName] = v;
+      }
+    });
+    return Object.keys(result).length > 0 ? result : null;
+  }
+  
   return {
-    basicInfo: interpretation.basicInfo,
-    feeInfo: interpretation.feeInfo,
+    basicInfo: translateFields(interpretation.basicInfo),
+    feeInfo: translateFields(interpretation.feeInfo),
     submissionRequirements: interpretation.submissionRequirements,
     framework,
     timeNodes: interpretation.timeNodes,
