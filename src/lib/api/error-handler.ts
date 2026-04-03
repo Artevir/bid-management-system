@@ -117,14 +117,17 @@ export function handleError(error: unknown, path?: string): NextResponse<ErrorRe
   const requestId = crypto.randomUUID();
   const isAppError = error instanceof AppError;
   const statusCode = isAppError ? error.statusCode : 500;
-  const shouldLogStack = !(isAppError && statusCode === 401);
-  const logFn = statusCode >= 500 ? console.error : console.warn;
-
-  logFn(`[API Error][${requestId}]`, {
-    path,
-    error: error instanceof Error ? error.message : String(error),
-    stack: shouldLogStack && error instanceof Error ? error.stack : undefined,
-  });
+  const log4xx = process.env.LOG_API_4XX === 'true';
+  const shouldLog = statusCode >= 500 || log4xx;
+  if (shouldLog) {
+    const shouldLogStack = statusCode >= 500;
+    const logFn = statusCode >= 500 ? console.error : console.warn;
+    logFn(`[API Error][${requestId}]`, {
+      path,
+      error: error instanceof Error ? error.message : String(error),
+      stack: shouldLogStack && error instanceof Error ? error.stack : undefined,
+    });
+  }
 
   // AppError
   if (error instanceof AppError) {
