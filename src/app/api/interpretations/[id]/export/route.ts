@@ -14,7 +14,8 @@ import {
 } from '@/lib/interpretation/service';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, IParagraphOptions } from 'docx';
-import PdfPrinter from 'pdfmake';
+import PdfPrinter from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 
 function buildExportData(interpretation: any, technicalSpecs: any[], scoringItems: any[], checklist: any[], framework: any[]) {
   return {
@@ -300,16 +301,16 @@ function generateTxt(exportData: any): string {
 }
 
 function generatePdf(exportData: any): Uint8Array {
-  const fonts = {
+  (PdfPrinter as any).setFonts({
     Helvetica: {
       normal: 'Helvetica',
       bold: 'Helvetica-Bold',
       italics: 'Helvetica-Oblique',
       bolditalics: 'Helvetica-BoldOblique',
     },
-  };
+  });
   
-  const pdfPrinter = new PdfPrinter(fonts);
+  const pdfPrinter = new PdfPrinter((PdfPrinter as any).getFonts());
   
   const content: any[] = [];
   
