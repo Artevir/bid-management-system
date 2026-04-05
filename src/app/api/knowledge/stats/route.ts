@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { knowledgeItems, knowledgeCategories } from '@/db/schema';
-import { eq, desc, gte, and, or } from 'drizzle-orm';
+import { eq, desc, gte, and, or, sql } from 'drizzle-orm';
 
 interface StatsParams {
   type?: 'overview' | 'trending' | 'category' | 'recent';
