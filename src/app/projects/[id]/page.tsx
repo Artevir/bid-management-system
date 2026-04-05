@@ -321,6 +321,10 @@ export default function ProjectDetailPage() {
             <FileStack className="h-4 w-4 mr-1" />
             过程记录
           </TabsTrigger>
+          <TabsTrigger value="documents">
+            <FileCheck className="h-4 w-4 mr-1" />
+            投标文档
+          </TabsTrigger>
           <TabsTrigger value="files">项目文件</TabsTrigger>
           <TabsTrigger value="members">项目成员</TabsTrigger>
         </TabsList>
@@ -722,6 +726,23 @@ export default function ProjectDetailPage() {
         {/* 过程记录 */}
         <TabsContent value="process">
           <ProcessRecords projectId={project.id} />
+        </TabsContent>
+
+        {/* 投标文档 */}
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader>
+              <CardTitle>投标文档</CardTitle>
+              <CardDescription>管理项目的投标文档和章节内容</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <Link href={`/projects/${project.id}/documents`}>
+                  <Button>进入文档管理</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* 项目文件 */}

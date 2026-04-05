@@ -15,7 +15,7 @@ import {
 } from '@/lib/bid/ai-generator';
 import { getChapterDetail, updateChapter } from '@/lib/bid/documents-service';
 import { db } from '@/db';
-import { bidDocuments, projects, responseItems } from '@/db/schema';
+import { bidDocuments, projects, responseItems, bidDocumentInterpretations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { createStreamResponse, createSSEEncoder as _createSSEEncoder } from '@/lib/stream-utils';
 import {
@@ -59,6 +59,45 @@ async function generateContentStream(
       .from(projects)
       .where(eq(projects.id, doc[0]?.projectId || 0))
       .limit(1);
+
+    // 获取招标文件解读信息（如果关联了解读）
+    let interpretationContext = '';
+    if (doc[0]?.interpretationId) {
+      const interpretation = await db
+        .select({
+          projectName: bidDocumentInterpretations.projectName,
+          tenderOrganization: bidDocumentInterpretations.tenderOrganization,
+          tenderAgent: bidDocumentInterpretations.tenderAgent,
+          projectBudget: bidDocumentInterpretations.projectBudget,
+          tenderMethod: bidDocumentInterpretations.tenderMethod,
+          tenderScope: bidDocumentInterpretations.tenderScope,
+          qualificationRequirements: bidDocumentInterpretations.qualificationRequirements,
+          personnelRequirements: bidDocumentInterpretations.personnelRequirements,
+          technicalSpecs: bidDocumentInterpretations.technicalSpecs,
+          scoringItems: bidDocumentInterpretations.scoringItems,
+          otherRequirements: bidDocumentInterpretations.otherRequirements,
+        })
+        .from(bidDocumentInterpretations)
+        .where(eq(bidDocumentInterpretations.id, doc[0].interpretationId))
+        .limit(1);
+
+      if (interpretation.length > 0) {
+        const interp = interpretation[0];
+        interpretationContext = `
+招标文件关键信息：
+- 项目名称：${interp.projectName || ''}
+- 招标单位：${interp.tenderOrganization || ''}
+- 招标代理机构：${interp.tenderAgent || ''}
+- 项目预算：${interp.projectBudget || ''}
+- 招标方式：${interp.tenderMethod || ''}
+- 招标范围：${interp.tenderScope || ''}
+${interp.qualificationRequirements ? `- 资质要求：${typeof interp.qualificationRequirements === 'string' ? interp.qualificationRequirements : JSON.stringify(interp.qualificationRequirements)}` : ''}
+${interp.personnelRequirements ? `- 人员要求：${typeof interp.personnelRequirements === 'string' ? interp.personnelRequirements : JSON.stringify(interp.personnelRequirements)}` : ''}
+${interp.scoringItems ? `- 评分标准：${typeof interp.scoringItems === 'string' ? interp.scoringItems : JSON.stringify(interp.scoringItems)}` : ''}
+${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements === 'string' ? interp.otherRequirements : JSON.stringify(interp.otherRequirements)}` : ''}
+`;
+      }
+    }
 
     // 获取关联的要求
     let requirements: string[] = [];
@@ -119,6 +158,10 @@ ${chapter.type ? `章节类型：${chapter.type}` : ''}`;
 
     if (referenceContent.length > 0) {
       userPrompt += `\n\n参考内容：\n${referenceContent.join('\n\n')}`;
+    }
+
+    if (interpretationContext) {
+      userPrompt += `\n\n${interpretationContext}`;
     }
 
     userPrompt += '\n\n请生成完整的章节内容：';
@@ -210,6 +253,45 @@ async function generateContent(
       .where(eq(projects.id, doc[0]?.projectId || 0))
       .limit(1);
 
+    // 获取招标文件解读信息（如果关联了解读）
+    let interpretationContext = '';
+    if (doc[0]?.interpretationId) {
+      const interpretation = await db
+        .select({
+          projectName: bidDocumentInterpretations.projectName,
+          tenderOrganization: bidDocumentInterpretations.tenderOrganization,
+          tenderAgent: bidDocumentInterpretations.tenderAgent,
+          projectBudget: bidDocumentInterpretations.projectBudget,
+          tenderMethod: bidDocumentInterpretations.tenderMethod,
+          tenderScope: bidDocumentInterpretations.tenderScope,
+          qualificationRequirements: bidDocumentInterpretations.qualificationRequirements,
+          personnelRequirements: bidDocumentInterpretations.personnelRequirements,
+          technicalSpecs: bidDocumentInterpretations.technicalSpecs,
+          scoringItems: bidDocumentInterpretations.scoringItems,
+          otherRequirements: bidDocumentInterpretations.otherRequirements,
+        })
+        .from(bidDocumentInterpretations)
+        .where(eq(bidDocumentInterpretations.id, doc[0].interpretationId))
+        .limit(1);
+
+      if (interpretation.length > 0) {
+        const interp = interpretation[0];
+        interpretationContext = `
+招标文件关键信息：
+- 项目名称：${interp.projectName || ''}
+- 招标单位：${interp.tenderOrganization || ''}
+- 招标代理机构：${interp.tenderAgent || ''}
+- 项目预算：${interp.projectBudget || ''}
+- 招标方式：${interp.tenderMethod || ''}
+- 招标范围：${interp.tenderScope || ''}
+${interp.qualificationRequirements ? `- 资质要求：${typeof interp.qualificationRequirements === 'string' ? interp.qualificationRequirements : JSON.stringify(interp.qualificationRequirements)}` : ''}
+${interp.personnelRequirements ? `- 人员要求：${typeof interp.personnelRequirements === 'string' ? interp.personnelRequirements : JSON.stringify(interp.personnelRequirements)}` : ''}
+${interp.scoringItems ? `- 评分标准：${typeof interp.scoringItems === 'string' ? interp.scoringItems : JSON.stringify(interp.scoringItems)}` : ''}
+${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements === 'string' ? interp.otherRequirements : JSON.stringify(interp.otherRequirements)}` : ''}
+`;
+      }
+    }
+
     // 获取关联的要求（如果有响应矩阵项）
     let requirements: string[] = [];
     if (chapter.responseItemId) {
@@ -246,6 +328,7 @@ async function generateContent(
         projectName: project[0]?.name || '',
         requirements,
         referenceContent,
+        interpretationContext: interpretationContext || undefined,
       },
       { style },
       customHeaders

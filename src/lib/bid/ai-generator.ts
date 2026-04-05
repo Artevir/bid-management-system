@@ -28,6 +28,7 @@ export interface GenerationContext {
   projectName: string;
   requirements?: string[];
   referenceContent?: string[];
+  interpretationContext?: string;
 }
 
 export interface GenerationOptions {
@@ -119,6 +120,10 @@ ${chapterType ? `章节类型：${chapterType}` : ''}
 
   if (referenceContent && referenceContent.length > 0) {
     userPrompt += `\n参考内容：\n${referenceContent.join('\n\n')}\n`;
+  }
+
+  if (interpretationContext) {
+    userPrompt += `\n${interpretationContext}\n`;
   }
 
   userPrompt += '\n请生成完整的章节内容：';

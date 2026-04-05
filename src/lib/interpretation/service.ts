@@ -456,7 +456,11 @@ export async function parseDocumentWithLLM(
     "fundSource": "资金来源",
     "projectLocation": "项目地点",
     "tenderMethod": "招标方式",
-    "tenderScope": "招标范围"
+    "tenderScope": "招标范围",
+    "tenderNumber": "招标编号/公告号",
+    "tenderCategory": "采购类别",
+    "announcementType": "公告类型",
+    "deliveryAddress": " Delivery地址/文件获取地点"
   },
   "timeNodes": [
     {
@@ -465,75 +469,96 @@ export async function parseDocumentWithLLM(
       "location": "地点（如适用）"
     }
   ],
-  "submissionRequirements": {
-    "submissionMethod": "提交方式",
-    "submissionLocation": "提交地点",
-    "contactPerson": "联系人",
-    "contactPhone": "联系电话",
-    "copiesRequired": "正本副本数量",
-    "sealingRequirements": "密封要求"
-  },
+  "submissionRequirements": [
+    {
+      "requirementType": "要求类型（如：投标方式、密封要求、截止时间等）",
+      "requirement": "具体要求描述",
+      "copies": "份数要求"
+    }
+  ],
   "feeInfo": {
     "documentFee": "招标文件购买费用",
     "documentFeeDeadline": "缴纳截止时间",
-    "bidBond": "投标保证金",
-    "bidBondMethod": "缴纳方式",
+    "documentFeePaymentMethod": "缴费方式",
+    "bidBond": "投标保证金金额",
+    "bidBondMethod": "缴纳方式（电汇/转账/保函等）",
     "bidBondDeadline": "保证金缴纳截止时间",
     "bidBondRefundCondition": "退还条件",
-    "performanceBond": "履约保证金"
+    "performanceBond": "履约保证金金额",
+    "performanceBondRatio": "履约保证金比例"
   },
   "qualificationRequirements": [
     {
       "type": "资质类型",
       "requirement": "具体要求",
-      "isRequired": true
+      "isRequired": true/false,
+      "certRequired": "需要提供的证明材料"
     }
   ],
   "personnelRequirements": [
     {
       "position": "岗位",
+      "count": "人数要求",
       "qualification": "资质要求",
-      "experience": "经验要求"
+      "experience": "经验要求",
+      "certificate": "需要的证书"
     }
   ],
   "technicalSpecs": [
     {
-      "specCategory": "规格分类",
-      "specName": "规格名称",
-      "specValue": "规格值",
+      "specCategory": "规格分类（如：服务器/软件/网络/服务等）",
+      "specSubCategory": "子分类（可选）",
+      "specName": "参数名称",
+      "specValue": "要求值",
       "specUnit": "单位",
       "specRequirement": "要求描述",
-      "isKeyParam": false,
-      "isMandatory": true
+      "minValue": "最小值（可选）",
+      "maxValue": "最大值（可选）",
+      "isKeyParam": true/false,
+      "isMandatory": true/false,
+      "allowableDeviation": "允许偏差"
     }
   ],
   "scoringItems": [
     {
       "scoringCategory": "评分分类（商务/技术/报价）",
+      "scoringSubCategory": "子分类（可选）",
       "itemName": "评分项名称",
-      "maxScore": 10,
-      "scoringCriteria": "评分标准",
-      "scoringMethod": "评分方法"
+      "itemDescription": "评分项说明",
+      "serialNumber": "序号",
+      "maxScore": "最高分值",
+      "minScore": "最低分值",
+      "scoringMethod": "评分方法",
+      "scoringCriteria": "评分标准/评分细则"
     }
   ],
-  "docRequirements": {
-    "docContent": "投标文件内容要求",
-    "docFormat": "格式要求",
-    "signRequirement": "签章要求"
-  },
+  "docRequirements": [
+    {
+      "docType": "文档类型",
+      "copies": "份数",
+      "requirement": "格式/内容要求",
+      "binding": "装订要求"
+    }
+  ],
   "otherRequirements": {
     "consortiumRequirement": "联合体要求",
     "performanceRequirement": "业绩要求",
     "afterSalesRequirement": "售后服务要求",
-    "paymentMethod": "付款方式"
+    "paymentMethod": "付款方式",
+    "contractPeriod": "合同期限",
+    "warrantyPeriod": "质保期",
+    "trainingRequirement": "培训要求",
+    "specialRequirement": "特殊要求"
   },
   "documentFramework": [
     {
-      "chapterNumber": "第一章",
+      "chapterNumber": "章节编号（如：第一章）",
       "chapterTitle": "章节标题",
-      "chapterType": "章节类型",
+      "chapterType": "章节类型（正文/附录/附件等）",
       "level": 1,
-      "contentRequirement": "内容要求"
+      "contentRequirement": "内容要求",
+      "pageLimit": "页数限制",
+      "formatRequirement": "格式要求"
     }
   ]
 }
@@ -544,10 +569,12 @@ export async function parseDocumentWithLLM(
 3. 评分项要标注分值和评分方法
 4. 技术参数要注明是否为关键参数
 5. 对不确定的内容，请标注"待确认"
-6. 在输出中增加 evidence 字段，用于记录每个关键字段的置信度与证据引用：
+6. 费用相关字段要尽量详细，包括金额、支付方式、截止时间等
+7. 投标文件要求要包含份数、装订方式、密封要求等
+8. 在输出中增加 evidence 字段，用于记录每个关键字段的置信度与证据引用：
    - confidence: 0~1 的数值
    - quote: 从原文中摘取的一小段原句（尽量精确、可核对）
-   evidence 示例（你可以自行补全字段）： 
+   - evidence 示例： 
    {
      "basicInfo": {
        "projectName": { "confidence": 0.9, "quote": "项目名称：xxx" }

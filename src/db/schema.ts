@@ -1267,6 +1267,7 @@ export const reviewTypeEnum = pgEnum('review_type', [
 export const bidDocuments = pgTable('bid_documents', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  interpretationId: integer('interpretation_id').references(() => bidDocumentInterpretations.id, { onDelete: 'set null' }),
   name: varchar('name', { length: 200 }).notNull(),
   version: integer('version').notNull().default(1),
   status: bidDocStatusEnum('status').notNull().default('draft'),
@@ -1989,6 +1990,11 @@ export const bidDocumentsRelations = relations(bidDocuments, ({ one, many }) => 
   project: one(projects, {
     fields: [bidDocuments.projectId],
     references: [projects.id],
+  }),
+  interpretation: one(bidDocumentInterpretations, {
+    fields: [bidDocuments.interpretationId],
+    references: [bidDocumentInterpretations.id],
+    relationName: 'bid_doc_interpretation',
   }),
   publisher: one(users, {
     fields: [bidDocuments.publishedBy],
