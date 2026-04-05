@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const interpretations = await db
       .select({
         interpretation: bidDocumentInterpretations,
-        reviewerName: users.name,
+        reviewerName: users.realName,
       })
       .from(bidDocumentInterpretations)
       .leftJoin(users, eq(bidDocumentInterpretations.reviewerId, users.id))
