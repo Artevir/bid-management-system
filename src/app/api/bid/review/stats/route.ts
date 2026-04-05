@@ -96,7 +96,7 @@ async function getReviewStats(
             chapterId: complianceChecks.chapterId,
             ruleName: complianceChecks.ruleName,
             severity: complianceChecks.severity,
-            checkResult: complianceChecks.checkResult,
+            checkResult: complianceChecks.result,
             count: sql<number>`count(*)`,
           })
           .from(complianceChecks)
@@ -105,7 +105,7 @@ async function getReviewStats(
             complianceChecks.chapterId,
             complianceChecks.ruleName,
             complianceChecks.severity,
-            complianceChecks.checkResult
+            complianceChecks.result
           )
           .orderBy(desc(sql<number>`count(*)`))
           .limit(20);
