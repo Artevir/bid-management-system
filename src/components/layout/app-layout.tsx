@@ -162,6 +162,7 @@ const navigation: NavItem[] = [
       { name: '授权申请审核', href: '/approval/authorizations', icon: FileCheck },
       { name: '友司支持审核', href: '/approval/partner-applications', icon: Building },
       { name: '审校配置', href: '/review/config', icon: Settings },
+      { name: '导出中心', href: '/exports', icon: Download },
     ],
   },
   { 
