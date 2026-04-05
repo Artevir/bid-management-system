@@ -520,6 +520,7 @@ export const reviewConfigs = pgTable('review_configs', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   description: text('description'),
+  configType: varchar('config_type', { length: 20 }).default('bid'), // bid/interpretation
   projectTypeId: integer('project_type_id'), // 关联项目类型
   checkItems: text('check_items'), // JSON数组存储检查项配置
   reviewers: text('reviewers'), // JSON数组存储审校人ID列表
@@ -529,6 +530,22 @@ export const reviewConfigs = pgTable('review_configs', {
   maxDuration: integer('max_duration').notNull().default(72), // 最长审校时间（小时）
   isActive: boolean('is_active').notNull().default(true),
   createdBy: integer('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// ============================================
+// 审核意见模板表
+// ============================================
+
+export const reviewCommentTemplates = pgTable('review_comment_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  content: text('content').notNull(),
+  category: varchar('category', { length: 20 }).notNull(), // approve/reject
+  configType: varchar('config_type', { length: 20 }).default('bid'), // bid/interpretation
+  isActive: boolean('is_active').notNull().default(true),
+  createdBy: integer('created_by').references(() => users.id),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -4068,6 +4085,18 @@ export const bidDocumentInterpretations = pgTable('bid_document_interpretations'
   parseError: text('parse_error'), // 解析错误信息
   extractAccuracy: integer('extract_accuracy'), // 提取精度（百分比）
   extractMeta: text('extract_meta'), // 提取证据/置信度等元数据（JSON）
+  
+  // 审核状态（新增）
+  reviewStatus: varchar('review_status', { length: 20 }).notNull().default('pending'), // pending/approved/rejected
+  reviewerId: integer('reviewer_id').references(() => users.id), // 审核人
+  reviewedAt: timestamp('reviewed_at'), // 审核时间
+  reviewComment: text('review_comment'), // 审核意见
+  reviewAccuracy: integer('review_accuracy'), // 审核后的实际准确率
+  currentApprovalLevel: integer('current_approval_level').default(1), // 当前审核级别
+  approvalLevelRequired: integer('approval_level_required').default(1), // 需要审核级别数
+  confidentialityLevel: varchar('confidentiality_level', { length: 20 }).default('public'), // public/internal/confidential/secret
+  assignedReviewerId: integer('assigned_reviewer_id').references(() => users.id), // 分配的审核人
+  isEncrypted: boolean('is_encrypted').default(false), // 是否加密存储
   
   // 时间节点（提取）
   submissionDeadline: timestamp('submission_deadline'), // 投标截止时间

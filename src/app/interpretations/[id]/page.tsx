@@ -17,6 +17,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -37,6 +44,9 @@ import {
   Plus,
   Loader2,
   Calendar,
+  Shield,
+  Lock,
+} from 'lucide-react';
   MapPin,
   Phone as _Phone,
   Mail as _Mail,
@@ -76,6 +86,17 @@ interface InterpretationDetail {
   checklistCount: number;
   createdAt: string;
   updatedAt: string;
+  reviewStatus: 'pending' | 'approved' | 'rejected' | null;
+  reviewerId: number | null;
+  reviewerName: string | null;
+  reviewedAt: string | null;
+  reviewComment: string | null;
+reviewAccuracy: number | null;
+  currentApprovalLevel: number | null;
+  approvalLevelRequired: number | null;
+  confidentialityLevel: string | null;
+  assignedReviewerId: number | null;
+  assignedReviewerName: string | null;
   basicInfo: Record<string, unknown> | null;
   timeNodes: Array<{ name: string; time: string; location?: string }> | null;
   submissionRequirements: Record<string, unknown> | null;
@@ -136,6 +157,32 @@ const statusConfig = {
   failed: { label: '解析失败', color: 'bg-red-100 text-red-800', icon: XCircle },
 };
 
+const reviewStatusConfig = {
+  pending: { label: '待审核', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  approved: { label: '已通过', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+  rejected: { label: '已驳回', color: 'bg-red-100 text-red-800', icon: XCircle },
+};
+
+const getReviewStatusLabel = () => {
+  const status = data?.reviewStatus;
+  const currentLevel = data?.currentApprovalLevel || 1;
+  const requiredLevel = data?.approvalLevelRequired || 1;
+  
+  if (status === 'approved') return '已通过';
+  if (status === 'rejected') return '已驳回';
+  if (status === 'pending' && currentLevel > 1) {
+    return `待${currentLevel}级审核`;
+  }
+  return '待审核';
+};
+
+const getReviewStatusColor = () => {
+  const status = data?.reviewStatus;
+  if (status === 'approved') return 'bg-green-100 text-green-800';
+  if (status === 'rejected') return 'bg-red-100 text-red-800';
+  return 'bg-yellow-100 text-yellow-800';
+};
+
 export default function InterpretationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -144,6 +191,15 @@ export default function InterpretationDetailPage() {
   const [data, setData] = useState<InterpretationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    action: 'approve' as 'approve' | 'reject',
+    accuracy: 90,
+    comment: '',
+  });
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
   const getEvidence = (
     meta: Record<string, unknown> | null | undefined,
@@ -281,6 +337,38 @@ export default function InterpretationDetailPage() {
     }
   };
 
+  const handleReview = async () => {
+    setReviewing(true);
+    try {
+      const response = await fetch(`/api/interpretations/${id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: reviewForm.action,
+          accuracy: reviewForm.accuracy,
+          comment: reviewForm.comment,
+        }),
+      });
+      
+      const result = await response.json();
+        if (result.success) {
+          alert(result.message);
+          setShowReviewDialog(false);
+          fetchData();
+        } else {
+          alert(result.message || '审核失败');
+        }
+        if (result.needNextLevel) {
+          alert(`已通过第${result.currentLevel}级审核，需要继续进行第${result.currentLevel + 1}级审核`);
+        }
+    } catch (error) {
+      console.error('审核失败:', error);
+      alert('审核失败');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('zh-CN', {
       year: 'numeric',
@@ -344,11 +432,40 @@ export default function InterpretationDetailPage() {
             <p className="text-muted-foreground">{data.documentName}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge className={statusInfo.color}>
-            <StatusIcon className={`w-3 h-3 mr-1 ${data.status === 'parsing' ? 'animate-spin' : ''}`} />
-            {statusInfo.label}
-          </Badge>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Badge className={statusInfo.color}>
+              <StatusIcon className={`w-3 h-3 mr-1 ${data.status === 'parsing' ? 'animate-spin' : ''}`} />
+              {statusInfo.label}
+            </Badge>
+            {data.status === 'completed' && (
+              <Badge className={getReviewStatusColor()}>
+                {data.reviewStatus === 'approved' ? (
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                ) : data.reviewStatus === 'rejected' ? (
+                  <XCircle className="w-3 h-3 mr-1" />
+                ) : (
+                  <Clock className="w-3 h-3 mr-1" />
+                )}
+                {getReviewStatusLabel()}
+                {data.currentApprovalLevel && data.approvalLevelRequired && data.reviewStatus === 'pending' && data.currentApprovalLevel < data.approvalLevelRequired && (
+                  <span className="ml-1 text-xs">({data.currentApprovalLevel}/{data.approvalLevelRequired})</span>
+                )}
+              </Badge>
+            )}
+            {/* 密级 */}
+            {data.confidentialityLevel && data.confidentialityLevel !== 'public' && (
+              <Badge className={
+                data.confidentialityLevel === 'secret' ? 'bg-red-100 text-red-800' :
+                data.confidentialityLevel === 'confidential' ? 'bg-orange-100 text-orange-800' :
+                'bg-blue-100 text-blue-800'
+              }>
+                {data.confidentialityLevel === 'secret' ? '绝密' :
+                 data.confidentialityLevel === 'confidential' ? '机密' :
+                 data.confidentialityLevel === 'internal' ? '内部' : '公开'}
+              </Badge>
+            )}
+          </div>
           {data.status === 'pending' && (
             <Button onClick={handleStartParse}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -363,6 +480,13 @@ export default function InterpretationDetailPage() {
           )}
           {data.status === 'completed' && (
             <>
+              <Button 
+                variant="outline"
+                onClick={() => setShowReviewDialog(true)}
+              >
+                <FileCheck className="w-4 h-4 mr-2" />
+                审核解读
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
@@ -395,16 +519,48 @@ export default function InterpretationDetailPage() {
                       导出 TXT
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/api/interpretations/${id}/export?format=pdf`} target="_blank">
-                      <FileText className="w-4 h-4 mr-2" />
-                      导出 PDF
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* 项目联动按钮 */}
+<DropdownMenuItem asChild>
+                      <Link href={`/api/interpretations/${id}/export?format=pdf`} target="_blank">
+                        <FileText className="w-4 h-4 mr-2" />
+                        导出 PDF
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* 密级设置 */}
+                <Select
+                  value={data.confidentialityLevel || 'public'}
+                  onValueChange={async (value) => {
+                    try {
+                      const res = await fetch(`/api/interpretations/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ confidentialityLevel: value }),
+                      });
+                      if (res.ok) fetchData();
+                    } catch (e) { console.error(e); }
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <Shield className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">公开</SelectItem>
+                    <SelectItem value="internal">内部</SelectItem>
+                    <SelectItem value="confidential">机密</SelectItem>
+                    <SelectItem value="secret">绝密</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* 分配审核人 */}
+                <Button variant="outline" onClick={() => setShowAssignDialog(true)}>
+                  <Lock className="w-4 h-4 mr-2" />
+                  分配审核
+                </Button>
+                
+                {/* 项目联动按钮 */}
               {data.projectId ? (
                 <>
                   <Button variant="outline" onClick={handleSyncToProject} disabled={syncing}>
@@ -482,6 +638,44 @@ export default function InterpretationDetailPage() {
           <AlertTitle>解析失败</AlertTitle>
           <AlertDescription>{data.parseError}</AlertDescription>
         </Alert>
+      )}
+
+      {/* 审核状态 */}
+      {data.status === 'completed' && data.reviewStatus && (
+        <Card className={data.reviewStatus === 'approved' ? 'border-green-200 bg-green-50' : data.reviewStatus === 'rejected' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'}>
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-4">
+              {data.reviewStatus === 'approved' ? (
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              ) : data.reviewStatus === 'rejected' ? (
+                <XCircle className="w-6 h-6 text-red-600" />
+              ) : (
+                <Clock className="w-6 h-6 text-yellow-600" />
+              )}
+              <div>
+                <p className="font-medium text-green-900">
+                  审核状态：{data.reviewStatus === 'approved' ? '已通过' : data.reviewStatus === 'rejected' ? '已驳回' : '待审核'}
+                </p>
+                {data.reviewerName && (
+                  <p className="text-sm text-muted-foreground">
+                    审核人：{data.reviewerName} · {data.reviewedAt ? formatDate(data.reviewedAt) : ''}
+                  </p>
+                )}
+                {data.reviewAccuracy && (
+                  <p className="text-sm text-muted-foreground">
+                    审核准确率：{data.reviewAccuracy}%
+                  </p>
+                )}
+              </div>
+            </div>
+            {data.reviewComment && (
+              <div className="text-sm text-muted-foreground max-w-md">
+                <span className="font-medium">审核意见：</span>
+                {data.reviewComment}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* 统计卡片 */}
@@ -1057,6 +1251,121 @@ export default function InterpretationDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 审核对话框 */}
+      {showReviewDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4">审核解读结果</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">审核结果</label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={reviewForm.action === 'approve' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setReviewForm({ ...reviewForm, action: 'approve' })}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    通过
+                  </Button>
+                  <Button
+                    variant={reviewForm.action === 'reject' ? 'destructive' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setReviewForm({ ...reviewForm, action: 'reject' })}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    驳回
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  准确率评分: {reviewForm.accuracy}%
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={reviewForm.accuracy}
+                  onChange={(e) => setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">审核意见</label>
+                <textarea
+                  className="w-full min-h-[100px] p-3 rounded-md border bg-background"
+                  placeholder="请输入审核意见..."
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
+                取消
+              </Button>
+              <Button onClick={handleReview} disabled={reviewing}>
+                {reviewing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                提交审核
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分配审核人对话框 */}
+      {showAssignDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4">分配审核人</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              指定专人审核此解读文档
+            </p>
+            <div className="space-y-4">
+              <div>
+                <Label>当前分配审核人</Label>
+                <p className="text-sm mt-1">
+                  {data.assignedReviewerName || '未指定'}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+                取消
+              </Button>
+              <Button onClick={async () => {
+                setAssigning(true);
+                try {
+                  const res = await fetch(`/api/interpretations/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assignedReviewerId: null }),
+                  });
+                  if (res.ok) {
+                    alert('已清除审核人分配');
+                    fetchData();
+                    setShowAssignDialog(false);
+                  }
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  setAssigning(false);
+                }
+              }} disabled={assigning || !data.assignedReviewerId}>
+                清除分配
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

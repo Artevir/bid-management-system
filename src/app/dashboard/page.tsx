@@ -23,7 +23,7 @@ import {
 } from 'recharts';
 import {
   FolderOpen,
-  FileText as _FileText,
+  FileText,
   Clock,
   AlertTriangle,
   CheckCircle,
@@ -46,6 +46,7 @@ interface DashboardOverview {
   overdueProjects: number;
   totalDocuments: number;
   pendingReviews: number;
+  pendingInterpretationReviews: number;
   totalKnowledge: number;
   myTasks: number;
 }
@@ -171,6 +172,14 @@ export default function DashboardPage() {
           color="text-orange-500"
           loading={loading}
           alert={!!overview?.pendingReviews && overview.pendingReviews > 5}
+        />
+        <StatCard
+          title="解读待审核"
+          value={overview?.pendingInterpretationReviews ?? 0}
+          icon={FileText}
+          color="text-yellow-500"
+          loading={loading}
+          alert={!!overview?.pendingInterpretationReviews && overview.pendingInterpretationReviews > 0}
         />
         <StatCard
           title="过期项目"

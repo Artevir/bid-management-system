@@ -159,6 +159,8 @@ const navigation: NavItem[] = [
     icon: CheckCircle,
     children: [
       { name: '审核列表', href: '/approval', icon: ClipboardCheck },
+      { name: '解读审核', href: '/approval/interpretations', icon: FileSearch },
+      { name: '解读审核配置', href: '/settings/approval/interpretation', icon: Settings },
       { name: '授权申请审核', href: '/approval/authorizations', icon: FileCheck },
       { name: '友司支持审核', href: '/approval/partner-applications', icon: Building },
       { name: '审校配置', href: '/review/config', icon: Settings },

@@ -13,6 +13,7 @@ import {
   bidInterpretationLogs,
   bidTimeReminders,
   files as _files,
+  users,
 } from '@/db/schema';
 import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
 import { extractTextFromDocumentBuffer } from '@/lib/document/text-extractor';
@@ -42,6 +43,7 @@ export interface CreateInterpretationParams {
 
 export interface InterpretationListParams {
   status?: InterpretationStatus;
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | 'none';
   keyword?: string;
   uploaderId?: number;
   projectId?: number;
@@ -190,8 +192,12 @@ export async function createInterpretation(
  */
 export async function getInterpretationById(id: number) {
   const interpretation = await db
-    .select()
+    .select({
+      interpretation: bidDocumentInterpretations,
+      reviewerName: users.name,
+    })
     .from(bidDocumentInterpretations)
+    .leftJoin(users, eq(bidDocumentInterpretations.reviewerId, users.id))
     .where(eq(bidDocumentInterpretations.id, id))
     .limit(1);
 
@@ -199,11 +205,22 @@ export async function getInterpretationById(id: number) {
     return null;
   }
 
-  const item = interpretation[0];
+  // 获取分配的审核人名称
+  const assignedReviewer = interpretation[0].interpretation.assignedReviewerId
+    ? await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, interpretation[0].interpretation.assignedReviewerId))
+        .limit(1)
+    : null;
+
+  const item = interpretation[0].interpretation;
 
   // 解析JSON字段
   return {
     ...item,
+    reviewerName: interpretation[0].reviewerName,
+    assignedReviewerName: assignedReviewer?.[0]?.name || null,
     basicInfo: item.basicInfo ? JSON.parse(item.basicInfo) : null,
     timeNodes: item.timeNodes ? JSON.parse(item.timeNodes) : null,
     submissionRequirements: item.submissionRequirements ? JSON.parse(item.submissionRequirements) : null,
@@ -221,13 +238,21 @@ export async function getInterpretationById(id: number) {
  * 获取解读记录列表
  */
 export async function getInterpretationList(params: InterpretationListParams = {}) {
-  const { status, keyword, uploaderId, projectId, page = 1, pageSize = 20 } = params;
+  const { status, reviewStatus, keyword, uploaderId, projectId, page = 1, pageSize = 20 } = params;
   const offset = (page - 1) * pageSize;
 
   const conditions = [];
 
   if (status) {
     conditions.push(eq(bidDocumentInterpretations.status, status));
+  }
+
+  if (reviewStatus) {
+    if (reviewStatus === 'none') {
+      conditions.push(sql`(${bidDocumentInterpretations.reviewStatus} IS NULL OR ${bidDocumentInterpretations.reviewStatus} = 'pending')`);
+    } else {
+      conditions.push(eq(bidDocumentInterpretations.reviewStatus, reviewStatus));
+    }
   }
 
   if (keyword) {
@@ -256,8 +281,12 @@ export async function getInterpretationList(params: InterpretationListParams = {
 
   // 获取列表
   const list = await db
-    .select()
+    .select({
+      interpretation: bidDocumentInterpretations,
+      reviewerName: users.name,
+    })
     .from(bidDocumentInterpretations)
+    .leftJoin(users, eq(bidDocumentInterpretations.reviewerId, users.id))
     .where(whereClause)
     .orderBy(desc(bidDocumentInterpretations.createdAt))
     .limit(pageSize)
@@ -265,8 +294,9 @@ export async function getInterpretationList(params: InterpretationListParams = {
 
   return {
     list: list.map(item => ({
-      ...item,
-      tags: item.tags ? JSON.parse(item.tags) : [],
+      ...item.interpretation,
+      reviewerName: item.reviewerName,
+      tags: item.interpretation.tags ? JSON.parse(item.interpretation.tags) : [],
     })),
     total,
     page,
@@ -805,19 +835,35 @@ export async function executeInterpretation(
 
     // 更新状态为完成
     const duration = Date.now() - startTime;
+    const accuracy = computedAccuracy ?? fallbackAccuracy;
+    
+    // 自动审核规则：准确率 >= 95% 自动通过
+    const autoApproveThreshold = 95;
+    let reviewStatus: 'pending' | 'approved' = 'pending';
+    
+    if (accuracy >= autoApproveThreshold) {
+      reviewStatus = 'approved';
+    }
+    
     await db
       .update(bidDocumentInterpretations)
       .set({
         status: 'completed',
         parseProgress: 100,
-        extractAccuracy: computedAccuracy ?? fallbackAccuracy,
+        extractAccuracy: accuracy,
         parseDuration: duration,
+        reviewStatus,
+        approvalLevelRequired: accuracy >= autoApproveThreshold ? 1 : 1,
+        currentApprovalLevel: accuracy >= autoApproveThreshold ? 1 : 1,
         updatedAt: new Date(),
       })
       .where(eq(bidDocumentInterpretations.id, id));
 
     // 记录日志
-    await createInterpretationLog(id, 'parse', `解读完成，耗时 ${duration}ms`, interpretation.uploaderId);
+    const logMsg = accuracy >= autoApproveThreshold 
+      ? `解读完成，耗时 ${duration}ms，准确率${accuracy}%（自动通过）`
+      : `解读完成，耗时 ${duration}ms，准确率${accuracy}%`;
+    await createInterpretationLog(id, 'parse', logMsg, interpretation.uploaderId);
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : '解析失败';
@@ -1328,6 +1374,9 @@ export async function getInterpretationStats(uploaderId?: number) {
       parsing: sql<number>`count(*) filter (where ${bidDocumentInterpretations.status} = 'parsing')`,
       completed: sql<number>`count(*) filter (where ${bidDocumentInterpretations.status} = 'completed')`,
       failed: sql<number>`count(*) filter (where ${bidDocumentInterpretations.status} = 'failed')`,
+      reviewPending: sql<number>`count(*) filter (where ${bidDocumentInterpretations.status} = 'completed' and (${bidDocumentInterpretations.reviewStatus} IS NULL OR ${bidDocumentInterpretations.reviewStatus} = 'pending'))`,
+      reviewApproved: sql<number>`count(*) filter (where ${bidDocumentInterpretations.reviewStatus} = 'approved')`,
+      reviewRejected: sql<number>`count(*) filter (where ${bidDocumentInterpretations.reviewStatus} = 'rejected')`,
     })
     .from(bidDocumentInterpretations)
     .where(conditions.length > 0 ? and(...conditions) : undefined);

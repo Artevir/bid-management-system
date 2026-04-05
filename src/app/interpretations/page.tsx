@@ -69,6 +69,7 @@ interface Interpretation {
   scoringCount: number;
   createdAt: string;
   tags: string[];
+  reviewStatus: 'pending' | 'approved' | 'rejected' | null;
 }
 
 interface Stats {
@@ -77,6 +78,9 @@ interface Stats {
   parsing: number;
   completed: number;
   failed: number;
+  reviewPending: number;
+  reviewApproved: number;
+  reviewRejected: number;
 }
 
 const statusConfig = {
@@ -86,6 +90,12 @@ const statusConfig = {
   failed: { label: '解析失败', color: 'bg-red-100 text-red-800', icon: XCircle },
 };
 
+const reviewStatusConfig = {
+  pending: { label: '待审核', color: 'bg-yellow-100 text-yellow-800' },
+  approved: { label: '已通过', color: 'bg-green-100 text-green-800' },
+  rejected: { label: '已驳回', color: 'bg-red-100 text-red-800' },
+};
+
 export default function InterpretationsPage() {
   const _router = useRouter();
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
@@ -93,6 +103,7 @@ export default function InterpretationsPage() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<string>('all');
+  const [reviewStatusFilter, setReviewStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null }>({
@@ -106,6 +117,9 @@ export default function InterpretationsPage() {
       const params = new URLSearchParams();
       if (keyword) params.append('keyword', keyword);
       if (status !== 'all') params.append('status', status);
+      if (reviewStatusFilter !== 'all') {
+        params.append('reviewStatus', reviewStatusFilter === 'none' ? 'none' : reviewStatusFilter);
+      }
       params.append('page', page.toString());
       params.append('pageSize', '10');
 
@@ -122,7 +136,7 @@ export default function InterpretationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, status, page]);
+  }, [keyword, status, reviewStatusFilter, page]);
 
   useEffect(() => {
     fetchData();
@@ -225,12 +239,14 @@ export default function InterpretationsPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <StatCard title="总记录" value={stats.total} icon={FileText} color="bg-gray-100" />
         <StatCard title="待解析" value={stats.pending} icon={Clock} color="bg-gray-100" />
         <StatCard title="解析中" value={stats.parsing} icon={Loader2} color="bg-blue-100" />
         <StatCard title="已完成" value={stats.completed} icon={CheckCircle} color="bg-green-100" />
         <StatCard title="失败" value={stats.failed} icon={AlertCircle} color="bg-red-100" />
+        <StatCard title="待审核" value={stats.reviewPending || 0} icon={Clock} color="bg-yellow-100" />
+        <StatCard title="已审核" value={(stats.reviewApproved || 0) + (stats.reviewRejected || 0)} icon={CheckCircle} color="bg-purple-100" />
       </div>
 
       {/* 搜索和筛选 */}
@@ -250,15 +266,26 @@ export default function InterpretationsPage() {
               />
             </div>
             <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="全部状态" />
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="解析状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="all">解析状态</SelectItem>
                 <SelectItem value="pending">待解析</SelectItem>
                 <SelectItem value="parsing">解析中</SelectItem>
                 <SelectItem value="completed">已完成</SelectItem>
                 <SelectItem value="failed">解析失败</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={reviewStatusFilter} onValueChange={(v) => { setReviewStatusFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="审核状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">审核状态</SelectItem>
+                <SelectItem value="none">待审核</SelectItem>
+                <SelectItem value="approved">已通过</SelectItem>
+                <SelectItem value="rejected">已驳回</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -313,10 +340,17 @@ export default function InterpretationsPage() {
                         <span className="text-sm">{item.tenderOrganization || '-'}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusInfo.color}>
-                          <StatusIcon className={`w-3 h-3 mr-1 ${item.status === 'parsing' ? 'animate-spin' : ''}`} />
-                          {statusInfo.label}
-                        </Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className={statusInfo.color}>
+                            <StatusIcon className={`w-3 h-3 mr-1 ${item.status === 'parsing' ? 'animate-spin' : ''}`} />
+                            {statusInfo.label}
+                          </Badge>
+                          {item.status === 'completed' && item.reviewStatus && (
+                            <Badge className={reviewStatusConfig[item.reviewStatus].color}>
+                              {reviewStatusConfig[item.reviewStatus].label}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2 text-xs">

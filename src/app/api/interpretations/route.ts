@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as 'pending' | 'parsing' | 'completed' | 'failed' | null;
+    const reviewStatus = searchParams.get('reviewStatus') as 'pending' | 'approved' | 'rejected' | null;
     const keyword = searchParams.get('keyword') || undefined;
     const projectId = searchParams.get('projectId') ? parseInt(searchParams.get('projectId')!) : undefined;
     const page = parseInt(searchParams.get('page') || '1');
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
     // 获取列表
     const result = await getInterpretationList({
       status: status || undefined,
+      reviewStatus: reviewStatus || undefined,
       keyword,
       projectId,
       page,

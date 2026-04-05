@@ -11,12 +11,13 @@ import {
   projectPhases as _projectPhases,
   bidDocuments,
   bidChapters as _bidChapters,
+  bidDocumentInterpretations,
   reviewReports,
   knowledgeItems,
   users,
   departments,
 } from '@/db/schema';
-import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull as _isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
 import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek as _endOfWeek, subDays, subMonths, format } from 'date-fns';
 
 // ============================================
@@ -30,6 +31,7 @@ export interface DashboardOverview {
   overdueProjects: number;
   totalDocuments: number;
   pendingReviews: number;
+  pendingInterpretationReviews: number;
   totalKnowledge: number;
   myTasks: number;
 }
@@ -121,33 +123,17 @@ export async function getDashboardOverview(userId: number): Promise<DashboardOve
     .from(reviewReports)
     .where(eq(reviewReports.status, 'pending'));
 
-  // 统计知识库条目
-  const knowledgeCount = await db
+// 统计待审核解读数量
+  const interpretationReviewCount = await db
     .select({ count: count() })
-    .from(knowledgeItems)
-    .where(eq(knowledgeItems.status, 'approved'));
-
-  // 统计我的任务（待处理的里程碑）
-  const myTasks = await db
-    .select({ count: count() })
-    .from(projectMilestones)
-    .innerJoin(projects, eq(projectMilestones.projectId, projects.id))
+    .from(bidDocumentInterpretations)
     .where(
       and(
-        eq(projectMilestones.status, 'pending'),
-        eq(projects.ownerId, userId)
-      )
-    );
-
-  // 统计过期项目
-  const now = new Date();
-  const overdueCount = await db
-    .select({ count: count() })
-    .from(projects)
-    .where(
-      and(
-        eq(projects.status, 'preparing'),
-        lte(projects.submissionDeadline, now)
+        eq(bidDocumentInterpretations.status, 'completed'),
+        or(
+          eq(bidDocumentInterpretations.reviewStatus, 'pending'),
+          isNull(bidDocumentInterpretations.reviewStatus)
+        )
       )
     );
 
@@ -158,6 +144,7 @@ export async function getDashboardOverview(userId: number): Promise<DashboardOve
     overdueProjects: overdueCount[0]?.count || 0,
     totalDocuments: docCount[0]?.count || 0,
     pendingReviews: reviewCount[0]?.count || 0,
+    pendingInterpretationReviews: interpretationReviewCount[0]?.count || 0,
     totalKnowledge: knowledgeCount[0]?.count || 0,
     myTasks: myTasks[0]?.count || 0,
   };
