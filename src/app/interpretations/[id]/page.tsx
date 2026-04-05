@@ -46,7 +46,6 @@ import {
   Calendar,
   Shield,
   Lock,
-} from 'lucide-react';
   MapPin,
   Phone as _Phone,
   Mail as _Mail,
