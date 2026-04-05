@@ -1218,11 +1218,19 @@ export const knowledgeVersionsRelations = relations(knowledgeVersions, ({ one })
 // 标书文档状态枚举
 export const bidDocStatusEnum = pgEnum('bid_doc_status', [
   'draft',      // 草稿
-  'editing',    // 编辑中
+  'writing',    // 编写中
   'reviewing',  // 审核中
   'approved',   // 已通过
-  'rejected',   // 已拒绝
+  'rejected',   // 已驳回
   'published',  // 已发布
+]);
+
+// 文档密级枚举
+export const docConfidentialityEnum = pgEnum('doc_confidentiality', [
+  'public',     // 公开
+  'internal',   // 内部
+  'confidential', // 机密
+  'secret',     // 绝密
 ]);
 
 // 章节类型枚举
@@ -1271,6 +1279,7 @@ export const bidDocuments = pgTable('bid_documents', {
   name: varchar('name', { length: 200 }).notNull(),
   version: integer('version').notNull().default(1),
   status: bidDocStatusEnum('status').notNull().default('draft'),
+  confidentiality: docConfidentialityEnum('confidentiality').notNull().default('internal'), // 密级
   totalChapters: integer('total_chapters').notNull().default(0),
   completedChapters: integer('completed_chapters').notNull().default(0),
   wordCount: integer('word_count').notNull().default(0),
