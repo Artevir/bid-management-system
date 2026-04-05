@@ -50,6 +50,9 @@ import {
   Tag,
   Calendar as _Calendar,
   FolderTree,
+  TrendingUp,
+  Eye as EyeIcon,
+  Users,
 } from 'lucide-react';
 
 interface KnowledgeEntry {
@@ -85,6 +88,8 @@ export default function KnowledgePage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [trending, setTrending] = useState<any[]>([]);
   const [createForm, setCreateForm] = useState({
     title: '',
     content: '',
@@ -96,17 +101,21 @@ export default function KnowledgePage() {
   useEffect(() => {
     fetchEntries();
     fetchCategories();
+    fetchStats();
   }, []);
 
-  async function fetchEntries() {
+  async function fetchStats() {
     try {
-      const response = await fetch('/api/knowledge/entries');
-      const data = await response.json();
-      setEntries(data.entries || []);
+      const [overviewRes, trendingRes] = await Promise.all([
+        fetch('/api/knowledge/stats?type=overview'),
+        fetch('/api/knowledge/stats?type=trending&topK=5'),
+      ]);
+      const overviewData = await overviewRes.json();
+      const trendingData = await trendingRes.json();
+      if (overviewData.success) setStats(overviewData.stats);
+      if (trendingData.success) setTrending(trendingData.trending);
     } catch (error) {
-      console.error('Failed to fetch entries:', error);
-    } finally {
-      setLoading(false);
+      console.error('Failed to fetch stats:', error);
     }
   }
 
@@ -183,7 +192,57 @@ export default function KnowledgePage() {
   });
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto py-6 space-y-6">
+      {/* 统计卡片 */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">知识条目</p>
+                  <p className="text-2xl font-bold">{stats.totalItems}</p>
+                </div>
+                <BookOpen className="w-8 h-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">总浏览量</p>
+                  <p className="text-2xl font-bold">{stats.totalViews}</p>
+                </div>
+                <EyeIcon className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">总使用量</p>
+                  <p className="text-2xl font-bold">{stats.totalUses}</p>
+                </div>
+                <Users className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">热门知识</p>
+                  <p className="text-lg font-bold">{trending[0]?.title?.slice(0, 10) || '-'}...</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">知识库</h1>
@@ -317,6 +376,11 @@ export default function KnowledgePage() {
                             onClick={() => {
                               setSelectedEntry(entry);
                               setViewDialogOpen(true);
+                              fetch(`/api/knowledge/track`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ itemId: entry.id, action: 'view' }),
+                              });
                             }}
                           >
                             <Eye className="mr-2 h-4 w-4" />
