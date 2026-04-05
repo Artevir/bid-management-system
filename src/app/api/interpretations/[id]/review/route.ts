@@ -117,9 +117,9 @@ export async function POST(
           .where(eq(bidDocumentInterpretations.id, interpretationId))
           .limit(1);
         
-        if (uploader[0]?.uploaderId) {
+        if (uploader[0]?.userId) {
           await db.insert(notifications).values({
-            userId: uploader[0].uploaderId,
+            userId: uploader[0].userId,
             type: 'interpretation_review',
             title: '解读审核通过',
             content: `招标文件《${interp.documentName}》已通过审核`,
@@ -136,9 +136,9 @@ export async function POST(
           .where(eq(bidDocumentInterpretations.id, interpretationId))
           .limit(1);
         
-        if (uploader[0]?.uploaderId) {
+        if (uploader[0]?.userId) {
           await db.insert(notifications).values({
-            userId: uploader[0].uploaderId,
+            userId: uploader[0].userId,
             type: 'interpretation_review',
             title: '解读审核驳回',
             content: `招标文件《${interp.documentName}》审核未通过：${comment || '请查看详情'}`,
