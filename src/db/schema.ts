@@ -4076,6 +4076,8 @@ export const bidDocumentInterpretations = pgTable('bid_document_interpretations'
   projectBudget: varchar('project_budget', { length: 100 }), // 项目预算
   tenderMethod: varchar('tender_method', { length: 50 }), // 招标方式
   tenderScope: text('tender_scope'), // 招标范围
+  technicalSpecs: text('technical_specs'), // 技术规格（JSON）
+  scoringItems: text('scoring_items'), // 评分细则（JSON）
   
   // 政采单位关联（数据联动核心）
   platformId: integer('platform_id'), // 招标单位ID（关联政采单位）
