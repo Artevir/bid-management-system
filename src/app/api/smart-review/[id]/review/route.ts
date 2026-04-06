@@ -45,18 +45,20 @@ export async function POST(
     // 创建审核记录
     const approvalLevel = document.currentApprovalLevel || 1;
     
+    const recordData = {
+      documentId: documentId,
+      reviewerId: currentUser.id,
+      approvalLevel: approvalLevel,
+      status: status,
+      comment: comment || null,
+      accuracy: accuracy || null,
+      issuesFound: issuesFound || [],
+      suggestions: suggestions || [],
+    };
+    
     const [record] = await db
       .insert(smartReviewRecords)
-      .values({
-        documentId,
-        reviewerId: currentUser.id,
-        approvalLevel,
-        status,
-        comment,
-        accuracy,
-        issuesFound: issuesFound || [],
-        suggestions: suggestions || [],
-      })
+      .values(recordData)
       .returning();
 
     // 更新文档审核状态
