@@ -36,9 +36,9 @@ export async function POST(
     }
 
     // 获取文档中的技术规格和评分细则
-    const technicalSpecs = document.technicalSpecs || [];
-    const scoringItems = document.scoringItems || [];
-    const qualificationRequirements = document.qualificationRequirements || [];
+    const technicalSpecs = (document.technicalSpecs || []) as any[];
+    const scoringItems = (document.scoringItems || []) as any[];
+    const qualificationRequirements = (document.qualificationRequirements || []) as any[];
 
     // 合并所有要求项
     const allRequirements = [
