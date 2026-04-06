@@ -162,26 +162,6 @@ const reviewStatusConfig = {
   rejected: { label: '已驳回', color: 'bg-red-100 text-red-800', icon: XCircle },
 };
 
-const getReviewStatusLabel = () => {
-  const status = data?.reviewStatus;
-  const currentLevel = data?.currentApprovalLevel || 1;
-  const requiredLevel = data?.approvalLevelRequired || 1;
-  
-  if (status === 'approved') return '已通过';
-  if (status === 'rejected') return '已驳回';
-  if (status === 'pending' && currentLevel > 1) {
-    return `待${currentLevel}级审核`;
-  }
-  return '待审核';
-};
-
-const getReviewStatusColor = () => {
-  const status = data?.reviewStatus;
-  if (status === 'approved') return 'bg-green-100 text-green-800';
-  if (status === 'rejected') return 'bg-red-100 text-red-800';
-  return 'bg-yellow-100 text-yellow-800';
-};
-
 export default function InterpretationDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -199,6 +179,26 @@ export default function InterpretationDetailPage() {
   });
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [assigning, setAssigning] = useState(false);
+
+  const getReviewStatusLabel = () => {
+    const status = data?.reviewStatus;
+    const currentLevel = data?.currentApprovalLevel || 1;
+    const requiredLevel = data?.approvalLevelRequired || 1;
+    
+    if (status === 'approved') return '已通过';
+    if (status === 'rejected') return '已驳回';
+    if (status === 'pending' && currentLevel > 1) {
+      return `待${currentLevel}级审核`;
+    }
+    return '待审核';
+  };
+
+  const getReviewStatusColor = () => {
+    const status = data?.reviewStatus;
+    if (status === 'approved') return 'bg-green-100 text-green-800';
+    if (status === 'rejected') return 'bg-red-100 text-red-800';
+    return 'bg-yellow-100 text-yellow-800';
+  };
 
   const getEvidence = (
     meta: Record<string, unknown> | null | undefined,
