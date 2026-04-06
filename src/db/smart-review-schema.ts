@@ -1,6 +1,15 @@
 import { pgTable, text, timestamp, integer, varchar, boolean, serial, uniqueIndex, index, pgEnum, decimal, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { users, projects } from './schema';
+
+// 用户表和项目表的引用（使用integer，不设置外键以避免循环依赖）
+// 如需外键，请在主schema中添加
+const _users = {
+  id: serial('id').primaryKey(),
+};
+
+const _projects = {
+  id: serial('id').primaryKey(),
+};
 
 // ============================================
 // 智能审阅中枢 - 文档表
@@ -85,7 +94,7 @@ export const smartReviewDocuments = pgTable('smart_review_documents', {
   reviewStatus: srReviewStatusEnum('review_status').notNull().default('pending'),
   reviewStartedAt: timestamp('review_started_at'),
   reviewCompletedAt: timestamp('review_completed_at'),
-  reviewerId: integer('reviewer_id').references(() => users.id),
+  reviewerId: integer('reviewer_id'),
   reviewComment: text('review_comment'),
   reviewAccuracy: integer('review_accuracy'),
   
@@ -96,7 +105,7 @@ export const smartReviewDocuments = pgTable('smart_review_documents', {
   
   // 保密等级
   confidentialityLevel: srConfidentialityEnum('confidentiality_level').default('public'),
-  assignedReviewerId: integer('assigned_reviewer_id').references(() => users.id),
+  assignedReviewerId: integer('assigned_reviewer_id'),
   
   // 标签
   tags: jsonb('tags'),
@@ -105,10 +114,10 @@ export const smartReviewDocuments = pgTable('smart_review_documents', {
   expireTime: timestamp('expire_time'),
   
   // 上传者
-  uploaderId: integer('uploader_id').notNull().references(() => users.id),
+  uploaderId: integer('uploader_id').notNull(),
   
   // 关联项目
-  projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  projectId: integer('project_id'),
   
   // AI处理元数据
   aiModel: varchar('ai_model', { length: 100 }),
@@ -133,7 +142,7 @@ export const smartReviewRecords = pgTable('smart_review_records', {
   id: serial('id').primaryKey(),
   
   documentId: integer('document_id').notNull().references(() => smartReviewDocuments.id, { onDelete: 'cascade' }),
-  reviewerId: integer('reviewer_id').notNull().references(() => users.id),
+  reviewerId: integer('reviewer_id').notNull(),
   
   // 审核级别
   approvalLevel: integer('approval_level').notNull().default(1),
@@ -241,22 +250,6 @@ export const smartReviewReports = pgTable('smart_review_reports', {
 // ============================================
 
 export const smartReviewDocumentsRelations = relations(smartReviewDocuments, ({ one, many }) => ({
-  uploader: one(users, {
-    fields: [smartReviewDocuments.uploaderId],
-    references: [users.id],
-  }),
-  reviewer: one(users, {
-    fields: [smartReviewDocuments.reviewerId],
-    references: [users.id],
-  }),
-  assignedReviewer: one(users, {
-    fields: [smartReviewDocuments.assignedReviewerId],
-    references: [users.id],
-  }),
-  project: one(projects, {
-    fields: [smartReviewDocuments.projectId],
-    references: [projects.id],
-  }),
   reviewRecords: many(smartReviewRecords),
   responseMatrix: many(smartResponseMatrix),
   reviewReports: many(smartReviewReports),
@@ -266,10 +259,6 @@ export const smartReviewRecordsRelations = relations(smartReviewRecords, ({ one 
   document: one(smartReviewDocuments, {
     fields: [smartReviewRecords.documentId],
     references: [smartReviewDocuments.id],
-  }),
-  reviewer: one(users, {
-    fields: [smartReviewRecords.reviewerId],
-    references: [users.id],
   }),
 }));
 

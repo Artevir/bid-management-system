@@ -9018,6 +9018,7 @@ export type ContractType = typeof contractTypeEnum.enumValues[number];
 // ============================================
 
 export * from './bidding-platform-schema';
+export * from './smart-review-schema';
 
 // ============================================
 // 招标信息订阅与预警模块

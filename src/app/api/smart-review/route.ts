@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { smartReviewDocuments } from '@/db/smart-review-schema';
 import { eq, desc, asc, like, or, and, sql } from 'drizzle-orm';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET(request: NextRequest) {
   try {

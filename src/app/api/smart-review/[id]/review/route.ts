@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { smartReviewDocuments, smartReviewRecords } from '@/db/smart-review-schema';
 import { eq, desc } from 'drizzle-orm';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function POST(
   request: NextRequest,
