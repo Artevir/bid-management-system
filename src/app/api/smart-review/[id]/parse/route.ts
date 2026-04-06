@@ -116,7 +116,7 @@ export async function POST(
         { role: 'user', content: userPrompt },
       ]);
 
-      let parsedData = {};
+      let parsedData: any = {};
       try {
         parsedData = JSON.parse(result.content);
       } catch (e) {
