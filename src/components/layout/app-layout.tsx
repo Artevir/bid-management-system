@@ -65,6 +65,7 @@ import {
   Download,
   ClipboardList,
   Upload,
+  List,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -163,6 +164,8 @@ const navigation: NavItem[] = [
     children: [
       { name: '文档列表', href: '/smart-review', icon: FileText },
       { name: '上传文件', href: '/smart-review/upload', icon: Upload },
+      { name: '审核工作台', href: '/smart-review/reviews', icon: ClipboardCheck },
+      { name: '响应矩阵', href: '/smart-review/matrix', icon: List },
     ],
   },
   { 
