@@ -119,13 +119,32 @@ export default function KnowledgePage() {
     }
   }
 
-  async function fetchCategories() {
+async function fetchCategories() {
     try {
       const response = await fetch('/api/knowledge/categories');
       const data = await response.json();
       setCategories(data.categories || []);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+    }
+  }
+
+  async function fetchEntries() {
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      params.append('page', page.toString());
+      params.append('pageSize', pageSize.toString());
+
+      const response = await fetch(`/api/knowledge/entries?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setEntries(data.entries || []);
+        setTotal(data.total || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch entries:', error);
     }
   }
 
