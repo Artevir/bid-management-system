@@ -63,6 +63,8 @@ import {
   Stamp,
   Book,
   Download,
+  FileCheck,
+  ClipboardList,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -155,16 +157,24 @@ const navigation: NavItem[] = [
     ],
   },
   { 
+    name: '文件智能审阅中枢', 
+    href: '/approval/interpretations', 
+    icon: FileCheck,
+    children: [
+      { name: '解读审核', href: '/approval/interpretations', icon: FileSearch },
+      { name: '审核配置', href: '/settings/approval/interpretation', icon: Settings },
+      { name: '审校配置', href: '/review/config', icon: ClipboardList },
+      { name: '审核模板', href: '/review/config?tab=templates', icon: LayoutTemplate },
+    ],
+  },
+  { 
     name: '审核中心', 
     href: '/approval', 
     icon: CheckCircle,
     children: [
       { name: '审核列表', href: '/approval', icon: ClipboardCheck },
-      { name: '解读审核', href: '/approval/interpretations', icon: FileSearch },
-      { name: '解读审核配置', href: '/settings/approval/interpretation', icon: Settings },
       { name: '授权申请审核', href: '/approval/authorizations', icon: FileCheck },
       { name: '友司支持审核', href: '/approval/partner-applications', icon: Building },
-      { name: '审校配置', href: '/review/config', icon: Settings },
       { name: '导出中心', href: '/exports', icon: Download },
     ],
   },
