@@ -64,6 +64,7 @@ import {
   Book,
   Download,
   ClipboardList,
+  Upload,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -157,9 +158,11 @@ const navigation: NavItem[] = [
   },
   { 
     name: '文件智能审阅中枢', 
-    href: '/approval/interpretations', 
+    href: '/interpretations/upload', 
     icon: FileCheck,
     children: [
+      { name: '上传解读', href: '/interpretations/upload', icon: Upload },
+      { name: '解读列表', href: '/interpretations', icon: FileText },
       { name: '解读审核', href: '/approval/interpretations', icon: FileSearch },
       { name: '审核配置', href: '/settings/approval/interpretation', icon: Settings },
       { name: '审校配置', href: '/review/config', icon: ClipboardList },
