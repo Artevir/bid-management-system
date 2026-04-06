@@ -194,7 +194,7 @@ export async function getInterpretationById(id: number) {
   const interpretation = await db
     .select({
       interpretation: bidDocumentInterpretations,
-      reviewerName: users.name,
+      reviewerName: users.realName,
     })
     .from(bidDocumentInterpretations)
     .leftJoin(users, eq(bidDocumentInterpretations.reviewerId, users.id))
@@ -208,7 +208,7 @@ export async function getInterpretationById(id: number) {
   // 获取分配的审核人名称
   const assignedReviewer = interpretation[0].interpretation.assignedReviewerId
     ? await db
-        .select({ name: users.name })
+        .select({ name: users.realName })
         .from(users)
         .where(eq(users.id, interpretation[0].interpretation.assignedReviewerId))
         .limit(1)
@@ -283,7 +283,7 @@ export async function getInterpretationList(params: InterpretationListParams = {
   const list = await db
     .select({
       interpretation: bidDocumentInterpretations,
-      reviewerName: users.name,
+      reviewerName: users.realName,
     })
     .from(bidDocumentInterpretations)
     .leftJoin(users, eq(bidDocumentInterpretations.reviewerId, users.id))
