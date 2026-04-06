@@ -63,7 +63,6 @@ import {
   Stamp,
   Book,
   Download,
-  FileCheck,
   ClipboardList,
 } from 'lucide-react';
 
