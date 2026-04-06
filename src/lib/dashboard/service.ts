@@ -123,6 +123,17 @@ export async function getDashboardOverview(userId: number): Promise<DashboardOve
     .from(reviewReports)
     .where(eq(reviewReports.status, 'pending'));
 
+  // 统计逾期项目数量（已过期且未提交/归档/流标/中标的）
+  const overdueCount = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(
+      and(
+        sql`${projects.submissionDeadline} < NOW()`,
+        sql`${projects.status} NOT IN ('submitted', 'archived', 'lost', 'awarded')`
+      )
+    );
+
 // 统计待审核解读数量
   const interpretationReviewCount = await db
     .select({ count: count() })
