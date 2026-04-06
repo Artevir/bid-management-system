@@ -148,6 +148,21 @@ export async function getDashboardOverview(userId: number): Promise<DashboardOve
       )
     );
 
+  // 统计知识库条目数量
+  const knowledgeCount = await db
+    .select({ count: count() })
+    .from(knowledgeItems);
+
+  // 统计我的待办任务数量
+  const myTasks = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(
+      and(
+        sql`${projects.status} NOT IN ('submitted', 'archived', 'lost', 'awarded')`
+      )
+    );
+
   return {
     totalProjects: Object.values(projectCounts).reduce((a, b) => a + b, 0),
     activeProjects: projectCounts['preparing'] || 0,
