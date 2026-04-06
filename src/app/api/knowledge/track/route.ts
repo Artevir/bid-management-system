@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { knowledgeItems } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 async function trackKnowledgeUse(
   request: NextRequest,
