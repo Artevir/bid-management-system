@@ -104,11 +104,11 @@ async function getKnowledgeStats(
           .orderBy(desc(knowledgeItems.useCount), desc(knowledgeItems.viewCount))
           .limit(topK);
 
-        const categoryMap = new Map(
-          await db
-            .select({ id: knowledgeCategories.id, name: knowledgeCategories.name })
-            .from(knowledgeCategories)
-        );
+        const categories = await db
+          .select({ id: knowledgeCategories.id, name: knowledgeCategories.name })
+          .from(knowledgeCategories);
+        
+        const categoryMap = new Map(categories.map(c => [c.id, c.name]));
 
         return NextResponse.json({
           success: true,
