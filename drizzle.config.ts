@@ -8,6 +8,7 @@ export default defineConfig({
     './src/db/image-schema.ts',
     './src/db/llm-schema.ts',
     './src/db/scheme-schema.ts',
+    './src/db/smart-review-schema.ts',
   ],
   out: './drizzle',
   dialect: 'postgresql',
