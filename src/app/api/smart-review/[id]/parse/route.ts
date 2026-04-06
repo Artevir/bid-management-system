@@ -111,7 +111,7 @@ export async function POST(
 
 请以JSON格式返回提取的信息。`;
 
-      const result = await llm.chat([
+      const result = await llm.generate([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ]);
