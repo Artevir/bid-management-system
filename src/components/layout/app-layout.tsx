@@ -157,16 +157,12 @@ const navigation: NavItem[] = [
     ],
   },
   { 
-    name: '文件智能审阅中枢', 
-    href: '/interpretations/upload', 
+    name: '智能审阅中枢', 
+    href: '/smart-review', 
     icon: FileCheck,
     children: [
-      { name: '上传解读', href: '/interpretations/upload', icon: Upload },
-      { name: '解读列表', href: '/interpretations', icon: FileText },
-      { name: '解读审核', href: '/approval/interpretations', icon: FileSearch },
-      { name: '审核配置', href: '/settings/approval/interpretation', icon: Settings },
-      { name: '审校配置', href: '/review/config', icon: ClipboardList },
-      { name: '审核模板', href: '/review/config?tab=templates', icon: LayoutTemplate },
+      { name: '文档列表', href: '/smart-review', icon: FileText },
+      { name: '上传文件', href: '/smart-review/upload', icon: Upload },
     ],
   },
   { 
