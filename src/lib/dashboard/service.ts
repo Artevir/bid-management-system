@@ -17,7 +17,7 @@ import {
   users,
   departments,
 } from '@/db/schema';
-import { eq, and, or as _or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, desc, asc, count, sum as _sum, avg, sql, gte, lte, between, isNull, isNotNull } from 'drizzle-orm';
 import { startOfMonth, endOfMonth, startOfWeek as _startOfWeek, endOfWeek as _endOfWeek, subDays, subMonths, format } from 'date-fns';
 
 // ============================================
