@@ -141,7 +141,7 @@ export const smartReviewDocuments = pgTable('smart_review_documents', {
 export const smartReviewRecords = pgTable('smart_review_records', {
   id: serial('id').primaryKey(),
   
-  documentId: integer('document_id').notNull().references(() => smartReviewDocuments.id, { onDelete: 'cascade' }),
+  documentId: integer('document_id').notNull(),
   reviewerId: integer('reviewer_id').notNull(),
   
   // 审核级别
@@ -167,7 +167,7 @@ export const smartReviewRecords = pgTable('smart_review_records', {
 export const smartResponseMatrix = pgTable('smart_response_matrix', {
   id: serial('id').primaryKey(),
   
-  documentId: integer('document_id').notNull().references(() => smartReviewDocuments.id, { onDelete: 'cascade' }),
+  documentId: integer('document_id').notNull(),
   
   // 矩阵信息
   matrixName: varchar('matrix_name', { length: 255 }).notNull(),
@@ -193,8 +193,8 @@ export const smartResponseMatrix = pgTable('smart_response_matrix', {
 export const smartResponseItems = pgTable('smart_response_items', {
   id: serial('id').primaryKey(),
   
-  matrixId: integer('matrix_id').notNull().references(() => smartResponseMatrix.id, { onDelete: 'cascade' }),
-  documentId: integer('document_id').notNull().references(() => smartReviewDocuments.id, { onDelete: 'cascade' }),
+  matrixId: integer('matrix_id').notNull(),
+  documentId: integer('document_id').notNull(),
   
   // 响应项内容
   requirementCategory: varchar('requirement_category', { length: 100 }),
@@ -224,7 +224,7 @@ export const smartResponseItems = pgTable('smart_response_items', {
 export const smartReviewReports = pgTable('smart_review_reports', {
   id: serial('id').primaryKey(),
   
-  documentId: integer('document_id').notNull().references(() => smartReviewDocuments.id, { onDelete: 'cascade' }),
+  documentId: integer('document_id').notNull(),
   
   // 审校结果
   totalIssues: integer('total_issues').default(0),
