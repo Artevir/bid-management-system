@@ -80,6 +80,7 @@ export async function generateChapterContent(
     projectName,
     requirements,
     referenceContent,
+    interpretationContext,
   } = context;
 
   const {
