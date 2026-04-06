@@ -99,7 +99,7 @@ const reviewStatusConfig = {
 export default function InterpretationsPage() {
   const _router = useRouter();
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, parsing: 0, completed: 0, failed: 0 });
+  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, parsing: 0, completed: 0, failed: 0, reviewPending: 0, reviewApproved: 0, reviewRejected: 0 });
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<string>('all');
