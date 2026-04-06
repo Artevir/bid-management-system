@@ -62,6 +62,7 @@ import {
   FileSignature,
   Stamp,
   Book,
+  Download,
 } from 'lucide-react';
 
 interface AppLayoutProps {
