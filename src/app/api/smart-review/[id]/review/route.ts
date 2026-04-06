@@ -45,9 +45,9 @@ export async function POST(
     // 创建审核记录
     const approvalLevel = document.currentApprovalLevel || 1;
     
-    const recordData = {
+    const recordData: any = {
       documentId: documentId,
-      reviewerId: currentUser.id,
+      reviewerId: Number(currentUser.id),
       approvalLevel: approvalLevel,
       status: status,
       comment: comment || null,
