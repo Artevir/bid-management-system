@@ -37,7 +37,7 @@ import {
   Sparkles,
   LayoutDashboard,
   ArrowRight,
-
+  FileCheck,
   FileStack,
 } from 'lucide-react';
 import {
