@@ -1,16 +1,6 @@
 import { pgTable, text, timestamp, integer, varchar, boolean, serial, uniqueIndex, index, pgEnum, decimal, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// 用户表和项目表的引用（使用integer，不设置外键以避免循环依赖）
-// 如需外键，请在主schema中添加
-const _users = {
-  id: serial('id').primaryKey(),
-};
-
-const _projects = {
-  id: serial('id').primaryKey(),
-};
-
 // ============================================
 // 智能审阅中枢 - 文档表
 // ============================================
