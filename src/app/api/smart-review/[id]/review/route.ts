@@ -85,7 +85,7 @@ export async function POST(
       .set({
         reviewStatus: newReviewStatus,
         currentApprovalLevel: newApprovalLevel,
-        reviewerId: currentUser.id,
+        reviewerId: Number(currentUser.id),
         reviewComment: comment,
         reviewAccuracy: accuracy,
         reviewCompletedAt: new Date(),
@@ -93,7 +93,7 @@ export async function POST(
           ...(document.approvalHistory || []),
           {
             level: approvalLevel,
-            reviewerId: currentUser.id,
+            reviewerId: Number(currentUser.id),
             status,
             comment,
             timestamp: new Date().toISOString(),
