@@ -90,7 +90,7 @@ export async function POST(
         reviewAccuracy: accuracy,
         reviewCompletedAt: new Date(),
         approvalHistory: [
-          ...(document.approvalHistory || []),
+          ...((document.approvalHistory as any[]) || []),
           {
             level: approvalLevel,
             reviewerId: Number(currentUser.id),
