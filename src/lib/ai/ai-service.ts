@@ -17,7 +17,7 @@ import {
   logCall,
   type LLMProvider,
 } from '@/lib/llm/service';
-import { Config as _Config, LLMClient as _LLMClient, HeaderUtils as _HeaderUtils, type Message } from 'coze-coding-dev-sdk';
+import type { Message } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -102,11 +102,7 @@ export async function getAgentList() {
  * 获取AI角色详情
  */
 export async function getAgentById(agentId: number) {
-  const [agent] = await db
-    .select()
-    .from(aiAgents)
-    .where(eq(aiAgents.id, agentId))
-    .limit(1);
+  const [agent] = await db.select().from(aiAgents).where(eq(aiAgents.id, agentId)).limit(1);
 
   return agent || null;
 }
@@ -235,8 +231,8 @@ export async function callAI(options: AICallOptions): Promise<AICallResult> {
       messages,
       model: modelId,
       temperature: options.temperature ?? parseFloat(modelConfig?.defaultTemperature || '0.7'),
-      thinking: options.thinking ?? modelConfig?.defaultThinking ? 'enabled' : 'disabled',
-      caching: options.caching ?? modelConfig?.defaultCaching ? 'enabled' : 'disabled',
+      thinking: (options.thinking ?? modelConfig?.defaultThinking) ? 'enabled' : 'disabled',
+      caching: (options.caching ?? modelConfig?.defaultCaching) ? 'enabled' : 'disabled',
     });
 
     const latency = Date.now() - startTime;
@@ -375,8 +371,8 @@ export async function* streamAI(
         messages,
         model: modelId,
         temperature: options.temperature ?? parseFloat(modelConfig?.defaultTemperature || '0.7'),
-        thinking: options.thinking ?? modelConfig?.defaultThinking ? 'enabled' : 'disabled',
-        caching: options.caching ?? modelConfig?.defaultCaching ? 'enabled' : 'disabled',
+        thinking: (options.thinking ?? modelConfig?.defaultThinking) ? 'enabled' : 'disabled',
+        caching: (options.caching ?? modelConfig?.defaultCaching) ? 'enabled' : 'disabled',
       },
       customHeaders
     );
@@ -517,11 +513,7 @@ export async function getUsageOverview(params?: {
 /**
  * 获取每日用量统计
  */
-export async function getDailyUsage(params?: {
-  startDate?: Date;
-  endDate?: Date;
-  days?: number;
-}) {
+export async function getDailyUsage(params?: { startDate?: Date; endDate?: Date; days?: number }) {
   const days = params?.days || 7;
   const startDate = params?.startDate || new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -592,10 +584,7 @@ export async function getModelUsageRanking(params?: {
 /**
  * 获取最近调用记录
  */
-export async function getRecentCalls(params?: {
-  limit?: number;
-  userId?: number;
-}) {
+export async function getRecentCalls(params?: { limit?: number; userId?: number }) {
   const limit = params?.limit || 20;
 
   const calls = await db

@@ -4,7 +4,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AIRecommendationService, RecommendationType } from '@/lib/ai/recommendation-service';
-import { HeaderUtils } from 'coze-coding-dev-sdk';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 // ============================================
 // POST - 获取推荐
@@ -16,13 +29,10 @@ export async function POST(request: NextRequest) {
     const { type, ...data } = body;
 
     if (!type) {
-      return NextResponse.json(
-        { error: '缺少type参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少type参数' }, { status: 400 });
     }
 
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    const customHeaders = extractForwardHeaders(request.headers);
     const service = new AIRecommendationService(customHeaders);
 
     let recommendations;
@@ -49,10 +59,7 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json(
-          { error: '不支持的推荐类型' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '不支持的推荐类型' }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -62,9 +69,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('AI recommendation error:', error);
-    return NextResponse.json(
-      { error: error.message || '获取推荐失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '获取推荐失败' }, { status: 500 });
   }
 }

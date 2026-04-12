@@ -12,7 +12,6 @@ import crypto from 'crypto';
 import { AppError } from '@/lib/api/error-handler';
 
 // JWT配置
-const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'; // 访问令牌有效期
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d'; // 刷新令牌有效期
 
@@ -35,15 +34,29 @@ function parseTime(timeString: string): number {
   }
 }
 
-// 编码密钥
-if (!JWT_SECRET) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET is required in production environment');
-  }
-  console.warn('[auth] JWT_SECRET is not set, using local development fallback secret.');
-}
+let cachedSecretKey: Uint8Array | null = null;
+let hasWarnedDevFallback = false;
 
-const secretKey = new TextEncoder().encode(JWT_SECRET || 'dev-only-insecure-jwt-secret');
+function getSecretKey(): Uint8Array {
+  if (cachedSecretKey) {
+    return cachedSecretKey;
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET is required in production environment');
+    }
+
+    if (!hasWarnedDevFallback) {
+      console.warn('[auth] JWT_SECRET is not set, using local development fallback secret.');
+      hasWarnedDevFallback = true;
+    }
+  }
+
+  cachedSecretKey = new TextEncoder().encode(jwtSecret || 'dev-only-insecure-jwt-secret');
+  return cachedSecretKey;
+}
 
 // JWT Payload接口
 export interface JwtCustomPayload extends JWTPayload {
@@ -67,6 +80,7 @@ export interface TokenResponse {
  * @returns 访问令牌
  */
 export async function generateAccessToken(payload: JwtCustomPayload): Promise<string> {
+  const secretKey = getSecretKey();
   const token = await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -84,6 +98,7 @@ export async function generateAccessToken(payload: JwtCustomPayload): Promise<st
  * @returns 刷新令牌
  */
 export async function generateRefreshToken(payload: JwtCustomPayload): Promise<string> {
+  const secretKey = getSecretKey();
   const token = await new SignJWT({ ...payload, type: 'refresh' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -101,6 +116,7 @@ export async function generateRefreshToken(payload: JwtCustomPayload): Promise<s
  * @returns 解码后的载荷
  */
 export async function verifyAccessToken(token: string): Promise<JwtCustomPayload> {
+  const secretKey = getSecretKey();
   try {
     const { payload } = await jwtVerify(token, secretKey, {
       issuer: 'bid-management-system',
@@ -119,6 +135,7 @@ export async function verifyAccessToken(token: string): Promise<JwtCustomPayload
  * @returns 解码后的载荷
  */
 export async function verifyRefreshToken(token: string): Promise<JwtCustomPayload> {
+  const secretKey = getSecretKey();
   try {
     const { payload } = await jwtVerify(token, secretKey, {
       issuer: 'bid-management-system',

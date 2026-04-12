@@ -13,7 +13,7 @@ import {
 } from '@/db/llm-schema';
 import { users } from '@/db/schema';
 import { eq, desc, asc, and, like as _like, sql } from 'drizzle-orm';
-import { LLMClient, Config, type Message } from 'coze-coding-dev-sdk';
+import type { Message } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -84,54 +84,91 @@ export interface ChatRequest {
 }
 
 // 模型映射表
-const MODEL_MAPPING: Record<string, { provider: LLMProvider; name: string; description?: string }> = {
-  // ========================================
-  // 豆包模型 (Doubao)
-  // ========================================
-  'doubao-seed-2-0-pro-260215': { provider: 'doubao', name: '豆包 Pro 2.0', description: '高性能旗舰模型' },
-  'doubao-seed-2-0-lite-260215': { provider: 'doubao', name: '豆包 Lite 2.0', description: '轻量快速响应' },
-  'doubao-seed-2-0-mini-260215': { provider: 'doubao', name: '豆包 Mini 2.0', description: '极致轻量' },
-  'doubao-seed-1-8-251228': { provider: 'doubao', name: '豆包 1.8', description: '稳定版本' },
-  'doubao-seed-1-6-251015': { provider: 'doubao', name: '豆包 1.6', description: '平衡性能' },
-  'doubao-seed-1-6-vision-250815': { provider: 'doubao', name: '豆包 Vision', description: '多模态视觉理解' },
-  'doubao-seed-1-6-lite-251015': { provider: 'doubao', name: '豆包 Lite', description: '低成本选择' },
+const MODEL_MAPPING: Record<string, { provider: LLMProvider; name: string; description?: string }> =
+  {
+    // ========================================
+    // 豆包模型 (Doubao)
+    // ========================================
+    'doubao-seed-2-0-pro-260215': {
+      provider: 'doubao',
+      name: '豆包 Pro 2.0',
+      description: '高性能旗舰模型',
+    },
+    'doubao-seed-2-0-lite-260215': {
+      provider: 'doubao',
+      name: '豆包 Lite 2.0',
+      description: '轻量快速响应',
+    },
+    'doubao-seed-2-0-mini-260215': {
+      provider: 'doubao',
+      name: '豆包 Mini 2.0',
+      description: '极致轻量',
+    },
+    'doubao-seed-1-8-251228': { provider: 'doubao', name: '豆包 1.8', description: '稳定版本' },
+    'doubao-seed-1-6-251015': { provider: 'doubao', name: '豆包 1.6', description: '平衡性能' },
+    'doubao-seed-1-6-vision-250815': {
+      provider: 'doubao',
+      name: '豆包 Vision',
+      description: '多模态视觉理解',
+    },
+    'doubao-seed-1-6-lite-251015': {
+      provider: 'doubao',
+      name: '豆包 Lite',
+      description: '低成本选择',
+    },
 
-  // ========================================
-  // DeepSeek模型
-  // ========================================
-  'deepseek-v3-2-251201': { provider: 'deepseek', name: 'DeepSeek V3.2', description: '最新版本' },
-  'deepseek-r1-250528': { provider: 'deepseek', name: 'DeepSeek R1', description: '深度推理模型' },
+    // ========================================
+    // DeepSeek模型
+    // ========================================
+    'deepseek-v3-2-251201': {
+      provider: 'deepseek',
+      name: 'DeepSeek V3.2',
+      description: '最新版本',
+    },
+    'deepseek-r1-250528': {
+      provider: 'deepseek',
+      name: 'DeepSeek R1',
+      description: '深度推理模型',
+    },
 
-  // ========================================
-  // GLM模型 (智谱)
-  // ========================================
-  'glm-4-7-251222': { provider: 'glm', name: 'GLM-4-7', description: '智谱最新模型' },
+    // ========================================
+    // GLM模型 (智谱)
+    // ========================================
+    'glm-4-7-251222': { provider: 'glm', name: 'GLM-4-7', description: '智谱最新模型' },
 
-  // ========================================
-  // Kimi模型 (月之暗面)
-  // ========================================
-  'kimi-k2-250905': { provider: 'kimi', name: 'Kimi K2', description: '长文本处理' },
-  'kimi-k2-5-260127': { provider: 'kimi', name: 'Kimi K2.5', description: '最新版本' },
+    // ========================================
+    // Kimi模型 (月之暗面)
+    // ========================================
+    'kimi-k2-250905': { provider: 'kimi', name: 'Kimi K2', description: '长文本处理' },
+    'kimi-k2-5-260127': { provider: 'kimi', name: 'Kimi K2.5', description: '最新版本' },
 
-  // ========================================
-  // OpenAI模型
-  // ========================================
-  // --- 对话模型 ---
-  'gpt-5.4': { provider: 'openai', name: 'GPT-5.4', description: '最强通用模型' },
-  'gpt-5.4-mini': { provider: 'openai', name: 'GPT-5.4 Mini', description: '最推荐生产主力' },
-  'gpt-5.4-nano': { provider: 'openai', name: 'GPT-5.4 Nano', description: '最低成本批处理' },
-  'o1-pro': { provider: 'openai', name: 'O1 Pro', description: '最强深推理' },
-  'gpt-5.2': { provider: 'openai', name: 'GPT-5.2', description: '最强代码/Agent' },
+    // ========================================
+    // OpenAI模型
+    // ========================================
+    // --- 对话模型 ---
+    'gpt-5.4': { provider: 'openai', name: 'GPT-5.4', description: '最强通用模型' },
+    'gpt-5.4-mini': { provider: 'openai', name: 'GPT-5.4 Mini', description: '最推荐生产主力' },
+    'gpt-5.4-nano': { provider: 'openai', name: 'GPT-5.4 Nano', description: '最低成本批处理' },
+    'o1-pro': { provider: 'openai', name: 'O1 Pro', description: '最强深推理' },
+    'gpt-5.2': { provider: 'openai', name: 'GPT-5.2', description: '最强代码/Agent' },
 
-  // --- 多模态模型 ---
-  'gpt-image-1.5': { provider: 'openai', name: 'GPT Image 1.5', description: '图片生成' },
-  'gpt-4o-mini-tts': { provider: 'openai', name: 'GPT-4o Mini TTS', description: '语音合成' },
-  'gpt-4o-transcribe': { provider: 'openai', name: 'GPT-4o Transcribe', description: '语音识别' },
+    // --- 多模态模型 ---
+    'gpt-image-1.5': { provider: 'openai', name: 'GPT Image 1.5', description: '图片生成' },
+    'gpt-4o-mini-tts': { provider: 'openai', name: 'GPT-4o Mini TTS', description: '语音合成' },
+    'gpt-4o-transcribe': { provider: 'openai', name: 'GPT-4o Transcribe', description: '语音识别' },
 
-  // --- Embedding & 审核 ---
-  'text-embedding-3-large': { provider: 'openai', name: 'Text Embedding 3 Large', description: '向量检索' },
-  'omni-moderation-latest': { provider: 'openai', name: 'Omni Moderation', description: '内容审核' },
-};
+    // --- Embedding & 审核 ---
+    'text-embedding-3-large': {
+      provider: 'openai',
+      name: 'Text Embedding 3 Large',
+      description: '向量检索',
+    },
+    'omni-moderation-latest': {
+      provider: 'openai',
+      name: 'Omni Moderation',
+      description: '内容审核',
+    },
+  };
 
 // ============================================
 // 配置管理服务
@@ -144,17 +181,18 @@ const MODEL_MAPPING: Record<string, { provider: LLMProvider; name: string; descr
 export async function getAvailableModels() {
   try {
     // 动态导入模型服务，避免循环依赖
-    const { getAvailableModels: getDbModels, initializeDefaultModels } = await import('./model-service');
-    
+    const { getAvailableModels: getDbModels, initializeDefaultModels } =
+      await import('./model-service');
+
     // 尝试从数据库获取模型
     let models = await getDbModels();
-    
+
     // 如果数据库为空，初始化默认模型
     if (models.length === 0) {
       await initializeDefaultModels();
       models = await getDbModels();
     }
-    
+
     return models.map((m) => ({
       id: m.modelId,
       provider: m.provider,
@@ -187,7 +225,7 @@ export async function getConfigList(params?: {
   createdBy?: number;
 }) {
   const conditions = [];
-  
+
   if (params?.provider) {
     conditions.push(eq(llmConfigs.provider, params.provider));
   }
@@ -231,11 +269,7 @@ export async function getConfigList(params?: {
  * 获取配置详情
  */
 export async function getConfigById(configId: number) {
-  const [config] = await db
-    .select()
-    .from(llmConfigs)
-    .where(eq(llmConfigs.id, configId))
-    .limit(1);
+  const [config] = await db.select().from(llmConfigs).where(eq(llmConfigs.id, configId)).limit(1);
 
   return config || null;
 }
@@ -445,6 +479,7 @@ export async function* streamChat(
   request: ChatRequest,
   customHeaders?: Record<string, string>
 ): AsyncGenerator<string> {
+  const { LLMClient, Config } = await import('coze-coding-dev-sdk');
   const config = new Config();
   const client = new LLMClient(config, customHeaders);
 
@@ -474,6 +509,7 @@ export async function invokeChat(
   request: ChatRequest,
   customHeaders?: Record<string, string>
 ): Promise<string> {
+  const { LLMClient, Config } = await import('coze-coding-dev-sdk');
   const config = new Config();
   const client = new LLMClient(config, customHeaders);
 
@@ -541,7 +577,7 @@ export async function logCall(data: {
  */
 export async function getTemplateList(params?: { category?: string; isPublic?: boolean }) {
   const conditions = [];
-  
+
   if (params?.category) {
     conditions.push(eq(llmPromptTemplates.category, params.category));
   }
