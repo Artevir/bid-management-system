@@ -1,7 +1,7 @@
 /**
  * 项目信息联动服务
  * 实现文件解读信息与项目的全周期联动
- * 
+ *
  * 核心功能：
  * 1. 同步解读信息到项目（syncProjectFromInterpretation）
  * 2. 获取项目完整信息（包含解读详情）
@@ -20,7 +20,7 @@ import {
   type Project,
   type BidDocumentInterpretation,
 } from '@/db/schema';
-import { eq, and, desc, isNotNull, sql } from 'drizzle-orm';
+import { eq, and, desc, isNotNull, inArray, sql } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -66,11 +66,7 @@ export async function syncProjectFromInterpretation(
   }
 
   // 获取项目信息
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
+  const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
 
   if (!project) {
     return { success: false, message: '项目不存在', updatedFields: [] };
@@ -94,7 +90,10 @@ export async function syncProjectFromInterpretation(
   }
 
   // 同步招标单位
-  if (interpretation.tenderOrganization && interpretation.tenderOrganization !== project.tenderOrganization) {
+  if (
+    interpretation.tenderOrganization &&
+    interpretation.tenderOrganization !== project.tenderOrganization
+  ) {
     updates.tenderOrganization = interpretation.tenderOrganization;
     updatedFields.push('招标单位');
   }
@@ -112,32 +111,40 @@ export async function syncProjectFromInterpretation(
   }
 
   // 同步投标截止时间
-  if (interpretation.submissionDeadline && 
-      (!project.submissionDeadline || new Date(interpretation.submissionDeadline).getTime() !== new Date(project.submissionDeadline).getTime())) {
+  if (
+    interpretation.submissionDeadline &&
+    (!project.submissionDeadline ||
+      new Date(interpretation.submissionDeadline).getTime() !==
+        new Date(project.submissionDeadline).getTime())
+  ) {
     updates.submissionDeadline = interpretation.submissionDeadline;
     updatedFields.push('投标截止时间');
   }
 
   // 同步开标时间
-  if (interpretation.openBidTime && 
-      (!project.openBidDate || new Date(interpretation.openBidTime).getTime() !== new Date(project.openBidDate).getTime())) {
+  if (
+    interpretation.openBidTime &&
+    (!project.openBidDate ||
+      new Date(interpretation.openBidTime).getTime() !== new Date(project.openBidDate).getTime())
+  ) {
     updates.openBidDate = interpretation.openBidTime;
     updatedFields.push('开标时间');
   }
 
   // 同步答疑截止时间
-  if (interpretation.questionDeadline && 
-      (!project.questionDeadline || new Date(interpretation.questionDeadline).getTime() !== new Date(project.questionDeadline).getTime())) {
+  if (
+    interpretation.questionDeadline &&
+    (!project.questionDeadline ||
+      new Date(interpretation.questionDeadline).getTime() !==
+        new Date(project.questionDeadline).getTime())
+  ) {
     updates.questionDeadline = interpretation.questionDeadline;
     updatedFields.push('答疑截止时间');
   }
 
   // 更新项目
   if (updatedFields.length > 0) {
-    await db
-      .update(projects)
-      .set(updates)
-      .where(eq(projects.id, projectId));
+    await db.update(projects).set(updates).where(eq(projects.id, projectId));
 
     // 更新解读记录的关联
     await db
@@ -148,9 +155,10 @@ export async function syncProjectFromInterpretation(
 
   return {
     success: true,
-    message: updatedFields.length > 0 
-      ? `成功同步 ${updatedFields.length} 个字段：${updatedFields.join('、')}`
-      : '项目信息已是最新，无需同步',
+    message:
+      updatedFields.length > 0
+        ? `成功同步 ${updatedFields.length} 个字段：${updatedFields.join('、')}`
+        : '项目信息已是最新，无需同步',
     updatedFields,
   };
 }
@@ -159,9 +167,7 @@ export async function syncProjectFromInterpretation(
 // 自动同步：解读完成后自动更新关联项目
 // ============================================
 
-export async function autoSyncToProject(
-  interpretationId: number
-): Promise<SyncResult | null> {
+export async function autoSyncToProject(interpretationId: number): Promise<SyncResult | null> {
   const [interpretation] = await db
     .select()
     .from(bidDocumentInterpretations)
@@ -172,7 +178,11 @@ export async function autoSyncToProject(
     return null;
   }
 
-  return syncProjectFromInterpretation(interpretation.projectId, interpretationId, interpretation.uploaderId);
+  return syncProjectFromInterpretation(
+    interpretation.projectId,
+    interpretationId,
+    interpretation.uploaderId
+  );
 }
 
 // ============================================
@@ -181,11 +191,7 @@ export async function autoSyncToProject(
 
 export async function getProjectFullInfo(projectId: number): Promise<ProjectFullInfo | null> {
   // 获取项目基本信息
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
+  const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
 
   if (!project) {
     return null;
@@ -294,7 +300,7 @@ export async function getProjectFullInfo(projectId: number): Promise<ProjectFull
 
 export async function getProjectKeyInfo(projectId: number) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo) {
     return null;
   }
@@ -307,31 +313,31 @@ export async function getProjectKeyInfo(projectId: number) {
     code: project.code,
     tenderCode: project.tenderCode || interpretation?.projectCode,
     status: project.status,
-    
+
     // 招标信息
     tenderOrganization: project.tenderOrganization || interpretation?.tenderOrganization,
     tenderAgent: project.tenderAgent || interpretation?.tenderAgent,
     budget: project.budget || interpretation?.projectBudget,
-    
+
     // 关键时间节点
     submissionDeadline: project.submissionDeadline || interpretation?.submissionDeadline,
     openBidDate: project.openBidDate || interpretation?.openBidTime,
     questionDeadline: project.questionDeadline || interpretation?.questionDeadline,
     openBidLocation: interpretation?.openBidLocation,
-    
+
     // 解读信息ID
     interpretationId: interpretation?.id,
-    
+
     // 资质要求
     qualificationRequirements: fullInfo.qualificationRequirements,
     personnelRequirements: fullInfo.personnelRequirements,
     docRequirements: fullInfo.docRequirements,
-    
+
     // 统计信息
     specCount: interpretation?.specCount || 0,
     scoringCount: interpretation?.scoringCount || 0,
     checklistCount: interpretation?.checklistCount || 0,
-    
+
     // 项目负责人
     ownerId: project.ownerId,
   };
@@ -343,7 +349,7 @@ export async function getProjectKeyInfo(projectId: number) {
 
 export async function getProjectTimeReminders(projectId: number) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo || !fullInfo.interpretation) {
     return [];
   }
@@ -357,7 +363,7 @@ export async function getProjectTimeReminders(projectId: number) {
 
 export async function getProjectQualificationRequirements(projectId: number) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo || !fullInfo.interpretation) {
     return null;
   }
@@ -375,13 +381,13 @@ export async function getProjectQualificationRequirements(projectId: number) {
 
 export async function getProjectTechnicalSpecs(projectId: number, category?: string) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo || !fullInfo.interpretation) {
     return [];
   }
 
   if (category) {
-    return fullInfo.technicalSpecs.filter(spec => spec.specCategory === category);
+    return fullInfo.technicalSpecs.filter((spec) => spec.specCategory === category);
   }
 
   return fullInfo.technicalSpecs;
@@ -393,13 +399,13 @@ export async function getProjectTechnicalSpecs(projectId: number, category?: str
 
 export async function getProjectScoringItems(projectId: number, category?: string) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo || !fullInfo.interpretation) {
     return [];
   }
 
   if (category) {
-    return fullInfo.scoringItems.filter(item => item.scoringCategory === category);
+    return fullInfo.scoringItems.filter((item) => item.scoringCategory === category);
   }
 
   return fullInfo.scoringItems;
@@ -411,7 +417,7 @@ export async function getProjectScoringItems(projectId: number, category?: strin
 
 export async function getProjectDocumentFramework(projectId: number) {
   const fullInfo = await getProjectFullInfo(projectId);
-  
+
   if (!fullInfo || !fullInfo.interpretation) {
     return [];
   }
@@ -447,27 +453,31 @@ export async function getProjectsWithInterpretation(filters?: {
     .limit(100);
 
   // 批量获取关联的解读信息
-  const projectIds = projectList.map(p => p.id);
-  
-  const interpretations = await db
-    .select()
-    .from(bidDocumentInterpretations)
-    .where(and(
-      isNotNull(bidDocumentInterpretations.projectId),
-      // @ts-ignore
-      sql`${bidDocumentInterpretations.projectId} IN (${projectIds.join(',')})`
-    ))
-    .orderBy(desc(bidDocumentInterpretations.createdAt));
+  const projectIds = projectList.map((p) => p.id);
+
+  const interpretations =
+    projectIds.length > 0
+      ? await db
+          .select()
+          .from(bidDocumentInterpretations)
+          .where(
+            and(
+              isNotNull(bidDocumentInterpretations.projectId),
+              inArray(bidDocumentInterpretations.projectId, projectIds)
+            )
+          )
+          .orderBy(desc(bidDocumentInterpretations.createdAt))
+      : [];
 
   // 关联项目和解读信息
   const interpretationMap = new Map();
-  interpretations.forEach(interp => {
+  interpretations.forEach((interp) => {
     if (interp.projectId && !interpretationMap.has(interp.projectId)) {
       interpretationMap.set(interp.projectId, interp);
     }
   });
 
-  return projectList.map(project => ({
+  return projectList.map((project) => ({
     project,
     interpretation: interpretationMap.get(project.id) || null,
     hasInterpretation: interpretationMap.has(project.id),
@@ -563,10 +573,10 @@ export async function linkInterpretationToProject(
       .set({ projectId: newProject.id })
       .where(eq(bidDocumentInterpretations.id, interpretationId));
 
-    return { 
-      success: true, 
-      message: '已创建新项目并关联解读信息', 
-      projectId: newProject.id 
+    return {
+      success: true,
+      message: '已创建新项目并关联解读信息',
+      projectId: newProject.id,
     };
   }
 }

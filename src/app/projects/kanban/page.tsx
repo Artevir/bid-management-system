@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,6 +36,7 @@ import {
   List,
   Filter as _Filter,
 } from 'lucide-react';
+import Link from 'next/link';
 
 // ============================================
 // 类型定义
@@ -92,10 +98,10 @@ export default function ProjectKanbanPage() {
     try {
       const response = await fetch('/api/projects');
       const data = await response.json();
-      
+
       // 按状态分组项目
       const groupedProjects: Record<string, Project[]> = {};
-      columnOrder.forEach(status => {
+      columnOrder.forEach((status) => {
         groupedProjects[status] = [];
       });
 
@@ -106,7 +112,7 @@ export default function ProjectKanbanPage() {
       });
 
       // 构建看板列
-      const kanbanColumns: KanbanColumn[] = columnOrder.map(status => ({
+      const kanbanColumns: KanbanColumn[] = columnOrder.map((status) => ({
         id: status,
         title: statusConfig[status]?.label || status,
         color: statusConfig[status]?.color || 'bg-gray-500',
@@ -138,49 +144,55 @@ export default function ProjectKanbanPage() {
   }, []);
 
   // 放置
-  const handleDrop = useCallback(async (e: React.DragEvent, targetColumnId: string) => {
-    e.preventDefault();
-    
-    if (!draggedProject || !dragSourceColumn) return;
-    if (dragSourceColumn === targetColumnId) return;
+  const handleDrop = useCallback(
+    async (e: React.DragEvent, targetColumnId: string) => {
+      e.preventDefault();
 
-    // 更新项目状态
-    try {
-      const response = await fetch(`/api/projects/${draggedProject.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: targetColumnId }),
-      });
+      if (!draggedProject || !dragSourceColumn) return;
+      if (dragSourceColumn === targetColumnId) return;
 
-      if (!response.ok) throw new Error('更新失败');
+      // 更新项目状态
+      try {
+        const response = await fetch(`/api/projects/${draggedProject.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: targetColumnId }),
+        });
 
-      // 更新本地状态
-      setColumns(prev => {
-        const newColumns = [...prev];
-        
-        // 从源列移除
-        const sourceCol = newColumns.find(c => c.id === dragSourceColumn);
-        if (sourceCol) {
-          sourceCol.projects = sourceCol.projects.filter(p => p.id !== draggedProject.id);
-        }
-        
-        // 添加到目标列
-        const targetCol = newColumns.find(c => c.id === targetColumnId);
-        if (targetCol) {
-          targetCol.projects = [...targetCol.projects, { ...draggedProject, status: targetColumnId }];
-        }
-        
-        return newColumns;
-      });
-    } catch (error) {
-      console.error('Failed to update project status:', error);
-      // 刷新数据恢复状态
-      fetchProjects();
-    } finally {
-      setDraggedProject(null);
-      setDragSourceColumn(null);
-    }
-  }, [draggedProject, dragSourceColumn]);
+        if (!response.ok) throw new Error('更新失败');
+
+        // 更新本地状态
+        setColumns((prev) => {
+          const newColumns = [...prev];
+
+          // 从源列移除
+          const sourceCol = newColumns.find((c) => c.id === dragSourceColumn);
+          if (sourceCol) {
+            sourceCol.projects = sourceCol.projects.filter((p) => p.id !== draggedProject.id);
+          }
+
+          // 添加到目标列
+          const targetCol = newColumns.find((c) => c.id === targetColumnId);
+          if (targetCol) {
+            targetCol.projects = [
+              ...targetCol.projects,
+              { ...draggedProject, status: targetColumnId },
+            ];
+          }
+
+          return newColumns;
+        });
+      } catch (error) {
+        console.error('Failed to update project status:', error);
+        // 刷新数据恢复状态
+        fetchProjects();
+      } finally {
+        setDraggedProject(null);
+        setDragSourceColumn(null);
+      }
+    },
+    [draggedProject, dragSourceColumn]
+  );
 
   const handleDragEnd = useCallback(() => {
     setDraggedProject(null);
@@ -221,16 +233,16 @@ export default function ProjectKanbanPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <a href="/projects">
+            <Link href="/projects">
               <List className="mr-2 h-4 w-4" />
               列表视图
-            </a>
+            </Link>
           </Button>
           <Button size="sm" asChild>
-            <a href="/projects/new">
+            <Link href="/projects/new">
               <Plus className="mr-2 h-4 w-4" />
               新建项目
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -269,13 +281,11 @@ export default function ProjectKanbanPage() {
               {/* 项目卡片 */}
               <div className="flex-1 space-y-3 min-h-[200px] bg-muted/30 rounded-lg p-2">
                 {column.projects.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    暂无项目
-                  </div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">暂无项目</div>
                 ) : (
                   column.projects.map((project) => {
                     const daysRemaining = getDaysRemaining(project.submissionDeadline);
-                    
+
                     return (
                       <Card
                         key={project.id}
@@ -291,12 +301,8 @@ export default function ProjectKanbanPage() {
                           {/* 卡片头部 */}
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm truncate">
-                                {project.name}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                {project.code}
-                              </p>
+                              <h4 className="font-medium text-sm truncate">{project.name}</h4>
+                              <p className="text-xs text-muted-foreground">{project.code}</p>
                             </div>
                             <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           </div>
@@ -315,10 +321,7 @@ export default function ProjectKanbanPage() {
                               <span className="text-muted-foreground">进度</span>
                               <span>{project.progress}%</span>
                             </div>
-                            <Progress 
-                              value={project.progress} 
-                              className="h-1.5"
-                            />
+                            <Progress value={project.progress} className="h-1.5" />
                           </div>
 
                           {/* 底部信息 */}
@@ -331,13 +334,15 @@ export default function ProjectKanbanPage() {
                               </Avatar>
                             </div>
                             {project.submissionDeadline && (
-                              <div className={`flex items-center gap-1 text-xs ${
-                                daysRemaining !== null && daysRemaining < 3
-                                  ? 'text-red-500'
-                                  : daysRemaining !== null && daysRemaining < 7
-                                  ? 'text-orange-500'
-                                  : 'text-muted-foreground'
-                              }`}>
+                              <div
+                                className={`flex items-center gap-1 text-xs ${
+                                  daysRemaining !== null && daysRemaining < 3
+                                    ? 'text-red-500'
+                                    : daysRemaining !== null && daysRemaining < 7
+                                      ? 'text-orange-500'
+                                      : 'text-muted-foreground'
+                                }`}
+                              >
                                 <Calendar className="h-3 w-3" />
                                 {formatDate(project.submissionDeadline)}
                                 {daysRemaining !== null && daysRemaining > 0 && (
@@ -362,9 +367,7 @@ export default function ProjectKanbanPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedProject?.name}</DialogTitle>
-            <DialogDescription>
-              {selectedProject?.code}
-            </DialogDescription>
+            <DialogDescription>{selectedProject?.code}</DialogDescription>
           </DialogHeader>
           {selectedProject && (
             <div className="space-y-4">
@@ -383,9 +386,7 @@ export default function ProjectKanbanPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">投标截止</p>
-                  <p className="font-medium">
-                    {formatDate(selectedProject.submissionDeadline)}
-                  </p>
+                  <p className="font-medium">{formatDate(selectedProject.submissionDeadline)}</p>
                 </div>
               </div>
               <div>

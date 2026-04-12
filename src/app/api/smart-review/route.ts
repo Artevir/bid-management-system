@@ -1,8 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { smartReviewDocuments } from '@/db/smart-review-schema';
-import { eq, desc, asc, like, or, and, sql } from 'drizzle-orm';
+import { eq, desc, asc, like, or, and, sql, SQL } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
+
+const allowedDocumentStatuses = [
+  'uploading',
+  'parsing',
+  'parsed',
+  'reviewing',
+  'approved',
+  'rejected',
+  'archived',
+] as const;
+
+const allowedReviewStatuses = [
+  'pending',
+  'in_progress',
+  'approved',
+  'rejected',
+  'needs_revision',
+] as const;
+
+type DocumentStatus = (typeof allowedDocumentStatuses)[number];
+type ReviewStatus = (typeof allowedReviewStatuses)[number];
+
+function toDocumentStatus(value: string | null): DocumentStatus | null {
+  if (!value || value === 'all') return null;
+  return (allowedDocumentStatuses as readonly string[]).includes(value)
+    ? (value as DocumentStatus)
+    : null;
+}
+
+function toReviewStatus(value: string | null): ReviewStatus | null {
+  if (!value || value === 'all') return null;
+  return (allowedReviewStatuses as readonly string[]).includes(value)
+    ? (value as ReviewStatus)
+    : null;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,50 +47,67 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const reviewStatus = searchParams.get('reviewStatus');
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '20');
+    const rawStatus = searchParams.get('status');
+    const rawReviewStatus = searchParams.get('reviewStatus');
+    const status = toDocumentStatus(rawStatus);
+    const reviewStatus = toReviewStatus(rawReviewStatus);
+    if (rawStatus && rawStatus !== 'all' && !status) {
+      return NextResponse.json({ error: '无效的status参数' }, { status: 400 });
+    }
+    if (rawReviewStatus && rawReviewStatus !== 'all' && !reviewStatus) {
+      return NextResponse.json({ error: '无效的reviewStatus参数' }, { status: 400 });
+    }
+    const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number.parseInt(searchParams.get('pageSize') || '20', 10) || 20)
+    );
     const keyword = searchParams.get('keyword');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const conditions: any[] = [];
+    const conditions: SQL<unknown>[] = [];
 
-    if (status && status !== 'all') {
+    if (status) {
       conditions.push(eq(smartReviewDocuments.status, status));
     }
 
-    if (reviewStatus && reviewStatus !== 'all') {
+    if (reviewStatus) {
       conditions.push(eq(smartReviewDocuments.reviewStatus, reviewStatus));
     }
 
     if (keyword) {
-      conditions.push(
-        or(
-          like(smartReviewDocuments.fileName, `%${keyword}%`),
-          like(smartReviewDocuments.projectName, `%${keyword}%`),
-          like(smartReviewDocuments.projectCode, `%${keyword}%`)
-        )
+      const keywordCondition = or(
+        like(smartReviewDocuments.fileName, `%${keyword}%`),
+        like(smartReviewDocuments.projectName, `%${keyword}%`),
+        like(smartReviewDocuments.projectCode, `%${keyword}%`)
       );
+      if (keywordCondition) {
+        conditions.push(keywordCondition);
+      }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const offset = (page - 1) * pageSize;
-    const orderColumn = sortBy === 'projectName' ? smartReviewDocuments.projectName :
-                       sortBy === 'fileName' ? smartReviewDocuments.fileName :
-                       smartReviewDocuments.createdAt;
+    const orderColumn =
+      sortBy === 'projectName'
+        ? smartReviewDocuments.projectName
+        : sortBy === 'fileName'
+          ? smartReviewDocuments.fileName
+          : smartReviewDocuments.createdAt;
     const orderFn = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
 
     const [documents, totalCount] = await Promise.all([
-      db.select()
+      db
+        .select()
         .from(smartReviewDocuments)
         .where(whereClause)
         .orderBy(orderFn)
         .limit(pageSize)
         .offset(offset),
-      db.select({ count: sql<number>`count(*)::int` })
+      db
+        .select({ count: sql<number>`count(*)::int` })
         .from(smartReviewDocuments)
         .where(whereClause),
     ]);
@@ -139,7 +191,7 @@ export async function POST(request: NextRequest) {
         projectLocation,
         projectOverview,
         fundSource,
-        uploaderId: currentUser.id,
+        uploaderId: currentUser.userId,
         status: 'uploading',
         reviewStatus: 'pending',
       })
