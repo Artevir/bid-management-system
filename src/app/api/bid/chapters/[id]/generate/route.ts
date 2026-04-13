@@ -5,20 +5,32 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import {
-  bidChapters,
-  bidDocuments,
-  projects,
-  companies,
-} from '@/db/schema';
+import { bidChapters, bidDocuments, projects, companies } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { withChapterPermission } from '@/lib/auth/middleware';
-import { ChatMessage, extractForwardHeaders } from '@/lib/llm';
 import { streamChat, invokeChat } from '@/lib/llm/service';
 import { createStreamResponse } from '@/lib/stream-utils';
-import { retrieveRelevantKnowledge } from '@/lib/bid/ai-generator';
 import { AppError } from '@/lib/api/error-handler';
 import { parseIdFromParams } from '@/lib/api/validators';
+
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 async function generateChapterContent(
   request: NextRequest,
@@ -60,11 +72,7 @@ async function generateChapterContent(
   }
 
   // 获取项目信息
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, doc.projectId))
-    .limit(1);
+  const [project] = await db.select().from(projects).where(eq(projects.id, doc.projectId)).limit(1);
 
   // 获取公司信息（如果指定）
   let company: any = null;
@@ -80,7 +88,10 @@ async function generateChapterContent(
 
   // 检索知识库
   const knowledge = useKnowledge
-    ? await retrieveRelevantKnowledge(chapter.title, project?.id)
+    ? await (async () => {
+        const { retrieveRelevantKnowledge } = await import('@/lib/bid/ai-generator');
+        return retrieveRelevantKnowledge(chapter.title, project?.id);
+      })()
     : '无';
 
   // 构建消息
@@ -101,10 +112,10 @@ async function generateChapterContent(
 文档背景：${doc?.name || '无'}
 参考资料：${knowledge}
 公司背景：${
-  company
-    ? `${company.name} (${company.shortName || ''}) - ${company.description || ''}`
-    : '无'
-}
+        company
+          ? `${company.name} (${company.shortName || ''}) - ${company.description || ''}`
+          : '无'
+      }
 附加要求：${JSON.stringify(inputParams)}
 模板ID：${templateId ?? '未指定'}
 标签：${Array.isArray(tags) && tags.length > 0 ? tags.join(', ') : '无'}`,
@@ -117,10 +128,7 @@ async function generateChapterContent(
   if (stream) {
     return createStreamResponse(async (controller, encoder) => {
       try {
-        const streamIterator = streamChat(
-          { messages },
-          forwardHeaders
-        );
+        const streamIterator = streamChat({ messages }, forwardHeaders);
 
         for await (const chunk of streamIterator) {
           if (request.signal.aborted) {
@@ -136,8 +144,7 @@ async function generateChapterContent(
         }
       } catch (error) {
         if (!request.signal.aborted) {
-          const errorMessage =
-            error instanceof Error ? error.message : '生成失败';
+          const errorMessage = error instanceof Error ? error.message : '生成失败';
           controller.enqueue(encoder.encodeError(errorMessage));
         }
       }
@@ -145,21 +152,14 @@ async function generateChapterContent(
   }
 
   // 非流式生成
-  const content = await invokeChat(
-    { messages },
-    forwardHeaders
-  );
+  const content = await invokeChat({ messages }, forwardHeaders);
 
   return NextResponse.json({ content });
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const middleware = await withChapterPermission(
-    'edit',
-    (_req, p) => parseIdFromParams(p, 'id', '章节')
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const middleware = await withChapterPermission('edit', (_req, p) =>
+    parseIdFromParams(p, 'id', '章节')
   );
 
   const resolvedParams = await params;

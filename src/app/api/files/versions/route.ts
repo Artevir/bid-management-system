@@ -9,16 +9,31 @@ import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { files, fileVersions, auditLogs } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { S3Storage } from 'coze-coding-dev-sdk';
 
-// 初始化 S3 存储
-const storage = new S3Storage({
-  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-  accessKey: '',
-  secretKey: '',
-  bucketName: process.env.COZE_BUCKET_NAME,
-  region: 'cn-beijing',
-});
+let storagePromise: Promise<{
+  generatePresignedUrl: (params: { key: string; expireTime: number }) => Promise<string>;
+} | null> | null = null;
+
+async function getStorage() {
+  if (!storagePromise) {
+    storagePromise = (async () => {
+      if (!process.env.COZE_BUCKET_ENDPOINT_URL || !process.env.COZE_BUCKET_NAME) {
+        return null;
+      }
+
+      const { S3Storage } = await import('coze-coding-dev-sdk');
+      return new S3Storage({
+        endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+        accessKey: '',
+        secretKey: '',
+        bucketName: process.env.COZE_BUCKET_NAME,
+        region: 'cn-beijing',
+      });
+    })();
+  }
+
+  return storagePromise;
+}
 
 // ============================================
 // 类型定义
@@ -60,10 +75,7 @@ interface VersionCompareResult {
 // 获取版本列表
 // ============================================
 
-async function getVersions(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function getVersions(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const fileId = parseInt(searchParams.get('fileId') || '0');
@@ -73,11 +85,7 @@ async function getVersions(
     }
 
     // 验证文件存在
-    const file = await db
-      .select()
-      .from(files)
-      .where(eq(files.id, fileId))
-      .limit(1);
+    const file = await db.select().from(files).where(eq(files.id, fileId)).limit(1);
 
     if (file.length === 0) {
       return NextResponse.json({ error: '文件不存在' }, { status: 404 });
@@ -95,10 +103,13 @@ async function getVersions(
       versions.map(async (v) => {
         let signedUrl: string | undefined;
         try {
-          signedUrl = await storage.generatePresignedUrl({
-            key: v.path,
-            expireTime: 3600,
-          });
+          const storage = await getStorage();
+          if (storage) {
+            signedUrl = await storage.generatePresignedUrl({
+              key: v.path,
+              expireTime: 3600,
+            });
+          }
         } catch (e) {
           console.error('Generate signed URL error:', e);
         }
@@ -128,10 +139,7 @@ async function getVersions(
 // 版本回滚
 // ============================================
 
-async function rollbackVersion(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function rollbackVersion(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { fileId, targetVersion, changeLog } = body;
@@ -141,11 +149,7 @@ async function rollbackVersion(
     }
 
     // 获取文件信息
-    const file = await db
-      .select()
-      .from(files)
-      .where(eq(files.id, fileId))
-      .limit(1);
+    const file = await db.select().from(files).where(eq(files.id, fileId)).limit(1);
 
     if (file.length === 0) {
       return NextResponse.json({ error: '文件不存在' }, { status: 404 });
@@ -155,12 +159,7 @@ async function rollbackVersion(
     const targetVersionData = await db
       .select()
       .from(fileVersions)
-      .where(
-        and(
-          eq(fileVersions.fileId, fileId),
-          eq(fileVersions.version, targetVersion)
-        )
-      )
+      .where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.version, targetVersion)))
       .limit(1);
 
     if (targetVersionData.length === 0) {
@@ -219,10 +218,7 @@ async function rollbackVersion(
 // 版本比较
 // ============================================
 
-async function compareVersions(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function compareVersions(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const fileId = parseInt(searchParams.get('fileId') || '0');
@@ -237,22 +233,12 @@ async function compareVersions(
     const versions = await db
       .select()
       .from(fileVersions)
-      .where(
-        and(
-          eq(fileVersions.fileId, fileId),
-          eq(fileVersions.version, version1)
-        )
-      );
+      .where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.version, version1)));
 
     const versions2 = await db
       .select()
       .from(fileVersions)
-      .where(
-        and(
-          eq(fileVersions.fileId, fileId),
-          eq(fileVersions.version, version2)
-        )
-      );
+      .where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.version, version2)));
 
     if (versions.length === 0 || versions2.length === 0) {
       return NextResponse.json({ error: '版本不存在' }, { status: 404 });
@@ -289,10 +275,7 @@ async function compareVersions(
 // 版本锁定
 // ============================================
 
-async function lockVersion(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function lockVersion(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { fileId, version, lockReason } = body;
@@ -305,12 +288,7 @@ async function lockVersion(
     const existingVersion = await db
       .select()
       .from(fileVersions)
-      .where(
-        and(
-          eq(fileVersions.fileId, fileId),
-          eq(fileVersions.version, version)
-        )
-      )
+      .where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.version, version)))
       .limit(1);
 
     if (existingVersion.length === 0) {
@@ -356,10 +334,7 @@ async function lockVersion(
 // 版本解锁
 // ============================================
 
-async function unlockVersion(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function unlockVersion(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { fileId, version } = body;
@@ -372,12 +347,7 @@ async function unlockVersion(
     const existingVersion = await db
       .select()
       .from(fileVersions)
-      .where(
-        and(
-          eq(fileVersions.fileId, fileId),
-          eq(fileVersions.version, version)
-        )
-      )
+      .where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.version, version)))
       .limit(1);
 
     if (existingVersion.length === 0) {

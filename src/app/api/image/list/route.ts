@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { getImageList, type ImageType, type ImageStatus } from '@/lib/image/service';
+import type { ImageType, ImageStatus } from '@/lib/image/service';
 
 // GET /api/image/list
 export async function GET(request: NextRequest) {
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
+    const { getImageList } = await import('@/lib/image/service');
     const images = await getImageList({
       imageType: imageType || undefined,
       status: status || undefined,
@@ -36,9 +37,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ images });
   } catch (error: any) {
     console.error('获取图片列表失败:', error);
-    return NextResponse.json(
-      { error: error.message || '获取图片列表失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '获取图片列表失败' }, { status: 500 });
   }
 }

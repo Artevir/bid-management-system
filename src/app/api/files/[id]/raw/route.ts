@@ -7,18 +7,35 @@ import { checkFilePermission } from '@/lib/auth/resource-permission';
 import { db } from '@/db';
 import { files } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { S3Storage } from 'coze-coding-dev-sdk';
 
-const hasBucketStorage = Boolean(process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME);
-const bucketStorage = hasBucketStorage
-  ? new S3Storage({
-      endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-      accessKey: '',
-      secretKey: '',
-      bucketName: process.env.COZE_BUCKET_NAME,
-      region: 'cn-beijing',
-    })
-  : null;
+let bucketStoragePromise: Promise<{
+  generatePresignedUrl: (params: { key: string; expireTime: number }) => Promise<string>;
+} | null> | null = null;
+
+async function getBucketStorage() {
+  if (!bucketStoragePromise) {
+    bucketStoragePromise = (async () => {
+      const hasBucketStorage = Boolean(
+        process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME
+      );
+
+      if (!hasBucketStorage) {
+        return null;
+      }
+
+      const { S3Storage } = await import('coze-coding-dev-sdk');
+      return new S3Storage({
+        endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+        accessKey: '',
+        secretKey: '',
+        bucketName: process.env.COZE_BUCKET_NAME,
+        region: 'cn-beijing',
+      });
+    })();
+  }
+
+  return bucketStoragePromise;
+}
 
 async function getRawFile(
   _request: NextRequest,
@@ -38,6 +55,7 @@ async function getRawFile(
     return NextResponse.json({ error: '文件不存在' }, { status: 404 });
   }
 
+  const bucketStorage = await getBucketStorage();
   if (bucketStorage) {
     const signedUrl = await bucketStorage.generatePresignedUrl({
       key: file.path,
@@ -67,10 +85,7 @@ async function getRawFile(
   return new NextResponse(webStream, { headers });
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const fileId = parseInt(id);
   return withAuth(request, (req, userId) => getRawFile(req, userId, fileId));

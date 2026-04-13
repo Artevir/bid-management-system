@@ -1,38 +1,42 @@
 /**
  * AI编标API
  * POST: 生成章节内容（支持流式和非流式）
- * 
+ *
  * 已迁移至统一LLM适配层
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import {
-  generateChapterContent,
-  optimizeChapterContent,
-  retrieveRelevantKnowledge,
-  saveGenerationLog,
-} from '@/lib/bid/ai-generator';
 import { getChapterDetail, updateChapter } from '@/lib/bid/documents-service';
 import { db } from '@/db';
 import { bidDocuments, projects, responseItems, bidDocumentInterpretations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { createStreamResponse, createSSEEncoder as _createSSEEncoder } from '@/lib/stream-utils';
-import {
-  getLLM,
-  createCozeAdapterWithHeaders,
-  ChatMessage,
-} from '@/lib/llm';
-import { extractForwardHeaders } from '@/lib/llm/factory';
+
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 // ============================================
 // 流式生成章节内容
 // ============================================
 
-async function generateContentStream(
-  request: NextRequest,
-  userId: number
-): Promise<Response> {
+async function generateContentStream(request: NextRequest, userId: number): Promise<Response> {
   try {
     const body = await request.json();
     const { chapterId, style, useKnowledge } = body;
@@ -107,7 +111,7 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
         .from(responseItems)
         .where(eq(responseItems.id, chapter.responseItemId))
         .limit(1);
-      
+
       if (responseItem.length > 0 && responseItem[0].requirement) {
         requirements = [responseItem[0].requirement];
       }
@@ -118,11 +122,8 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
     // 获取参考知识
     let referenceContent: string[] = [];
     if (useKnowledge) {
-      const knowledge = await retrieveRelevantKnowledge(
-        chapter.title,
-        3,
-        customHeaders
-      );
+      const { retrieveRelevantKnowledge } = await import('@/lib/bid/ai-generator');
+      const knowledge = await retrieveRelevantKnowledge(chapter.title, 3, customHeaders);
       referenceContent = knowledge.map((k) => k.content);
     }
 
@@ -169,10 +170,9 @@ ${chapter.type ? `章节类型：${chapter.type}` : ''}`;
     // 创建流式响应
     return createStreamResponse(async (controller, encoder) => {
       // 使用统一适配层
-      const llm = customHeaders 
-        ? createCozeAdapterWithHeaders(customHeaders) 
-        : getLLM();
-      
+      const { getLLM, createCozeAdapterWithHeaders } = await import('@/lib/llm');
+      const llm = customHeaders ? createCozeAdapterWithHeaders(customHeaders) : getLLM();
+
       let fullContent = '';
 
       try {
@@ -193,6 +193,7 @@ ${chapter.type ? `章节类型：${chapter.type}` : ''}`;
         }
 
         // 保存生成记录
+        const { saveGenerationLog } = await import('@/lib/bid/ai-generator');
         await saveGenerationLog({
           chapterId,
           prompt: `生成章节: ${chapter.title}`,
@@ -203,10 +204,12 @@ ${chapter.type ? `章节类型：${chapter.type}` : ''}`;
         });
 
         // 发送完成信号，包含字数统计
-        controller.enqueue(encoder.encode({
-          type: 'complete',
-          wordCount: fullContent.length,
-        }));
+        controller.enqueue(
+          encoder.encode({
+            type: 'complete',
+            wordCount: fullContent.length,
+          })
+        );
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '生成失败';
         controller.enqueue(encoder.encodeError(errorMessage));
@@ -222,10 +225,7 @@ ${chapter.type ? `章节类型：${chapter.type}` : ''}`;
 // 非流式生成章节内容（保留向后兼容）
 // ============================================
 
-async function generateContent(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function generateContent(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { chapterId, style, useKnowledge } = body;
@@ -300,7 +300,7 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
         .from(responseItems)
         .where(eq(responseItems.id, chapter.responseItemId))
         .limit(1);
-      
+
       if (responseItem.length > 0 && responseItem[0].requirement) {
         requirements = [responseItem[0].requirement];
       }
@@ -311,15 +311,13 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
     // 检索相关知识（如果启用）
     let referenceContent: string[] = [];
     if (useKnowledge) {
-      const knowledge = await retrieveRelevantKnowledge(
-        chapter.title,
-        3,
-        customHeaders
-      );
+      const { retrieveRelevantKnowledge } = await import('@/lib/bid/ai-generator');
+      const knowledge = await retrieveRelevantKnowledge(chapter.title, 3, customHeaders);
       referenceContent = knowledge.map((k) => k.content);
     }
 
     // 生成内容
+    const { generateChapterContent } = await import('@/lib/bid/ai-generator');
     const result = await generateChapterContent(
       {
         chapterTitle: chapter.title,
@@ -335,6 +333,7 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
     );
 
     // 保存生成记录
+    const { saveGenerationLog } = await import('@/lib/bid/ai-generator');
     await saveGenerationLog({
       chapterId,
       prompt: `生成章节: ${chapter.title}`,
@@ -360,10 +359,7 @@ ${interp.otherRequirements ? `- 其他要求：${typeof interp.otherRequirements
 // 优化内容
 // ============================================
 
-async function optimizeContent(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function optimizeContent(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { chapterId, optimizationType } = body;
@@ -381,13 +377,11 @@ async function optimizeContent(
     const customHeaders = extractForwardHeaders(request.headers);
 
     // 优化内容
-    const result = await optimizeChapterContent(
-      chapter.content,
-      optimizationType,
-      customHeaders
-    );
+    const { optimizeChapterContent } = await import('@/lib/bid/ai-generator');
+    const result = await optimizeChapterContent(chapter.content, optimizationType, customHeaders);
 
     // 保存生成记录
+    const { saveGenerationLog } = await import('@/lib/bid/ai-generator');
     await saveGenerationLog({
       chapterId,
       prompt: `优化内容: ${optimizationType}`,
@@ -412,10 +406,7 @@ async function optimizeContent(
 // 流式优化内容
 // ============================================
 
-async function optimizeContentStream(
-  request: NextRequest,
-  userId: number
-): Promise<Response> {
+async function optimizeContentStream(request: NextRequest, userId: number): Promise<Response> {
   try {
     const body = await request.json();
     const { chapterId, optimizationType } = body;
@@ -446,10 +437,9 @@ async function optimizeContentStream(
 3. 语言要专业、规范`;
 
     return createStreamResponse(async (controller, encoder) => {
-      const llm = customHeaders 
-        ? createCozeAdapterWithHeaders(customHeaders) 
-        : getLLM();
-      
+      const { getLLM, createCozeAdapterWithHeaders } = await import('@/lib/llm');
+      const llm = customHeaders ? createCozeAdapterWithHeaders(customHeaders) : getLLM();
+
       let fullContent = '';
 
       try {
@@ -481,6 +471,7 @@ async function optimizeContentStream(
 
         // 只有在未中断的情况下才保存日志
         if (!request.signal.aborted) {
+          const { saveGenerationLog } = await import('@/lib/bid/ai-generator');
           await saveGenerationLog({
             chapterId,
             prompt: `优化内容: ${optimizationType}`,
@@ -490,10 +481,12 @@ async function optimizeContentStream(
             userId,
           });
 
-          controller.enqueue(encoder.encode({
-            type: 'complete',
-            wordCount: fullContent.length,
-          }));
+          controller.enqueue(
+            encoder.encode({
+              type: 'complete',
+              wordCount: fullContent.length,
+            })
+          );
         }
       } catch (error) {
         if (!request.signal.aborted) {
@@ -512,10 +505,7 @@ async function optimizeContentStream(
 // 接受生成内容
 // ============================================
 
-async function acceptContent(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function acceptContent(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { chapterId, content } = body;

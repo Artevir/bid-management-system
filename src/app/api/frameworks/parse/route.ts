@@ -5,7 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { FetchClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 // ============================================
 // 标题识别模式配置
@@ -20,15 +33,25 @@ interface TitlePattern {
 
 const TITLE_PATTERNS: TitlePattern[] = [
   // 一级标题模式
-  { regex: /^第[一二三四五六七八九十百千万]+章[\s：:：]?\s*/u, level: 1, name: '中文章节', priority: 1 },
-  { regex: /^第[一二三四五六七八九十百千万]+部分[\s：:：]?\s*/u, level: 1, name: '中文部分', priority: 1 },
+  {
+    regex: /^第[一二三四五六七八九十百千万]+章[\s：:：]?\s*/u,
+    level: 1,
+    name: '中文章节',
+    priority: 1,
+  },
+  {
+    regex: /^第[一二三四五六七八九十百千万]+部分[\s：:：]?\s*/u,
+    level: 1,
+    name: '中文部分',
+    priority: 1,
+  },
   { regex: /^[一二三四五六七八九十]+[、.．]\s+/, level: 1, name: '中文数字', priority: 2 },
   { regex: /^1[\s.．、]\s+/, level: 1, name: '阿拉伯数字', priority: 3 },
   { regex: /^#[\s]+/, level: 1, name: 'Markdown H1', priority: 4 },
   { regex: /^一、\s*/, level: 1, name: '中文顿号', priority: 2 },
   { regex: /^PART\s+[IVX]+[\s:：]?\s*/i, level: 1, name: '英文部分', priority: 3 },
   { regex: /^CHAPTER\s+[IVX]+[\s:：]?\s*/i, level: 1, name: '英文章节', priority: 3 },
-  
+
   // 二级标题模式
   { regex: /^第[一二三四五六七八九十]+节[\s：:：]?\s*/u, level: 2, name: '中文小节', priority: 1 },
   { regex: /^第[一二三四五六七八九十]+条[\s：:：]?\s*/u, level: 2, name: '中文条款', priority: 1 },
@@ -36,18 +59,18 @@ const TITLE_PATTERNS: TitlePattern[] = [
   { regex: /^[（(][一二三四五六七八九十]+[)）]\s*/, level: 2, name: '括号中文', priority: 2 },
   { regex: /^##[\s]+/, level: 2, name: 'Markdown H2', priority: 4 },
   { regex: /^二、\s*/, level: 2, name: '二级中文顿号', priority: 3 },
-  
+
   // 三级标题模式
   { regex: /^\d+[.．]\d+[.．]\d+[\s.．、]?\s+/, level: 3, name: '三级编号', priority: 2 },
   { regex: /^[（(]\d+[)）]\s*/, level: 3, name: '括号数字', priority: 2 },
   { regex: /^###[\s]+/, level: 3, name: 'Markdown H3', priority: 4 },
   { regex: /^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, level: 3, name: '带圈数字', priority: 3 },
-  
+
   // 四级标题模式
   { regex: /^\d+[.．]\d+[.．]\d+[.．]\d+[\s.．、]?\s+/, level: 4, name: '四级编号', priority: 2 },
   { regex: /^[a-zA-Z][.．、]\s+/, level: 4, name: '字母编号', priority: 3 },
   { regex: /^####[\s]+/, level: 4, name: 'Markdown H4', priority: 4 },
-  
+
   // 五级标题模式
   { regex: /^[ivxIVX]+[.．、]\s+/, level: 5, name: '罗马数字', priority: 3 },
   { regex: /^#####[\s]+/, level: 5, name: 'Markdown H5', priority: 4 },
@@ -69,12 +92,13 @@ export async function POST(request: NextRequest) {
 
     // 如果提供了URL，先获取文档内容
     if (url) {
-      const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+      const customHeaders = extractForwardHeaders(request.headers);
+      const { FetchClient, Config } = await import('coze-coding-dev-sdk');
       const config = new Config();
       const client = new FetchClient(config, customHeaders);
 
       const response = await client.fetch(url);
-      
+
       if (response.status_code !== 0) {
         return NextResponse.json(
           { error: response.status_message || '获取文档失败' },
@@ -83,20 +107,17 @@ export async function POST(request: NextRequest) {
       }
 
       documentTitle = response.title || '';
-      
+
       // 提取文本内容
-      const textItems = response.content.filter(item => item.type === 'text');
-      documentContent = textItems.map(item => item.text).join('\n');
-      
+      const textItems = response.content.filter((item) => item.type === 'text');
+      documentContent = textItems.map((item) => item.text).join('\n');
+
       // 尝试检测文档格式
       detectedFormat = detectFormat(url, response.content);
     }
 
     if (!documentContent) {
-      return NextResponse.json(
-        { error: '缺少文档内容' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少文档内容' }, { status: 400 });
     }
 
     // 解析选项
@@ -110,12 +131,12 @@ export async function POST(request: NextRequest) {
 
     // 使用增强的正则表达式识别标题层级
     const parseResult = parseDocumentStructureEnhanced(
-      documentContent, 
+      documentContent,
       documentTitle,
       parseOptions
     );
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       title: documentTitle,
       format: detectedFormat,
       chapters: parseResult.chapters,
@@ -124,10 +145,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('解析文档失败:', error);
-    return NextResponse.json(
-      { error: '解析文档失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '解析文档失败' }, { status: 500 });
   }
 }
 
@@ -136,13 +154,13 @@ export async function POST(request: NextRequest) {
 // ============================================
 
 function parseDocumentStructureEnhanced(
-  content: string, 
+  content: string,
   title: string,
   options: any
 ): { chapters: any[]; statistics: any } {
   const chapters: any[] = [];
   const lines = content.split('\n');
-  
+
   // 统计信息
   const statistics = {
     totalLines: lines.length,
@@ -157,23 +175,23 @@ function parseDocumentStructureEnhanced(
   const parentStack: { level: number; id: number }[] = [];
   let currentParent: number | null = null;
   let lastChapterIndex = -1;
-  
+
   // 用于收集章节内容的缓冲区
   const chapterContents: Map<number, string[]> = new Map();
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmedLine = line.trim();
-    
+
     // 空行跳过
     if (!trimmedLine) continue;
 
     // 检查是否匹配标题模式
     let matched = false;
-    
+
     // 按优先级排序匹配
     const sortedPatterns = [...TITLE_PATTERNS].sort((a, b) => a.priority - b.priority);
-    
+
     for (const pattern of sortedPatterns) {
       if (pattern.regex.test(trimmedLine)) {
         // 提取标题文本
@@ -198,7 +216,10 @@ function parseDocumentStructureEnhanced(
         const chapterCode = generateChapterCodeEnhanced(levelCounters, pattern.level, pattern.name);
 
         // 确定父级
-        while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= pattern.level) {
+        while (
+          parentStack.length > 0 &&
+          parentStack[parentStack.length - 1].level >= pattern.level
+        ) {
           parentStack.pop();
         }
         currentParent = parentStack.length > 0 ? parentStack[parentStack.length - 1].id : null;
@@ -223,40 +244,40 @@ function parseDocumentStructureEnhanced(
         };
 
         chapters.push(chapter);
-        
+
         // 处理上一章节的内容收集
         if (lastChapterIndex >= 0) {
           const lastChapter = chapters[lastChapterIndex];
           const contentLines = chapterContents.get(lastChapter.id) || [];
           lastChapter.content = contentLines.join('\n').trim();
         }
-        
+
         // 重置内容收集
         chapterContents.set(chapterId, []);
         lastChapterIndex = chapters.length - 1;
-        
+
         parentStack.push({ level: pattern.level, id: chapter.id });
         matched = true;
         break;
       }
     }
-    
+
     // 如果不是标题，收集到当前章节内容中
     if (!matched && lastChapterIndex >= 0) {
       const currentChapter = chapters[lastChapterIndex];
       const contentLines = chapterContents.get(currentChapter.id) || [];
-      
+
       // 检查是否是列表项
       if (options.detectLists && isListItem(trimmedLine)) {
         contentLines.push(trimmedLine);
       } else {
         contentLines.push(trimmedLine);
       }
-      
+
       chapterContents.set(currentChapter.id, contentLines);
     }
   }
-  
+
   // 处理最后一个章节的内容
   if (lastChapterIndex >= 0) {
     const lastChapter = chapters[lastChapterIndex];
@@ -289,12 +310,12 @@ function parseDocumentStructureEnhanced(
 // ============================================
 
 function generateChapterCodeEnhanced(
-  counters: { [key: number]: number }, 
+  counters: { [key: number]: number },
   level: number,
   patternName: string
 ): string {
   const parts: string[] = [];
-  
+
   // 根据模式名称选择编码风格
   if (patternName.includes('中文')) {
     // 中文数字编码
@@ -315,7 +336,7 @@ function generateChapterCodeEnhanced(
       parts.push(counters[l].toString());
     }
   }
-  
+
   return parts.join('.');
 }
 
@@ -325,13 +346,13 @@ function generateChapterCodeEnhanced(
 
 function isListItem(line: string): boolean {
   const listPatterns = [
-    /^[-•·]\s+/,           // 无序列表
-    /^\d+[\)、]\s*/,       // 数字列表
-    /^[a-zA-Z][)、]\s*/,   // 字母列表
+    /^[-•·]\s+/, // 无序列表
+    /^\d+[\)、]\s*/, // 数字列表
+    /^[a-zA-Z][)、]\s*/, // 字母列表
     /^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, // 带圈数字
   ];
-  
-  return listPatterns.some(pattern => pattern.test(line));
+
+  return listPatterns.some((pattern) => pattern.test(line));
 }
 
 // ============================================
@@ -343,12 +364,15 @@ function detectFormat(url: string, content: any[]): string {
   if (url.toLowerCase().endsWith('.txt')) return 'text';
   if (url.toLowerCase().endsWith('.pdf')) return 'pdf';
   if (url.toLowerCase().match(/\.docx?$/)) return 'word';
-  
+
   // 基于内容检测
-  const textContent = content.filter(item => item.type === 'text').map(item => item.text).join('\n');
-  
+  const textContent = content
+    .filter((item) => item.type === 'text')
+    .map((item) => item.text)
+    .join('\n');
+
   if (textContent.match(/^[#]+\s/m)) return 'markdown';
-  
+
   return 'unknown';
 }
 
@@ -366,7 +390,7 @@ export async function GET() {
       { ext: '.md', name: 'Markdown', description: '支持Markdown格式，识别标题层级' },
       { ext: '.rtf', name: 'RTF文档', description: '支持富文本格式' },
     ],
-    titlePatterns: TITLE_PATTERNS.map(p => ({
+    titlePatterns: TITLE_PATTERNS.map((p) => ({
       name: p.name,
       level: p.level,
       description: getPatternDescription(p.name),
@@ -387,30 +411,30 @@ export async function GET() {
 
 function getPatternDescription(name: string): string {
   const descriptions: Record<string, string> = {
-    '中文章节': '如：第一章 项目概述',
-    '中文部分': '如：第一部分 总体说明',
-    '中文数字': '如：一、项目背景',
-    '阿拉伯数字': '如：1. 项目背景',
+    中文章节: '如：第一章 项目概述',
+    中文部分: '如：第一部分 总体说明',
+    中文数字: '如：一、项目背景',
+    阿拉伯数字: '如：1. 项目背景',
     'Markdown H1': '如：# 标题',
-    '中文顿号': '如：一、项目概述',
-    '英文部分': '如：PART I Overview',
-    '英文章节': '如：CHAPTER 1 Introduction',
-    '中文小节': '如：第一节 项目背景',
-    '中文条款': '如：第一条 总则',
-    '二级编号': '如：1.1 项目目标',
-    '括号中文': '如：（一）项目背景',
+    中文顿号: '如：一、项目概述',
+    英文部分: '如：PART I Overview',
+    英文章节: '如：CHAPTER 1 Introduction',
+    中文小节: '如：第一节 项目背景',
+    中文条款: '如：第一条 总则',
+    二级编号: '如：1.1 项目目标',
+    括号中文: '如：（一）项目背景',
     'Markdown H2': '如：## 标题',
-    '三级编号': '如：1.1.1 总体目标',
-    '括号数字': '如：（1）总体目标',
+    三级编号: '如：1.1.1 总体目标',
+    括号数字: '如：（1）总体目标',
     'Markdown H3': '如：### 标题',
-    '带圈数字': '如：① 总体目标',
-    '四级编号': '如：1.1.1.1 具体内容',
-    '字母编号': '如：a. 具体内容',
+    带圈数字: '如：① 总体目标',
+    四级编号: '如：1.1.1.1 具体内容',
+    字母编号: '如：a. 具体内容',
     'Markdown H4': '如：#### 标题',
-    '罗马数字': '如：i. 具体内容',
+    罗马数字: '如：i. 具体内容',
     'Markdown H5': '如：##### 标题',
-    '字母括号': '如：a) 具体内容',
+    字母括号: '如：a) 具体内容',
   };
-  
+
   return descriptions[name] || '通用标题格式';
 }

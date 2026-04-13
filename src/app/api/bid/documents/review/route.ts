@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { oneClickGenerateService } from '@/lib/services/one-click-generate-service';
 import { getSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
+    const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
@@ -28,15 +28,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Get pending reviews error:', error);
-    return NextResponse.json(
-      { error: error.message || '获取失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '获取失败' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
@@ -46,17 +44,11 @@ export async function POST(request: NextRequest) {
     const { documentId, reviewId, result, comments, chapterModifications } = body;
 
     if (!documentId || !reviewId || !result) {
-      return NextResponse.json(
-        { error: '缺少必要参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
     if (!['approved', 'rejected'].includes(result)) {
-      return NextResponse.json(
-        { error: '审核结果无效' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '审核结果无效' }, { status: 400 });
     }
 
     await oneClickGenerateService.reviewDocument(
@@ -76,9 +68,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Review document error:', error);
-    return NextResponse.json(
-      { error: error.message || '审核失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '审核失败' }, { status: 500 });
   }
 }

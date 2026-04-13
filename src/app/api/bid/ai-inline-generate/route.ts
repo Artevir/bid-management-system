@@ -9,7 +9,20 @@ import { db } from '@/db';
 import { promptTemplates } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 export async function POST(request: NextRequest) {
   const currentUser = await getCurrentUser();
@@ -47,7 +60,7 @@ export async function POST(request: NextRequest) {
         if (agent.systemPrompt) {
           systemPrompt = agent.systemPrompt;
         }
-        
+
         // 如果有角色描述，添加到系统提示词
         if (agent.agentDescription) {
           systemPrompt += `\n\n你的角色：${agent.agentDescription}`;
@@ -62,11 +75,11 @@ export async function POST(request: NextRequest) {
 
     // 添加上下文信息
     const contextParts: string[] = [];
-    
+
     if (context?.chapterTitle) {
       contextParts.push(`当前章节：${context.chapterTitle}`);
     }
-    
+
     if (context?.selectedText) {
       if (mode === 'replace') {
         contextParts.push(`需要改写的原文：\n${context.selectedText}`);
@@ -90,7 +103,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 提取请求头并创建LLM客户端
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    const customHeaders = extractForwardHeaders(request.headers);
+    const { LLMClient, Config } = await import('coze-coding-dev-sdk');
     const config = new Config();
     const client = new LLMClient(config, customHeaders);
 
@@ -137,14 +151,11 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
   } catch (error) {
     console.error('AI inline generate error:', error);
-    return NextResponse.json(
-      { error: 'AI生成失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'AI生成失败' }, { status: 500 });
   }
 }

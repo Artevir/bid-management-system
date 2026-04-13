@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateImage, getImageGenerationList } from '@/lib/image-generation/service';
 import { requireAuth } from '@/lib/auth/session';
 import { z } from 'zod';
 
@@ -24,19 +23,36 @@ const generateImageSchema = z.object({
   projectId: z.number().optional(),
   projectName: z.string().optional(),
   bidDocumentId: z.number().optional(),
-  businessObjectType: z.enum(['project', 'bid_document', 'chapter', 'marketing', 'other']).optional(),
+  businessObjectType: z
+    .enum(['project', 'bid_document', 'chapter', 'marketing', 'other'])
+    .optional(),
   businessObjectId: z.number().optional(),
   usage: z.string().optional(),
 });
 
 const getListSchema = z.object({
-  projectId: z.string().transform((val) => (val ? parseInt(val, 10) : undefined)).optional(),
-  bidDocumentId: z.string().transform((val) => (val ? parseInt(val, 10) : undefined)).optional(),
+  projectId: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
+  bidDocumentId: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
   businessObjectType: z.string().optional(),
-  businessObjectId: z.string().transform((val) => (val ? parseInt(val, 10) : undefined)).optional(),
+  businessObjectId: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .optional(),
   status: z.string().optional(),
-  page: z.string().transform((val) => (val ? parseInt(val, 10) : 1)).optional(),
-  pageSize: z.string().transform((val) => (val ? parseInt(val, 10) : 20)).optional(),
+  page: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : 1))
+    .optional(),
+  pageSize: z
+    .string()
+    .transform((val) => (val ? parseInt(val, 10) : 20))
+    .optional(),
 });
 
 // ============================================
@@ -53,6 +69,7 @@ export async function POST(request: NextRequest) {
     const validatedData = generateImageSchema.parse(body);
 
     // 生成图片
+    const { generateImage } = await import('@/lib/image-generation/service');
     const result = await generateImage(
       {
         ...validatedData,
@@ -69,10 +86,7 @@ export async function POST(request: NextRequest) {
     console.error('图片生成失败:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: '参数验证失败', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '参数验证失败', details: error.errors }, { status: 400 });
     }
 
     return NextResponse.json(
@@ -93,11 +107,10 @@ export async function GET(request: NextRequest) {
 
     // 解析查询参数
     const searchParams = request.nextUrl.searchParams;
-    const validatedData = getListSchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const validatedData = getListSchema.parse(Object.fromEntries(searchParams.entries()));
 
     // 获取列表
+    const { getImageGenerationList } = await import('@/lib/image-generation/service');
     const records = await getImageGenerationList({
       ...validatedData,
       createdBy: user.id,
@@ -111,10 +124,7 @@ export async function GET(request: NextRequest) {
     console.error('获取图片生成列表失败:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: '参数验证失败', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '参数验证失败', details: error.errors }, { status: 400 });
     }
 
     return NextResponse.json(
