@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Avoid bundling this SDK into server chunks in ways that break runtime (e.g. class extends undefined).
+  serverExternalPackages: ['coze-coding-dev-sdk'],
+
   // ESLint配置
   eslint: {
     // 构建时忽略ESLint错误

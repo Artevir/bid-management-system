@@ -3,7 +3,6 @@
  * 提供文件上传、下载、管理等操作
  */
 
-import { S3Storage } from 'coze-coding-dev-sdk';
 import fs from 'fs';
 import path from 'path';
 import { db } from '@/db';
@@ -11,16 +10,29 @@ import { files, fileVersions, fileCategories, projectFiles, auditLogs } from '@/
 import { eq, and, like, desc, asc, inArray as _inArray, sql, count, isNull as _isNull } from 'drizzle-orm';
 import { DocumentSecurityLevel } from '@/types/document';
 
-const hasBucketStorage = Boolean(process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME);
-const bucketStorage = hasBucketStorage
-  ? new S3Storage({
-      endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-      accessKey: '',
-      secretKey: '',
-      bucketName: process.env.COZE_BUCKET_NAME,
-      region: 'cn-beijing',
-    })
-  : null;
+function cozeBucketConfigured(): boolean {
+  return Boolean(process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME);
+}
+
+let cozeS3ClientPromise: Promise<import('coze-coding-dev-sdk').S3Storage | null> | null = null;
+
+/** Lazy-load Coze S3 client so Next build / route preflight never executes SDK at module top level. */
+async function getCozeBucketClient(): Promise<import('coze-coding-dev-sdk').S3Storage | null> {
+  if (!cozeBucketConfigured()) return null;
+  if (!cozeS3ClientPromise) {
+    cozeS3ClientPromise = (async () => {
+      const { S3Storage } = await import('coze-coding-dev-sdk');
+      return new S3Storage({
+        endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL!,
+        accessKey: '',
+        secretKey: '',
+        bucketName: process.env.COZE_BUCKET_NAME!,
+        region: 'cn-beijing',
+      });
+    })();
+  }
+  return cozeS3ClientPromise;
+}
 
 // ============================================
 // 类型定义
@@ -117,6 +129,7 @@ export async function uploadFile(
   const storagePath = `uploads/${timestamp}_${sanitizedFileName}`;
 
   let actualKey: string;
+  const bucketStorage = await getCozeBucketClient();
   if (bucketStorage) {
     actualKey = await bucketStorage.uploadFile({
       fileContent,
@@ -280,6 +293,7 @@ export async function getFileList(
     .offset((page - 1) * pageSize);
 
   // 生成签名URL
+  const bucketStorage = await getCozeBucketClient();
   const items = await Promise.all(
     result.map(async (item) => {
       if (!bucketStorage) {
@@ -337,6 +351,7 @@ export async function getFileById(
 
   // 生成当前版本签名URL
   let signedUrl: string | undefined;
+  const bucketStorage = await getCozeBucketClient();
   if (!bucketStorage) {
     signedUrl = `/api/files/${fileId}/raw`;
   } else {
@@ -411,6 +426,7 @@ export async function getFileDownloadUrl(
 
   const file = fileResult[0];
 
+  const bucketStorage = await getCozeBucketClient();
   const url = bucketStorage
     ? await bucketStorage.generatePresignedUrl({
         key: file.path,

@@ -21,8 +21,6 @@ import { generateWithDefaultLLM } from '@/lib/llm/db-runtime';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { S3Storage } from 'coze-coding-dev-sdk';
-
 // ============================================
 // 类型定义
 // ============================================
@@ -386,6 +384,7 @@ async function loadDocumentBuffer(documentUrl: string): Promise<Buffer> {
     }
 
     if (process.env.COZE_BUCKET_ENDPOINT_URL && process.env.COZE_BUCKET_NAME) {
+      const { S3Storage } = await import('coze-coding-dev-sdk');
       const storage = new S3Storage({
         endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
         accessKey: '',
