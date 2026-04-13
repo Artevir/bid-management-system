@@ -116,15 +116,7 @@ const nextConfig: NextConfig = {
   // Headers 配置 - 禁用 HTML 页面缓存
   async headers() {
     return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, must-revalidate',
-          },
-        ],
-      },
+      // 具体路径放前：避免与下方 `/:path*` 在合并策略上产生歧义；带 hash 的 chunk 可长期缓存
       {
         source: '/_next/static/:path*',
         headers: [
@@ -141,6 +133,15 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400',
+          },
+        ],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
           },
         ],
       },

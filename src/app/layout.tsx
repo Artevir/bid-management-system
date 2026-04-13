@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import AppLayout from '@/components/layout/app-layout';
+import { ChunkLoadRecovery } from '@/components/chunk-load-recovery';
 import { ReactQueryProvider } from '@/components/providers/react-query-provider';
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="antialiased">
+        <ChunkLoadRecovery />
         <ReactQueryProvider>
           <ThemeProvider
             attribute="class"
