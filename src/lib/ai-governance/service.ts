@@ -4,9 +4,14 @@
  */
 
 import { db } from '@/db';
-import { aiEvaluationSets, aiTestCases, aiTestRuns, aiTestCaseResults, aiQualityMetrics } from '@/db/schema';
+import {
+  aiEvaluationSets,
+  aiTestCases,
+  aiTestRuns,
+  aiTestCaseResults,
+  aiQualityMetrics,
+} from '@/db/schema';
 import { eq, and, desc, avg, count as _count } from 'drizzle-orm';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
 
 // ============================================
 // 类型定义
@@ -162,8 +167,13 @@ export async function runRegressionTest(
     .returning();
 
   // 3. 异步执行测试
-  executeTestCases(testRun.id, evalSet.testCases, params.modelId, params.parameters, customHeaders)
-    .catch(console.error);
+  executeTestCases(
+    testRun.id,
+    evalSet.testCases,
+    params.modelId,
+    params.parameters,
+    customHeaders
+  ).catch(console.error);
 
   return testRun.id;
 }
@@ -173,13 +183,14 @@ export async function runRegressionTest(
  */
 async function executeTestCases(
   runId: number,
-  testCases: typeof aiTestCases.$inferSelect[],
+  testCases: (typeof aiTestCases.$inferSelect)[],
   modelId: string,
   parameters?: Record<string, unknown>,
   customHeaders?: Record<string, string>
 ): Promise<void> {
+  const { LLMClient, Config } = await import('coze-coding-dev-sdk');
   const config = new Config();
-  const client = new LLMClient(config, customHeaders as any);
+  const client = new LLMClient(config, customHeaders);
 
   let passedCount = 0;
   let failedCount = 0;
@@ -191,24 +202,17 @@ async function executeTestCases(
       const startTime = Date.now();
 
       // 调用LLM
-      const response = await client.invoke(
-        [{ role: 'user' as const, content: testCase.input }],
-        {
-          model: modelId,
-          temperature: (parameters?.temperature as number) ?? 0.7,
-        }
-      );
+      const response = await client.invoke([{ role: 'user' as const, content: testCase.input }], {
+        model: modelId,
+        temperature: (parameters?.temperature as number) ?? 0.7,
+      });
 
       const latency = Date.now() - startTime;
       const actualOutput = response.content;
 
       // 评估输出
-      const criteria = JSON.parse(testCase.criteria as string || '{}');
-      const { score, passed } = evaluateOutput(
-        actualOutput,
-        testCase.expectedOutput,
-        criteria
-      );
+      const criteria = JSON.parse((testCase.criteria as string) || '{}');
+      const { score, passed } = evaluateOutput(actualOutput, testCase.expectedOutput, criteria);
 
       // 保存测试用例结果
       await db.insert(aiTestCaseResults).values({
@@ -230,12 +234,11 @@ async function executeTestCases(
       totalLatency += latency;
       if (passed) passedCount++;
       else failedCount++;
-
     } catch (error) {
       failedCount++;
       const errorMessage = error instanceof Error ? error.message : '未知错误';
       console.error(`Test case ${testCase.caseId} failed:`, error);
-      
+
       // 保存失败结果
       await db.insert(aiTestCaseResults).values({
         testRunId: runId,
@@ -339,11 +342,7 @@ function calculateSimilarity(text1: string, text2: string): number {
  * 获取测试运行结果
  */
 export async function getTestRunResult(runId: number) {
-  const run = await db
-    .select()
-    .from(aiTestRuns)
-    .where(eq(aiTestRuns.id, runId))
-    .limit(1);
+  const run = await db.select().from(aiTestRuns).where(eq(aiTestRuns.id, runId)).limit(1);
 
   return run.length > 0 ? run[0] : null;
 }
@@ -365,7 +364,7 @@ export async function getTestRunCaseResults(runId: number) {
  */
 export async function getTestRunDetail(runId: number) {
   const run = await getTestRunResult(runId);
-  
+
   if (!run) {
     return null;
   }
@@ -430,7 +429,7 @@ async function updateQualityMetrics(
 
   if (existing.length > 0) {
     // 更新现有指标（使用移动平均）
-    const newValue = (existing[0].metricValue * 0.8 + metric.metricValue * 0.2);
+    const newValue = existing[0].metricValue * 0.8 + metric.metricValue * 0.2;
     await db
       .update(aiQualityMetrics)
       .set({

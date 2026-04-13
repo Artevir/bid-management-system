@@ -4,16 +4,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { companyFrameworkService } from '@/lib/services/company-framework-service';
-import frameworkMergeService, { type MergedChapter, type FrameworkMergeOptions, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';
+import type {
+  MergedChapter,
+  FrameworkMergeOptions,
+  SimpleFramework,
+  BaseChapter,
+} from '@/lib/services/framework-merge-service';
 import { db } from '@/db';
-import { 
-  bidDocuments, 
-  bidChapters,
-  projects,
-} from '@/db/schema';
+import { bidDocuments, bidChapters, projects } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getDocumentFramework } from '@/lib/interpretation/service';
 
 // ============================================
 // 类型定义
@@ -55,11 +54,7 @@ async function createDocumentFromMerge(
     }
 
     // 验证项目存在
-    const project = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
+    const project = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
 
     if (project.length === 0) {
       return NextResponse.json({ error: '项目不存在' }, { status: 404 });
@@ -70,6 +65,7 @@ async function createDocumentFromMerge(
 
     if (tenderInterpretationId) {
       // 使用 getDocumentFramework 获取框架数据
+      const { getDocumentFramework } = await import('@/lib/interpretation/service');
       const frameworkData = await getDocumentFramework(tenderInterpretationId);
       if (frameworkData && frameworkData.length > 0) {
         tenderFramework = {
@@ -81,12 +77,11 @@ async function createDocumentFromMerge(
     }
 
     // 获取公司框架
-    const companyFrameworks = await companyFrameworkService.getFrameworksByIds(
-      companyFrameworkIds
-    );
+    const { companyFrameworkService } = await import('@/lib/services/company-framework-service');
+    const companyFrameworks = await companyFrameworkService.getFrameworksByIds(companyFrameworkIds);
 
     // 转换公司框架为 SimpleFramework 类型
-    const convertedCompanyFrameworks: SimpleFramework[] = companyFrameworks.map(fw => ({
+    const convertedCompanyFrameworks: SimpleFramework[] = companyFrameworks.map((fw) => ({
       id: fw.id,
       name: fw.name,
       chapters: convertChaptersToBase(fw.chapters),
@@ -110,10 +105,9 @@ async function createDocumentFromMerge(
     };
 
     // 执行合并
-    const mergedResult = await frameworkMergeService.mergeFrameworks(
-      allFrameworks,
-      mergeOptions
-    );
+    const { default: frameworkMergeService } =
+      await import('@/lib/services/framework-merge-service');
+    const mergedResult = await frameworkMergeService.mergeFrameworks(allFrameworks, mergeOptions);
 
     // 创建投标文档
     const [document] = await db
@@ -233,12 +227,7 @@ async function createChaptersFromMerged(
 
     // 递归创建子章节
     if (chapter.children && chapter.children.length > 0) {
-      const childIds = await createChaptersFromMerged(
-        documentId,
-        chapter.children,
-        created.id,
-        0
-      );
+      const childIds = await createChaptersFromMerged(documentId, chapter.children, created.id, 0);
       chapterIds.push(...childIds);
     }
   }
@@ -249,7 +238,10 @@ async function createChaptersFromMerged(
 /**
  * 根据章节标题和层级推断章节类型
  */
-function getChapterType(title: string, level: number): 'business' | 'technical' | 'qualification' | 'price' | 'appendix' | 'cover' | 'toc' | null {
+function getChapterType(
+  title: string,
+  level: number
+): 'business' | 'technical' | 'qualification' | 'price' | 'appendix' | 'cover' | 'toc' | null {
   const titleLower = title.toLowerCase();
 
   if (level === 1) {
@@ -301,7 +293,7 @@ async function updateDocumentProgress(documentId: number): Promise<void> {
 
 // 辅助函数：将公司框架章节转换为 BaseChapter 类型
 function convertChaptersToBase(chapters: any[]): BaseChapter[] {
-  return chapters.map(chapter => ({
+  return chapters.map((chapter) => ({
     id: chapter.id,
     frameworkId: chapter.frameworkId,
     parentId: chapter.parentId,

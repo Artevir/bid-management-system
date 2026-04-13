@@ -3,7 +3,12 @@
  * 使用大语言模型提供智能推荐功能
  */
 
-import { LLMClient, Config, HeaderUtils as _HeaderUtils } from 'coze-coding-dev-sdk';
+type RecommendationClient = {
+  invoke: (
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    options: Record<string, unknown>
+  ) => Promise<{ content: string }>;
+};
 
 // ============================================
 // 推荐类型
@@ -88,11 +93,26 @@ export interface RiskAssessmentRequest {
 // ============================================
 
 export class AIRecommendationService {
-  private client: LLMClient;
+  private clientPromise: Promise<RecommendationClient>;
 
   constructor(customHeaders?: Record<string, string>) {
+    this.clientPromise = this.createClient(customHeaders);
+  }
+
+  private async createClient(
+    customHeaders?: Record<string, string>
+  ): Promise<RecommendationClient> {
+    const { LLMClient, Config } = await import('coze-coding-dev-sdk');
     const config = new Config();
-    this.client = new LLMClient(config, customHeaders);
+    return new LLMClient(config, customHeaders);
+  }
+
+  private async invokeModel(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    options: Record<string, unknown>
+  ): Promise<{ content: string }> {
+    const client = await this.clientPromise;
+    return client.invoke(messages, options);
   }
 
   /**
@@ -122,7 +142,7 @@ export class AIRecommendationService {
     ];
 
     try {
-      const response = await this.client.invoke(messages, {
+      const response = await this.invokeModel(messages, {
         model: 'doubao-seed-2-0-pro-260215',
         temperature: 0.7,
       });
@@ -165,7 +185,7 @@ export class AIRecommendationService {
     ];
 
     try {
-      const response = await this.client.invoke(messages, {
+      const response = await this.invokeModel(messages, {
         model: 'doubao-seed-2-0-pro-260215',
         temperature: 0.7,
       });
@@ -185,9 +205,7 @@ export class AIRecommendationService {
   /**
    * 生成风险评估
    */
-  async getRiskAssessment(
-    request: RiskAssessmentRequest
-  ): Promise<Recommendation[]> {
+  async getRiskAssessment(request: RiskAssessmentRequest): Promise<Recommendation[]> {
     const systemPrompt = `你是一个专业的风险管理顾问，擅长识别和评估项目风险。
 请根据项目信息，提供全面的风险评估和建议。
 
@@ -214,7 +232,7 @@ export class AIRecommendationService {
     ];
 
     try {
-      const response = await this.client.invoke(messages, {
+      const response = await this.invokeModel(messages, {
         model: 'doubao-seed-2-0-pro-260215',
         thinking: 'enabled',
         temperature: 0.7,
@@ -261,7 +279,7 @@ export class AIRecommendationService {
     ];
 
     try {
-      const response = await this.client.invoke(messages, {
+      const response = await this.invokeModel(messages, {
         model: 'doubao-seed-2-0-pro-260215',
         temperature: 0.7,
       });
@@ -307,7 +325,7 @@ export class AIRecommendationService {
     ];
 
     try {
-      const response = await this.client.invoke(messages, {
+      const response = await this.invokeModel(messages, {
         model: 'doubao-seed-2-0-pro-260215',
         temperature: 0.7,
       });
@@ -339,7 +357,9 @@ export class AIRecommendationService {
     if (request.complexity) parts.push(`复杂度：${request.complexity}`);
     if (request.requirements) parts.push(`需求：${request.requirements}`);
     if (request.previousProjects?.length) {
-      parts.push(`历史项目：\n${request.previousProjects.map(p => `- ${p.name} (${p.success ? '成功' : '失败'})`).join('\n')}`);
+      parts.push(
+        `历史项目：\n${request.previousProjects.map((p) => `- ${p.name} (${p.success ? '成功' : '失败'})`).join('\n')}`
+      );
     }
 
     return parts.join('\n');
@@ -366,10 +386,7 @@ export class AIRecommendationService {
     return parts.join('\n');
   }
 
-  private parseRecommendations(
-    content: string,
-    type: RecommendationType
-  ): Recommendation[] {
+  private parseRecommendations(content: string, type: RecommendationType): Recommendation[] {
     try {
       // 尝试提取JSON部分
       const jsonMatch = content.match(/\[[\s\S]*\]/);
@@ -382,9 +399,11 @@ export class AIRecommendationService {
       return data.map((item: any, index: number) => ({
         id: `${type}_${Date.now()}_${index}`,
         type,
-        title: item.title || item.模板名称 || item.实践名称 || item.优化点 || item.风险类型 || '未命名',
+        title:
+          item.title || item.模板名称 || item.实践名称 || item.优化点 || item.风险类型 || '未命名',
         description: item.description || item.适用场景 || item.问题描述 || item.风险描述 || '',
-        content: item.content || item.详细建议 || item.实施步骤 || item.改进方案 || item.应对措施 || '',
+        content:
+          item.content || item.详细建议 || item.实施步骤 || item.改进方案 || item.应对措施 || '',
         confidence: item.confidence || 0.8,
         priority: item.priority || 'medium',
         tags: item.tags || [],
@@ -396,5 +415,3 @@ export class AIRecommendationService {
     }
   }
 }
-
-

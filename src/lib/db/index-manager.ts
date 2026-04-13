@@ -5,6 +5,8 @@
 
 import { db } from '@/db/index';
 import { sql } from 'drizzle-orm';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // ============================================
 // 索引信息接口
@@ -39,19 +41,21 @@ export class IndexManager {
   static async runMigration(): Promise<{ success: boolean; message: string }> {
     try {
       // 读取迁移SQL文件
-      const fs = require('fs');
-      const path = require('path');
-      const migrationPath = path.join(process.cwd(), 'migrations', '0001_add_performance_indexes.sql');
-      
+      const migrationPath = path.join(
+        process.cwd(),
+        'migrations',
+        '0001_add_performance_indexes.sql'
+      );
+
       if (!fs.existsSync(migrationPath)) {
         return {
           success: false,
-          message: '迁移文件不存在'
+          message: '迁移文件不存在',
         };
       }
 
       const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
-      
+
       // 分割SQL语句（按分号分隔，过滤空行和注释）
       const statements = migrationSQL
         .split(';')
@@ -71,13 +75,13 @@ export class IndexManager {
 
       return {
         success: true,
-        message: '索引迁移执行完成'
+        message: '索引迁移执行完成',
       };
     } catch (error) {
       console.error('[Index] 迁移执行失败:', error);
       return {
         success: false,
-        message: `迁移执行失败: ${error}`
+        message: `迁移执行失败: ${error}`,
       };
     }
   }
@@ -120,8 +124,8 @@ export class IndexManager {
       `);
 
       // 查找未使用的索引
-      const unusedIndexes = allIndexes.filter((idx) => 
-        idx.indexScans === 0 && !idx.indexName.includes('_pkey')
+      const unusedIndexes = allIndexes.filter(
+        (idx) => idx.indexScans === 0 && !idx.indexName.includes('_pkey')
       );
 
       // 获取最常用的索引
@@ -173,14 +177,16 @@ export class IndexManager {
   /**
    * 分析表统计信息
    */
-  static async analyzeTables(tables: string[] = []): Promise<{ success: boolean; message: string }> {
+  static async analyzeTables(
+    tables: string[] = []
+  ): Promise<{ success: boolean; message: string }> {
     try {
       // 如果未指定表，则分析所有表
       if (tables.length === 0) {
         await db.execute(sql`ANALYZE`);
         return {
           success: true,
-          message: '已分析所有表的统计信息'
+          message: '已分析所有表的统计信息',
         };
       }
 
@@ -191,13 +197,13 @@ export class IndexManager {
 
       return {
         success: true,
-        message: `已分析表: ${tables.join(', ')}`
+        message: `已分析表: ${tables.join(', ')}`,
       };
     } catch (error) {
       console.error('[Index] 分析表失败:', error);
       return {
         success: false,
-        message: `分析表失败: ${error}`
+        message: `分析表失败: ${error}`,
       };
     }
   }
@@ -212,7 +218,7 @@ export class IndexManager {
         await db.execute(sql`VACUUM ANALYZE`);
         return {
           success: true,
-          message: '已清理所有表的死元组'
+          message: '已清理所有表的死元组',
         };
       }
 
@@ -223,13 +229,13 @@ export class IndexManager {
 
       return {
         success: true,
-        message: `已清理表: ${tables.join(', ')}`
+        message: `已清理表: ${tables.join(', ')}`,
       };
     } catch (error) {
       console.error('[Index] 清理死元组失败:', error);
       return {
         success: false,
-        message: `清理死元组失败: ${error}`
+        message: `清理死元组失败: ${error}`,
       };
     }
   }
@@ -242,13 +248,13 @@ export class IndexManager {
       await db.execute(sql.raw(`REINDEX INDEX ${indexName}`));
       return {
         success: true,
-        message: `索引 ${indexName} 重建成功`
+        message: `索引 ${indexName} 重建成功`,
       };
     } catch (error) {
       console.error('[Index] 重建索引失败:', error);
       return {
         success: false,
-        message: `重建索引 ${indexName} 失败: ${error}`
+        message: `重建索引 ${indexName} 失败: ${error}`,
       };
     }
   }
@@ -256,7 +262,11 @@ export class IndexManager {
   /**
    * 删除未使用的索引
    */
-  static async dropUnusedIndexes(): Promise<{ success: boolean; droppedIndexes: string[]; message: string }> {
+  static async dropUnusedIndexes(): Promise<{
+    success: boolean;
+    droppedIndexes: string[];
+    message: string;
+  }> {
     try {
       const stats = await this.getIndexStats();
       const droppedIndexes: string[] = [];
@@ -275,14 +285,14 @@ export class IndexManager {
       return {
         success: true,
         droppedIndexes,
-        message: `已删除 ${droppedIndexes.length} 个未使用的索引`
+        message: `已删除 ${droppedIndexes.length} 个未使用的索引`,
       };
     } catch (error) {
       console.error('[Index] 删除未使用索引失败:', error);
       return {
         success: false,
         droppedIndexes: [],
-        message: `删除未使用索引失败: ${error}`
+        message: `删除未使用索引失败: ${error}`,
       };
     }
   }

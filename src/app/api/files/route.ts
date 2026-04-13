@@ -5,14 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { getFileList, getFileCategories, initFileCategories } from '@/lib/file/service';
 import { DocumentSecurityLevel } from '@/types/document';
 
 // 获取文件列表
-async function getList(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function getList(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
 
@@ -20,15 +16,22 @@ async function getList(
       page: parseInt(searchParams.get('page') || '1'),
       pageSize: parseInt(searchParams.get('pageSize') || '20'),
       keyword: searchParams.get('keyword') || undefined,
-      categoryId: searchParams.get('categoryId') ? parseInt(searchParams.get('categoryId')!) : undefined,
+      categoryId: searchParams.get('categoryId')
+        ? parseInt(searchParams.get('categoryId')!)
+        : undefined,
       securityLevel: searchParams.get('securityLevel') as DocumentSecurityLevel | undefined,
-      projectId: searchParams.get('projectId') ? parseInt(searchParams.get('projectId')!) : undefined,
-      uploaderId: searchParams.get('uploaderId') ? parseInt(searchParams.get('uploaderId')!) : undefined,
+      projectId: searchParams.get('projectId')
+        ? parseInt(searchParams.get('projectId')!)
+        : undefined,
+      uploaderId: searchParams.get('uploaderId')
+        ? parseInt(searchParams.get('uploaderId')!)
+        : undefined,
       status: searchParams.get('status') || 'active',
       sortBy: searchParams.get('sortBy') || 'createdAt',
       sortOrder: (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc',
     };
 
+    const { getFileList } = await import('@/lib/file/service');
     const { items, total } = await getFileList(params, userId);
 
     return NextResponse.json({
@@ -45,12 +48,10 @@ async function getList(
 }
 
 // 获取文件分类
-async function getCategories(
-  _request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function getCategories(_request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     // 确保分类已初始化
+    const { getFileCategories, initFileCategories } = await import('@/lib/file/service');
     await initFileCategories();
 
     const categories = await getFileCategories();

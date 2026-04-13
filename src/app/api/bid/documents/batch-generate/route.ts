@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { batchGenerateService } from '@/lib/services/batch-generate-service';
 import { getSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {
+    const { batchGenerateService } = await import('@/lib/services/batch-generate-service');
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
     const { items, generateOptions, parallel, maxParallel } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: '请提供要生成的文档列表' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '请提供要生成的文档列表' }, { status: 400 });
     }
 
     // 验证每个item
@@ -65,15 +62,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Batch generate error:', error);
-    return NextResponse.json(
-      { error: error.message || '批量生成失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '批量生成失败' }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
+    const { batchGenerateService } = await import('@/lib/services/batch-generate-service');
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
@@ -83,18 +78,12 @@ export async function GET(request: NextRequest) {
     const batchId = searchParams.get('batchId');
 
     if (!batchId) {
-      return NextResponse.json(
-        { error: '缺少batchId参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少batchId参数' }, { status: 400 });
     }
 
     const result = batchGenerateService.getBatchResult(batchId);
     if (!result) {
-      return NextResponse.json(
-        { error: '批量任务不存在' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '批量任务不存在' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -103,9 +92,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Get batch status error:', error);
-    return NextResponse.json(
-      { error: error.message || '获取失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '获取失败' }, { status: 500 });
   }
 }

@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { checkFilePermission } from '@/lib/auth/resource-permission';
-import { getFileDownloadUrl } from '@/lib/file/service';
 
 // 获取文件下载URL
 async function getDownloadUrl(
@@ -27,6 +26,7 @@ async function getDownloadUrl(
     const { searchParams } = new URL(request.url);
     const expireTime = parseInt(searchParams.get('expireTime') || '3600');
 
+    const { getFileDownloadUrl } = await import('@/lib/file/service');
     const result = await getFileDownloadUrl(fileId, userId, expireTime);
 
     if (!result) {
@@ -44,10 +44,7 @@ async function getDownloadUrl(
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return withAuth(request, (req, userId) => getDownloadUrl(req, userId, parseInt(id)));
 }

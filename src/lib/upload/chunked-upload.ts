@@ -3,7 +3,7 @@
  * 支持大文件的分片上传、断点续传、进度追踪
  */
 
-import { mkdir, writeFile, readFile, unlink, stat as _stat, rename as _rename } from 'fs/promises';
+import { mkdir, writeFile, readFile, unlink, rm } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -133,10 +133,10 @@ export async function deleteUploadSession(sessionId: string): Promise<void> {
   const session = uploadSessions.get(sessionId);
   if (!session) return;
 
-  // 清理临时文件
+  // 清理临时目录
   try {
-    await unlink(path.join(session.tempDir, 'metadata.json'));
-  } catch (_error) {
+    await rm(session.tempDir, { recursive: true, force: true });
+  } catch {
     // 忽略错误
   }
 
@@ -154,7 +154,7 @@ export async function uploadChunk(
   sessionId: string,
   chunkNumber: number,
   chunkData: Buffer,
-  _chunkHash: string
+  chunkHash: string
 ): Promise<{ success: boolean; message: string }> {
   const session = getUploadSession(sessionId);
   if (!session) {
@@ -169,6 +169,14 @@ export async function uploadChunk(
   // 验证是否已上传
   if (session.uploadedChunks.includes(chunkNumber)) {
     return { success: true, message: '分片已存在' };
+  }
+  if (!chunkHash) {
+    throw new Error('缺少分片哈希');
+  }
+
+  const isHashValid = await verifyChunkHash(chunkData, chunkHash);
+  if (!isHashValid) {
+    throw new Error('分片哈希校验失败');
   }
 
   // 保存分片
@@ -214,10 +222,7 @@ export async function verifyFileIntegrity(
 /**
  * 合并分片
  */
-export async function mergeChunks(
-  sessionId: string,
-  targetPath: string
-): Promise<void> {
+export async function mergeChunks(sessionId: string, targetPath: string): Promise<void> {
   const session = getUploadSession(sessionId);
   if (!session) {
     throw new Error('上传会话不存在');
@@ -228,7 +233,7 @@ export async function mergeChunks(
   await mkdir(targetDir, { recursive: true });
 
   // 合并分片
-  const _writeStream = await writeFile(targetPath, Buffer.alloc(0));
+  await writeFile(targetPath, Buffer.alloc(0));
 
   for (let i = 1; i <= session.totalChunks; i++) {
     const chunkPath = path.join(session.tempDir, `chunk_${i}`);
@@ -312,9 +317,9 @@ export async function cleanupExpiredSessions(): Promise<void> {
 export async function cleanupAllTempFiles(): Promise<void> {
   try {
     if (existsSync(TEMP_DIR)) {
-      // 递归删除临时目录
-      // 注意：这里需要实际的递归删除实现
-      console.log('Cleanup temp files directory:', TEMP_DIR);
+      await rm(TEMP_DIR, { recursive: true, force: true });
+      await mkdir(TEMP_DIR, { recursive: true });
+      console.log('Cleanup temp files directory done:', TEMP_DIR);
     }
   } catch (error) {
     console.error('Error cleaning up temp files:', error);
@@ -338,10 +343,7 @@ export async function calculateFileHash(filePath: string): Promise<string> {
 /**
  * 验证分片哈希
  */
-export async function verifyChunkHash(
-  chunkData: Buffer,
-  expectedHash: string
-): Promise<boolean> {
+export async function verifyChunkHash(chunkData: Buffer, expectedHash: string): Promise<boolean> {
   const hash = crypto.createHash('sha256');
   hash.update(chunkData);
   const actualHash = hash.digest('hex');
@@ -352,7 +354,20 @@ export async function verifyChunkHash(
 // 定时清理任务
 // ============================================
 
-// 每小时清理一次过期的上传会话
-setInterval(() => {
-  cleanupExpiredSessions();
-}, 60 * 60 * 1000);
+let cleanupScheduler: NodeJS.Timeout | null = null;
+
+export function startUploadCleanupScheduler(): void {
+  if (cleanupScheduler) return;
+  cleanupScheduler = setInterval(
+    () => {
+      cleanupExpiredSessions();
+    },
+    60 * 60 * 1000
+  );
+}
+
+export function stopUploadCleanupScheduler(): void {
+  if (!cleanupScheduler) return;
+  clearInterval(cleanupScheduler);
+  cleanupScheduler = null;
+}

@@ -4,9 +4,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { HeaderUtils } from 'coze-coding-dev-sdk';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { generateImage, type ImageType, type ImageSize, type GenerateMode } from '@/lib/image/service';
+import type { ImageType, ImageSize, GenerateMode } from '@/lib/image/service';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 // POST /api/image/generate
 export async function POST(request: NextRequest) {
@@ -38,9 +51,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 提取请求头
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    const customHeaders = extractForwardHeaders(request.headers);
 
     // 调用生成服务
+    const { generateImage } = await import('@/lib/image/service');
     const result = await generateImage(
       {
         prompt,
@@ -67,16 +81,10 @@ export async function POST(request: NextRequest) {
         imageUrl: result.imageUrl,
       });
     } else {
-      return NextResponse.json(
-        { error: result.error || '图片生成失败' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error || '图片生成失败' }, { status: 500 });
     }
   } catch (error: any) {
     console.error('图片生成失败:', error);
-    return NextResponse.json(
-      { error: error.message || '图片生成失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '图片生成失败' }, { status: 500 });
   }
 }

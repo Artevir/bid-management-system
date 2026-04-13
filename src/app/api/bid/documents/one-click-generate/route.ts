@@ -4,11 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { oneClickGenerateService } from '@/lib/services/one-click-generate-service';
 import { getSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {
+    const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: '未授权访问' }, { status: 401 });
@@ -25,11 +25,14 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // 参数验证
-    if (!projectId || !documentName || !interpretationId || !companyIds || companyIds.length === 0) {
-      return NextResponse.json(
-        { error: '缺少必要参数' },
-        { status: 400 }
-      );
+    if (
+      !projectId ||
+      !documentName ||
+      !interpretationId ||
+      !companyIds ||
+      companyIds.length === 0
+    ) {
+      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
     // 构造生成参数
@@ -72,9 +75,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('One-click generate error:', error);
-    return NextResponse.json(
-      { error: error.message || '生成失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || '生成失败' }, { status: 500 });
   }
 }

@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getImageGeneration, deleteImageGeneration } from '@/lib/image-generation/service';
 import { requireAuth } from '@/lib/auth/session';
 import { z as _z } from 'zod';
 
@@ -13,10 +12,7 @@ import { z as _z } from 'zod';
 // GET - 获取图片生成详情
 // ============================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // 获取当前用户
     const user = await requireAuth();
@@ -29,6 +25,7 @@ export async function GET(
     }
 
     // 获取详情
+    const { getImageGeneration } = await import('@/lib/image-generation/service');
     const record = await getImageGeneration(idNum);
     if (!record) {
       return NextResponse.json({ error: '记录不存在' }, { status: 404 });
@@ -73,6 +70,8 @@ export async function DELETE(
     }
 
     // 获取详情并检查权限
+    const { getImageGeneration, deleteImageGeneration } =
+      await import('@/lib/image-generation/service');
     const record = await getImageGeneration(idNum);
     if (!record) {
       return NextResponse.json({ error: '记录不存在' }, { status: 404 });

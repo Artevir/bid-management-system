@@ -52,11 +52,7 @@ export async function exportDocument(
   options: ExportOptions
 ): Promise<ExportResult> {
   // 获取文档信息
-  const doc = await db
-    .select()
-    .from(bidDocuments)
-    .where(eq(bidDocuments.id, documentId))
-    .limit(1);
+  const doc = await db.select().from(bidDocuments).where(eq(bidDocuments.id, documentId)).limit(1);
 
   if (doc.length === 0) {
     throw new Error('文档不存在');
@@ -90,7 +86,7 @@ export async function exportDocument(
  */
 function exportAsHtml(
   document: typeof bidDocuments.$inferSelect,
-  chapters: typeof bidChapters.$inferSelect[],
+  chapters: (typeof bidChapters.$inferSelect)[],
   options: ExportOptions
 ): ExportResult {
   // 构建章节树
@@ -225,7 +221,7 @@ function exportAsHtml(
  */
 function exportAsMarkdown(
   document: typeof bidDocuments.$inferSelect,
-  chapters: typeof bidChapters.$inferSelect[],
+  chapters: (typeof bidChapters.$inferSelect)[],
   options: ExportOptions
 ): ExportResult {
   const chapterTree = buildChapterTree(chapters);
@@ -258,14 +254,13 @@ function exportAsMarkdown(
  */
 function exportAsDocx(
   document: typeof bidDocuments.$inferSelect,
-  chapters: typeof bidChapters.$inferSelect[],
+  chapters: (typeof bidChapters.$inferSelect)[],
   options: ExportOptions
 ): ExportResult {
   // Word可以打开HTML格式，使用mhtml mime类型
   const htmlResult = exportAsHtml(document, chapters, options);
-  const htmlContent = typeof htmlResult.content === 'string'
-    ? htmlResult.content
-    : htmlResult.content.toString();
+  const htmlContent =
+    typeof htmlResult.content === 'string' ? htmlResult.content : htmlResult.content.toString();
 
   // 添加Word特定的命名空间
   const docxHtml = htmlContent.replace(
@@ -285,13 +280,12 @@ function exportAsDocx(
  */
 async function exportAsPdf(
   document: typeof bidDocuments.$inferSelect,
-  chapters: typeof bidChapters.$inferSelect[],
+  chapters: (typeof bidChapters.$inferSelect)[],
   options: ExportOptions
 ): Promise<ExportResult> {
   const chapterTree = buildChapterTree(chapters);
 
   // 定义字体
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fonts: any = {
     SimSun: {
       normal: '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
@@ -526,7 +520,7 @@ function generateContentPdf(chapters: ChapterNode[], level: number): Content[] {
 /**
  * 构建章节树
  */
-function buildChapterTree(chapters: typeof bidChapters.$inferSelect[]): ChapterNode[] {
+function buildChapterTree(chapters: (typeof bidChapters.$inferSelect)[]): ChapterNode[] {
   const chapterMap = new Map<number, ChapterNode>();
 
   // 创建映射

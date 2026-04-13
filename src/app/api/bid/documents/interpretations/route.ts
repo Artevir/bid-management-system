@@ -8,7 +8,6 @@
 
 import { NextRequest } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { getInterpretationList } from '@/lib/interpretation/service';
 import { db } from '@/db';
 import { bidDocuments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -18,10 +17,7 @@ import { success, AppError, handleError } from '@/lib/api/error-handler';
 // GET - 获取文档关联的解读列表
 // ============================================
 
-async function getDocumentInterpretations(
-  request: NextRequest,
-  _userId: number
-) {
+async function getDocumentInterpretations(request: NextRequest, _userId: number) {
   try {
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
@@ -42,6 +38,7 @@ async function getDocumentInterpretations(
     }
 
     // 获取项目相关的解读列表
+    const { getInterpretationList } = await import('@/lib/interpretation/service');
     const interpretations = await getInterpretationList({
       projectId: doc[0].projectId,
       status: 'completed',
@@ -57,10 +54,7 @@ async function getDocumentInterpretations(
 // POST - 为文档关联解读
 // ============================================
 
-async function linkInterpretation(
-  request: NextRequest,
-  _userId: number
-) {
+async function linkInterpretation(request: NextRequest, _userId: number) {
   try {
     const body = await request.json();
     const { documentId, interpretationId } = body;

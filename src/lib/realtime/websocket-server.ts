@@ -1,7 +1,7 @@
 /**
  * WebSocket实时通知服务（简化实现）
  * 用于实时推送系统消息、项目更新等
- * 
+ *
  * 注意：当前为简化实现，完整功能需要安装 socket.io
  * 安装命令：pnpm add socket.io
  */
@@ -60,8 +60,7 @@ export interface SocketClient {
 let io: SocketIOServer | null = null;
 
 export function initWebSocket(httpServer: any): SocketIOServer {
-  const Server = require('socket.io').Server;
-  io = new Server(httpServer, {
+  io = new SocketIOServer(httpServer, {
     path: '/socket.io',
     cors: {
       origin: process.env.COZE_PROJECT_DOMAIN_DEFAULT || '*',
@@ -113,7 +112,7 @@ export async function sendNotificationToUser(
     createdAt: new Date(),
     read: false,
   };
-  
+
   console.log('[Notification] User:', userId, fullNotification);
   // 实际实现需要 WebSocket 连接
 }
@@ -128,7 +127,7 @@ export async function sendNotificationToCompany(
     createdAt: new Date(),
     read: false,
   };
-  
+
   console.log('[Notification] Company:', companyId, fullNotification);
 }
 
@@ -143,12 +142,14 @@ export async function sendNotificationToProject(
     read: false,
     projectId,
   };
-  
+
   console.log('[Notification] Project:', projectId, fullNotification);
 }
 
 export async function broadcastNotification(
-  notification: Omit<Notification, 'id' | 'createdAt' | 'read' | 'type'> & { type: NotificationType.SYSTEM_MESSAGE }
+  notification: Omit<Notification, 'id' | 'createdAt' | 'read' | 'type'> & {
+    type: NotificationType.SYSTEM_MESSAGE;
+  }
 ): Promise<void> {
   const fullNotification: Notification = {
     ...notification,
@@ -156,7 +157,7 @@ export async function broadcastNotification(
     createdAt: new Date(),
     read: false,
   };
-  
+
   console.log('[Notification] Broadcast:', fullNotification);
 }
 

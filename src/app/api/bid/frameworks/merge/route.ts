@@ -5,21 +5,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { companyFrameworkService } from '@/lib/services/company-framework-service';
-import frameworkMergeService, { type FrameworkMergeOptions, type MergedChapter as _MergedChapter, type SimpleFramework, type BaseChapter } from '@/lib/services/framework-merge-service';
+import type {
+  FrameworkMergeOptions,
+  MergedChapter as _MergedChapter,
+  SimpleFramework,
+  BaseChapter,
+} from '@/lib/services/framework-merge-service';
 import { db } from '@/db';
 import { companies } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getDocumentFramework } from '@/lib/interpretation/service';
 
 // ============================================
 // 预览框架合并
 // ============================================
 
-async function previewMerge(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function previewMerge(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const {
@@ -38,8 +38,9 @@ async function previewMerge(
 
     if (tenderInterpretationId) {
       // 使用 getDocumentFramework 函数获取框架数据
+      const { getDocumentFramework } = await import('@/lib/interpretation/service');
       const frameworkData = await getDocumentFramework(tenderInterpretationId);
-      
+
       if (frameworkData && Array.isArray(frameworkData) && frameworkData.length > 0) {
         tenderFramework = {
           id: -1, // 临时ID，表示来自招标文件解读
@@ -50,12 +51,11 @@ async function previewMerge(
     }
 
     // 获取公司框架
-    const companyFrameworks = await companyFrameworkService.getFrameworksByIds(
-      companyFrameworkIds
-    );
+    const { companyFrameworkService } = await import('@/lib/services/company-framework-service');
+    const companyFrameworks = await companyFrameworkService.getFrameworksByIds(companyFrameworkIds);
 
     // 转换公司框架为 SimpleFramework 类型
-    const convertedCompanyFrameworks: SimpleFramework[] = companyFrameworks.map(fw => ({
+    const convertedCompanyFrameworks: SimpleFramework[] = companyFrameworks.map((fw) => ({
       id: fw.id,
       name: fw.name,
       chapters: convertChaptersToBase(fw.chapters),
@@ -79,10 +79,9 @@ async function previewMerge(
     };
 
     // 执行合并
-    const mergedResult = await frameworkMergeService.mergeFrameworks(
-      allFrameworks,
-      mergeOptions
-    );
+    const { default: frameworkMergeService } =
+      await import('@/lib/services/framework-merge-service');
+    const mergedResult = await frameworkMergeService.mergeFrameworks(allFrameworks, mergeOptions);
 
     return NextResponse.json({
       success: true,
@@ -110,30 +109,34 @@ function convertFrameworkToChapters(frameworkData: any[]): BaseChapter[] {
     isRequired: true,
     description: item.contentRequirement || null,
     contentTemplate: null,
-    children: item.children ? item.children.map((sub: any, subIdx: number) => ({
-      id: -idx * 100 - subIdx - 1,
-      frameworkId: -1,
-      parentId: -idx - 1,
-      level: sub.level || 2,
-      order: subIdx + 1,
-      title: sub.chapterTitle,
-      titleNumber: sub.chapterNumber || null,
-      isRequired: true,
-      description: sub.contentRequirement || null,
-      contentTemplate: null,
-      children: sub.children ? sub.children.map((subSub: any, subSubIdx: number) => ({
-        id: -idx * 10000 - subIdx * 100 - subSubIdx - 1,
-        frameworkId: -1,
-        parentId: -idx * 100 - subIdx - 1,
-        level: subSub.level || 3,
-        order: subSubIdx + 1,
-        title: subSub.chapterTitle,
-        titleNumber: subSub.chapterNumber || null,
-        isRequired: true,
-        description: subSub.contentRequirement || null,
-        contentTemplate: null,
-      })) : undefined,
-    })) : undefined,
+    children: item.children
+      ? item.children.map((sub: any, subIdx: number) => ({
+          id: -idx * 100 - subIdx - 1,
+          frameworkId: -1,
+          parentId: -idx - 1,
+          level: sub.level || 2,
+          order: subIdx + 1,
+          title: sub.chapterTitle,
+          titleNumber: sub.chapterNumber || null,
+          isRequired: true,
+          description: sub.contentRequirement || null,
+          contentTemplate: null,
+          children: sub.children
+            ? sub.children.map((subSub: any, subSubIdx: number) => ({
+                id: -idx * 10000 - subIdx * 100 - subSubIdx - 1,
+                frameworkId: -1,
+                parentId: -idx * 100 - subIdx - 1,
+                level: subSub.level || 3,
+                order: subSubIdx + 1,
+                title: subSub.chapterTitle,
+                titleNumber: subSub.chapterNumber || null,
+                isRequired: true,
+                description: subSub.contentRequirement || null,
+                contentTemplate: null,
+              }))
+            : undefined,
+        }))
+      : undefined,
   }));
 }
 
@@ -164,6 +167,7 @@ async function getAvailableFrameworks(
     // 对于每个解读，获取其框架数据
     const tenderFrameworks = [];
     for (const item of interpretationResult.list || []) {
+      const { getDocumentFramework } = await import('@/lib/interpretation/service');
       const frameworkData = await getDocumentFramework(item.id);
       if (frameworkData && frameworkData.length > 0) {
         tenderFrameworks.push({
@@ -188,6 +192,7 @@ async function getAvailableFrameworks(
     const companyFrameworks = [];
 
     for (const company of companyList) {
+      const { companyFrameworkService } = await import('@/lib/services/company-framework-service');
       const frameworks = await companyFrameworkService.getFrameworksByCompany(
         company.id,
         documentType
@@ -218,16 +223,13 @@ async function getAvailableFrameworks(
     });
   } catch (error) {
     console.error('Get available frameworks error:', error);
-    return NextResponse.json(
-      { error: '获取框架列表失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '获取框架列表失败' }, { status: 500 });
   }
 }
 
 // 辅助函数：将公司框架章节转换为 BaseChapter 类型
 function convertChaptersToBase(chapters: any[]): BaseChapter[] {
-  return chapters.map(chapter => ({
+  return chapters.map((chapter) => ({
     id: chapter.id,
     frameworkId: chapter.frameworkId,
     parentId: chapter.parentId,

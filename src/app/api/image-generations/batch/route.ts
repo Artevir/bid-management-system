@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBatchImages } from '@/lib/image-generation/service';
 import { requireAuth } from '@/lib/auth/session';
 import { z } from 'zod';
 
@@ -23,7 +22,9 @@ const batchGenerateSchema = z.object({
   projectId: z.number().optional(),
   projectName: z.string().optional(),
   bidDocumentId: z.number().optional(),
-  businessObjectType: z.enum(['project', 'bid_document', 'chapter', 'marketing', 'other']).optional(),
+  businessObjectType: z
+    .enum(['project', 'bid_document', 'chapter', 'marketing', 'other'])
+    .optional(),
   businessObjectId: z.number().optional(),
   usage: z.string().optional(),
 });
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
     const validatedData = batchGenerateSchema.parse(body);
 
     // 批量生成图片
+    const { generateBatchImages } = await import('@/lib/image-generation/service');
     const results = await generateBatchImages(
       validatedData.prompts,
       {
@@ -59,10 +61,7 @@ export async function POST(request: NextRequest) {
     console.error('批量图片生成失败:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: '参数验证失败', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '参数验证失败', details: error.errors }, { status: 400 });
     }
 
     return NextResponse.json(

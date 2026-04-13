@@ -27,6 +27,32 @@ function toAllowedOrigins(value?: string) {
 // ============================================
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const RATE_LIMIT_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const RATE_LIMIT_MAX_KEYS = 10000;
+
+let lastRateLimitSweepAt = 0;
+
+function cleanupRateLimitMap(now: number) {
+  if (now - lastRateLimitSweepAt < RATE_LIMIT_SWEEP_INTERVAL_MS) return;
+
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (value.resetTime < now) {
+      rateLimitMap.delete(key);
+    }
+  }
+
+  if (rateLimitMap.size > RATE_LIMIT_MAX_KEYS) {
+    const entries = [...rateLimitMap.entries()].sort((a, b) => a[1].resetTime - b[1].resetTime);
+    const toDeleteCount = rateLimitMap.size - RATE_LIMIT_MAX_KEYS;
+    for (let i = 0; i < toDeleteCount; i++) {
+      rateLimitMap.delete(entries[i][0]);
+    }
+  }
+
+  lastRateLimitSweepAt = now;
+}
 
 function checkRateLimit(request: NextRequest): boolean {
   const ip =
@@ -35,18 +61,17 @@ function checkRateLimit(request: NextRequest): boolean {
     'unknown';
 
   const now = Date.now();
-  const windowMs = 60 * 1000; // 1分钟
-  const maxRequests = 100;
+  cleanupRateLimitMap(now);
 
   let userRequests = rateLimitMap.get(ip);
 
   if (!userRequests || userRequests.resetTime < now) {
-    userRequests = { count: 1, resetTime: now + windowMs };
+    userRequests = { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS };
     rateLimitMap.set(ip, userRequests);
     return true;
   }
 
-  if (userRequests.count >= maxRequests) {
+  if (userRequests.count >= RATE_LIMIT_MAX_REQUESTS) {
     return false;
   }
 
@@ -131,7 +156,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

@@ -5,21 +5,32 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { HeaderUtils, LLMClient, Config } from 'coze-coding-dev-sdk';
-import { reviewDocument, ReviewType } from '@/lib/bid/reviewer';
 import { db } from '@/db';
 import { documentReviews, complianceChecks, bidChapters, bidDocuments } from '@/db/schema';
 import { eq, and as _and } from 'drizzle-orm';
 import { createStreamResponse } from '@/lib/stream-utils';
 
+type ReviewType = 'compliance' | 'format' | 'content' | 'completeness';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
+
 // ============================================
 // 流式审校
 // ============================================
 
-async function executeReviewStream(
-  request: NextRequest,
-  _userId: number
-): Promise<Response> {
+async function executeReviewStream(request: NextRequest, _userId: number): Promise<Response> {
   try {
     const body = await request.json();
     const { documentId, types } = body;
@@ -29,7 +40,7 @@ async function executeReviewStream(
     }
 
     const reviewTypes: ReviewType[] = types || ['compliance', 'format', 'content', 'completeness'];
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    const customHeaders = extractForwardHeaders(request.headers);
 
     // 获取文档和章节信息
     const doc = await db
@@ -53,23 +64,27 @@ async function executeReviewStream(
       const totalSteps = chapters.length * reviewTypes.length;
 
       // 发送开始信号
-      controller.enqueue(encoder.encode({
-        type: 'start',
-        totalSteps,
-        documentName: doc[0]?.name,
-      }));
+      controller.enqueue(
+        encoder.encode({
+          type: 'start',
+          totalSteps,
+          documentName: doc[0]?.name,
+        })
+      );
 
       for (const type of reviewTypes) {
-        controller.enqueue(encoder.encode({
-          type: 'phase',
-          phase: type,
-          phaseName: {
-            compliance: '合规检查',
-            format: '格式检查',
-            content: '内容检查',
-            completeness: '完整性检查',
-          }[type],
-        }));
+        controller.enqueue(
+          encoder.encode({
+            type: 'phase',
+            phase: type,
+            phaseName: {
+              compliance: '合规检查',
+              format: '格式检查',
+              content: '内容检查',
+              completeness: '完整性检查',
+            }[type],
+          })
+        );
 
         for (const chapter of chapters) {
           if (!chapter.content || chapter.content.length < 50) {
@@ -78,8 +93,9 @@ async function executeReviewStream(
           }
 
           try {
+            const { LLMClient, Config } = await import('coze-coding-dev-sdk');
             const config = new Config();
-            const client = new LLMClient(config, customHeaders as any);
+            const client = new LLMClient(config, customHeaders);
 
             const systemPrompt = getReviewPrompt(type);
 
@@ -113,12 +129,14 @@ async function executeReviewStream(
                   severity: issue.severity,
                 };
                 allIssues.push(newIssue);
-                
+
                 // 实时发送每个问题
-                controller.enqueue(encoder.encode({
-                  type: 'issue',
-                  issue: newIssue,
-                }));
+                controller.enqueue(
+                  encoder.encode({
+                    type: 'issue',
+                    issue: newIssue,
+                  })
+                );
               });
             }
           } catch (error) {
@@ -126,10 +144,12 @@ async function executeReviewStream(
           }
 
           totalProgress++;
-          controller.enqueue(encoder.encode({
-            type: 'progress',
-            progress: Math.round((totalProgress / totalSteps) * 100),
-          }));
+          controller.enqueue(
+            encoder.encode({
+              type: 'progress',
+              progress: Math.round((totalProgress / totalSteps) * 100),
+            })
+          );
         }
       }
 
@@ -141,7 +161,10 @@ async function executeReviewStream(
         infos: allIssues.filter((i) => i.type === 'info').length,
       };
 
-      const score = Math.max(0, 100 - statistics.errors * 10 - statistics.warnings * 3 - statistics.infos);
+      const score = Math.max(
+        0,
+        100 - statistics.errors * 10 - statistics.warnings * 3 - statistics.infos
+      );
 
       // 保存审校结果
       await db.insert(documentReviews).values({
@@ -155,15 +178,17 @@ async function executeReviewStream(
       });
 
       // 发送完成信号
-      controller.enqueue(encoder.encode({
-        type: 'complete',
-        result: {
-          score,
-          passed: statistics.errors === 0,
-          statistics,
-          issues: allIssues,
-        },
-      }));
+      controller.enqueue(
+        encoder.encode({
+          type: 'complete',
+          result: {
+            score,
+            passed: statistics.errors === 0,
+            statistics,
+            issues: allIssues,
+          },
+        })
+      );
     });
   } catch (error) {
     console.error('Execute review stream error:', error);
@@ -225,10 +250,7 @@ function getReviewPrompt(type: ReviewType): string {
 // 非流式审校（保留向后兼容）
 // ============================================
 
-async function executeReview(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function executeReview(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { documentId, types } = body;
@@ -238,9 +260,9 @@ async function executeReview(
     }
 
     const reviewTypes: ReviewType[] = types || ['compliance', 'format', 'content', 'completeness'];
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
-
-    const result = await reviewDocument(documentId, reviewTypes, customHeaders);
+    const customHeaders = extractForwardHeaders(request.headers);
+    const { reviewDocument } = await import('@/lib/bid/reviewer');
+    const result = await reviewDocument(documentId, reviewTypes as any, customHeaders);
 
     return NextResponse.json({
       success: true,
@@ -256,10 +278,7 @@ async function executeReview(
 // 获取审校历史
 // ============================================
 
-async function getReviewHistory(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function getReviewHistory(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
@@ -291,10 +310,7 @@ async function getReviewHistory(
 // 获取合规检查结果
 // ============================================
 
-async function getComplianceResults(
-  request: NextRequest,
-  _userId: number
-): Promise<NextResponse> {
+async function getComplianceResults(request: NextRequest, _userId: number): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
@@ -331,10 +347,7 @@ async function getComplianceResults(
 // 解决合规问题
 // ============================================
 
-async function resolveComplianceIssue(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function resolveComplianceIssue(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const body = await request.json();
     const { checkId } = body;

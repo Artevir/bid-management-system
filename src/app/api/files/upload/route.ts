@@ -5,14 +5,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
-import { uploadFile, FileUploadParams } from '@/lib/file/service';
+import type { FileUploadParams } from '@/lib/file/service';
 import { DocumentSecurityLevel } from '@/types/document';
 
 // 上传文件
-async function upload(
-  request: NextRequest,
-  userId: number
-): Promise<NextResponse> {
+async function upload(request: NextRequest, userId: number): Promise<NextResponse> {
   try {
     const formData = await request.formData();
 
@@ -31,13 +28,18 @@ async function upload(
       fileName: file.name,
       mimeType: file.type,
       size: file.size,
-      categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : undefined,
+      categoryId: formData.get('categoryId')
+        ? parseInt(formData.get('categoryId') as string)
+        : undefined,
       securityLevel: (formData.get('securityLevel') as DocumentSecurityLevel) || 'internal',
-      projectId: formData.get('projectId') ? parseInt(formData.get('projectId') as string) : undefined,
-      fileType: formData.get('fileType') as string || undefined,
-      description: formData.get('description') as string || undefined,
+      projectId: formData.get('projectId')
+        ? parseInt(formData.get('projectId') as string)
+        : undefined,
+      fileType: (formData.get('fileType') as string) || undefined,
+      description: (formData.get('description') as string) || undefined,
     };
 
+    const { uploadFile } = await import('@/lib/file/service');
     const fileId = await uploadFile(params, userId);
 
     return NextResponse.json(

@@ -4,9 +4,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { HeaderUtils } from 'coze-coding-dev-sdk';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { callAI, streamAI } from '@/lib/ai/ai-service';
+
+function extractForwardHeaders(headers: Headers): Record<string, string> {
+  const customHeaders: Record<string, string> = {};
+  const forwardHeaders = ['authorization', 'x-api-key', 'x-request-id', 'x-session-id', 'cookie'];
+
+  for (const key of forwardHeaders) {
+    const value = headers.get(key);
+    if (value) {
+      customHeaders[key] = value;
+    }
+  }
+
+  return customHeaders;
+}
 
 // POST /api/ai/call
 export async function POST(request: NextRequest) {
@@ -45,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 提取请求头
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    const customHeaders = extractForwardHeaders(request.headers);
 
     // 流式模式
     if (stream) {
@@ -90,7 +103,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
         },
       });
     }
@@ -116,9 +129,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('AI调用失败:', error);
-    return NextResponse.json(
-      { error: error.message || 'AI调用失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'AI调用失败' }, { status: 500 });
   }
 }
