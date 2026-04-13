@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { hardReloadForNewDeployment, isChunkOrModuleLoadError } from '@/lib/client/chunk-error';
 
 export default function GlobalError({
   error,
@@ -26,7 +27,13 @@ export default function GlobalError({
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-white"
-              onClick={() => reset()}
+              onClick={() => {
+                if (isChunkOrModuleLoadError(error)) {
+                  hardReloadForNewDeployment();
+                  return;
+                }
+                reset();
+              }}
             >
               重试
             </button>

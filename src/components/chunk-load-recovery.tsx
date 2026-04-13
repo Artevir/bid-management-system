@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-
-const SESSION_KEY = 'bidmgmt_chunk_reload_once';
+import { CHUNK_RELOAD_SESSION_KEY } from '@/lib/client/chunk-error';
 
 /**
  * After a new deploy, cached HTML may still reference removed hashed chunks under
@@ -12,8 +11,8 @@ const SESSION_KEY = 'bidmgmt_chunk_reload_once';
 export function ChunkLoadRecovery() {
   useEffect(() => {
     const reloadOnce = () => {
-      if (typeof window === 'undefined' || sessionStorage.getItem(SESSION_KEY)) return;
-      sessionStorage.setItem(SESSION_KEY, '1');
+      if (typeof window === 'undefined' || sessionStorage.getItem(CHUNK_RELOAD_SESSION_KEY)) return;
+      sessionStorage.setItem(CHUNK_RELOAD_SESSION_KEY, '1');
       window.location.reload();
     };
 
@@ -45,7 +44,7 @@ export function ChunkLoadRecovery() {
     window.addEventListener('error', onError, true);
 
     const clearGuard = window.setTimeout(() => {
-      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(CHUNK_RELOAD_SESSION_KEY);
     }, 10000);
 
     return () => {
