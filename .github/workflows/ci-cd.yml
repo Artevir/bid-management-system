@@ -234,6 +234,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /app/bid-platform
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Config.Image}}' bid-platform-app 2>/dev/null || true)
+            echo "PREVIOUS_IMAGE=$PREVIOUS_IMAGE" > .deploy-state-ci.env
             export APP_IMAGE=${{ secrets.DOCKER_USERNAME }}/bid-platform:sha-${{ github.sha }}
             docker compose pull app
             docker compose run --rm app pnpm run db:migrate
@@ -241,9 +243,35 @@ jobs:
             docker system prune -f
 
       - name: 健康检查
+        id: prod-healthcheck
+        continue-on-error: true
         run: |
           sleep 30
           curl -f https://your-domain.com/api/health || exit 1
+
+      - name: 健康检查失败后回滚
+        if: steps.prod-healthcheck.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app/bid-platform
+            if [ -f .deploy-state-ci.env ]; then
+              source .deploy-state-ci.env
+            fi
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              export APP_IMAGE=$PREVIOUS_IMAGE
+              docker compose pull app || true
+              docker compose up -d --remove-orphans
+            else
+              echo "No previous image found, rollback skipped"
+            fi
+
+      - name: 标记生产部署失败
+        if: steps.prod-healthcheck.outcome == 'failure'
+        run: exit 1
 
       - name: 发送部署通知
         uses: 8398a7/action-slack@v3
@@ -276,15 +304,43 @@ jobs:
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           script: |
             cd /app/bid-platform-staging
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Config.Image}}' bid-platform-app 2>/dev/null || true)
+            echo "PREVIOUS_IMAGE=$PREVIOUS_IMAGE" > .deploy-state-ci.env
             export APP_IMAGE=${{ secrets.DOCKER_USERNAME }}/bid-platform:sha-${{ github.sha }}
             docker compose pull app
             docker compose run --rm app pnpm run db:migrate
             docker compose up -d --remove-orphans
 
       - name: 健康检查
+        id: staging-healthcheck
+        continue-on-error: true
         run: |
           sleep 30
           curl -f https://staging.your-domain.com/api/health || exit 1
+
+      - name: 健康检查失败后回滚（预发布）
+        if: steps.staging-healthcheck.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_SERVER_HOST }}
+          username: ${{ secrets.STAGING_SERVER_USER }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          script: |
+            cd /app/bid-platform-staging
+            if [ -f .deploy-state-ci.env ]; then
+              source .deploy-state-ci.env
+            fi
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              export APP_IMAGE=$PREVIOUS_IMAGE
+              docker compose pull app || true
+              docker compose up -d --remove-orphans
+            else
+              echo "No previous image found, rollback skipped"
+            fi
+
+      - name: 标记预发布部署失败
+        if: steps.staging-healthcheck.outcome == 'failure'
+        run: exit 1
 
   # ============================================
   # 安全扫描

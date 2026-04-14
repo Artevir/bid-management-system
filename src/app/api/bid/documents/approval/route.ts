@@ -8,6 +8,7 @@
 
 import { NextRequest } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
+import { checkResourcePermission } from '@/lib/auth/resource-permission';
 import { db } from '@/db';
 import { approvalFlows, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -19,7 +20,7 @@ import { success, created, AppError, handleError } from '@/lib/api/error-handler
 
 async function getDocumentApprovalFlows(
   request: NextRequest,
-  _userId: number
+  userId: number
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -30,8 +31,18 @@ async function getDocumentApprovalFlows(
       throw AppError.badRequest('缺少文档ID');
     }
 
+    const documentIdNum = Number.parseInt(documentId, 10);
+    if (!Number.isInteger(documentIdNum) || documentIdNum <= 0) {
+      throw AppError.badRequest('文档ID不合法');
+    }
+
+    const permission = await checkResourcePermission(userId, 'document', documentIdNum, 'read');
+    if (!permission.allowed) {
+      throw AppError.forbidden(permission.reason || '无权查看该文档审批流程');
+    }
+
     // 构建查询条件
-    const conditions = [eq(approvalFlows.documentId, parseInt(documentId))];
+    const conditions = [eq(approvalFlows.documentId, documentIdNum)];
 
     if (status) {
       conditions.push(eq(approvalFlows.status, status as any));
@@ -85,11 +96,21 @@ async function createApprovalFlow(
       throw AppError.badRequest('缺少必填字段：documentId, level, assigneeId');
     }
 
+    const documentIdNum = Number.parseInt(documentId, 10);
+    if (!Number.isInteger(documentIdNum) || documentIdNum <= 0) {
+      throw AppError.badRequest('文档ID不合法');
+    }
+
+    const permission = await checkResourcePermission(userId, 'document', documentIdNum, 'edit');
+    if (!permission.allowed) {
+      throw AppError.forbidden(permission.reason || '无权创建该文档审批流程');
+    }
+
     // 创建审批流程
     const [flow] = await db
       .insert(approvalFlows)
       .values({
-        documentId: parseInt(documentId),
+        documentId: documentIdNum,
         level,
         status: 'pending',
         assigneeId: parseInt(assigneeId),

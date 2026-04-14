@@ -324,11 +324,51 @@ export default function ProjectDocumentsPage() {
     if (!selectedDocument) return;
     setGenerating(true);
     try {
-      await fetch('/api/bid/documents/one-click-generate', {
+      const [interpretationsRes, dataSourcesRes] = await Promise.all([
+        fetch(`/api/interpretations?projectId=${projectId}&status=completed&page=1&pageSize=1`),
+        fetch(`/api/bid/documents/data-sources?projectId=${projectId}`),
+      ]);
+
+      const interpretationsPayload = await interpretationsRes.json();
+      const dataSourcesPayload = await dataSourcesRes.json();
+
+      const interpretationItems =
+        interpretationsPayload?.data?.items ||
+        interpretationsPayload?.data?.list ||
+        interpretationsPayload?.items ||
+        [];
+      const selectedInterpretation = interpretationItems[0];
+      const companyIds = (dataSourcesPayload?.data?.companies || []).map((c: any) => c.id);
+
+      if (!selectedInterpretation?.id) {
+        throw new Error('缺少可用的已完成解读结果，请先完成解读');
+      }
+      if (companyIds.length === 0) {
+        throw new Error('缺少可用投标主体，请先维护公司资料');
+      }
+
+      const response = await fetch('/api/bid/documents/one-click-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: selectedDocument.id }),
+        body: JSON.stringify({
+          projectId: Number.parseInt(projectId, 10),
+          documentName: `${selectedDocument.name}-AI生成`,
+          interpretationId: selectedInterpretation.id,
+          companyIds,
+          partnerApplicationIds: [],
+          generateOptions: {
+            includeQualification: true,
+            includePerformance: true,
+            includeTechnical: true,
+            includeBusiness: true,
+            style: 'formal',
+          },
+        }),
       });
+      const result = await response.json();
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || '一键生成失败');
+      }
       fetchChapters(selectedDocument.id);
     } catch (error) {
       console.error('Failed to generate document:', error);
