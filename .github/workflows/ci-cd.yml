@@ -269,6 +269,12 @@ jobs:
               echo "No previous image found, rollback skipped"
             fi
 
+      - name: 验证回滚后健康状态
+        if: steps.prod-healthcheck.outcome == 'failure'
+        run: |
+          sleep 30
+          curl -f https://your-domain.com/api/health || exit 1
+
       - name: 标记生产部署失败
         if: steps.prod-healthcheck.outcome == 'failure'
         run: exit 1
@@ -337,6 +343,12 @@ jobs:
             else
               echo "No previous image found, rollback skipped"
             fi
+
+      - name: 验证预发布回滚后健康状态
+        if: steps.staging-healthcheck.outcome == 'failure'
+        run: |
+          sleep 30
+          curl -f https://staging.your-domain.com/api/health || exit 1
 
       - name: 标记预发布部署失败
         if: steps.staging-healthcheck.outcome == 'failure'

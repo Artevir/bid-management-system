@@ -324,24 +324,26 @@ export default function ProjectDocumentsPage() {
     if (!selectedDocument) return;
     setGenerating(true);
     try {
-      const [interpretationsRes, dataSourcesRes] = await Promise.all([
-        fetch(`/api/interpretations?projectId=${projectId}&status=completed&page=1&pageSize=1`),
+      const [documentRes, dataSourcesRes] = await Promise.all([
+        fetch(`/api/bid/documents/${selectedDocument.id}`),
         fetch(`/api/bid/documents/data-sources?projectId=${projectId}`),
       ]);
 
-      const interpretationsPayload = await interpretationsRes.json();
+      const documentPayload = await documentRes.json();
       const dataSourcesPayload = await dataSourcesRes.json();
 
-      const interpretationItems =
-        interpretationsPayload?.data?.items ||
-        interpretationsPayload?.data?.list ||
-        interpretationsPayload?.items ||
-        [];
-      const selectedInterpretation = interpretationItems[0];
+      if (!documentRes.ok || !documentPayload?.success) {
+        throw new Error(documentPayload?.error || '获取文档详情失败');
+      }
+      if (!dataSourcesRes.ok || !dataSourcesPayload?.success) {
+        throw new Error(dataSourcesPayload?.error || '获取可用数据源失败');
+      }
+
+      const interpretationId = documentPayload?.data?.document?.interpretationId;
       const companyIds = (dataSourcesPayload?.data?.companies || []).map((c: any) => c.id);
 
-      if (!selectedInterpretation?.id) {
-        throw new Error('缺少可用的已完成解读结果，请先完成解读');
+      if (!interpretationId) {
+        throw new Error('当前文档未关联解读结果，请先完成解读并关联后再生成');
       }
       if (companyIds.length === 0) {
         throw new Error('缺少可用投标主体，请先维护公司资料');
@@ -353,7 +355,7 @@ export default function ProjectDocumentsPage() {
         body: JSON.stringify({
           projectId: Number.parseInt(projectId, 10),
           documentName: `${selectedDocument.name}-AI生成`,
-          interpretationId: selectedInterpretation.id,
+          interpretationId,
           companyIds,
           partnerApplicationIds: [],
           generateOptions: {

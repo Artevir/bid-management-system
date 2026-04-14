@@ -4,17 +4,25 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { withProjectPermission } from '@/lib/auth/project-middleware';
+import { parseResourceId } from '@/lib/api/validators';
+import { db } from '@/db';
+import { bidDocumentInterpretations } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
+  const body = await request.clone().json().catch(() => ({}));
+  let projectId: number;
   try {
-    const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: '未授权访问' }, { status: 401 });
-    }
+    projectId = parseResourceId(body.projectId?.toString(), '项目');
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || '项目ID格式错误' }, { status: 400 });
+  }
 
-    const body = await request.json();
+  return withProjectPermission(request, projectId, 'edit', async (req, userId) => {
+    try {
+    const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
+    const body = await req.json();
     const {
       projectId,
       documentName,
@@ -24,23 +32,40 @@ export async function POST(request: NextRequest) {
       generateOptions,
     } = body;
 
+    const projectIdNum = parseResourceId(projectId?.toString(), '项目');
+    const interpretationIdNum = parseResourceId(interpretationId?.toString(), '解读');
+    const validCompanyIds = Array.isArray(companyIds)
+      ? companyIds
+          .map((id: any) => Number.parseInt(String(id), 10))
+          .filter((id: number) => Number.isInteger(id) && id > 0)
+      : [];
+
     // 参数验证
     if (
-      !projectId ||
       !documentName ||
-      !interpretationId ||
-      !companyIds ||
-      companyIds.length === 0
+      validCompanyIds.length === 0
     ) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
+    // 解读结果必须属于当前项目，避免跨项目滥用
+    const matchedInterpretation = await db.query.bidDocumentInterpretations.findFirst({
+      where: and(
+        eq(bidDocumentInterpretations.id, interpretationIdNum),
+        eq(bidDocumentInterpretations.projectId, projectIdNum)
+      ),
+      columns: { id: true },
+    });
+    if (!matchedInterpretation) {
+      return NextResponse.json({ error: '解读结果不存在或不属于当前项目' }, { status: 400 });
+    }
+
     // 构造生成参数
     const params = {
-      projectId,
+      projectId: projectIdNum,
       documentName,
-      interpretationId,
-      companyIds,
+      interpretationId: interpretationIdNum,
+      companyIds: validCompanyIds,
       partnerApplicationIds: partnerApplicationIds || [],
       generateOptions: generateOptions || {
         includeQualification: true,
@@ -65,7 +90,7 @@ export async function POST(request: NextRequest) {
     // 执行一键生成
     const result = await oneClickGenerateService.generateDocument(
       params,
-      session.user.id,
+      userId,
       customHeaders
     );
 
@@ -76,5 +101,6 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('One-click generate error:', error);
     return NextResponse.json({ error: error.message || '生成失败' }, { status: 500 });
-  }
+    }
+  });
 }

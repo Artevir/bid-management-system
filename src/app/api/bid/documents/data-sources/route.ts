@@ -4,31 +4,31 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { withProjectPermission } from '@/lib/auth/project-middleware';
+import { parseResourceId } from '@/lib/api/validators';
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  let projectId: number;
   try {
+    projectId = parseResourceId(searchParams.get('projectId'), '项目');
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || '项目ID格式错误' }, { status: 400 });
+  }
+
+  return withProjectPermission(request, projectId, 'view', async () => {
+    try {
     const { oneClickGenerateService } = await import('@/lib/services/one-click-generate-service');
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: '未授权访问' }, { status: 401 });
-    }
 
-    const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get('projectId');
-
-    if (!projectId) {
-      return NextResponse.json({ error: '缺少项目ID' }, { status: 400 });
-    }
-
-    const dataSources = await oneClickGenerateService.getAvailableDataSources(parseInt(projectId));
+    const dataSources = await oneClickGenerateService.getAvailableDataSources(projectId);
 
     return NextResponse.json({
       success: true,
       data: dataSources,
     });
-  } catch (error: any) {
-    console.error('Get data sources error:', error);
-    return NextResponse.json({ error: error.message || '获取失败' }, { status: 500 });
-  }
+    } catch (error: any) {
+      console.error('Get data sources error:', error);
+      return NextResponse.json({ error: error.message || '获取失败' }, { status: 500 });
+    }
+  });
 }
