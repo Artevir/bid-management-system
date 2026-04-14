@@ -15,12 +15,13 @@ import {
   invalidateProjectRedisCache,
   invalidateUserRedisCache,
 } from '@/lib/cache';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取缓存信息
 // ============================================
 
-export async function GET(request: NextRequest) {
+async function getCacheInfo(request: NextRequest, _userId: number) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'stats';
 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 // POST - 设置缓存
 // ============================================
 
-export async function POST(request: NextRequest) {
+async function setCacheInfo(request: NextRequest, _userId: number) {
   try {
     const body = await request.json();
     const { key, value, ttl } = body;
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
 // DELETE - 删除缓存
 // ============================================
 
-export async function DELETE(request: NextRequest) {
+async function deleteCacheInfo(request: NextRequest, _userId: number) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'key';
 
@@ -189,4 +190,16 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  return withAdmin(request, getCacheInfo);
+}
+
+export async function POST(request: NextRequest) {
+  return withAdmin(request, setCacheInfo);
+}
+
+export async function DELETE(request: NextRequest) {
+  return withAdmin(request, deleteCacheInfo);
 }

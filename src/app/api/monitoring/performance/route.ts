@@ -4,12 +4,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取性能统计
 // ============================================
 
-export async function GET(request: NextRequest) {
+async function getPerformanceStats(request: NextRequest, _userId: number) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') || 'stats';
 
@@ -52,10 +53,7 @@ export async function GET(request: NextRequest) {
 // DELETE - 清除性能指标
 // ============================================
 
-export async function DELETE(_request: NextRequest) {
-  // 在实际应用中，这里应该添加权限验证
-  // 只有管理员才能清除性能指标
-
+async function clearPerformanceMetrics(_request: NextRequest, _userId: number) {
   try {
     // 这里需要添加清除方法到 PerformanceMonitor 类
     // 暂时返回成功
@@ -70,4 +68,12 @@ export async function DELETE(_request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  return withAdmin(request, getPerformanceStats);
+}
+
+export async function DELETE(request: NextRequest) {
+  return withAdmin(request, clearPerformanceMetrics);
 }

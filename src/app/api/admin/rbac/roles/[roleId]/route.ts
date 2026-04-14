@@ -7,18 +7,15 @@ import { db } from '@/db/index';
 import { roles, rolePermissions, userRoles } from '@/db/schema/rbac';
 import { eq, sql } from 'drizzle-orm';
 import RBACService from '@/lib/auth/rbac-service';
-import { withPermission, withAnyPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
+import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取角色详情
 // ============================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ roleId: string }> }
-) {
+async function getRoleDetail(roleId: string) {
   try {
-    const { roleId } = await params;
     const roleIdNum = parseInt(roleId, 10);
     if (!Number.isFinite(roleIdNum)) {
       return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
@@ -77,16 +74,24 @@ export async function GET(
   }
 }
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ roleId: string }> }
+) {
+  const { roleId } = await params;
+  return withAdmin(request, async () => getRoleDetail(roleId));
+}
+
 // ============================================
 // PATCH - 更新角色
 // ============================================
 
-export const PATCH = withAnyPermission(
-  [PERMISSIONS.ROLE_UPDATE, PERMISSIONS.ROLE_ASSIGN],
-  async (request: NextRequest, context?: any, userId?: string) => {
+async function patchRole(
+  request: NextRequest,
+  roleId: string,
+  authUserId: number
+) {
     try {
-      const p = await context?.params;
-      const roleId = p?.roleId;
       const roleIdNum = parseInt(roleId, 10);
       if (!Number.isFinite(roleIdNum)) {
         return NextResponse.json({ success: false, error: 'roleId 参数错误' }, { status: 400 });
@@ -129,18 +134,20 @@ export const PATCH = withAnyPermission(
 
       // 更新权限
       if (permissionIds !== undefined) {
-        // 删除旧权限
-        await db.delete(rolePermissions).where(eq(rolePermissions.roleId, roleIdNum));
+        await db.transaction(async (tx) => {
+          // 删除旧权限
+          await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleIdNum));
 
-        // 添加新权限
-        const grantedBy = userId ? parseInt(userId, 10) : null;
-        for (const permId of permissionIds) {
-          await db.insert(rolePermissions).values({
-            roleId: roleIdNum,
-            permissionId: permId,
-            grantedBy,
-          });
-        }
+          // 添加新权限
+          const grantedBy = authUserId || null;
+          for (const permId of permissionIds) {
+            await tx.insert(rolePermissions).values({
+              roleId: roleIdNum,
+              permissionId: permId,
+              grantedBy,
+            });
+          }
+        });
 
         // 更新角色的权限列表缓存
         await RBACService.updateRolePermissionsCache(roleIdNum);
@@ -157,8 +164,15 @@ export const PATCH = withAnyPermission(
         error: '更新角色失败',
       }, { status: 500 });
     }
-  }
-);
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ roleId: string }> }
+) {
+  const { roleId } = await params;
+  return withAdmin(request, (req, userId) => patchRole(req, roleId, userId));
+}
 
 // ============================================
 // DELETE - 删除角色

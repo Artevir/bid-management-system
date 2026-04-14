@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users, departments as _departments } from '@/db/schema';
 import { eq, like, or, desc } from 'drizzle-orm';
-import { withAuth, withAdmin } from '@/lib/auth/middleware';
+import { withAdmin } from '@/lib/auth/middleware';
 import { hashPassword } from '@/lib/auth/password';
 
 // 获取用户列表
@@ -115,7 +115,7 @@ async function createUser(request: NextRequest, _currentUserId: number): Promise
 }
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, getUsers);
+  return withAdmin(request, getUsers);
 }
 
 export async function POST(request: NextRequest) {

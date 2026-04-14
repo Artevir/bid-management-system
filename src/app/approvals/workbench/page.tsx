@@ -34,6 +34,7 @@ import {
 interface PendingApproval {
   id: number;
   documentId: number;
+  projectId: number;
   documentName: string;
   projectName: string;
   level: string;
@@ -64,20 +65,32 @@ export default function ApprovalWorkbenchPage() {
     fetchApprovals();
   }, []);
 
+  const normalizePendingApprovals = (rawItems: any[]): PendingApproval[] => {
+    return (rawItems || []).map((item) => ({
+      id: item.id,
+      documentId: item.documentId,
+      projectId: item.document?.projectId || 0,
+      documentName: item.document?.name || `文档#${item.documentId}`,
+      projectName: item.document?.projectName || '-',
+      level: item.level,
+      status: item.status,
+      submittedBy: item.createdBy ? `用户#${item.createdBy}` : '未知',
+      submittedAt: item.createdAt,
+      deadline: item.dueDate || null,
+    }));
+  };
+
   const fetchApprovals = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/bid/approvals?status=pending');
+      const res = await fetch('/api/bid/approvals');
       const data = await res.json();
       if (data.success) {
-        setPendingApprovals(data.flows || []);
+        setPendingApprovals(normalizePendingApprovals(data?.data || []));
       }
 
-      const historyRes = await fetch('/api/bid/approvals?status=completed');
-      const historyData = await historyRes.json();
-      if (historyData.success) {
-        setHistoryApprovals(historyData.flows || []);
-      }
+      // 当前后端仅返回待审核列表，避免使用无效字段导致历史区误显示
+      setHistoryApprovals([]);
     } catch (error) {
       console.error('Failed to fetch approvals:', error);
     } finally {
@@ -94,6 +107,7 @@ export default function ApprovalWorkbenchPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentId: selectedApproval.documentId,
+          level: selectedApproval.level,
           action: 'approve',
           comment: reviewComment,
         }),
@@ -120,6 +134,7 @@ export default function ApprovalWorkbenchPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentId: selectedApproval.documentId,
+          level: selectedApproval.level,
           action: 'reject',
           comment: reviewComment,
         }),
@@ -267,7 +282,7 @@ export default function ApprovalWorkbenchPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/projects/${approval.documentId}/documents`)}
+                          onClick={() => router.push(`/projects/${approval.projectId}/documents`)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           查看

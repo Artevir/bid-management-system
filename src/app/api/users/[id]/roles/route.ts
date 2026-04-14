@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users, roles, userRoles } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { withAuth, withAdmin, clearPermissionCache } from '@/lib/auth/middleware';
+import { withAdmin, clearPermissionCache } from '@/lib/auth/middleware';
 
 // 获取用户的角色列表
 async function getUserRoles(
@@ -101,19 +101,21 @@ async function setUserRoles(
       }
     }
 
-    // 删除原有角色
-    await db.delete(userRoles).where(eq(userRoles.userId, targetUserId));
+    await db.transaction(async (tx) => {
+      // 删除原有角色
+      await tx.delete(userRoles).where(eq(userRoles.userId, targetUserId));
 
-    // 添加新角色
-    if (roleIds.length > 0) {
-      await db.insert(userRoles).values(
-        roleIds.map((roleId) => ({
-          userId: targetUserId,
-          roleId,
-          assignedBy: currentUserId,
-        }))
-      );
-    }
+      // 添加新角色
+      if (roleIds.length > 0) {
+        await tx.insert(userRoles).values(
+          roleIds.map((roleId) => ({
+            userId: targetUserId,
+            roleId,
+            assignedBy: currentUserId,
+          }))
+        );
+      }
+    });
 
     // 清除权限缓存
     clearPermissionCache(targetUserId);
@@ -134,7 +136,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  return withAuth(request, (req, userId) => getUserRoles(req, userId, parseInt(id)));
+  return withAdmin(request, (req, userId) => getUserRoles(req, userId, parseInt(id)));
 }
 
 export async function PUT(

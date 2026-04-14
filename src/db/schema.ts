@@ -482,7 +482,7 @@ export const sessions = pgTable('sessions', {
 }, (table) => {
   return {
     tokenHashIdx: uniqueIndex('sessions_token_hash_idx').on(table.tokenHash),
-    userIdIdx: uniqueIndex('sessions_user_id_idx').on(table.userId),
+    userIdIdx: index('sessions_user_id_idx').on(table.userId),
   };
 });
 
@@ -507,8 +507,8 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => {
   return {
-    userIdIdx: uniqueIndex('notifications_user_id_idx').on(table.userId),
-    isReadIdx: uniqueIndex('notifications_is_read_idx').on(table.isRead),
+    userIdIdx: index('notifications_user_id_idx').on(table.userId),
+    isReadIdx: index('notifications_is_read_idx').on(table.isRead),
   };
 });
 
@@ -4555,10 +4555,10 @@ export const recycleBin = pgTable('recycle_bin', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  resourceTypeIdx: uniqueIndex('recycle_bin_resource_type_idx').on(table.resourceType),
-  resourceIdIdx: uniqueIndex('recycle_bin_resource_id_idx').on(table.resourceId),
-  deletedByIdx: uniqueIndex('recycle_bin_deleted_by_idx').on(table.deletedBy),
-  expiresAtIdx: uniqueIndex('recycle_bin_expires_at_idx').on(table.expiresAt),
+  resourceTypeIdx: index('recycle_bin_resource_type_idx').on(table.resourceType),
+  resourceIdIdx: index('recycle_bin_resource_id_idx').on(table.resourceId),
+  deletedByIdx: index('recycle_bin_deleted_by_idx').on(table.deletedBy),
+  expiresAtIdx: index('recycle_bin_expires_at_idx').on(table.expiresAt),
 }));
 
 // 删除提醒记录表
@@ -4706,8 +4706,8 @@ export const workflowDefinitions = pgTable('workflow_definitions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
   codeIdx: uniqueIndex('workflow_definitions_code_idx').on(table.code),
-  categoryIdx: uniqueIndex('workflow_definitions_category_idx').on(table.category),
-  statusIdx: uniqueIndex('workflow_definitions_status_idx').on(table.status),
+  categoryIdx: index('workflow_definitions_category_idx').on(table.category),
+  statusIdx: index('workflow_definitions_status_idx').on(table.status),
 }));
 
 // 工作流节点表
@@ -4748,7 +4748,7 @@ export const workflowNodes = pgTable('workflow_nodes', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  definitionIdx: uniqueIndex('workflow_nodes_definition_idx').on(table.definitionId),
+  definitionIdx: index('workflow_nodes_definition_idx').on(table.definitionId),
   nodeKeyIdx: uniqueIndex('workflow_nodes_node_key_idx').on(table.definitionId, table.nodeKey),
 }));
 
@@ -4772,9 +4772,9 @@ export const workflowTransitions = pgTable('workflow_transitions', {
   
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
-  definitionIdx: uniqueIndex('workflow_transitions_definition_idx').on(table.definitionId),
-  sourceIdx: uniqueIndex('workflow_transitions_source_idx').on(table.sourceNodeId),
-  targetIdx: uniqueIndex('workflow_transitions_target_idx').on(table.targetNodeId),
+  definitionIdx: index('workflow_transitions_definition_idx').on(table.definitionId),
+  sourceIdx: index('workflow_transitions_source_idx').on(table.sourceNodeId),
+  targetIdx: index('workflow_transitions_target_idx').on(table.targetNodeId),
 }));
 
 // 工作流实例表
@@ -4811,10 +4811,10 @@ export const workflowInstances = pgTable('workflow_instances', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  definitionIdx: uniqueIndex('workflow_instances_definition_idx').on(table.definitionId),
-  businessIdx: uniqueIndex('workflow_instances_business_idx').on(table.businessType, table.businessId),
-  statusIdx: uniqueIndex('workflow_instances_status_idx').on(table.status),
-  createdByIdx: uniqueIndex('workflow_instances_created_by_idx').on(table.createdBy),
+  definitionIdx: index('workflow_instances_definition_idx').on(table.definitionId),
+  businessIdx: index('workflow_instances_business_idx').on(table.businessType, table.businessId),
+  statusIdx: index('workflow_instances_status_idx').on(table.status),
+  createdByIdx: index('workflow_instances_created_by_idx').on(table.createdBy),
 }));
 
 // 工作流任务表
@@ -4860,10 +4860,10 @@ export const workflowTasks = pgTable('workflow_tasks', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => ({
-  instanceIdx: uniqueIndex('workflow_tasks_instance_idx').on(table.instanceId),
-  assigneeIdx: uniqueIndex('workflow_tasks_assignee_idx').on(table.assigneeId),
-  statusIdx: uniqueIndex('workflow_tasks_status_idx').on(table.status),
-  dueTimeIdx: uniqueIndex('workflow_tasks_due_time_idx').on(table.dueTime),
+  instanceIdx: index('workflow_tasks_instance_idx').on(table.instanceId),
+  assigneeIdx: index('workflow_tasks_assignee_idx').on(table.assigneeId),
+  statusIdx: index('workflow_tasks_status_idx').on(table.status),
+  dueTimeIdx: index('workflow_tasks_due_time_idx').on(table.dueTime),
 }));
 
 // 工作流任务操作记录表
@@ -4888,9 +4888,9 @@ export const workflowTaskActions = pgTable('workflow_task_actions', {
   
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => ({
-  taskIdx: uniqueIndex('workflow_task_actions_task_idx').on(table.taskId),
-  instanceIdx: uniqueIndex('workflow_task_actions_instance_idx').on(table.instanceId),
-  operatorIdx: uniqueIndex('workflow_task_actions_operator_idx').on(table.operatorId),
+  taskIdx: index('workflow_task_actions_task_idx').on(table.taskId),
+  instanceIdx: index('workflow_task_actions_instance_idx').on(table.instanceId),
+  operatorIdx: index('workflow_task_actions_operator_idx').on(table.operatorId),
 }));
 
 // ============================================

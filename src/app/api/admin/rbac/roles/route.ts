@@ -8,12 +8,13 @@ import { roles, userRoles, rolePermissions } from '@/db/schema/rbac';
 import { eq, sql } from 'drizzle-orm';
 import RBACService from '@/lib/auth/rbac-service';
 import { withPermission, PERMISSIONS } from '@/lib/auth/rbac-middleware';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取所有角色
 // ============================================
 
-export async function GET(_request: NextRequest) {
+async function getRoles(_request: NextRequest, _userId: number) {
   try {
     const allRoles = await RBACService.getAllRoles();
 
@@ -49,6 +50,10 @@ export async function GET(_request: NextRequest) {
       error: '获取角色列表失败',
     }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  return withAdmin(request, getRoles);
 }
 
 // ============================================

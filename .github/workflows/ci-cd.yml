@@ -110,6 +110,19 @@ jobs:
 
       - name: 构建应用
         run: pnpm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bid_management
+          JWT_SECRET: ci-jwt-secret
+          CRON_SECRET: ci-cron-secret
+          E_SIGN_CALLBACK_SECRET: ci-e-sign-secret
+
+      - name: 运行发布门禁检查
+        run: pnpm run release:gate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bid_management
+          JWT_SECRET: ci-jwt-secret
+          CRON_SECRET: ci-cron-secret
+          E_SIGN_CALLBACK_SECRET: ci-e-sign-secret
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v3
@@ -119,12 +132,48 @@ jobs:
           retention-days: 7
 
   # ============================================
+  # E2E 冒烟测试
+  # ============================================
+  e2e-smoke:
+    name: E2E Smoke
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 运行 E2E 冒烟
+        run: pnpm run test:e2e:smoke
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bid_management
+          JWT_SECRET: ci-jwt-secret
+          CRON_SECRET: ci-cron-secret
+          E_SIGN_CALLBACK_SECRET: ci-e-sign-secret
+
+  # ============================================
   # Docker镜像构建
   # ============================================
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build, e2e-smoke]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     steps:
       - name: Checkout代码
@@ -155,7 +204,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ secrets.DOCKER_USERNAME }}/bid-platform:sha-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -183,14 +234,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /app/bid-platform
-            docker-compose pull
-            docker-compose up -d
+            export APP_IMAGE=${{ secrets.DOCKER_USERNAME }}/bid-platform:sha-${{ github.sha }}
+            docker compose pull app
+            docker compose run --rm app pnpm run db:migrate
+            docker compose up -d --remove-orphans
             docker system prune -f
-
-      - name: 运行数据库迁移
-        run: |
-          echo "Running database migrations..."
-          # 这里可以添加数据库迁移命令
 
       - name: 健康检查
         run: |
@@ -228,8 +276,10 @@ jobs:
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           script: |
             cd /app/bid-platform-staging
-            docker-compose pull
-            docker-compose up -d
+            export APP_IMAGE=${{ secrets.DOCKER_USERNAME }}/bid-platform:sha-${{ github.sha }}
+            docker compose pull app
+            docker compose run --rm app pnpm run db:migrate
+            docker compose up -d --remove-orphans
 
       - name: 健康检查
         run: |
@@ -243,9 +293,27 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: [build]
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout代码
         uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
 
       - name: 运行 npm audit
         run: pnpm audit --audit-level moderate
@@ -257,7 +325,13 @@ jobs:
         with:
           args: --severity-threshold=high
 
-      - name: 代码安全分析（CodeQL）
-        uses: github/codeql-action/analyze@v2
+      - name: 初始化 CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          languages: javascript, typescript
+          languages: javascript-typescript
+
+      - name: CodeQL 自动构建
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 代码安全分析（CodeQL）
+        uses: github/codeql-action/analyze@v3

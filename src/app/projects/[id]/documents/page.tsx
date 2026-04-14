@@ -67,11 +67,10 @@ interface Document {
 
 interface Chapter {
   id: number;
+  serialNumber?: string | null;
   title: string;
   type: string | null;
-  content: string | null;
   level: number;
-  sortOrder: number;
   isRequired: boolean;
   isCompleted: boolean;
   wordCount: number;
@@ -135,6 +134,57 @@ export default function ProjectDocumentsPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [generationHistory, setGenerationHistory] = useState<any[]>([]);
 
+  const normalizeDocuments = (rawItems: any[]): Document[] => {
+    return (rawItems || []).map((item) => ({
+      id: item.id,
+      name: item.name,
+      status: item.status,
+      progress: item.progress || 0,
+      totalChapters: item.totalChapters || 0,
+      completedChapters: item.completedChapters || 0,
+      wordCount: item.wordCount || 0,
+      currentApprovalLevel: item.currentApprovalLevel || null,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }));
+  };
+
+  const flattenChapterTree = (nodes: any[]): Chapter[] => {
+    const result: Chapter[] = [];
+    const walk = (items: any[]) => {
+      (items || []).forEach((node) => {
+        result.push({
+          id: node.id,
+          serialNumber: node.serialNumber || null,
+          title: node.title,
+          type: node.type || null,
+          level: node.level || 1,
+          isRequired: Boolean(node.isRequired),
+          isCompleted: Boolean(node.isCompleted),
+          wordCount: node.wordCount || 0,
+        });
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          walk(node.children);
+        }
+      });
+    };
+    walk(nodes || []);
+    return result;
+  };
+
+  const normalizeApprovalFlows = (rawFlows: any[]): ApprovalFlow[] => {
+    return (rawFlows || []).map((flow) => ({
+      id: flow.id,
+      level: flow.level,
+      status: flow.status,
+      assigneeId: flow.assigneeId,
+      assigneeName: flow.assigneeName || '',
+      dueDate: flow.dueDate || null,
+      createdAt: flow.assignedAt || flow.createdAt,
+      comment: flow.comment || null,
+    }));
+  };
+
   useEffect(() => {
     if (projectId) {
       fetchDocuments();
@@ -146,7 +196,7 @@ export default function ProjectDocumentsPage() {
       const res = await fetch(`/api/bid/documents?projectId=${projectId}`);
       const data = await res.json();
       if (data.success) {
-        setDocuments(data.documents || []);
+        setDocuments(normalizeDocuments(data?.data || []));
       }
     } catch (error) {
       console.error('Failed to fetch documents:', error);
@@ -160,7 +210,7 @@ export default function ProjectDocumentsPage() {
       const res = await fetch(`/api/bid/chapters?documentId=${docId}`);
       const data = await res.json();
       if (data.success) {
-        setChapters(data.chapters || []);
+        setChapters(flattenChapterTree(data?.data || []));
       }
     } catch (error) {
       console.error('Failed to fetch chapters:', error);
@@ -169,10 +219,10 @@ export default function ProjectDocumentsPage() {
 
   const fetchApprovalFlows = async (docId: number) => {
     try {
-      const res = await fetch(`/api/bid/approvals?documentId=${docId}`);
+      const res = await fetch(`/api/bid/documents/approval?documentId=${docId}`);
       const data = await res.json();
       if (data.success) {
-        setApprovalFlows(data.flows || []);
+        setApprovalFlows(normalizeApprovalFlows(data?.data?.flows || []));
       }
     } catch (error) {
       console.error('Failed to fetch approval flows:', error);
@@ -434,7 +484,7 @@ export default function ProjectDocumentsPage() {
       const res = await fetch(`/api/bid/documents/generation-history?documentId=${documentId}`);
       const data = await res.json();
       if (data.success) {
-        setGenerationHistory(data.history || []);
+        setGenerationHistory(data?.histories || []);
         setHistoryOpen(true);
       }
     } catch (error) {
@@ -700,7 +750,7 @@ export default function ProjectDocumentsPage() {
                                 <Clock className="w-4 h-4 text-muted-foreground" />
                               )}
                               <span className="font-medium">
-                                {chapter.sortOrder}. {chapter.title}
+                                {chapter.serialNumber || '-'}. {chapter.title}
                               </span>
                               {chapter.isRequired && (
                                 <Badge variant="outline" className="text-xs">必填</Badge>
@@ -725,11 +775,6 @@ export default function ProjectDocumentsPage() {
                               </Button>
                             </div>
                           </div>
-                          {chapter.content && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                              {chapter.content.slice(0, 150)}...
-                            </p>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -906,13 +951,15 @@ export default function ProjectDocumentsPage() {
               generationHistory.map((item, idx) => (
                 <div key={idx} className="p-3 rounded-lg border">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{item.chapterTitle || `章节 #${item.chapterId}`}</span>
-                    <Badge variant={item.isAccepted ? 'default' : 'outline'}>
-                      {item.isAccepted ? '已采纳' : '未采纳'}
+                    <span className="font-medium text-sm">{item.document?.name || `文档 #${item.documentId}`}</span>
+                    <Badge variant={item.status === 'completed' ? 'default' : 'outline'}>
+                      {item.status || 'unknown'}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mb-1">生成时间: {new Date(item.createdAt).toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">模型: {item.model}</p>
+                  <p className="text-xs text-muted-foreground">
+                    进度: {item.generatedChapters || 0}/{item.totalChapters || 0} 章节
+                  </p>
                 </div>
               ))
             )}

@@ -7,11 +7,11 @@ import { bidService } from '@/lib/api/bid-service';
 import { toast } from 'sonner';
 
 // 文档相关 Hooks
-export const useDocuments = (projectId: number) => {
+export const useDocuments = (projectId?: number) => {
   return useQuery({
     queryKey: ['bid-documents', projectId],
-    queryFn: () => bidService.getDocuments(projectId),
-    enabled: !!projectId,
+    queryFn: () => bidService.getDocuments(projectId as number),
+    enabled: typeof projectId === 'number' && projectId > 0,
   });
 };
 

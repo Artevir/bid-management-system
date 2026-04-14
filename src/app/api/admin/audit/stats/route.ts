@@ -4,13 +4,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import AuditLogService from '@/lib/audit/audit-service';
-import { withPermission as _withPermission, PERMISSIONS as _PERMISSIONS } from '@/lib/auth/rbac-middleware';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取审计日志统计信息
 // ============================================
 
-export async function GET(request: NextRequest) {
+async function getStats(request: NextRequest, _userId: number) {
   try {
     const { searchParams } = new URL(request.url);
     
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 // POST - 删除旧日志（数据归档）
 // ============================================
 
-export async function POST(request: NextRequest) {
+async function archiveOldLogs(request: NextRequest, _userId: number) {
   try {
     const body = await request.json();
     const { beforeDate } = body;
@@ -74,4 +74,12 @@ export async function POST(request: NextRequest) {
       error: '删除旧日志失败',
     }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  return withAdmin(request, getStats);
+}
+
+export async function POST(request: NextRequest) {
+  return withAdmin(request, archiveOldLogs);
 }

@@ -701,6 +701,19 @@ export async function updateProject(
     throw new Error('项目不存在');
   }
 
+  const canManageProject = await db.query.projectMembers.findFirst({
+    where: and(
+      eq(projectMembers.projectId, projectId),
+      eq(projectMembers.userId, userId),
+      eq(projectMembers.canEdit, true)
+    ),
+    columns: { id: true },
+  });
+
+  if (existing[0].ownerId !== userId && !canManageProject) {
+    throw AppError.forbidden('无权更新该项目');
+  }
+
   const oldStatus = existing[0].status;
   const project = existing[0];
 
@@ -860,6 +873,10 @@ export async function deleteProject(
 
   if (existing.length === 0) {
     throw new Error('项目不存在');
+  }
+
+  if (existing[0].ownerId !== userId) {
+    throw AppError.forbidden('仅项目负责人可删除项目');
   }
 
   const project = existing[0];

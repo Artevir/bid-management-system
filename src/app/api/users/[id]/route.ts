@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { withAuth, withAdmin } from '@/lib/auth/middleware';
+import { withAdmin } from '@/lib/auth/middleware';
 import { hashPassword } from '@/lib/auth/password';
 
 // 获取用户详情
@@ -141,7 +141,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  return withAuth(request, (req, userId) => getUser(req, userId, parseInt(id)));
+  return withAdmin(request, (req, userId) => getUser(req, userId, parseInt(id)));
 }
 
 export async function PUT(

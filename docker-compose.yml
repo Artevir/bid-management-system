@@ -10,6 +10,7 @@ services:
   # 应用服务
   # ============================================
   app:
+    image: ${APP_IMAGE:-bid-platform:latest}
     build:
       context: .
       dockerfile: Dockerfile

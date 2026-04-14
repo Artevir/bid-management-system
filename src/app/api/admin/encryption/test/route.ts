@@ -5,12 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import EncryptionService from '@/lib/encryption/encryption-service';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取加密测试信息
 // ============================================
 
-export async function GET() {
+async function getEncryptionTestInfo(_request: NextRequest, _userId: number) {
   return NextResponse.json({
     success: true,
     data: {
@@ -37,7 +38,7 @@ export async function GET() {
 // POST - 执行加密操作
 // ============================================
 
-export async function POST(request: NextRequest) {
+async function runEncryptionTest(request: NextRequest, _userId: number) {
   try {
     const body = await request.json();
     const { action, data, password } = body;
@@ -171,4 +172,12 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : '请求失败',
     }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  return withAdmin(request, getEncryptionTestInfo);
+}
+
+export async function POST(request: NextRequest) {
+  return withAdmin(request, runEncryptionTest);
 }

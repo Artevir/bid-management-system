@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
 const env = typeof process !== 'undefined' ? process.env : undefined;
 const cozeProjectDomainDefaultRaw = env?.COZE_PROJECT_DOMAIN_DEFAULT;
@@ -37,17 +38,18 @@ function isPublicApiPath(pathname: string): boolean {
   return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function isTokenPayloadNotExpired(token: string): boolean {
+function getJwtSecretKey(): Uint8Array | null {
+  const secret = env?.JWT_SECRET?.trim();
+  if (!secret) return null;
+  return new TextEncoder().encode(secret);
+}
+
+async function hasValidSignedAccessToken(token: string): Promise<boolean> {
+  const secretKey = getJwtSecretKey();
+  if (!secretKey) return false;
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = payloadBase64 + '='.repeat((4 - (payloadBase64.length % 4)) % 4);
-    const payloadText = atob(padded);
-    const payload = JSON.parse(payloadText) as { exp?: number };
-    if (!payload.exp) return false;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
-    return payload.exp > nowInSeconds;
+    await jwtVerify(token, secretKey);
+    return true;
   } catch {
     return false;
   }
@@ -126,12 +128,12 @@ function checkRateLimit(request: NextRequest): boolean {
 // 主中间件函数
 // ============================================
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname;
     const isApiRoute = pathname.startsWith('/api/');
     const accessToken = request.cookies.get('accessToken')?.value || null;
-    const hasValidAccessToken = accessToken ? isTokenPayloadNotExpired(accessToken) : false;
+    const hasValidAccessToken = accessToken ? await hasValidSignedAccessToken(accessToken) : false;
 
     // 页面路由登录守卫：未登录访问业务页面时跳转到登录页
     if (!isApiRoute) {

@@ -76,9 +76,14 @@ export default function BidApprovalPage() {
   const [approvalFlows, setApprovalFlows] = useState<ApprovalFlow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [reviewDialog, setReviewDialog] = useState<{ open: boolean; flowId: number | null }>({
+  const [reviewDialog, setReviewDialog] = useState<{
+    open: boolean;
+    flowId: number | null;
+    level: string | null;
+  }>({
     open: false,
     flowId: null,
+    level: null,
   });
   const [reviewComment, setReviewComment] = useState('');
   const [reviewResult, setReviewResult] = useState<'approved' | 'rejected'>('approved');
@@ -95,7 +100,7 @@ export default function BidApprovalPage() {
       const response = await fetch(`/api/bid/documents/${documentId}`);
       const data = await response.json();
       if (data.success) {
-        setDocument(data.data);
+        setDocument(data?.data?.document || null);
       }
     } catch (error) {
       console.error('Failed to load document:', error);
@@ -114,7 +119,7 @@ export default function BidApprovalPage() {
       const response = await fetch(`/api/bid/documents/approval?${params}`);
       const data = await response.json();
       if (data.success) {
-        setApprovalFlows(data.data);
+        setApprovalFlows(data?.data?.flows || []);
       }
     } catch (error) {
       console.error('Failed to load approval flows:', error);
@@ -124,20 +129,24 @@ export default function BidApprovalPage() {
   };
 
   const handleReview = async () => {
-    if (!reviewDialog.flowId) return;
+    if (!reviewDialog.level) return;
 
     try {
-      const response = await fetch(`/api/bid/documents/approval/${reviewDialog.flowId}/review`, {
+      const action = reviewResult === 'approved' ? 'approve' : 'reject';
+      const response = await fetch('/api/bid/approvals/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          result: reviewResult,
+          documentId: parseInt(documentId, 10),
+          level: reviewDialog.level,
+          action,
           comment: reviewComment,
         }),
       });
 
-      if (response.ok) {
-        setReviewDialog({ open: false, flowId: null });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setReviewDialog({ open: false, flowId: null, level: null });
         setReviewComment('');
         loadApprovalFlows();
         loadDocumentDetail();
@@ -363,7 +372,13 @@ export default function BidApprovalPage() {
                           {flow.status === 'pending' && (
                             <Dialog
                               open={reviewDialog.open && reviewDialog.flowId === flow.id}
-                              onOpenChange={(open) => setReviewDialog({ open, flowId: flow.id })}
+                              onOpenChange={(open) =>
+                                setReviewDialog({
+                                  open,
+                                  flowId: flow.id,
+                                  level: flow.level,
+                                })
+                              }
                             >
                               <DialogTrigger asChild>
                                 <Button variant="outline" size="sm">
@@ -401,7 +416,10 @@ export default function BidApprovalPage() {
                                   </div>
                                 </div>
                                 <DialogFooter>
-                                  <Button variant="outline" onClick={() => setReviewDialog({ open: false, flowId: null })}>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setReviewDialog({ open: false, flowId: null, level: null })}
+                                  >
                                     取消
                                   </Button>
                                   <Button onClick={handleReview}>提交</Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +59,7 @@ import { BID_STATUS_MAP } from '@/lib/constants/bid-ui';
 
 export default function BidDocumentsPage() {
   const router = useRouter();
+  const [activeProjectId, setActiveProjectId] = useState<number | undefined>(undefined);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     projectId: '',
@@ -67,10 +68,16 @@ export default function BidDocumentsPage() {
   });
 
   // --- 服务端状态 (React Query) ---
-  const { data: documents = [], isLoading: loadingDocs } = useDocuments(0); // 0 表示获取全部，或按需调整
   const { data: projects = [], isLoading: _loadingProjects } = useProjects();
+  const { data: documents = [], isLoading: loadingDocs } = useDocuments(activeProjectId);
   
   const submitApprovalMutation = useSubmitApproval();
+
+  useEffect(() => {
+    if (projects.length > 0 && !activeProjectId) {
+      setActiveProjectId(projects[0].id);
+    }
+  }, [projects, activeProjectId]);
 
   // --- 事件处理 ---
   async function handleCreateDocument() {
@@ -117,6 +124,21 @@ export default function BidDocumentsPage() {
           <p className="text-muted-foreground">管理和编辑标书文档</p>
         </div>
         <div className="flex items-center gap-2">
+          <Select
+            value={activeProjectId?.toString() || ''}
+            onValueChange={(value) => setActiveProjectId(parseInt(value, 10))}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="选择项目" />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project: any) => (
+                <SelectItem key={project.id} value={project.id.toString()}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             新建文档
