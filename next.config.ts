@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // 与 Dockerfile 的 `.next/standalone` 产物保持一致，避免运行时产物不完整。
+  output: 'standalone',
+
   // Avoid bundling this SDK into server chunks in ways that break runtime (e.g. class extends undefined).
   serverExternalPackages: ['coze-coding-dev-sdk'],
 
@@ -41,54 +44,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-  },
-
-  // Webpack 配置优化
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.output = {
-        ...config.output,
-        chunkFilename: '[id].js',
-      };
-    }
-    // 生产环境客户端构建优化
-    if (!isServer) {
-      // 代码分割配置
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            // React核心库单独打包
-            react: {
-              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-              name: 'react-vendor',
-              priority: 40,
-            },
-            // UI组件库单独打包
-            ui: {
-              test: /[\\/]node_modules[\\/](@radix-ui|@components\/ui)[\\/]/,
-              name: 'ui-vendor',
-              priority: 30,
-            },
-            // 工具库单独打包
-            libs: {
-              test: /[\\/]node_modules[\\/](lodash|date-fns|clsx|tailwind-merge)[\\/]/,
-              name: 'libs-vendor',
-              priority: 20,
-            },
-            // 其他node_modules
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendor',
-              priority: 10,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-    return config;
   },
 
   // 编译优化

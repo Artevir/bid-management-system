@@ -40,6 +40,7 @@ ENV NODE_ENV production
 
 # 构建应用
 RUN pnpm run build
+RUN test -f /app/.next/standalone/server.js
 
 # ============================================
 # 阶段 3: 运行阶段
