@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { CHUNK_RELOAD_SESSION_KEY } from '@/lib/client/chunk-error';
+import {
+  CHUNK_RELOAD_SESSION_KEY,
+  navigateOnceWithCacheBustForStaleChunks,
+} from '@/lib/client/chunk-error';
 
 /**
  * After a new deploy, cached HTML may still reference removed hashed chunks under
@@ -11,9 +14,8 @@ import { CHUNK_RELOAD_SESSION_KEY } from '@/lib/client/chunk-error';
 export function ChunkLoadRecovery() {
   useEffect(() => {
     const reloadOnce = () => {
-      if (typeof window === 'undefined' || sessionStorage.getItem(CHUNK_RELOAD_SESSION_KEY)) return;
-      sessionStorage.setItem(CHUNK_RELOAD_SESSION_KEY, '1');
-      window.location.reload();
+      if (typeof window === 'undefined') return;
+      navigateOnceWithCacheBustForStaleChunks();
     };
 
     const onUnhandledRejection = (e: PromiseRejectionEvent) => {
@@ -32,10 +34,16 @@ export function ChunkLoadRecovery() {
 
     const onError = (e: Event) => {
       const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      if (t.tagName !== 'SCRIPT') return;
-      const src = (t as HTMLScriptElement).src;
-      if (src && src.includes('/_next/static/')) {
+      if (t instanceof HTMLElement && t.tagName === 'SCRIPT') {
+        const src = (t as HTMLScriptElement).src;
+        if (src && src.includes('/_next/static/')) {
+          reloadOnce();
+          return;
+        }
+      }
+      const ev = e as ErrorEvent;
+      const msg = String(ev?.message || '');
+      if (msg.includes('Loading chunk') || msg.includes('ChunkLoadError')) {
         reloadOnce();
       }
     };
@@ -44,7 +52,11 @@ export function ChunkLoadRecovery() {
     window.addEventListener('error', onError, true);
 
     const clearGuard = window.setTimeout(() => {
-      sessionStorage.removeItem(CHUNK_RELOAD_SESSION_KEY);
+      try {
+        sessionStorage.removeItem(CHUNK_RELOAD_SESSION_KEY);
+      } catch {
+        /* ignore */
+      }
     }, 10000);
 
     return () => {
