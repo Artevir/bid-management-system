@@ -9,6 +9,7 @@ import type { NextRequest } from 'next/server';
 const env = typeof process !== 'undefined' ? process.env : undefined;
 const cozeProjectDomainDefaultRaw = env?.COZE_PROJECT_DOMAIN_DEFAULT;
 const nodeEnv = env?.NODE_ENV;
+const PUBLIC_PAGE_PATHS = new Set(['/login']);
 
 function normalizeEnvUrlLike(value?: string) {
   const v = value?.trim().replace(/^[`'"]+|[`'"]+$/g, '');
@@ -86,6 +87,28 @@ function checkRateLimit(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname;
+    const isApiRoute = pathname.startsWith('/api/');
+
+    // 页面路由登录守卫：未登录访问业务页面时跳转到登录页
+    if (!isApiRoute) {
+      const accessToken = request.cookies.get('accessToken')?.value;
+      const isPublicPage = PUBLIC_PAGE_PATHS.has(pathname);
+
+      if (!accessToken && !isPublicPage) {
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = '/login';
+        const nextPath = `${pathname}${request.nextUrl.search || ''}`;
+        loginUrl.searchParams.set('next', nextPath);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      if (accessToken && pathname === '/login') {
+        const homeUrl = request.nextUrl.clone();
+        homeUrl.pathname = '/';
+        homeUrl.search = '';
+        return NextResponse.redirect(homeUrl);
+      }
+    }
 
     // OPTIONS 预检请求
     if (request.method === 'OPTIONS') {
@@ -103,7 +126,7 @@ export function middleware(request: NextRequest) {
     }
 
     // API 路由做限流
-    if (pathname.startsWith('/api/')) {
+    if (isApiRoute) {
       if (!checkRateLimit(request)) {
         return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
           status: 429,
