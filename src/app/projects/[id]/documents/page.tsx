@@ -191,18 +191,21 @@ export default function ProjectDocumentsPage() {
     }
   }, [projectId]);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (): Promise<Document[]> => {
     try {
       const res = await fetch(`/api/bid/documents?projectId=${projectId}`);
       const data = await res.json();
       if (data.success) {
-        setDocuments(normalizeDocuments(data?.data || []));
+        const normalizedDocs = normalizeDocuments(data?.data || []);
+        setDocuments(normalizedDocs);
+        return normalizedDocs;
       }
     } catch (error) {
       console.error('Failed to fetch documents:', error);
     } finally {
       setLoading(false);
     }
+    return [];
   };
 
   const fetchChapters = async (docId: number) => {
@@ -371,7 +374,16 @@ export default function ProjectDocumentsPage() {
       if (!response.ok || !result?.success) {
         throw new Error(result?.error || '一键生成失败');
       }
-      fetchChapters(selectedDocument.id);
+
+      const newDocumentId = result?.data?.documentId;
+      const refreshedDocuments = await fetchDocuments();
+      const generatedDocument = refreshedDocuments.find((doc) => doc.id === newDocumentId);
+
+      if (generatedDocument) {
+        await handleSelectDocument(generatedDocument);
+      } else {
+        await fetchChapters(selectedDocument.id);
+      }
     } catch (error) {
       console.error('Failed to generate document:', error);
     } finally {
