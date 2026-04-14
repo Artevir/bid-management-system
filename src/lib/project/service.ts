@@ -226,7 +226,7 @@ export interface ProjectMilestoneItem {
  */
 export async function getProjectList(
   params: ProjectQueryParams,
-  _userId: number
+  userId: number
 ): Promise<{ items: ProjectListItem[]; total: number }> {
   const {
     page = 1,
@@ -249,9 +249,13 @@ export async function getProjectList(
   // 构建查询条件
   const conditions = [eq(projects.isDeleted, false)]; // 默认过滤已删除项目
 
-  // 用户只能看到自己是成员的项目（或者自己部门的项目）
-  // 这里简化为用户可以看到所有项目，实际应该加上权限过滤
-  // conditions.push(eq(projects.id, sql`ANY(SELECT project_id FROM ${projectMembers} WHERE user_id = ${userId})`));
+  // 用户只能看到自己是负责人或项目成员的项目
+  conditions.push(
+    or(
+      eq(projects.ownerId, userId),
+      sql`${projects.id} IN (SELECT project_id FROM ${projectMembers} WHERE user_id = ${userId})`
+    )!
+  );
 
   if (keyword) {
     const keywordCondition = or(
@@ -384,7 +388,7 @@ export async function getProjectList(
  */
 export async function getProjectById(
   projectId: number,
-  _userId: number
+  userId: number
 ): Promise<ProjectDetail | null> {
   // 查询项目基本信息
   const projectResult = await db
@@ -422,7 +426,16 @@ export async function getProjectById(
     .from(projects)
     .leftJoin(users, eq(projects.ownerId, users.id))
     .leftJoin(departments, eq(projects.departmentId, departments.id))
-    .where(and(eq(projects.id, projectId), eq(projects.isDeleted, false)))
+    .where(
+      and(
+        eq(projects.id, projectId),
+        eq(projects.isDeleted, false),
+        or(
+          eq(projects.ownerId, userId),
+          sql`${projects.id} IN (SELECT project_id FROM ${projectMembers} WHERE user_id = ${userId})`
+        )!
+      )
+    )
     .limit(1);
 
   if (projectResult.length === 0) {

@@ -5,15 +5,17 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import IndexManager from '@/lib/db/index-manager';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取索引统计信息
 // ============================================
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action') || 'stats';
+  return withAdmin(request, async (req) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const action = searchParams.get('action') || 'stats';
 
     // 获取索引统计信息
     if (action === 'stats') {
@@ -42,18 +44,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      success: false,
-      error: '未知的操作'
-    }, { status: 400 });
-
-  } catch (error) {
-    console.error('[Index API] 请求失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: '请求失败'
-    }, { status: 500 });
-  }
+      return NextResponse.json({
+        success: false,
+        error: '未知的操作'
+      }, { status: 400 });
+    } catch (error) {
+      console.error('[Index API] 请求失败:', error);
+      return NextResponse.json({
+        success: false,
+        error: '请求失败'
+      }, { status: 500 });
+    }
+  });
 }
 
 // ============================================
@@ -61,9 +63,10 @@ export async function GET(request: NextRequest) {
 // ============================================
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { action } = body;
+  return withAdmin(request, async (req) => {
+    try {
+      const body = await req.json();
+      const { action } = body;
 
     // 执行索引迁移
     if (action === 'migrate') {
@@ -104,16 +107,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result);
     }
 
-    return NextResponse.json({
-      success: false,
-      error: '未知的操作'
-    }, { status: 400 });
-
-  } catch (error) {
-    console.error('[Index API] 请求失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: '请求失败'
-    }, { status: 500 });
-  }
+      return NextResponse.json({
+        success: false,
+        error: '未知的操作'
+      }, { status: 400 });
+    } catch (error) {
+      console.error('[Index API] 请求失败:', error);
+      return NextResponse.json({
+        success: false,
+        error: '请求失败'
+      }, { status: 500 });
+    }
+  });
 }

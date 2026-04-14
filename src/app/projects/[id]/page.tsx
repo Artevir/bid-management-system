@@ -146,7 +146,7 @@ export default function ProjectDetailPage() {
         throw new Error('获取项目详情失败');
       }
       const data = await res.json();
-      setProject(data);
+      setProject(data?.data || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取项目详情失败');
     } finally {

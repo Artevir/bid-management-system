@@ -15,6 +15,7 @@ import crypto from 'crypto';
 export const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB per chunk
 export const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB max
 export const TEMP_DIR = path.join(process.cwd(), 'temp', 'uploads');
+export const SAFE_UPLOAD_ROOT = path.join(process.cwd(), 'uploads', 'chunked');
 
 // ============================================
 // 分片信息
@@ -228,17 +229,19 @@ export async function mergeChunks(sessionId: string, targetPath: string): Promis
     throw new Error('上传会话不存在');
   }
 
+  const safeTargetPath = resolveSafeTargetPath(sessionId, session.filename, targetPath);
+
   // 确保目标目录存在
-  const targetDir = path.dirname(targetPath);
+  const targetDir = path.dirname(safeTargetPath);
   await mkdir(targetDir, { recursive: true });
 
   // 合并分片
-  await writeFile(targetPath, Buffer.alloc(0));
+  await writeFile(safeTargetPath, Buffer.alloc(0));
 
   for (let i = 1; i <= session.totalChunks; i++) {
     const chunkPath = path.join(session.tempDir, `chunk_${i}`);
     const chunkData = await readFile(chunkPath);
-    await writeFile(targetPath, chunkData, { flag: 'a' });
+    await writeFile(safeTargetPath, chunkData, { flag: 'a' });
     await unlink(chunkPath);
   }
 
@@ -348,6 +351,25 @@ export async function verifyChunkHash(chunkData: Buffer, expectedHash: string): 
   hash.update(chunkData);
   const actualHash = hash.digest('hex');
   return actualHash === expectedHash;
+}
+
+function sanitizeFilename(filename: string): string {
+  const base = path.basename(filename || 'file');
+  return base.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function resolveSafeTargetPath(sessionId: string, filename: string, requestedPath?: string): string {
+  const safeFilename = sanitizeFilename(filename);
+  const safeBaseDir = path.join(SAFE_UPLOAD_ROOT, sessionId);
+  const candidate = requestedPath
+    ? path.join(safeBaseDir, sanitizeFilename(requestedPath))
+    : path.join(safeBaseDir, safeFilename);
+  const resolved = path.resolve(candidate);
+  const safeRoot = path.resolve(SAFE_UPLOAD_ROOT);
+  if (!resolved.startsWith(safeRoot + path.sep)) {
+    throw new Error('非法目标路径');
+  }
+  return resolved;
 }
 
 // ============================================

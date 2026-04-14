@@ -308,12 +308,15 @@ export default function ProjectDocumentsPage() {
 
   const handleApprove = async () => {
     if (!selectedDocument) return;
+    const pendingFlow = getApprovalAction();
+    if (!pendingFlow) return;
     try {
       const res = await fetch('/api/bid/approvals/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentId: selectedDocument.id,
+          level: pendingFlow.level,
           action: 'approve',
           comment: approveComment,
         }),
@@ -332,12 +335,15 @@ export default function ProjectDocumentsPage() {
 
   const handleReject = async () => {
     if (!selectedDocument) return;
+    const pendingFlow = getApprovalAction();
+    if (!pendingFlow) return;
     try {
       const res = await fetch('/api/bid/approvals/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentId: selectedDocument.id,
+          level: pendingFlow.level,
           action: 'reject',
           comment: approveComment,
         }),

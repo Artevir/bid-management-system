@@ -106,7 +106,7 @@ export async function moveToRecycleBin(
         resourceType,
         resourceId,
         resourceName: resourceData.name,
-        resourceData: JSON.stringify(resourceData.data),
+        resourceData: JSON.stringify(sanitizeResourceSnapshot(resourceType, resourceData.data)),
         projectId: resourceData.projectId,
         companyId: resourceData.companyId,
         deletedBy,
@@ -119,7 +119,7 @@ export async function moveToRecycleBin(
     await createDeletionReminders(recycleBinItem.id, deletedBy, expiresAt);
 
     // 标记原资源为已删除（软删除）
-    await softDeleteResource(resourceType, resourceId);
+    await softDeleteResource(resourceType, resourceId, deletedBy);
 
     return {
       success: true,
@@ -153,6 +153,9 @@ export async function restoreFromRecycleBin(
 
     if (recycleBinItem.restoredAt) {
       return { success: false, message: '资源已被恢复' };
+    }
+    if (recycleBinItem.deletedBy !== restoredBy) {
+      return { success: false, message: '无权恢复该资源' };
     }
 
     // 恢复原始数据
@@ -197,7 +200,7 @@ export async function restoreFromRecycleBin(
  */
 export async function permanentDelete(
   recycleBinId: number,
-  _deletedBy: number
+  deletedBy: number
 ): Promise<{ success: boolean; message: string }> {
   try {
     // 获取回收站记录
@@ -209,6 +212,9 @@ export async function permanentDelete(
 
     if (!recycleBinItem) {
       return { success: false, message: '回收站记录不存在' };
+    }
+    if (recycleBinItem.deletedBy !== deletedBy) {
+      return { success: false, message: '无权删除该资源' };
     }
 
     // 物理删除原始资源
@@ -400,7 +406,10 @@ export async function getRecycleBinDetail(
     resourceType: item.resourceType as ResourceType,
     resourceId: item.resourceId,
     resourceName: item.resourceName,
-    resourceData: JSON.parse(item.resourceData),
+    resourceData: sanitizeResourceSnapshot(
+      item.resourceType as ResourceType,
+      safeParseResourceData(item.resourceData)
+    ),
     deletedBy: {
       id: item.deletedById,
       realName: item.deleterRealName || '未知',
@@ -414,6 +423,76 @@ export async function getRecycleBinDetail(
       (item.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     ),
   };
+}
+
+function safeParseResourceData(raw: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // ignore parse errors and fallback to empty object
+  }
+  return {};
+}
+
+function sanitizeResourceSnapshot(
+  resourceType: ResourceType,
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  switch (resourceType) {
+    case 'document':
+      return {
+        id: data.id,
+        projectId: data.projectId,
+        name: data.name,
+        status: data.status,
+        version: data.version,
+        updatedAt: data.updatedAt,
+      };
+    case 'chapter':
+      return {
+        id: data.id,
+        documentId: data.documentId,
+        title: data.title,
+        level: data.level,
+        sortOrder: data.sortOrder,
+      };
+    case 'file':
+      return {
+        id: data.id,
+        originalName: data.originalName,
+        size: data.size,
+        status: data.status,
+        mimeType: data.mimeType,
+      };
+    case 'company':
+      return {
+        id: data.id,
+        name: data.name,
+        status: data.status,
+        isActive: data.isActive,
+      };
+    case 'company_file':
+      return {
+        id: data.id,
+        companyId: data.companyId,
+        fileName: data.fileName,
+        fileType: data.fileType,
+        fileSize: data.fileSize,
+      };
+    case 'project':
+      return {
+        id: data.id,
+        name: data.name,
+        code: data.code,
+        status: data.status,
+        ownerId: data.ownerId,
+      };
+    default:
+      return {};
+  }
 }
 
 // ============================================
@@ -608,17 +687,21 @@ async function getResourceData(
  */
 async function softDeleteResource(
   resourceType: ResourceType,
-  resourceId: number
+  resourceId: number,
+  deletedBy: number
 ): Promise<void> {
   const now = new Date();
 
   switch (resourceType) {
     case 'document':
-      // 文档软删除：标记状态为 rejected（作为已删除标记）
-      // 实际数据保留在回收站记录中
       await db
         .update(bidDocuments)
-        .set({ status: 'rejected', updatedAt: now })
+        .set({
+          isDeleted: true,
+          deletedAt: now,
+          deletedBy,
+          updatedAt: now,
+        })
         .where(eq(bidDocuments.id, resourceId));
       break;
     case 'chapter':
@@ -644,10 +727,14 @@ async function softDeleteResource(
         .where(eq(companyFiles.id, resourceId));
       break;
     case 'project':
-      // 项目支持 archived 状态
       await db
         .update(projects)
-        .set({ status: 'archived', updatedAt: now })
+        .set({
+          isDeleted: true,
+          deletedAt: now,
+          deletedBy,
+          updatedAt: now,
+        })
         .where(eq(projects.id, resourceId));
       break;
   }
@@ -677,7 +764,13 @@ async function restoreResourceData(
         }
         await db
           .update(bidDocuments)
-          .set({ status: 'draft', updatedAt: now })
+          .set({
+            isDeleted: false,
+            deletedAt: null,
+            deletedBy: null,
+            status: (originalData.status as any) || 'draft',
+            updatedAt: now,
+          })
           .where(eq(bidDocuments.id, resourceId));
         break;
 
@@ -712,10 +805,15 @@ async function restoreResourceData(
         break;
 
       case 'project':
-        // 项目恢复到 draft 状态
         await db
           .update(projects)
-          .set({ status: 'draft', updatedAt: now })
+          .set({
+            isDeleted: false,
+            deletedAt: null,
+            deletedBy: null,
+            status: (originalData.status as any) || 'draft',
+            updatedAt: now,
+          })
           .where(eq(projects.id, resourceId));
         break;
     }

@@ -131,14 +131,15 @@ export default function GuaranteeDetailPage() {
         throw new Error('获取保证金详情失败');
       }
       const data = await res.json();
-      setGuarantee(data);
+      const guaranteeData = data?.data || data;
+      setGuarantee(guaranteeData);
 
       // 获取关联项目信息
-      if (data.projectId) {
-        const projectRes = await fetch(`/api/projects/${data.projectId}`);
+      if (guaranteeData?.projectId) {
+        const projectRes = await fetch(`/api/projects/${guaranteeData.projectId}`);
         if (projectRes.ok) {
           const projectData = await projectRes.json();
-          setProject(projectData);
+          setProject(projectData?.data || null);
         }
       }
     } catch (err) {

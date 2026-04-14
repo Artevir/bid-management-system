@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { restoreFromRecycleBin } from '@/lib/recycle-bin/service';
+import { restoreFromRecycleBin, getRecycleBinDetail } from '@/lib/recycle-bin/service';
 
 // 恢复资源
 async function restore(
@@ -14,6 +14,14 @@ async function restore(
   recycleBinId: number
 ): Promise<NextResponse> {
   try {
+    const detail = await getRecycleBinDetail(recycleBinId);
+    if (!detail) {
+      return NextResponse.json({ error: '回收站记录不存在' }, { status: 404 });
+    }
+    if (detail.deletedBy.id !== userId) {
+      return NextResponse.json({ error: '无权恢复该回收站记录' }, { status: 403 });
+    }
+
     const result = await restoreFromRecycleBin(recycleBinId, userId);
 
     if (!result.success) {

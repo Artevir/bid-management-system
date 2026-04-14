@@ -192,10 +192,58 @@ export async function submitForApproval(
 export async function executeApproval(
   documentId: number,
   userId: number,
-  level: ApprovalLevel,
+  level: ApprovalLevel | undefined,
   action: 'approve' | 'reject',
   comment?: string
 ): Promise<void> {
+  const [document] = await db
+    .select({
+      id: bidDocuments.id,
+      status: bidDocuments.status,
+      currentApprovalLevel: bidDocuments.currentApprovalLevel,
+    })
+    .from(bidDocuments)
+    .where(eq(bidDocuments.id, documentId))
+    .limit(1);
+
+  if (!document) {
+    throw AppError.notFound('文档');
+  }
+
+  if (document.status !== 'reviewing') {
+    throw AppError.badRequest('当前文档不在审核中');
+  }
+
+  const resolvedLevel = level || (document.currentApprovalLevel as ApprovalLevel | null);
+  if (!resolvedLevel) {
+    throw AppError.badRequest('无法确定当前审核级别');
+  }
+
+  if (document.currentApprovalLevel !== resolvedLevel) {
+    throw AppError.badRequest('当前审核级别不匹配，请刷新后重试');
+  }
+
+  const currentIndex = APPROVAL_LEVEL_ORDER.indexOf(resolvedLevel);
+  if (currentIndex > 0) {
+    const prerequisiteLevels = APPROVAL_LEVEL_ORDER.slice(0, currentIndex);
+    const prerequisiteFlows = await db
+      .select({
+        level: approvalFlows.level,
+        status: approvalFlows.status,
+      })
+      .from(approvalFlows)
+      .where(
+        and(
+          eq(approvalFlows.documentId, documentId),
+          inArray(approvalFlows.level, prerequisiteLevels)
+        )
+      );
+
+    if (prerequisiteFlows.some((item) => item.status !== 'approved')) {
+      throw AppError.badRequest('前置审核级别尚未通过，无法越级审批');
+    }
+  }
+
   // 获取当前级别的审核流程
   const flow = await db
     .select()
@@ -203,13 +251,37 @@ export async function executeApproval(
     .where(
       and(
         eq(approvalFlows.documentId, documentId),
-        eq(approvalFlows.level, level),
+        eq(approvalFlows.level, resolvedLevel),
         eq(approvalFlows.status, 'pending')
       )
     )
     .limit(1);
 
   if (flow.length === 0) {
+    // 幂等处理：如果同级节点已是最终状态且与本次动作一致，则视为重复提交成功
+    const existing = await db
+      .select({
+        status: approvalFlows.status,
+        assigneeId: approvalFlows.assigneeId,
+      })
+      .from(approvalFlows)
+      .where(
+        and(
+          eq(approvalFlows.documentId, documentId),
+          eq(approvalFlows.level, resolvedLevel)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0 && existing[0].assigneeId === userId) {
+      if (action === 'approve' && existing[0].status === 'approved') {
+        return;
+      }
+      if (action === 'reject' && existing[0].status === 'rejected') {
+        return;
+      }
+    }
+
     throw new Error('未找到待审核记录');
   }
 
@@ -241,19 +313,8 @@ export async function executeApproval(
       });
 
       // 检查是否有下一级
-      const nextLevel = getNextLevel(level);
-      const nextFlow = await tx
-        .select()
-        .from(approvalFlows)
-        .where(
-          and(
-            eq(approvalFlows.documentId, documentId),
-            eq(approvalFlows.level, nextLevel)
-          )
-        )
-        .limit(1);
-
-      if (nextFlow.length > 0) {
+      const nextLevel = getNextLevel(resolvedLevel);
+      if (nextLevel) {
         // 进入下一级
         await tx
           .update(bidDocuments)
@@ -306,7 +367,7 @@ export async function executeApproval(
       action: action === 'approve' ? 'approve' : 'reject',
       resource: 'document',
       resourceId: documentId,
-      description: `审批了文档节点: ${level}, 结果: ${action}`,
+      description: `审批了文档节点: ${resolvedLevel}, 结果: ${action}`,
     });
   });
 }
@@ -314,9 +375,9 @@ export async function executeApproval(
 /**
  * 获取下一级审核
  */
-function getNextLevel(currentLevel: ApprovalLevel): ApprovalLevel {
+function getNextLevel(currentLevel: ApprovalLevel): ApprovalLevel | null {
   const currentIndex = APPROVAL_LEVEL_ORDER.indexOf(currentLevel);
-  return currentIndex < APPROVAL_LEVEL_ORDER.length - 1 ? APPROVAL_LEVEL_ORDER[currentIndex + 1] : currentLevel;
+  return currentIndex < APPROVAL_LEVEL_ORDER.length - 1 ? APPROVAL_LEVEL_ORDER[currentIndex + 1] : null;
 }
 
 /**

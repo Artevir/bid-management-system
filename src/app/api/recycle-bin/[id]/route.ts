@@ -23,6 +23,9 @@ async function getDetail(
     if (!detail) {
       return NextResponse.json({ error: '回收站记录不存在' }, { status: 404 });
     }
+    if (detail.deletedBy.id !== userId) {
+      return NextResponse.json({ error: '无权访问该回收站记录' }, { status: 403 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -41,6 +44,14 @@ async function deletePermanently(
   recycleBinId: number
 ): Promise<NextResponse> {
   try {
+    const detail = await getRecycleBinDetail(recycleBinId);
+    if (!detail) {
+      return NextResponse.json({ error: '回收站记录不存在' }, { status: 404 });
+    }
+    if (detail.deletedBy.id !== userId) {
+      return NextResponse.json({ error: '无权操作该回收站记录' }, { status: 403 });
+    }
+
     const result = await permanentDelete(recycleBinId, userId);
 
     if (!result.success) {

@@ -5,43 +5,52 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import RBACService from '@/lib/auth/rbac-service';
+import { withAdmin } from '@/lib/auth/middleware';
 
 // ============================================
 // GET - 获取系统权限信息
 // ============================================
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action') || 'info';
+  return withAdmin(request, async (req) => {
+    try {
+      const { searchParams } = new URL(req.url);
+      const action = searchParams.get('action') || 'info';
 
-    // 获取权限信息
-    if (action === 'info') {
-      const roles = await RBACService.getAllRoles();
-      const permissions = await RBACService.getAllPermissions();
+      // 获取权限信息
+      if (action === 'info') {
+        const roles = await RBACService.getAllRoles();
+        const permissions = await RBACService.getAllPermissions();
 
-      return NextResponse.json({
-        success: true,
-        data: {
-          roles,
-          permissions,
-          totalRoles: roles.length,
-          totalPermissions: permissions.length,
+        return NextResponse.json({
+          success: true,
+          data: {
+            roles,
+            permissions,
+            totalRoles: roles.length,
+            totalPermissions: permissions.length,
+          },
+        });
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: '未知的操作',
         },
-      });
+        { status: 400 }
+      );
+    } catch (error) {
+      console.error('[RBAC Init API] 请求失败:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: '请求失败',
+        },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({
-      success: false,
-      error: '未知的操作',
-    }, { status: 400 });
-  } catch (error) {
-    console.error('[RBAC Init API] 请求失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: '请求失败',
-    }, { status: 500 });
-  }
+  });
 }
 
 // ============================================
@@ -49,24 +58,32 @@ export async function GET(request: NextRequest) {
 // ============================================
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { action } = body;
+  return withAdmin(request, async (req) => {
+    try {
+      const body = await req.json();
+      const { action } = body;
 
-    if (action === 'initialize') {
-      const result = await RBACService.initializeDefaults();
-      return NextResponse.json(result);
+      if (action === 'initialize') {
+        const result = await RBACService.initializeDefaults();
+        return NextResponse.json(result);
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: '未知的操作',
+        },
+        { status: 400 }
+      );
+    } catch (error) {
+      console.error('[RBAC Init API] 请求失败:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: '请求失败',
+        },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({
-      success: false,
-      error: '未知的操作',
-    }, { status: 400 });
-  } catch (error) {
-    console.error('[RBAC Init API] 请求失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: '请求失败',
-    }, { status: 500 });
-  }
+  });
 }

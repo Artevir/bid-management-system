@@ -13,25 +13,20 @@ import {
   deleteProject,
   UpdateProjectData,
 } from '@/lib/project/service';
+import { AppError, success } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
 
 // 获取项目详情
 async function getDetail(
-  request: NextRequest,
+  _request: NextRequest,
   userId: number,
   projectId: number
 ): Promise<NextResponse> {
-  try {
-    const project = await getProjectById(projectId, userId);
-
-    if (!project) {
-      return NextResponse.json({ error: '项目不存在' }, { status: 404 });
-    }
-
-    return NextResponse.json(project);
-  } catch (error) {
-    console.error('Get project detail error:', error);
-    return NextResponse.json({ error: '获取项目详情失败' }, { status: 500 });
+  const project = await getProjectById(projectId, userId);
+  if (!project) {
+    throw AppError.notFound('项目');
   }
+  return success(project);
 }
 
 // 更新项目
@@ -40,59 +35,39 @@ async function update(
   userId: number,
   projectId: number
 ): Promise<NextResponse> {
-  try {
-    const body = await request.json();
+  const body = await request.json();
 
-    // 处理日期字段
-    const dateFields = [
-      'publishDate',
-      'registerDeadline',
-      'questionDeadline',
-      'submissionDeadline',
-      'openBidDate',
-    ];
+  // 处理日期字段
+  const dateFields = [
+    'publishDate',
+    'registerDeadline',
+    'questionDeadline',
+    'submissionDeadline',
+    'openBidDate',
+  ];
 
-    const data: UpdateProjectData = { ...body };
+  const data: UpdateProjectData = { ...body };
 
-    for (const field of dateFields) {
-      if (body[field]) {
-        data[field as keyof UpdateProjectData] = new Date(body[field]) as any;
-      } else if (body[field] === null || body[field] === '') {
-        data[field as keyof UpdateProjectData] = null as any;
-      }
+  for (const field of dateFields) {
+    if (body[field]) {
+      data[field as keyof UpdateProjectData] = new Date(body[field]) as any;
+    } else if (body[field] === null || body[field] === '') {
+      data[field as keyof UpdateProjectData] = null as any;
     }
-
-    await updateProject(projectId, data, userId);
-
-    return NextResponse.json({
-      success: true,
-      message: '项目更新成功',
-    });
-  } catch (error) {
-    console.error('Update project error:', error);
-    const message = error instanceof Error ? error.message : '更新项目失败';
-    return NextResponse.json({ error: message }, { status: 400 });
   }
+
+  await updateProject(projectId, data, userId);
+  return success({ projectId }, '项目更新成功');
 }
 
 // 删除项目
 async function remove(
-  request: NextRequest,
+  _request: NextRequest,
   userId: number,
   projectId: number
 ): Promise<NextResponse> {
-  try {
-    await deleteProject(projectId, userId);
-
-    return NextResponse.json({
-      success: true,
-      message: '项目已归档',
-    });
-  } catch (error) {
-    console.error('Delete project error:', error);
-    const message = error instanceof Error ? error.message : '删除项目失败';
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+  await deleteProject(projectId, userId);
+  return success({ projectId }, '项目已删除');
 }
 
 export async function GET(
@@ -100,7 +75,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  return withAuth(request, (req, userId) => getDetail(req, userId, parseInt(id)));
+  const projectId = parseResourceId(id, '项目');
+  return withAuth(request, (req, userId) => getDetail(req, userId, projectId));
 }
 
 export async function PUT(
@@ -108,9 +84,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseResourceId(id, '项目');
   return withPermission(request, 'project:update', (req, userId) =>
-    update(req, userId, parseInt(id))
+    update(req, userId, projectId)
   );
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return PUT(request, { params });
 }
 
 export async function DELETE(
@@ -118,7 +102,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseResourceId(id, '项目');
   return withPermission(request, 'project:delete', (req, userId) =>
-    remove(req, userId, parseInt(id))
+    remove(req, userId, projectId)
   );
 }

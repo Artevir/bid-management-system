@@ -24,6 +24,7 @@
     "db:init": "pnpm db:push && pnpm db:sync && pnpm db:seed",
     "db:init:prod": "cross-env NODE_ENV=production pnpm db:push",
     "app:doctor": "tsx src/scripts/doctor.ts",
+    "release:gate": "tsx src/scripts/release-gate.ts",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch",

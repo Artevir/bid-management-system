@@ -40,6 +40,9 @@ export async function GET(
     if (!interpretation) {
       return NextResponse.json({ error: '解读记录不存在' }, { status: 404 });
     }
+    if (interpretation.uploaderId !== user.userId) {
+      return NextResponse.json({ error: '无权访问该解读记录' }, { status: 403 });
+    }
 
     // 获取关联数据
     const [technicalSpecs, scoringItems, checklist, framework, logs] = await Promise.all([
@@ -90,6 +93,14 @@ export async function PUT(
     const body = await request.json();
     const { projectName, projectCode, tenderOrganization, tenderAgent, projectBudget, tags, expireTime } = body;
 
+    const interpretation = await getInterpretationById(interpretationId);
+    if (!interpretation) {
+      return NextResponse.json({ error: '解读记录不存在' }, { status: 404 });
+    }
+    if (interpretation.uploaderId !== user.userId) {
+      return NextResponse.json({ error: '无权修改该解读记录' }, { status: 403 });
+    }
+
     await updateInterpretation(
       interpretationId,
       {
@@ -132,6 +143,14 @@ export async function DELETE(
 
     if (isNaN(interpretationId)) {
       return NextResponse.json({ error: '无效的ID' }, { status: 400 });
+    }
+
+    const interpretation = await getInterpretationById(interpretationId);
+    if (!interpretation) {
+      return NextResponse.json({ error: '解读记录不存在' }, { status: 404 });
+    }
+    if (interpretation.uploaderId !== user.userId) {
+      return NextResponse.json({ error: '无权删除该解读记录' }, { status: 403 });
     }
 
     await deleteInterpretation(interpretationId, user.userId);

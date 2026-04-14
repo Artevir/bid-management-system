@@ -427,6 +427,39 @@ export async function startWorkflowInstance(
     throw new Error('工作流未启用');
   }
 
+  // 幂等保护：同一业务对象已有运行中的实例时，直接复用
+  const [runningInstance] = await db
+    .select({
+      id: workflowInstances.id,
+    })
+    .from(workflowInstances)
+    .where(
+      and(
+        eq(workflowInstances.definitionId, params.definitionId),
+        eq(workflowInstances.businessType, params.businessType),
+        eq(workflowInstances.businessId, params.businessId),
+        eq(workflowInstances.status, 'running')
+      )
+    )
+    .limit(1);
+
+  if (runningInstance) {
+    const [pendingTask] = await db
+      .select({
+        id: workflowTasks.id,
+      })
+      .from(workflowTasks)
+      .where(
+        and(
+          eq(workflowTasks.instanceId, runningInstance.id),
+          eq(workflowTasks.status, 'pending')
+        )
+      )
+      .orderBy(desc(workflowTasks.createdAt))
+      .limit(1);
+    return { instanceId: runningInstance.id, taskId: pendingTask?.id };
+  }
+
   // 查找开始节点
   const startNode = definition.nodes.find((n) => n.type === 'start');
   if (!startNode) {

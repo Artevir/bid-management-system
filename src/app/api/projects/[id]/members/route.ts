@@ -5,32 +5,27 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth as _withAuth, withPermission } from '@/lib/auth/middleware';
+import { withPermission } from '@/lib/auth/middleware';
 import {
   getProjectMembers,
-  addProjectMember as _addProjectMember,
   batchAddProjectMembers,
   ProjectRole,
 } from '@/lib/project/member';
+import { AppError, created, success } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
 
 // 获取项目成员列表
 async function getMembers(
-  request: NextRequest,
-  userId: number,
+  _request: NextRequest,
+  _userId: number,
   projectId: number
 ): Promise<NextResponse> {
-  try {
-    const members = await getProjectMembers(projectId);
-
-    return NextResponse.json({
-      projectId,
-      members,
-      total: members.length,
-    });
-  } catch (error) {
-    console.error('Get project members error:', error);
-    return NextResponse.json({ error: '获取项目成员失败' }, { status: 500 });
-  }
+  const members = await getProjectMembers(projectId);
+  return success({
+    projectId,
+    members,
+    total: members.length,
+  });
 }
 
 // 添加项目成员
@@ -39,39 +34,27 @@ async function addMember(
   userId: number,
   projectId: number
 ): Promise<NextResponse> {
-  try {
-    const body = await request.json();
-    const { userIds, role, permissions } = body;
+  const body = await request.json();
+  const { userIds, role, permissions } = body;
 
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return NextResponse.json({ error: '请选择要添加的成员' }, { status: 400 });
-    }
-
-    if (!role) {
-      return NextResponse.json({ error: '请指定成员角色' }, { status: 400 });
-    }
-
-    // 批量添加成员
-    const members = userIds.map((uid: number) => ({
-      userId: uid,
-      role: role as ProjectRole,
-      permissions,
-    }));
-
-    const count = await batchAddProjectMembers(projectId, members, userId);
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: `成功添加 ${count} 名成员`,
-        addedCount: count,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Add project member error:', error);
-    return NextResponse.json({ error: '添加项目成员失败' }, { status: 500 });
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw AppError.badRequest('请选择要添加的成员');
   }
+
+  if (!role) {
+    throw AppError.badRequest('请指定成员角色');
+  }
+
+  // 批量添加成员
+  const members = userIds.map((uid: number) => ({
+    userId: uid,
+    role: role as ProjectRole,
+    permissions,
+  }));
+
+  const count = await batchAddProjectMembers(projectId, members, userId);
+
+  return created({ addedCount: count }, `成功添加 ${count} 名成员`);
 }
 
 export async function GET(
@@ -79,9 +62,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseResourceId(id, '项目');
   // 需要 project:read 权限
   return withPermission(request, 'project:read', (req, userId) =>
-    getMembers(req, userId, parseInt(id))
+    getMembers(req, userId, projectId)
   );
 }
 
@@ -90,8 +74,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseResourceId(id, '项目');
   // 需要 project:manage 权限
   return withPermission(request, 'project:manage', (req, userId) =>
-    addMember(req, userId, parseInt(id))
+    addMember(req, userId, projectId)
   );
 }

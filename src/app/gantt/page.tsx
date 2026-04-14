@@ -115,9 +115,10 @@ export default function GanttChartPage() {
       const response = await fetch('/api/projects');
       if (!response.ok) throw new Error('获取失败');
       const data = await response.json();
-      setProjects(data.data || data);
-      if (data.data?.length > 0 || data.length > 0) {
-        const firstProject = data.data?.[0] || data[0];
+      const projectItems = data?.data?.items || data?.data || data || [];
+      setProjects(projectItems);
+      if (projectItems.length > 0) {
+        const firstProject = projectItems[0];
         setSelectedProject(firstProject.id.toString());
       }
     } catch (error) {
@@ -134,8 +135,10 @@ export default function GanttChartPage() {
         fetch(`/api/projects/${selectedProject}/milestones`),
       ]);
 
-      const phases = phasesRes.ok ? await phasesRes.json() : [];
-      const milestones = milestonesRes.ok ? await milestonesRes.json() : [];
+      const phasesData = phasesRes.ok ? await phasesRes.json() : {};
+      const milestonesData = milestonesRes.ok ? await milestonesRes.json() : {};
+      const phases = phasesData?.data?.phases || phasesData?.phases || [];
+      const milestones = milestonesData?.data?.milestones || milestonesData?.milestones || [];
 
       // 构建甘特图任务数据
       const ganttTasks: GanttTask[] = [];

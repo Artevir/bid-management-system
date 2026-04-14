@@ -98,6 +98,7 @@ export default function ProjectKanbanPage() {
     try {
       const response = await fetch('/api/projects');
       const data = await response.json();
+      const projectItems = data?.data?.items || [];
 
       // 按状态分组项目
       const groupedProjects: Record<string, Project[]> = {};
@@ -105,7 +106,7 @@ export default function ProjectKanbanPage() {
         groupedProjects[status] = [];
       });
 
-      (data.projects || []).forEach((project: Project) => {
+      projectItems.forEach((project: Project) => {
         if (groupedProjects[project.status]) {
           groupedProjects[project.status].push(project);
         }

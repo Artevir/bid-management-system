@@ -34,12 +34,13 @@ export async function GET(request: NextRequest) {
       reviewStatus: reviewStatus || undefined,
       keyword,
       projectId,
+      uploaderId: user.userId,
       page,
       pageSize,
     });
 
     // 获取统计信息
-    const stats = await getInterpretationStats();
+    const stats = await getInterpretationStats(user.userId);
 
     return NextResponse.json({
       success: true,

@@ -116,7 +116,10 @@ export default function ApprovalConfigPage() {
       const usersData = await usersRes.json();
 
       if (flowsData.success) setFlows(flowsData.flows || []);
-      if (projectsData.success) setProjects(projectsData.items || []);
+      if (projectsData.success) {
+        const projectItems = projectsData?.data?.items || projectsData?.items || [];
+        setProjects(projectItems);
+      }
       if (rolesData.success) setRoles(rolesData.roles || []);
       if (usersData.success) setUsers(usersData.users || []);
     } catch (error) {

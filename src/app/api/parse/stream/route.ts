@@ -9,12 +9,12 @@ import { HeaderUtils } from 'coze-coding-dev-sdk';
 import { comprehensiveParse } from '@/lib/parse/extractors';
 import { db } from '@/db';
 import { parseTasks, parseItems, parseResults } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 // 流式解析文档
 async function streamParse(
   request: NextRequest,
-  _userId: number
+  userId: number
 ): Promise<Response> {
   try {
     const body = await request.json();
@@ -33,6 +33,15 @@ async function streamParse(
 
     if (task.length === 0) {
       return NextResponse.json({ error: '解析任务不存在' }, { status: 404 });
+    }
+    if (task[0].createdBy !== userId) {
+      return NextResponse.json({ error: '无权访问该解析任务' }, { status: 403 });
+    }
+    if (task[0].status === 'processing') {
+      return NextResponse.json({ error: '解析任务正在处理中，请勿重复提交' }, { status: 409 });
+    }
+    if (task[0].status === 'completed') {
+      return NextResponse.json({ error: '解析任务已完成，请直接查看结果' }, { status: 409 });
     }
 
     // 提取请求头
@@ -64,11 +73,27 @@ async function streamParse(
         };
 
         try {
-          // 更新任务状态为处理中
-          await db
+          // 原子切换任务状态，避免并发重复执行
+          const started = await db
             .update(parseTasks)
             .set({ status: 'processing', startedAt: new Date() })
-            .where(eq(parseTasks.id, taskId));
+            .where(
+              and(
+                eq(parseTasks.id, taskId),
+                inArray(parseTasks.status, ['pending', 'failed'])
+              )
+            )
+            .returning({ id: parseTasks.id });
+
+          if (started.length === 0) {
+            sendError('任务状态已变更，请刷新后重试');
+            controller.close();
+            return;
+          }
+
+          // 幂等重试时先清空旧结果，避免重复写入
+          await db.delete(parseItems).where(eq(parseItems.taskId, taskId));
+          await db.delete(parseResults).where(eq(parseResults.taskId, taskId));
 
           // 执行综合解析
           const result = await comprehensiveParse(

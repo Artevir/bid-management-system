@@ -88,11 +88,12 @@ export default function CalendarPage() {
       // 获取项目数据
       const response = await fetch('/api/projects');
       const data = await response.json();
+      const projects: Project[] = data?.data?.items || data?.projects || [];
       
       // 转换为日历事件
       const calendarEvents: CalendarEvent[] = [];
       
-      (data.projects || []).forEach((project: Project) => {
+      projects.forEach((project: Project) => {
         // 投标截止日期
         if (project.submissionDeadline) {
           calendarEvents.push({

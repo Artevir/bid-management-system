@@ -16,7 +16,7 @@ import {
 // 获取回收站列表
 async function getList(
   request: NextRequest,
-  _userId: number
+  userId: number
 ): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,6 +24,7 @@ async function getList(
     const result = await getRecycleBinList({
       resourceType: searchParams.get('resourceType') as ResourceType || undefined,
       keyword: searchParams.get('keyword') || undefined,
+      deletedBy: userId,
       projectId: searchParams.get('projectId') ? parseInt(searchParams.get('projectId')!) : undefined,
       companyId: searchParams.get('companyId') ? parseInt(searchParams.get('companyId')!) : undefined,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,

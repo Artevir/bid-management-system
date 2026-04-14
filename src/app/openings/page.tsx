@@ -131,7 +131,8 @@ export default function OpeningsPage() {
       const res = await fetch('/api/projects?pageSize=100');
       if (res.ok) {
         const data = await res.json();
-        setProjects(data.items || []);
+        const projectItems = data?.data?.items || data?.items || [];
+        setProjects(projectItems);
       }
     } catch (err) {
       console.error('Fetch projects error:', err);

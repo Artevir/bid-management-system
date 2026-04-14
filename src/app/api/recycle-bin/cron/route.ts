@@ -12,10 +12,11 @@ import { processExpiredItems } from '@/lib/recycle-bin/service';
 function validateCronSecret(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
+  const isProd = process.env.NODE_ENV === 'production';
   
   if (!cronSecret) {
     console.warn('CRON_SECRET not configured');
-    return true; // 如果没有配置密钥，允许执行（开发环境）
+    return !isProd; // 仅开发环境允许无密钥
   }
   
   return authHeader === `Bearer ${cronSecret}`;

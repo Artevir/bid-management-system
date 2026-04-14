@@ -174,8 +174,9 @@ export default function ProjectsPage() {
       }
 
       const data = await res.json();
-      setProjects(data.items || []);
-      setTotal(data.total || 0);
+      const payload = data?.data || {};
+      setProjects(payload.items || []);
+      setTotal(payload.total || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取项目列表失败');
     } finally {

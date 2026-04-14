@@ -101,7 +101,12 @@ export async function getProjectDocuments(projectId: number): Promise<DocumentOv
     })
     .from(bidDocuments)
     .leftJoin(users, eq(bidDocuments.createdBy, users.id))
-    .where(eq(bidDocuments.projectId, projectId))
+    .where(
+      and(
+        eq(bidDocuments.projectId, projectId),
+        eq(bidDocuments.isDeleted, false)
+      )
+    )
     .orderBy(desc(bidDocuments.createdAt));
 
   return docs as DocumentOverview[];
@@ -114,7 +119,12 @@ export async function getDocumentById(documentId: number) {
   const doc = await db
     .select()
     .from(bidDocuments)
-    .where(eq(bidDocuments.id, documentId))
+    .where(
+      and(
+        eq(bidDocuments.id, documentId),
+        eq(bidDocuments.isDeleted, false)
+      )
+    )
     .limit(1);
 
   return doc[0] || null;

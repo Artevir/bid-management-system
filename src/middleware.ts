@@ -10,6 +10,32 @@ const env = typeof process !== 'undefined' ? process.env : undefined;
 const cozeProjectDomainDefaultRaw = env?.COZE_PROJECT_DOMAIN_DEFAULT;
 const nodeEnv = env?.NODE_ENV;
 const PUBLIC_PAGE_PATHS = new Set(['/login']);
+const PUBLIC_API_PATHS = new Set([
+  '/api/auth/login',
+  '/api/auth/refresh',
+  '/api/health',
+  '/api/e-sign/callback',
+  '/api/recycle-bin/cron',
+]);
+const PUBLIC_API_PREFIXES = ['/api/e-sign/callback/'];
+
+function getExtraPublicApiPaths() {
+  const raw = env?.PUBLIC_API_ALLOWLIST;
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.startsWith('/api/'));
+}
+
+const EXTRA_PUBLIC_API_PATHS = new Set(getExtraPublicApiPaths());
+
+function isPublicApiPath(pathname: string): boolean {
+  if (PUBLIC_API_PATHS.has(pathname) || EXTRA_PUBLIC_API_PATHS.has(pathname)) {
+    return true;
+  }
+  return PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 function isTokenPayloadNotExpired(token: string): boolean {
   try {
@@ -104,11 +130,11 @@ export function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname;
     const isApiRoute = pathname.startsWith('/api/');
+    const accessToken = request.cookies.get('accessToken')?.value || null;
+    const hasValidAccessToken = accessToken ? isTokenPayloadNotExpired(accessToken) : false;
 
     // 页面路由登录守卫：未登录访问业务页面时跳转到登录页
     if (!isApiRoute) {
-      const accessToken = request.cookies.get('accessToken')?.value || null;
-      const hasValidAccessToken = accessToken ? isTokenPayloadNotExpired(accessToken) : false;
       const isPublicPage = PUBLIC_PAGE_PATHS.has(pathname);
 
       if (!hasValidAccessToken && !isPublicPage) {
@@ -147,6 +173,14 @@ export function middleware(request: NextRequest) {
 
     // API 路由做限流
     if (isApiRoute) {
+      // API 默认拒绝：除白名单外，必须携带有效登录态
+      if (!isPublicApiPath(pathname) && !hasValidAccessToken) {
+        const denied = NextResponse.json({ error: '未授权访问' }, { status: 401 });
+        denied.cookies.delete('accessToken');
+        denied.cookies.delete('refreshToken');
+        return denied;
+      }
+
       if (!checkRateLimit(request)) {
         return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
           status: 429,

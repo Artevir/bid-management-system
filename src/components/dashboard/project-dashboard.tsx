@@ -106,31 +106,32 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
       // 并行获取各项数据
       const [projectRes, milestonesRes, documentsRes] = await Promise.all([
         fetch(`/api/projects/${projectId}`).catch(() => ({ json: () => null })),
-        fetch(`/api/projects/${projectId}/milestones`).catch(() => ({ json: () => ({ milestones: [] }) })),
+        fetch(`/api/projects/${projectId}/milestones`).catch(() => ({ json: () => ({ data: { milestones: [] } }) })),
         fetch('/api/bid/documents').catch(() => ({ json: () => ({ documents: [] }) })),
       ]);
 
       const projectData = await projectRes.json();
       const milestonesData = await milestonesRes.json();
       const documentsData = await documentsRes.json();
+      const project = projectData?.data || null;
 
-      if (projectData) {
+      if (project) {
         // 构建看板数据
-        const milestones = milestonesData?.milestones || [];
-        const documents = documentsData?.documents?.filter(
+        const milestones = milestonesData?.data?.milestones || milestonesData?.milestones || [];
+        const documents = (documentsData?.documents || documentsData?.data?.documents || []).filter(
           (d: any) => d.projectId === projectId
-        ) || [];
+        );
 
         // 计算剩余天数
-        const deadline = projectData.submissionDeadline
-          ? new Date(projectData.submissionDeadline)
+        const deadline = project.submissionDeadline
+          ? new Date(project.submissionDeadline)
           : null;
         const daysRemaining = deadline
           ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
           : 0;
 
         // 构建进度数据
-        const phases = projectData.phases || [];
+        const phases = project.phases || [];
         const phasesProgress = phases.map((phase: any) => ({
           name: phase.name,
           progress: phase.status === 'completed' ? 100 : phase.status === 'in_progress' ? 50 : 0,
@@ -192,7 +193,7 @@ export default function ProjectDashboard({ projectId }: ProjectDashboardProps) {
             daysRemaining: Math.max(0, daysRemaining),
           },
           progress: {
-            overall: projectData.progress || 0,
+            overall: project.progress || 0,
             phases: phasesProgress,
           },
           timeline,
