@@ -532,34 +532,24 @@ async function acceptContent(request: NextRequest, _userId: number): Promise<Nex
 // ============================================
 
 export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const action = searchParams.get('action');
-  const stream = searchParams.get('stream') === 'true';
+  return withAuth(request, async (req, userId) => {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+    const stream = searchParams.get('stream') === 'true';
 
-  switch (action) {
-    case 'optimize':
-      if (stream) {
-        // 流式优化需要绕过withAuth中间件
-        try {
-          const userId = 1; // TODO: 从session获取
-          return await optimizeContentStream(request, userId);
-        } catch (_error) {
-          return NextResponse.json({ error: '优化内容失败' }, { status: 500 });
+    switch (action) {
+      case 'optimize':
+        if (stream) {
+          return optimizeContentStream(req, userId);
         }
-      }
-      return withAuth(request, (req, userId) => optimizeContent(req, userId));
-    case 'accept':
-      return withAuth(request, (req, userId) => acceptContent(req, userId));
-    default:
-      if (stream) {
-        // 流式生成需要绕过withAuth中间件
-        try {
-          const userId = 1; // TODO: 从session获取
-          return await generateContentStream(request, userId);
-        } catch (_error) {
-          return NextResponse.json({ error: '生成内容失败' }, { status: 500 });
+        return optimizeContent(req, userId);
+      case 'accept':
+        return acceptContent(req, userId);
+      default:
+        if (stream) {
+          return generateContentStream(req, userId);
         }
-      }
-      return withAuth(request, (req, userId) => generateContent(req, userId));
-  }
+        return generateContent(req, userId);
+    }
+  });
 }

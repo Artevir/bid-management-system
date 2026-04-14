@@ -56,16 +56,27 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  function isAuthError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    return (
+      message.includes('未登录') ||
+      message.includes('认证') ||
+      message.includes('401') ||
+      message.toLowerCase().includes('unauthorized')
+    );
+  }
+
   async function fetchDashboardData() {
     try {
-      // 并行获取各项数据
-      const [projectsData, documents, approvals] = await Promise.all([
-        projectService.getProjects().catch(() => []),
-        bidService.getDocuments(1).catch(() => []), // 假设使用项目ID 1作为默认演示
-        bidService.getApprovals().catch(() => []),
+      const projectsData = await projectService.getProjects();
+      const projects = Array.isArray(projectsData) ? projectsData : [];
+      const activeProjectId = projects.length > 0 ? Number(projects[0]?.id) : null;
+
+      const [documents, approvals] = await Promise.all([
+        activeProjectId ? bidService.getDocuments(activeProjectId) : Promise.resolve([]),
+        bidService.getApprovals(),
       ]);
 
-      const projects = Array.isArray(projectsData) ? projectsData : [];
       const knowledge: any[] = []; // 暂无知识库 service，保持空
 
       // 构建待办任务
@@ -108,6 +119,10 @@ export default function DashboardPage() {
       });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      if (isAuthError(error)) {
+        router.push('/login');
+        return;
+      }
       // 设置默认数据
       setStats({
         totalProjects: 0,

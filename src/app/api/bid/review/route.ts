@@ -380,26 +380,23 @@ async function resolveComplianceIssue(request: NextRequest, userId: number): Pro
 // ============================================
 
 export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const action = searchParams.get('action');
-  const stream = searchParams.get('stream') === 'true';
+  return withAuth(request, async (req, userId) => {
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+    const stream = searchParams.get('stream') === 'true';
 
-  switch (action) {
-    case 'compliance':
-      return withAuth(request, (req, userId) => getComplianceResults(req, userId));
-    case 'resolve':
-      return withAuth(request, (req, userId) => resolveComplianceIssue(req, userId));
-    default:
-      if (stream) {
-        try {
-          const userId = 1; // TODO: 从session获取
-          return await executeReviewStream(request, userId);
-        } catch (_error) {
-          return NextResponse.json({ error: '执行审校失败' }, { status: 500 });
+    switch (action) {
+      case 'compliance':
+        return getComplianceResults(req, userId);
+      case 'resolve':
+        return resolveComplianceIssue(req, userId);
+      default:
+        if (stream) {
+          return executeReviewStream(req, userId);
         }
-      }
-      return withAuth(request, (req, userId) => executeReview(req, userId));
-  }
+        return executeReview(req, userId);
+    }
+  });
 }
 
 export async function GET(request: NextRequest) {

@@ -112,7 +112,7 @@ function ProjectDiscussionsContent() {
 
   async function fetchDiscussions() {
     try {
-      const res = await fetch('/api/project-discussions?action=list&userId=1');
+      const res = await fetch('/api/project-discussions?action=list');
       const data = await res.json();
       setDiscussions(data.data || []);
     } catch (error) {
@@ -129,7 +129,7 @@ function ProjectDiscussionsContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'getOrCreate',
-          data: { projectId: pid, userId: 1 },
+          data: { projectId: pid },
         }),
       });
       const createData = await createRes.json();
@@ -161,7 +161,6 @@ function ProjectDiscussionsContent() {
           action: 'sendMessage',
           data: {
             discussionId: currentDiscussion.id,
-            userId: 1,
             content: messageInput,
           },
         }),
@@ -187,7 +186,7 @@ function ProjectDiscussionsContent() {
 
   async function deleteMessage(messageId: number) {
     try {
-      await fetch(`/api/project-discussions/messages/${messageId}?userId=1&projectId=${projectId}`, {
+      await fetch(`/api/project-discussions/messages/${messageId}`, {
         method: 'DELETE',
       });
       setMessages(prev => prev.filter(m => m.id !== messageId));
@@ -203,8 +202,6 @@ function ProjectDiscussionsContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: isPinned ? 'unpin' : 'pin',
-          userId: 1,
-          projectId: parseInt(projectId || '0'),
         }),
       });
       setMessages(prev =>

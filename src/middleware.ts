@@ -11,6 +11,22 @@ const cozeProjectDomainDefaultRaw = env?.COZE_PROJECT_DOMAIN_DEFAULT;
 const nodeEnv = env?.NODE_ENV;
 const PUBLIC_PAGE_PATHS = new Set(['/login']);
 
+function isTokenPayloadNotExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payloadBase64 + '='.repeat((4 - (payloadBase64.length % 4)) % 4);
+    const payloadText = atob(padded);
+    const payload = JSON.parse(payloadText) as { exp?: number };
+    if (!payload.exp) return false;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return payload.exp > nowInSeconds;
+  } catch {
+    return false;
+  }
+}
+
 function normalizeEnvUrlLike(value?: string) {
   const v = value?.trim().replace(/^[`'"]+|[`'"]+$/g, '');
   return v ? v.replace(/\/+$/, '') : undefined;
@@ -91,18 +107,22 @@ export function middleware(request: NextRequest) {
 
     // 页面路由登录守卫：未登录访问业务页面时跳转到登录页
     if (!isApiRoute) {
-      const accessToken = request.cookies.get('accessToken')?.value;
+      const accessToken = request.cookies.get('accessToken')?.value || null;
+      const hasValidAccessToken = accessToken ? isTokenPayloadNotExpired(accessToken) : false;
       const isPublicPage = PUBLIC_PAGE_PATHS.has(pathname);
 
-      if (!accessToken && !isPublicPage) {
+      if (!hasValidAccessToken && !isPublicPage) {
         const loginUrl = request.nextUrl.clone();
         loginUrl.pathname = '/login';
         const nextPath = `${pathname}${request.nextUrl.search || ''}`;
         loginUrl.searchParams.set('next', nextPath);
-        return NextResponse.redirect(loginUrl);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete('accessToken');
+        response.cookies.delete('refreshToken');
+        return response;
       }
 
-      if (accessToken && pathname === '/login') {
+      if (hasValidAccessToken && pathname === '/login') {
         const homeUrl = request.nextUrl.clone();
         homeUrl.pathname = '/';
         homeUrl.search = '';
@@ -179,5 +199,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|json|webmanifest)$).*)',
+  ],
 };

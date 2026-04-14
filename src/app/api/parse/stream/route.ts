@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth as _withAuth } from '@/lib/auth/middleware';
+import { withAuth } from '@/lib/auth/middleware';
 import { HeaderUtils } from 'coze-coding-dev-sdk';
 import { comprehensiveParse } from '@/lib/parse/extractors';
 import { db } from '@/db';
@@ -198,13 +198,5 @@ async function saveSection(
 }
 
 export async function POST(request: NextRequest) {
-  // 流式API需要直接处理，不能使用withAuth中间件
-  // TODO: 在函数内部进行认证检查
-  try {
-    const userId = 1; // 临时处理，实际需要从session获取
-    return await streamParse(request, userId);
-  } catch (error) {
-    console.error('Stream parse error:', error);
-    return NextResponse.json({ error: '流式解析失败' }, { status: 500 });
-  }
+  return withAuth(request, async (req, userId) => streamParse(req, userId));
 }
