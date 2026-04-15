@@ -5,13 +5,21 @@ import { parseResourceId } from '@/lib/api/validators';
 import { executeInterpretation } from '@/lib/interpretation/service';
 import { db } from '@/db';
 import { bidInterpretationLogs } from '@/db/schema';
-import { resolveInterpretationByProjectAndVersion } from '@/app/api/tender-center/_utils';
+import {
+  resolveInterpretationByProjectAndVersion,
+  toBatchId,
+} from '@/app/api/tender-center/_utils';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
   lookupIdempotentResponse,
   recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  buildTenderTraceContext,
+  getOrCreateTraceId,
+  logTenderTraceEvent,
+} from '@/app/api/tender-center/_trace';
 
 const IDEM_OPERATION_TYPE = 'idem_parse';
 
@@ -37,6 +45,10 @@ export async function POST(
     if (interpretation.status === 'parsing') {
       return NextResponse.json({ error: '正在解析中，请勿重复操作' }, { status: 400 });
     }
+
+    const traceId = getOrCreateTraceId(req.headers);
+    const batchId = toBatchId(interpretation.id);
+    const taskId = `parse-${interpretation.id}`;
 
     const idempotencyKey = extractIdempotencyKey(req.headers);
     const requestDigest = idempotencyKey
@@ -69,6 +81,9 @@ export async function POST(
         return NextResponse.json({
           ...lookup.response,
           idempotentReplay: true,
+          traceId,
+          batchId,
+          taskId,
           message: '幂等命中，返回首次解析触发结果',
         });
       }
@@ -87,12 +102,30 @@ export async function POST(
       operatorName: 'system',
     });
 
+    await logTenderTraceEvent({
+      interpretationId: interpretation.id,
+      userId,
+      trace: buildTenderTraceContext({
+        interpretationId: interpretation.id,
+        traceId,
+        taskId,
+        event: 'parse_triggered',
+      }),
+      detail: {
+        projectId: pid,
+        versionId,
+      },
+    });
+
     const responsePayload = {
       success: true,
       data: {
         projectId: pid,
         versionId,
         interpretationId: interpretation.id,
+        traceId,
+        batchId,
+        taskId,
       },
       message: '解析任务已启动',
     };

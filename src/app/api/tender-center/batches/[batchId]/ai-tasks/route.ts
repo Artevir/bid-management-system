@@ -29,13 +29,25 @@ export async function GET(
       .limit(50);
 
     const batchStatus = toTenderBatchStatus(interpretation.status);
-    const tasks = logs.map((log) => ({
-      taskId: `task-${log.id}`,
-      taskType: log.operationType,
-      status: batchStatus,
-      content: log.operationContent,
-      executedAt: log.operationTime,
-    }));
+    const tasks = logs.map((log) => {
+      let parsed: Record<string, unknown> | null = null;
+      try {
+        parsed = log.operationContent
+          ? (JSON.parse(log.operationContent) as Record<string, unknown>)
+          : null;
+      } catch {
+        parsed = null;
+      }
+      return {
+        taskId: typeof parsed?.taskId === 'string' ? parsed.taskId : `task-${log.id}`,
+        taskType: log.operationType,
+        status: batchStatus,
+        batchId: typeof parsed?.batchId === 'string' ? parsed.batchId : batchId,
+        traceId: typeof parsed?.traceId === 'string' ? parsed.traceId : null,
+        content: parsed ?? log.operationContent,
+        executedAt: log.operationTime,
+      };
+    });
 
     return NextResponse.json({
       success: true,

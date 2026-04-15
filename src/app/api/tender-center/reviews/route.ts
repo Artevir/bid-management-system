@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { bidInterpretationLogs, bidDocumentInterpretations } from '@/db/schema';
 import {
   resolveInterpretationByProjectAndVersion,
+  toBatchId,
   toReviewTaskId,
 } from '@/app/api/tender-center/_utils';
 import { eq } from 'drizzle-orm';
@@ -14,6 +15,11 @@ import {
   lookupIdempotentResponse,
   recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  buildTenderTraceContext,
+  getOrCreateTraceId,
+  logTenderTraceEvent,
+} from '@/app/api/tender-center/_trace';
 
 const IDEM_OPERATION_TYPE = 'idem_review_create';
 
@@ -32,6 +38,8 @@ export async function POST(request: NextRequest) {
       if (!interpretation) {
         return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
       }
+      const traceId = getOrCreateTraceId(req.headers);
+      const batchId = toBatchId(interpretation.id);
 
       const idempotencyKey = extractIdempotencyKey(req.headers);
       const requestDigest = idempotencyKey
@@ -66,6 +74,8 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({
             ...lookup.response,
             idempotentReplay: true,
+            traceId,
+            batchId,
             message: '幂等命中，返回首次创建的复核任务',
           });
         }
@@ -94,9 +104,24 @@ export async function POST(request: NextRequest) {
         operatorName: 'system',
       });
 
+      await logTenderTraceEvent({
+        interpretationId: interpretation.id,
+        userId,
+        trace: buildTenderTraceContext({
+          interpretationId: interpretation.id,
+          traceId,
+          taskId: reviewTaskId,
+          event: 'review_created',
+        }),
+        detail: {
+          projectId,
+          versionId,
+        },
+      });
+
       const responsePayload = {
         success: true,
-        data: { reviewTaskId, interpretationId: interpretation.id },
+        data: { reviewTaskId, interpretationId: interpretation.id, traceId, batchId },
         message: '复核任务已创建',
       };
 

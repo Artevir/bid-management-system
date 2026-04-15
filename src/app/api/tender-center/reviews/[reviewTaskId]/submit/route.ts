@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { bidDocumentInterpretations, bidInterpretationLogs } from '@/db/schema';
-import { parseReviewTaskId } from '@/app/api/tender-center/_utils';
+import { parseReviewTaskId, toBatchId } from '@/app/api/tender-center/_utils';
 import { tenderCenterError } from '@/app/api/tender-center/_response';
 import {
   buildIdempotencyDigest,
@@ -11,6 +11,11 @@ import {
   lookupIdempotentResponse,
   recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  buildTenderTraceContext,
+  getOrCreateTraceId,
+  logTenderTraceEvent,
+} from '@/app/api/tender-center/_trace';
 
 const IDEM_OPERATION_TYPE = 'idem_review_submit';
 
@@ -30,6 +35,8 @@ export async function POST(
       const body = await req.json();
       const decision = String(body.decision || 'approved').toLowerCase();
       const reviewStatus = decision === 'rejected' ? 'rejected' : 'approved';
+      const traceId = getOrCreateTraceId(req.headers);
+      const batchId = toBatchId(interpretationId);
       const idempotencyKey = extractIdempotencyKey(req.headers);
       const requestDigest = idempotencyKey
         ? buildIdempotencyDigest({
@@ -63,6 +70,8 @@ export async function POST(
           return NextResponse.json({
             ...lookup.response,
             idempotentReplay: true,
+            traceId,
+            batchId,
             message: '幂等命中，返回首次提交结果',
           });
         }
@@ -92,9 +101,23 @@ export async function POST(
         operatorName: 'system',
       });
 
+      await logTenderTraceEvent({
+        interpretationId,
+        userId,
+        trace: buildTenderTraceContext({
+          interpretationId,
+          traceId,
+          taskId: reviewTaskId,
+          event: 'review_submitted',
+        }),
+        detail: {
+          decision: reviewStatus,
+        },
+      });
+
       const responsePayload = {
         success: true,
-        data: { reviewTaskId, interpretationId, decision: reviewStatus },
+        data: { reviewTaskId, interpretationId, decision: reviewStatus, traceId, batchId },
         message: '复核结果已提交',
       };
 

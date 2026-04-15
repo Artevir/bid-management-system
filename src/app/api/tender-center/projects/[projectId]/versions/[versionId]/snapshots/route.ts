@@ -4,13 +4,21 @@ import { withAuth } from '@/lib/auth/middleware';
 import { parseResourceId } from '@/lib/api/validators';
 import { db } from '@/db';
 import { bidDocumentInterpretations, bidInterpretationLogs } from '@/db/schema';
-import { resolveInterpretationByProjectAndVersion } from '@/app/api/tender-center/_utils';
+import {
+  resolveInterpretationByProjectAndVersion,
+  toBatchId,
+} from '@/app/api/tender-center/_utils';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
   lookupIdempotentResponse,
   recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  buildTenderTraceContext,
+  getOrCreateTraceId,
+  logTenderTraceEvent,
+} from '@/app/api/tender-center/_trace';
 
 const IDEM_OPERATION_TYPE = 'idem_snapshot_create';
 
@@ -85,6 +93,8 @@ export async function POST(
     }
 
     const body = await req.json().catch(() => ({}));
+    const traceId = getOrCreateTraceId(req.headers);
+    const batchId = toBatchId(interpretation.id);
     const idempotencyKey = extractIdempotencyKey(req.headers);
     const requestDigest = idempotencyKey
       ? buildIdempotencyDigest({
@@ -131,6 +141,8 @@ export async function POST(
         return NextResponse.json({
           ...lookup.response,
           idempotentReplay: true,
+          traceId,
+          batchId,
           message: '幂等命中，返回首次创建快照',
         });
       }
@@ -160,6 +172,21 @@ export async function POST(
       operatorName: 'system',
     });
 
+    await logTenderTraceEvent({
+      interpretationId: interpretation.id,
+      userId,
+      trace: buildTenderTraceContext({
+        interpretationId: interpretation.id,
+        traceId,
+        taskId: snapshotId,
+        event: 'snapshot_created',
+      }),
+      detail: {
+        projectId: pid,
+        versionId,
+      },
+    });
+
     await db
       .update(bidDocumentInterpretations)
       .set({ updatedAt: new Date() })
@@ -167,7 +194,11 @@ export async function POST(
 
     const responsePayload = {
       success: true,
-      data: payload,
+      data: {
+        ...payload,
+        traceId,
+        batchId,
+      },
       message: '快照已创建',
     };
 
