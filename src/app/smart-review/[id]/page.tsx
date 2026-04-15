@@ -1,22 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ArrowLeft, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  ArrowLeft,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Clock,
   AlertTriangle,
   RefreshCw,
   Play,
   Download,
-  Eye
+  Eye,
 } from 'lucide-react';
 
 interface SmartReviewDocument {
@@ -73,19 +74,17 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
   const router = useRouter();
   const [document, setDocument] = useState<SmartReviewDocument | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [parsing, setParsing] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [documentId, setDocumentId] = useState<string>('');
 
-  useEffect(() => {
-    params.then(p => {
-      setDocumentId(p.id);
-      fetchDocument(p.id);
-    });
-  }, [params]);
-
-  const fetchDocument = async (id: string) => {
-    setLoading(true);
+  const fetchDocument = useCallback(async (id: string, options?: { silent?: boolean }) => {
+    const silent = options?.silent === true;
+    if (!silent) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const res = await fetch(`/api/smart-review/${id}`);
       const data = await res.json();
@@ -94,10 +93,36 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
       }
     } catch (error) {
       console.error('Fetch document error:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    params.then((p) => {
+      setDocumentId(p.id);
+      fetchDocument(p.id);
+    });
+  }, [params, fetchDocument]);
+
+  useEffect(() => {
+    if (!documentId || !document) {
+      return;
+    }
+    const runningStatuses = ['uploading', 'parsing', 'reviewing'];
+    const isRunning =
+      runningStatuses.includes(document.status) || document.reviewStatus === 'in_progress';
+    if (!isRunning) {
+      return;
+    }
+    const interval = setInterval(() => {
+      void fetchDocument(documentId, { silent: true });
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [document, documentId, fetchDocument]);
 
   const handleParse = async () => {
     if (!document) return;
@@ -112,6 +137,7 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
       }
     } catch (error) {
       console.error('Parse error:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setParsing(false);
     }
@@ -123,6 +149,10 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -320,7 +350,9 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
                         <Badge variant="outline">{spec.category || '技术规格'}</Badge>
                         <span className="font-medium">{spec.name || spec.specName}</span>
                       </div>
-                      <p className="text-sm text-gray-600">{spec.requirement || spec.specRequirement}</p>
+                      <p className="text-sm text-gray-600">
+                        {spec.requirement || spec.specRequirement}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -385,7 +417,10 @@ export default function SmartReviewDetailPage({ params }: { params: Promise<{ id
             <Eye className="h-4 w-4 mr-2" />
             查看响应矩阵
           </Button>
-          <Button variant="outline" onClick={() => router.push(`/smart-review/${document.id}/review`)}>
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/smart-review/${document.id}/review`)}
+          >
             <CheckCircle className="h-4 w-4 mr-2" />
             提交审核
           </Button>

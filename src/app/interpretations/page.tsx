@@ -5,9 +5,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tabs as _Tabs,
+  TabsContent as _TabsContent,
+  TabsList as _TabsList,
+  TabsTrigger as _TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -23,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TableListStateRow } from '@/components/ui/list-states';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,8 +110,18 @@ const reviewStatusConfig = {
 export default function InterpretationsPage() {
   const _router = useRouter();
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, parsing: 0, completed: 0, failed: 0, reviewPending: 0, reviewApproved: 0, reviewRejected: 0 });
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    pending: 0,
+    parsing: 0,
+    completed: 0,
+    failed: 0,
+    reviewPending: 0,
+    reviewApproved: 0,
+    reviewRejected: 0,
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [reviewStatusFilter, setReviewStatusFilter] = useState<string>('all');
@@ -111,36 +132,62 @@ export default function InterpretationsPage() {
     id: null,
   });
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (keyword) params.append('keyword', keyword);
-      if (status !== 'all') params.append('status', status);
-      if (reviewStatusFilter !== 'all') {
-        params.append('reviewStatus', reviewStatusFilter === 'none' ? 'none' : reviewStatusFilter);
-      }
-      params.append('page', page.toString());
-      params.append('pageSize', '10');
+  const fetchData = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent === true;
+      try {
+        if (!silent) {
+          setLoading(true);
+          setError('');
+        }
+        const params = new URLSearchParams();
+        if (keyword) params.append('keyword', keyword);
+        if (status !== 'all') params.append('status', status);
+        if (reviewStatusFilter !== 'all') {
+          params.append(
+            'reviewStatus',
+            reviewStatusFilter === 'none' ? 'none' : reviewStatusFilter
+          );
+        }
+        params.append('page', page.toString());
+        params.append('pageSize', '10');
 
-      const response = await fetch(`/api/interpretations?${params.toString()}`);
-      const result = await response.json();
+        const response = await fetch(`/api/interpretations?${params.toString()}`);
+        const result = await response.json();
 
-      if (result.success) {
-        setInterpretations(result.data.list);
-        setTotalPages(result.data.totalPages);
-        setStats(result.stats);
+        if (result.success) {
+          setInterpretations(result.data.list);
+          setTotalPages(result.data.totalPages);
+          setStats(result.stats);
+        } else {
+          setError(result.message || '获取解读列表失败');
+        }
+      } catch (error) {
+        console.error('获取数据失败:', error);
+        setError(error instanceof Error ? error.message : '获取解读列表失败');
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('获取数据失败:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [keyword, status, reviewStatusFilter, page]);
+    },
+    [keyword, status, reviewStatusFilter, page]
+  );
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const hasRunningBatch = interpretations.some((item) => item.status === 'parsing');
+    if (!hasRunningBatch) {
+      return;
+    }
+    const interval = setInterval(() => {
+      void fetchData({ silent: true });
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [interpretations, fetchData]);
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
@@ -169,31 +216,11 @@ export default function InterpretationsPage() {
 
       const result = await response.json();
       if (result.success) {
-        // 开始轮询状态
-        pollStatus(id);
+        void fetchData({ silent: true });
       }
     } catch (error) {
       console.error('启动解析失败:', error);
     }
-  };
-
-  const pollStatus = async (id: number) => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/interpretations/${id}`);
-        const result = await response.json();
-
-        if (result.success && result.data.status !== 'parsing') {
-          clearInterval(interval);
-          fetchData();
-        }
-      } catch (_error) {
-        clearInterval(interval);
-      }
-    }, 2000);
-
-    // 30秒后停止轮询
-    setTimeout(() => clearInterval(interval), 30000);
   };
 
   const formatDate = (dateStr: string) => {
@@ -206,7 +233,17 @@ export default function InterpretationsPage() {
     });
   };
 
-  const StatCard = ({ title, value, icon: Icon, color }: { title: string; value: number; icon: React.ElementType; color: string }) => (
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
+    color,
+  }: {
+    title: string;
+    value: number;
+    icon: React.ElementType;
+    color: string;
+  }) => (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
@@ -245,8 +282,18 @@ export default function InterpretationsPage() {
         <StatCard title="解析中" value={stats.parsing} icon={Loader2} color="bg-blue-100" />
         <StatCard title="已完成" value={stats.completed} icon={CheckCircle} color="bg-green-100" />
         <StatCard title="失败" value={stats.failed} icon={AlertCircle} color="bg-red-100" />
-        <StatCard title="待审核" value={stats.reviewPending || 0} icon={Clock} color="bg-yellow-100" />
-        <StatCard title="已审核" value={(stats.reviewApproved || 0) + (stats.reviewRejected || 0)} icon={CheckCircle} color="bg-purple-100" />
+        <StatCard
+          title="待审核"
+          value={stats.reviewPending || 0}
+          icon={Clock}
+          color="bg-yellow-100"
+        />
+        <StatCard
+          title="已审核"
+          value={(stats.reviewApproved || 0) + (stats.reviewRejected || 0)}
+          icon={CheckCircle}
+          color="bg-purple-100"
+        />
       </div>
 
       {/* 搜索和筛选 */}
@@ -265,7 +312,13 @@ export default function InterpretationsPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
+            <Select
+              value={status}
+              onValueChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="解析状态" />
               </SelectTrigger>
@@ -277,7 +330,13 @@ export default function InterpretationsPage() {
                 <SelectItem value="failed">解析失败</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={reviewStatusFilter} onValueChange={(v) => { setReviewStatusFilter(v); setPage(1); }}>
+            <Select
+              value={reviewStatusFilter}
+              onValueChange={(v) => {
+                setReviewStatusFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="审核状态" />
               </SelectTrigger>
@@ -309,17 +368,11 @@ export default function InterpretationsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                  </TableCell>
-                </TableRow>
+                <TableListStateRow state="loading" colSpan={7} />
+              ) : error ? (
+                <TableListStateRow state="error" colSpan={7} error={error} onRetry={fetchData} />
               ) : interpretations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    暂无数据
-                  </TableCell>
-                </TableRow>
+                <TableListStateRow state="empty" colSpan={7} />
               ) : (
                 interpretations.map((item) => {
                   const statusInfo = statusConfig[item.status];
@@ -342,7 +395,9 @@ export default function InterpretationsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={statusInfo.color}>
-                            <StatusIcon className={`w-3 h-3 mr-1 ${item.status === 'parsing' ? 'animate-spin' : ''}`} />
+                            <StatusIcon
+                              className={`w-3 h-3 mr-1 ${item.status === 'parsing' ? 'animate-spin' : ''}`}
+                            />
                             {statusInfo.label}
                           </Badge>
                           {item.status === 'completed' && item.reviewStatus && (
@@ -396,31 +451,46 @@ export default function InterpretationsPage() {
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/api/interpretations/${item.id}/export?format=json`} target="_blank">
+                                  <Link
+                                    href={`/api/interpretations/${item.id}/export?format=json`}
+                                    target="_blank"
+                                  >
                                     <FileJson className="w-4 h-4 mr-2" />
                                     导出 JSON
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/api/interpretations/${item.id}/export?format=excel`} target="_blank">
+                                  <Link
+                                    href={`/api/interpretations/${item.id}/export?format=excel`}
+                                    target="_blank"
+                                  >
                                     <FileSpreadsheet className="w-4 h-4 mr-2" />
                                     导出 Excel
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/api/interpretations/${item.id}/export?format=word`} target="_blank">
+                                  <Link
+                                    href={`/api/interpretations/${item.id}/export?format=word`}
+                                    target="_blank"
+                                  >
                                     <FileWord className="w-4 h-4 mr-2" />
                                     导出 Word
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/api/interpretations/${item.id}/export?format=txt`} target="_blank">
+                                  <Link
+                                    href={`/api/interpretations/${item.id}/export?format=txt`}
+                                    target="_blank"
+                                  >
                                     <FileText className="w-4 h-4 mr-2" />
                                     导出 TXT
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/api/interpretations/${item.id}/export?format=pdf`} target="_blank">
+                                  <Link
+                                    href={`/api/interpretations/${item.id}/export?format=pdf`}
+                                    target="_blank"
+                                  >
                                     <FileText className="w-4 h-4 mr-2" />
                                     导出 PDF
                                   </Link>
@@ -477,9 +547,7 @@ export default function InterpretationsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              确定要删除这条解读记录吗？此操作不可恢复。
-            </DialogDescription>
+            <DialogDescription>确定要删除这条解读记录吗？此操作不可恢复。</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialog({ open: false, id: null })}>

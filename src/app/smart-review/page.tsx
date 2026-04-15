@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,7 @@ export default function SmartReviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
+  const keywordRef = useRef(keyword);
   const [statusFilter, setStatusFilter] = useState('all');
   const [reviewStatusFilter, setReviewStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
@@ -84,49 +85,78 @@ export default function SmartReviewPage() {
     approvedCount: 0,
   });
 
-  const fetchDocuments = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        pageSize: '20',
-        keyword,
-        status: statusFilter,
-        reviewStatus: reviewStatusFilter,
-      });
+  useEffect(() => {
+    keywordRef.current = keyword;
+  }, [keyword]);
 
-      const res = await fetch(`/api/smart-review?${params}`);
-      const data = await res.json();
-
-      if (data.documents) {
-        setDocuments(data.documents);
-        setTotalPages(data.totalPages);
-        setTotal(data.total);
+  const fetchDocuments = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent === true;
+      if (!silent) {
+        setLoading(true);
+        setError('');
       }
-      if (data.stats) {
-        setStats({
-          total: data.stats.total ?? 0,
-          pendingReviewCount: data.stats.pendingReviewCount ?? 0,
-          parsedCount: data.stats.parsedCount ?? 0,
-          approvedCount: data.stats.approvedCount ?? 0,
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          pageSize: '20',
+          keyword: keywordRef.current,
+          status: statusFilter,
+          reviewStatus: reviewStatusFilter,
         });
+
+        const res = await fetch(`/api/smart-review?${params}`);
+        const data = await res.json();
+
+        if (data.documents) {
+          setDocuments(data.documents);
+          setTotalPages(data.totalPages);
+          setTotal(data.total);
+        }
+        if (data.stats) {
+          setStats({
+            total: data.stats.total ?? 0,
+            pendingReviewCount: data.stats.pendingReviewCount ?? 0,
+            parsedCount: data.stats.parsedCount ?? 0,
+            approvedCount: data.stats.approvedCount ?? 0,
+          });
+        }
+      } catch (error) {
+        console.error('Fetch documents error:', error);
+        setError(error instanceof Error ? error.message : '加载文档列表失败');
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Fetch documents error:', error);
-      setError(error instanceof Error ? error.message : '加载文档列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [page, reviewStatusFilter, statusFilter]
+  );
 
   useEffect(() => {
     fetchDocuments();
-  }, [page, statusFilter, reviewStatusFilter]);
+  }, [fetchDocuments]);
+
+  useEffect(() => {
+    const hasRunningBatch = documents.some(
+      (doc) =>
+        doc.status === 'uploading' ||
+        doc.status === 'parsing' ||
+        doc.status === 'reviewing' ||
+        doc.reviewStatus === 'in_progress'
+    );
+    if (!hasRunningBatch) {
+      return;
+    }
+    const interval = setInterval(() => {
+      void fetchDocuments({ silent: true });
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [documents, fetchDocuments]);
 
   const handleSearch = () => {
     setPage(1);
-    fetchDocuments();
+    void fetchDocuments();
   };
 
   const getStatusIcon = (status: string) => {
