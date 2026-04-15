@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { smartReviewDocuments } from '@/db/smart-review-schema';
-import { eq } from 'drizzle-orm';
+import {
+  smartReviewDocuments,
+  smartResponseItems,
+  smartResponseMatrix,
+} from '@/db/smart-review-schema';
+import { and, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { getLLM } from '@/lib/llm';
+import { deriveSegmentsAndRequirements } from '@/lib/smart-review/assets';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
@@ -17,7 +19,7 @@ export async function POST(
 
     const { id } = await params;
     const documentId = parseInt(id);
-    
+
     if (isNaN(documentId)) {
       return NextResponse.json({ error: '无效的文档ID' }, { status: 400 });
     }
@@ -51,7 +53,7 @@ export async function POST(
     try {
       // 调用AI进行文档解析
       const llm = getLLM();
-      
+
       const systemPrompt = `你是一个专业的招标文件分析专家。你的任务是从招标文件中提取结构化信息。
 
 请从以下招标文件中提取关键信息，并以JSON格式返回：
@@ -151,6 +153,68 @@ export async function POST(
         })
         .where(eq(smartReviewDocuments.id, documentId))
         .returning();
+
+      const { requirements } = deriveSegmentsAndRequirements(updated);
+      if (requirements.length > 0) {
+        const [existingMatrix] = await db
+          .select()
+          .from(smartResponseMatrix)
+          .where(
+            and(
+              eq(smartResponseMatrix.documentId, documentId),
+              eq(smartResponseMatrix.matrixName, '要求资产主链路')
+            )
+          )
+          .limit(1);
+
+        const matrix =
+          existingMatrix ??
+          (
+            await db
+              .insert(smartResponseMatrix)
+              .values({
+                documentId,
+                matrixName: '要求资产主链路',
+                totalItems: 0,
+                respondedItems: 0,
+                matchRate: 0,
+                status: 'completed',
+                generatedBy: currentUser.username,
+                generatedAt: new Date(),
+              })
+              .returning()
+          )[0];
+
+        await db.delete(smartResponseItems).where(eq(smartResponseItems.matrixId, matrix.id));
+        await db.insert(smartResponseItems).values(
+          requirements.map((item) => ({
+            matrixId: matrix.id,
+            documentId,
+            requirementCategory: item.category,
+            requirementItem: item.item,
+            requirementSource: `${item.source}|segment:${item.segmentId}`,
+            responseSource: JSON.stringify({
+              segmentId: item.segmentId,
+              source: item.source,
+              confidence: item.confidence,
+              isMandatory: item.isMandatory,
+            }),
+            responseContent: item.detail,
+            confidence: item.confidence,
+            status: 'pending',
+          }))
+        );
+        await db
+          .update(smartResponseMatrix)
+          .set({
+            totalItems: requirements.length,
+            respondedItems: 0,
+            matchRate: 0,
+            status: 'completed',
+            updatedAt: new Date(),
+          })
+          .where(eq(smartResponseMatrix.id, matrix.id));
+      }
 
       return NextResponse.json({
         message: '文档解析成功',

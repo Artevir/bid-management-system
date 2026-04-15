@@ -27,6 +27,7 @@ import {
   AlertCircle,
   XCircle,
   ShieldAlert,
+  FileStack,
 } from 'lucide-react';
 
 interface SmartReviewDocument {
@@ -182,6 +183,12 @@ export default function SmartReviewPage() {
           <p className="text-gray-500">智能解析招标文件，自动提取关键信息</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/smart-review/assets">
+            <Button variant="outline">
+              <FileStack className="h-4 w-4 mr-2" />
+              资产主链路台
+            </Button>
+          </Link>
           <Link href="/smart-review/governance">
             <Button variant="outline">
               <ShieldAlert className="h-4 w-4 mr-2" />

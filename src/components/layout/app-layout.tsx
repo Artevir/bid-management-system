@@ -167,6 +167,7 @@ const navigation: NavItem[] = [
       { name: '上传文件', href: '/smart-review/upload', icon: Upload },
       { name: '审核工作台', href: '/smart-review/reviews', icon: ClipboardCheck },
       { name: '响应矩阵', href: '/smart-review/matrix', icon: List },
+      { name: '资产主链路台', href: '/smart-review/assets', icon: FileStack },
       { name: '风险与冲突处置台', href: '/smart-review/governance', icon: ShieldAlert },
     ],
   },
