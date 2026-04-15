@@ -54,6 +54,8 @@
     "docs:v3-w8-seed-dictionary:check": "python scripts/check-v3-w8-seed-dictionary.py --check",
     "docs:v3-w8-sample-projects:update": "python scripts/check-v3-w8-sample-projects.py --write",
     "docs:v3-w8-sample-projects:check": "python scripts/check-v3-w8-sample-projects.py --check",
+    "docs:v3-w9-integration-checklist:update": "python scripts/check-v3-w9-integration-checklist.py --write",
+    "docs:v3-w9-integration-checklist:check": "python scripts/check-v3-w9-integration-checklist.py --check",
     "docs:v5-list-states-guard:update": "python scripts/check-list-states-guard.py --write-baseline",
     "docs:v5-list-states-guard:check": "python scripts/check-list-states-guard.py",
     "prepare": "husky"
