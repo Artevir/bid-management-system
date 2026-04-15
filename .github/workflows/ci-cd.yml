@@ -52,6 +52,12 @@ jobs:
       - name: W4-002 DTO/Zod 漂移校验（CI 阻断）
         run: pnpm run docs:v4-dto-zod:check
 
+      - name: W8-001 seed 字典与 030 键值对校验（CI 阻断）
+        run: pnpm run docs:v3-w8-seed-dictionary:check
+
+      - name: W5-003 列表页三态组件门禁（CI 阻断）
+        run: pnpm run docs:v5-list-states-guard:check
+
   # ============================================
   # 单元测试
   # ============================================

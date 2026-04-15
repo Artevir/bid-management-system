@@ -50,6 +50,10 @@
     "docs:v3-w2-field-contract:check": "python scripts/validate-v3-w2-field-contract.py --check",
     "docs:v4-dto-zod:update": "python scripts/generate-tender-center-dto-zod.py --write",
     "docs:v4-dto-zod:check": "python scripts/generate-tender-center-dto-zod.py --check",
+    "docs:v3-w8-seed-dictionary:update": "python scripts/check-v3-w8-seed-dictionary.py --write",
+    "docs:v3-w8-seed-dictionary:check": "python scripts/check-v3-w8-seed-dictionary.py --check",
+    "docs:v5-list-states-guard:update": "python scripts/check-list-states-guard.py --write-baseline",
+    "docs:v5-list-states-guard:check": "python scripts/check-list-states-guard.py",
     "prepare": "husky"
   },
   "dependencies": {
