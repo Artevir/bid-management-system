@@ -1,0 +1,1263 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-15T10:15Z",
+  "source": "040 + src/app/api/tender-center/**/route.ts",
+  "contracts": [
+    {
+      "method": "GET",
+      "path": "/api/tender-center/batches/[batchId]",
+      "routeFile": "src/app/api/tender-center/batches/[batchId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "batchId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/batches/[batchId]/ai-tasks",
+      "routeFile": "src/app/api/tender-center/batches/[batchId]/ai-tasks/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "batchId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/batches/[batchId]/confidence",
+      "routeFile": "src/app/api/tender-center/batches/[batchId]/confidence/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "batchId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/batches/[batchId]/rule-hits",
+      "routeFile": "src/app/api/tender-center/batches/[batchId]/rule-hits/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "batchId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/change-logs",
+      "routeFile": "src/app/api/tender-center/change-logs/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {},
+        "query": {
+          "pageNo": {
+            "type": "number",
+            "required": false
+          },
+          "pageSize": {
+            "type": "number",
+            "required": false
+          }
+        },
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/clarifications/[clarificationId]/confirm",
+      "routeFile": "src/app/api/tender-center/clarifications/[clarificationId]/confirm/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "clarificationId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "comment": {
+            "type": "string",
+            "required": false
+          },
+          "note": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/conflicts/[conflictId]",
+      "routeFile": "src/app/api/tender-center/conflicts/[conflictId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "conflictId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/conflicts/[conflictId]/resolve",
+      "routeFile": "src/app/api/tender-center/conflicts/[conflictId]/resolve/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "conflictId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "note": {
+            "type": "string",
+            "required": false
+          },
+          "resolution": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/framework/[nodeId]",
+      "routeFile": "src/app/api/tender-center/framework/[nodeId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "nodeId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects",
+      "routeFile": "src/app/api/tender-center/projects/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {},
+        "query": {
+          "keyword": {
+            "type": "string",
+            "required": false
+          },
+          "sortBy": {
+            "type": "string",
+            "required": false
+          },
+          "sortOrder": {
+            "type": "string",
+            "required": false
+          },
+          "status": {
+            "type": "array<string>",
+            "required": false
+          }
+        },
+        "body": {
+          "budget": {
+            "type": "string",
+            "required": false
+          },
+          "code": {
+            "type": "string",
+            "required": true
+          },
+          "departmentId": {
+            "type": "string",
+            "required": true
+          },
+          "description": {
+            "type": "string",
+            "required": false
+          },
+          "industry": {
+            "type": "string",
+            "required": false
+          },
+          "name": {
+            "type": "string",
+            "required": true
+          },
+          "openBidDate": {
+            "type": "date",
+            "required": false
+          },
+          "ownerId": {
+            "type": "string",
+            "required": true
+          },
+          "publishDate": {
+            "type": "date",
+            "required": false
+          },
+          "questionDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "region": {
+            "type": "string",
+            "required": false
+          },
+          "registerDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "submissionDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "tags": {
+            "type": "string",
+            "required": false
+          },
+          "tenderAgent": {
+            "type": "string",
+            "required": false
+          },
+          "tenderCode": {
+            "type": "string",
+            "required": false
+          },
+          "tenderMethod": {
+            "type": "string",
+            "required": false
+          },
+          "tenderOrganization": {
+            "type": "string",
+            "required": false
+          },
+          "type": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/projects",
+      "routeFile": "src/app/api/tender-center/projects/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {},
+        "query": {
+          "keyword": {
+            "type": "string",
+            "required": false
+          },
+          "sortBy": {
+            "type": "string",
+            "required": false
+          },
+          "sortOrder": {
+            "type": "string",
+            "required": false
+          },
+          "status": {
+            "type": "array<string>",
+            "required": false
+          }
+        },
+        "body": {
+          "budget": {
+            "type": "string",
+            "required": false
+          },
+          "code": {
+            "type": "string",
+            "required": true
+          },
+          "departmentId": {
+            "type": "string",
+            "required": true
+          },
+          "description": {
+            "type": "string",
+            "required": false
+          },
+          "industry": {
+            "type": "string",
+            "required": false
+          },
+          "name": {
+            "type": "string",
+            "required": true
+          },
+          "openBidDate": {
+            "type": "date",
+            "required": false
+          },
+          "ownerId": {
+            "type": "string",
+            "required": true
+          },
+          "publishDate": {
+            "type": "date",
+            "required": false
+          },
+          "questionDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "region": {
+            "type": "string",
+            "required": false
+          },
+          "registerDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "submissionDeadline": {
+            "type": "date",
+            "required": false
+          },
+          "tags": {
+            "type": "string",
+            "required": false
+          },
+          "tenderAgent": {
+            "type": "string",
+            "required": false
+          },
+          "tenderCode": {
+            "type": "string",
+            "required": false
+          },
+          "tenderMethod": {
+            "type": "string",
+            "required": false
+          },
+          "tenderOrganization": {
+            "type": "string",
+            "required": false
+          },
+          "type": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/projects/[projectId]/upload",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/upload/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "documentExt": {
+            "type": "string",
+            "required": false
+          },
+          "documentMd5": {
+            "type": "string",
+            "required": false
+          },
+          "documentName": {
+            "type": "string",
+            "required": false
+          },
+          "documentPageCount": {
+            "type": "string",
+            "required": false
+          },
+          "documentSize": {
+            "type": "string",
+            "required": false
+          },
+          "documentUrl": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/batches",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/batches/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/clarifications",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/clarifications/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/conflicts",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/conflicts/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/export",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/export/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/framework",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/framework/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/material-view",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/material-view/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/materials",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/materials/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/money-terms",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/money-terms/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/overview",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/overview/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/pages",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/pages/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/parse",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/parse/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/requirements",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/requirements/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/response-tasks",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/response-tasks/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/reviews",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/reviews/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/risk-view",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/risk-view/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/risks",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/risks/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/scoring-items",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/scoring-items/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/scoring-schemes",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/scoring-schemes/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/sections",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/sections/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/segments",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/segments/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/snapshots",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/snapshots/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "name": {
+            "type": "string",
+            "required": false
+          },
+          "note": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/snapshots",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/snapshots/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "name": {
+            "type": "string",
+            "required": false
+          },
+          "note": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/submission-requirements",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/submission-requirements/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/technical-groups",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/technical-groups/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/technical-items",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/technical-items/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/template-view",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/template-view/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/templates",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/templates/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/projects/[projectId]/versions/[versionId]/time-nodes",
+      "routeFile": "src/app/api/tender-center/projects/[projectId]/versions/[versionId]/time-nodes/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "projectId": {
+            "type": "string",
+            "required": true
+          },
+          "versionId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/requirements/[requirementId]",
+      "routeFile": "src/app/api/tender-center/requirements/[requirementId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "requirementId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/reviews",
+      "routeFile": "src/app/api/tender-center/reviews/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {},
+        "query": {},
+        "body": {
+          "assignedReviewerId": {
+            "type": "number",
+            "required": false
+          },
+          "note": {
+            "type": "string",
+            "required": false
+          },
+          "projectId": {
+            "type": "string",
+            "required": false
+          },
+          "versionId": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/reviews/[reviewTaskId]/submit",
+      "routeFile": "src/app/api/tender-center/reviews/[reviewTaskId]/submit/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "reviewTaskId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "comment": {
+            "type": "string",
+            "required": false
+          },
+          "decision": {
+            "type": "string",
+            "required": false
+          },
+          "reviewAccuracy": {
+            "type": "number",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/risks/[riskId]",
+      "routeFile": "src/app/api/tender-center/risks/[riskId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "riskId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/tender-center/risks/[riskId]/close",
+      "routeFile": "src/app/api/tender-center/risks/[riskId]/close/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "riskId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {
+          "comment": {
+            "type": "string",
+            "required": false
+          },
+          "note": {
+            "type": "string",
+            "required": false
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/snapshots/[snapshotId]",
+      "routeFile": "src/app/api/tender-center/snapshots/[snapshotId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "snapshotId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/source-segments/[segmentId]",
+      "routeFile": "src/app/api/tender-center/source-segments/[segmentId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "segmentId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/templates/[templateId]",
+      "routeFile": "src/app/api/tender-center/templates/[templateId]/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "templateId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/tender-center/templates/[templateId]/variables",
+      "routeFile": "src/app/api/tender-center/templates/[templateId]/variables/route.ts",
+      "exists": true,
+      "methodImplemented": true,
+      "request": {
+        "path": {
+          "templateId": {
+            "type": "string",
+            "required": true
+          }
+        },
+        "query": {},
+        "body": {}
+      }
+    }
+  ]
+}

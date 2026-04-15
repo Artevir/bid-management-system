@@ -46,6 +46,9 @@ jobs:
       - name: TypeScript类型检查
         run: npx tsc --noEmit
 
+      - name: W2-002 字段契约校验（CI 阻断）
+        run: pnpm run docs:v3-w2-field-contract:check
+
   # ============================================
   # 单元测试
   # ============================================

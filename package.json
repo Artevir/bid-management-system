@@ -36,6 +36,18 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:codegen": "playwright codegen",
+    "docs:hub-md": "python scripts/docx-hub-to-markdown.py",
+    "docs:hub-md:native": "cross-env USE_PANDOC_FOR_DOCX=0 python scripts/docx-hub-to-markdown.py",
+    "docs:hub-md:pandoc": "python scripts/docx-hub-to-markdown.py",
+    "docs:hub-md:install-pandoc": "powershell -ExecutionPolicy Bypass -File scripts/install-pandoc-portable.ps1",
+    "docs:v3-appendix-routes": "python scripts/generate-v3-route-appendix.py",
+    "docs:v3-appendix-040-coverage": "python scripts/check-v3-040-api-coverage.py",
+    "docs:v3-mainline-prereq-check": "python scripts/check-v3-mainline-prerequisites.py",
+    "docs:v3-w2-dto-mapping": "python scripts/check-v3-w2-dto-mapping.py",
+    "docs:v3-w2-error-matrix": "python scripts/check-v3-w2-error-matrix.py",
+    "docs:v3-w2-export-alignment": "python scripts/check-v3-w2-export-alignment.py",
+    "docs:v3-w2-field-contract:update": "python scripts/validate-v3-w2-field-contract.py --write",
+    "docs:v3-w2-field-contract:check": "python scripts/validate-v3-w2-field-contract.py --check",
     "prepare": "husky"
   },
   "dependencies": {
