@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
           : smartReviewDocuments.createdAt;
     const orderFn = sortOrder === 'asc' ? asc(orderColumn) : desc(orderColumn);
 
-    const [documents, totalCount] = await Promise.all([
+    const [documents, totalCount, statsRows] = await Promise.all([
       db
         .select()
         .from(smartReviewDocuments)
@@ -110,7 +110,22 @@ export async function GET(request: NextRequest) {
         .select({ count: sql<number>`count(*)::int` })
         .from(smartReviewDocuments)
         .where(whereClause),
+      db
+        .select({
+          total: sql<number>`count(*)::int`,
+          pendingReviewCount: sql<number>`sum(case when ${smartReviewDocuments.reviewStatus} = 'pending' then 1 else 0 end)::int`,
+          parsedCount: sql<number>`sum(case when ${smartReviewDocuments.status} = 'parsed' then 1 else 0 end)::int`,
+          approvedCount: sql<number>`sum(case when ${smartReviewDocuments.reviewStatus} = 'approved' then 1 else 0 end)::int`,
+        })
+        .from(smartReviewDocuments)
+        .where(whereClause),
     ]);
+    const stats = statsRows[0] || {
+      total: 0,
+      pendingReviewCount: 0,
+      parsedCount: 0,
+      approvedCount: 0,
+    };
 
     return NextResponse.json({
       documents,
@@ -118,6 +133,12 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
       totalPages: Math.ceil((totalCount[0]?.count || 0) / pageSize),
+      stats: {
+        total: stats.total ?? 0,
+        pendingReviewCount: stats.pendingReviewCount ?? 0,
+        parsedCount: stats.parsedCount ?? 0,
+        approvedCount: stats.approvedCount ?? 0,
+      },
     });
   } catch (error) {
     console.error('Get smart review documents error:', error);

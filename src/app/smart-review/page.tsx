@@ -6,26 +6,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { TableListStateRow } from '@/components/ui/list-states';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { 
-  FileText, 
-  Upload, 
-  Search, 
-  Filter, 
+import {
+  FileText,
+  Upload,
+  Search,
+  Filter,
   Plus,
   Eye,
   CheckCircle,
   Clock,
   AlertCircle,
   XCircle,
-  RefreshCw
 } from 'lucide-react';
 
 interface SmartReviewDocument {
@@ -40,6 +40,13 @@ interface SmartReviewDocument {
   scoringCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface SmartReviewStats {
+  total: number;
+  pendingReviewCount: number;
+  parsedCount: number;
+  approvedCount: number;
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -63,15 +70,23 @@ const reviewStatusLabels: Record<string, { label: string; color: string }> = {
 export default function SmartReviewPage() {
   const [documents, setDocuments] = useState<SmartReviewDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [reviewStatusFilter, setReviewStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<SmartReviewStats>({
+    total: 0,
+    pendingReviewCount: 0,
+    parsedCount: 0,
+    approvedCount: 0,
+  });
 
   const fetchDocuments = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -80,17 +95,26 @@ export default function SmartReviewPage() {
         status: statusFilter,
         reviewStatus: reviewStatusFilter,
       });
-      
+
       const res = await fetch(`/api/smart-review?${params}`);
       const data = await res.json();
-      
+
       if (data.documents) {
         setDocuments(data.documents);
         setTotalPages(data.totalPages);
         setTotal(data.total);
       }
+      if (data.stats) {
+        setStats({
+          total: data.stats.total ?? 0,
+          pendingReviewCount: data.stats.pendingReviewCount ?? 0,
+          parsedCount: data.stats.parsedCount ?? 0,
+          approvedCount: data.stats.approvedCount ?? 0,
+        });
+      }
     } catch (error) {
       console.error('Fetch documents error:', error);
+      setError(error instanceof Error ? error.message : '加载文档列表失败');
     } finally {
       setLoading(false);
     }
@@ -140,7 +164,7 @@ export default function SmartReviewPage() {
             <CardTitle className="text-sm font-medium">文档总数</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -148,9 +172,7 @@ export default function SmartReviewPage() {
             <CardTitle className="text-sm font-medium">待审核</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {documents.filter(d => d.reviewStatus === 'pending').length}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.pendingReviewCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -158,9 +180,7 @@ export default function SmartReviewPage() {
             <CardTitle className="text-sm font-medium">已解析</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {documents.filter(d => d.status === 'parsed').length}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{stats.parsedCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -168,9 +188,7 @@ export default function SmartReviewPage() {
             <CardTitle className="text-sm font-medium">已通过</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {documents.filter(d => d.reviewStatus === 'approved').length}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{stats.approvedCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -237,18 +255,14 @@ export default function SmartReviewPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8">
-                    加载中...
-                  </TableCell>
-                </TableRow>
-              ) : documents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8">
-                    暂无文档，请先上传招标文件
-                  </TableCell>
-                </TableRow>
+              {loading || error || documents.length === 0 ? (
+                <TableListStateRow
+                  state={loading ? 'loading' : error ? 'error' : 'empty'}
+                  colSpan={10}
+                  error={error}
+                  onRetry={fetchDocuments}
+                  emptyText="暂无文档，请先上传招标文件"
+                />
               ) : (
                 documents.map((doc) => (
                   <TableRow key={doc.id}>
@@ -278,9 +292,7 @@ export default function SmartReviewPage() {
                     </TableCell>
                     <TableCell>{doc.specCount}</TableCell>
                     <TableCell>{doc.scoringCount}</TableCell>
-                    <TableCell>
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Link href={`/smart-review/${doc.id}`}>
                         <Button variant="outline" size="sm">
@@ -294,7 +306,7 @@ export default function SmartReviewPage() {
               )}
             </TableBody>
           </Table>
-          
+
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-gray-500">
               共 {total} 条记录，第 {page}/{totalPages} 页
@@ -303,7 +315,7 @@ export default function SmartReviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
                 上一页
@@ -311,7 +323,7 @@ export default function SmartReviewPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
                 下一页
