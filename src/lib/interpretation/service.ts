@@ -18,6 +18,10 @@ import {
 import { eq, and, desc, like as _like, sql, inArray, isNull as _isNull } from 'drizzle-orm';
 import { extractTextFromDocumentBuffer } from '@/lib/document/text-extractor';
 import { generateWithDefaultLLM } from '@/lib/llm/db-runtime';
+import {
+  assertInterpretationStatusTransition,
+  canTransitionInterpretationStatus,
+} from '@/lib/interpretation/status-machine';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -127,9 +131,7 @@ export interface FrameworkItem {
 /**
  * 创建解读记录
  */
-export async function createInterpretation(
-  params: CreateInterpretationParams
-): Promise<number> {
+export async function createInterpretation(params: CreateInterpretationParams): Promise<number> {
   // 检查是否已存在相同MD5的文件
   const existing = await db
     .select()
@@ -142,10 +144,15 @@ export async function createInterpretation(
     if (item.status === 'completed') {
       throw new Error('该招标文件已上传并解读过，请勿重复上传');
     }
+    if (item.status === 'parsing') {
+      throw new Error('该招标文件正在解析中，请勿重复上传');
+    }
+    if (item.status !== 'pending' && item.status !== 'failed') {
+      throw new Error(`当前状态 ${item.status} 不允许覆盖上传`);
+    }
 
-    await db
-      .update(bidDocumentInterpretations)
-      .set({
+    if (item.status === 'failed') {
+      await transitionInterpretationStatus(item.id, 'failed', 'pending', {
         documentName: params.documentName,
         documentUrl: params.documentUrl,
         documentExt: params.documentExt,
@@ -153,14 +160,33 @@ export async function createInterpretation(
         documentPageCount: params.documentPageCount,
         uploaderId: params.uploaderId,
         projectId: params.projectId,
-        status: 'pending',
         parseProgress: 0,
         parseError: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocumentInterpretations.id, item.id));
+      });
+    } else {
+      await db
+        .update(bidDocumentInterpretations)
+        .set({
+          documentName: params.documentName,
+          documentUrl: params.documentUrl,
+          documentExt: params.documentExt,
+          documentSize: params.documentSize,
+          documentPageCount: params.documentPageCount,
+          uploaderId: params.uploaderId,
+          projectId: params.projectId,
+          parseProgress: 0,
+          parseError: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(bidDocumentInterpretations.id, item.id));
+    }
 
-    await createInterpretationLog(item.id, 'reupload', '重新上传招标文件（覆盖未完成记录）', params.uploaderId);
+    await createInterpretationLog(
+      item.id,
+      'reupload',
+      '重新上传招标文件（覆盖未完成记录）',
+      params.uploaderId
+    );
     return item.id;
   }
 
@@ -221,10 +247,16 @@ export async function getInterpretationById(id: number) {
     assignedReviewerName: assignedReviewer?.[0]?.name || null,
     basicInfo: item.basicInfo ? JSON.parse(item.basicInfo) : null,
     timeNodes: item.timeNodes ? JSON.parse(item.timeNodes) : null,
-    submissionRequirements: item.submissionRequirements ? JSON.parse(item.submissionRequirements) : null,
+    submissionRequirements: item.submissionRequirements
+      ? JSON.parse(item.submissionRequirements)
+      : null,
     feeInfo: item.feeInfo ? JSON.parse(item.feeInfo) : null,
-    qualificationRequirements: item.qualificationRequirements ? JSON.parse(item.qualificationRequirements) : null,
-    personnelRequirements: item.personnelRequirements ? JSON.parse(item.personnelRequirements) : null,
+    qualificationRequirements: item.qualificationRequirements
+      ? JSON.parse(item.qualificationRequirements)
+      : null,
+    personnelRequirements: item.personnelRequirements
+      ? JSON.parse(item.personnelRequirements)
+      : null,
     docRequirements: item.docRequirements ? JSON.parse(item.docRequirements) : null,
     otherRequirements: item.otherRequirements ? JSON.parse(item.otherRequirements) : null,
     extractMeta: item.extractMeta ? JSON.parse(item.extractMeta) : null,
@@ -247,7 +279,9 @@ export async function getInterpretationList(params: InterpretationListParams = {
 
   if (reviewStatus) {
     if (reviewStatus === 'none') {
-      conditions.push(sql`(${bidDocumentInterpretations.reviewStatus} IS NULL OR ${bidDocumentInterpretations.reviewStatus} = 'pending')`);
+      conditions.push(
+        sql`(${bidDocumentInterpretations.reviewStatus} IS NULL OR ${bidDocumentInterpretations.reviewStatus} = 'pending')`
+      );
     } else {
       conditions.push(eq(bidDocumentInterpretations.reviewStatus, reviewStatus));
     }
@@ -291,7 +325,7 @@ export async function getInterpretationList(params: InterpretationListParams = {
     .offset(offset);
 
   return {
-    list: list.map(item => ({
+    list: list.map((item) => ({
       ...item.interpretation,
       reviewerName: item.reviewerName,
       tags: item.interpretation.tags ? JSON.parse(item.interpretation.tags) : [],
@@ -317,7 +351,8 @@ export async function updateInterpretation(
 
   if (params.projectName !== undefined) updateData.projectName = params.projectName;
   if (params.projectCode !== undefined) updateData.projectCode = params.projectCode;
-  if (params.tenderOrganization !== undefined) updateData.tenderOrganization = params.tenderOrganization;
+  if (params.tenderOrganization !== undefined)
+    updateData.tenderOrganization = params.tenderOrganization;
   if (params.tenderAgent !== undefined) updateData.tenderAgent = params.tenderAgent;
   if (params.projectBudget !== undefined) updateData.projectBudget = params.projectBudget;
   if (params.tags !== undefined) updateData.tags = JSON.stringify(params.tags);
@@ -463,8 +498,12 @@ export async function parseDocumentWithLLM(
     );
   }
 
-  const maxChars = process.env.LLM_INPUT_MAX_CHARS ? Number(process.env.LLM_INPUT_MAX_CHARS) : 40000;
-  const tailChars = process.env.LLM_INPUT_TAIL_CHARS ? Number(process.env.LLM_INPUT_TAIL_CHARS) : 6000;
+  const maxChars = process.env.LLM_INPUT_MAX_CHARS
+    ? Number(process.env.LLM_INPUT_MAX_CHARS)
+    : 40000;
+  const tailChars = process.env.LLM_INPUT_TAIL_CHARS
+    ? Number(process.env.LLM_INPUT_TAIL_CHARS)
+    : 6000;
   const headChars = Math.max(0, maxChars - tailChars);
   const contentForLLM =
     textContent.length > maxChars
@@ -635,8 +674,12 @@ export async function parseDocumentWithLLM(
   };
 
   const extractTechnicalSpecsWithLLM = async (fullText: string) => {
-    const chunkChars = process.env.LLM_SPECS_CHUNK_CHARS ? Number(process.env.LLM_SPECS_CHUNK_CHARS) : 12000;
-    const maxChunks = process.env.LLM_SPECS_MAX_CHUNKS ? Number(process.env.LLM_SPECS_MAX_CHUNKS) : 8;
+    const chunkChars = process.env.LLM_SPECS_CHUNK_CHARS
+      ? Number(process.env.LLM_SPECS_CHUNK_CHARS)
+      : 12000;
+    const maxChunks = process.env.LLM_SPECS_MAX_CHUNKS
+      ? Number(process.env.LLM_SPECS_MAX_CHUNKS)
+      : 8;
     const maxItemsPerChunk = process.env.LLM_SPECS_MAX_ITEMS_PER_CHUNK
       ? Number(process.env.LLM_SPECS_MAX_ITEMS_PER_CHUNK)
       : 50;
@@ -741,7 +784,9 @@ export async function parseDocumentWithLLM(
       const enableSecondPass = process.env.INTERPRETATION_ENABLE_SPECS_SECOND_PASS !== 'false';
       if (enableSecondPass) {
         const detailedSpecs = await extractTechnicalSpecsWithLLM(textContent);
-        const currentSpecs = Array.isArray((parsed as any).technicalSpecs) ? (parsed as any).technicalSpecs : [];
+        const currentSpecs = Array.isArray((parsed as any).technicalSpecs)
+          ? (parsed as any).technicalSpecs
+          : [];
         if (detailedSpecs.length > currentSpecs.length) {
           (parsed as any).technicalSpecs = detailedSpecs;
         }
@@ -752,8 +797,7 @@ export async function parseDocumentWithLLM(
     const repairMessages = [
       {
         role: 'system' as const,
-        content:
-          '你是一个严格的 JSON 修复器。只输出一个合法的 JSON 对象，不要输出任何多余字符。',
+        content: '你是一个严格的 JSON 修复器。只输出一个合法的 JSON 对象，不要输出任何多余字符。',
       },
       {
         role: 'user' as const,
@@ -768,7 +812,9 @@ export async function parseDocumentWithLLM(
       const enableSecondPass = process.env.INTERPRETATION_ENABLE_SPECS_SECOND_PASS !== 'false';
       if (enableSecondPass) {
         const detailedSpecs = await extractTechnicalSpecsWithLLM(textContent);
-        const currentSpecs = Array.isArray((repairedParsed as any).technicalSpecs) ? (repairedParsed as any).technicalSpecs : [];
+        const currentSpecs = Array.isArray((repairedParsed as any).technicalSpecs)
+          ? (repairedParsed as any).technicalSpecs
+          : [];
         if (detailedSpecs.length > currentSpecs.length) {
           (repairedParsed as any).technicalSpecs = detailedSpecs;
         }
@@ -801,16 +847,11 @@ export async function executeInterpretation(
     : 85;
 
   try {
-    // 更新状态为解析中
-    await db
-      .update(bidDocumentInterpretations)
-      .set({
-        status: 'parsing',
-        parseProgress: 10,
-        parseError: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocumentInterpretations.id, id));
+    // 状态机约束：pending/failed -> parsing
+    await transitionInterpretationStatus(id, interpretation.status, 'parsing', {
+      parseProgress: 10,
+      parseError: null,
+    });
 
     // 执行LLM解析
     const parseResult = await parseDocumentWithLLM(
@@ -835,58 +876,88 @@ export async function executeInterpretation(
     // 更新状态为完成
     const duration = Date.now() - startTime;
     const accuracy = computedAccuracy ?? fallbackAccuracy;
-    
+
     // 自动审核规则：准确率 >= 95% 自动通过
     const autoApproveThreshold = 95;
     let reviewStatus: 'pending' | 'approved' = 'pending';
-    
+
     if (accuracy >= autoApproveThreshold) {
       reviewStatus = 'approved';
     }
-    
-    await db
-      .update(bidDocumentInterpretations)
-      .set({
-        status: 'completed',
-        parseProgress: 100,
-        extractAccuracy: accuracy,
-        parseDuration: duration,
-        reviewStatus,
-        approvalLevelRequired: accuracy >= autoApproveThreshold ? 1 : 1,
-        currentApprovalLevel: accuracy >= autoApproveThreshold ? 1 : 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocumentInterpretations.id, id));
+
+    await transitionInterpretationStatus(id, 'parsing', 'completed', {
+      parseProgress: 100,
+      extractAccuracy: accuracy,
+      parseDuration: duration,
+      reviewStatus,
+      approvalLevelRequired: accuracy >= autoApproveThreshold ? 1 : 1,
+      currentApprovalLevel: accuracy >= autoApproveThreshold ? 1 : 1,
+    });
 
     // 记录日志
-    const logMsg = accuracy >= autoApproveThreshold 
-      ? `解读完成，耗时 ${duration}ms，准确率${accuracy}%（自动通过）`
-      : `解读完成，耗时 ${duration}ms，准确率${accuracy}%`;
+    const logMsg =
+      accuracy >= autoApproveThreshold
+        ? `解读完成，耗时 ${duration}ms，准确率${accuracy}%（自动通过）`
+        : `解读完成，耗时 ${duration}ms，准确率${accuracy}%`;
     await createInterpretationLog(id, 'parse', logMsg, interpretation.uploaderId);
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : '解析失败';
-    
-    await db
-      .update(bidDocumentInterpretations)
-      .set({
-        status: 'failed',
+    const latest = await db
+      .select({ status: bidDocumentInterpretations.status })
+      .from(bidDocumentInterpretations)
+      .where(eq(bidDocumentInterpretations.id, id))
+      .limit(1);
+    const currentStatus = latest[0]?.status;
+
+    if (currentStatus && canTransitionInterpretationStatus(currentStatus, 'failed')) {
+      await transitionInterpretationStatus(id, currentStatus, 'failed', {
         parseError: errorMessage,
-        updatedAt: new Date(),
-      })
-      .where(eq(bidDocumentInterpretations.id, id));
+      });
+    }
 
     // 记录日志
-    await createInterpretationLog(id, 'parse_error', `解读失败：${errorMessage}`, interpretation.uploaderId);
+    await createInterpretationLog(
+      id,
+      'parse_error',
+      `解读失败：${errorMessage}`,
+      interpretation.uploaderId
+    );
 
     throw error;
+  }
+}
+
+async function transitionInterpretationStatus(
+  id: number,
+  from: InterpretationStatus,
+  to: InterpretationStatus,
+  extraFields: Record<string, unknown> = {}
+) {
+  assertInterpretationStatusTransition(from, to, `interpretation#${id}`);
+
+  const updated = await db
+    .update(bidDocumentInterpretations)
+    .set({
+      ...extraFields,
+      status: to,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(bidDocumentInterpretations.id, id), eq(bidDocumentInterpretations.status, from)))
+    .returning({ id: bidDocumentInterpretations.id });
+
+  if (updated.length === 0) {
+    throw new Error(`interpretation#${id}: 状态迁移冲突（期望 ${from} -> ${to}）`);
   }
 }
 
 /**
  * 保存解析结果到数据库
  */
-async function saveParseResult(id: number, result: ParseResult, extractMeta?: unknown): Promise<void> {
+async function saveParseResult(
+  id: number,
+  result: ParseResult,
+  extractMeta?: unknown
+): Promise<void> {
   await db.transaction(async (tx) => {
     await tx
       .update(bidDocumentInterpretations)
@@ -913,7 +984,9 @@ async function saveParseResult(id: number, result: ParseResult, extractMeta?: un
 
     await tx.delete(bidTechnicalSpecs).where(eq(bidTechnicalSpecs.interpretationId, id));
     await tx.delete(bidScoringItems).where(eq(bidScoringItems.interpretationId, id));
-    await tx.delete(bidRequirementChecklist).where(eq(bidRequirementChecklist.interpretationId, id));
+    await tx
+      .delete(bidRequirementChecklist)
+      .where(eq(bidRequirementChecklist.interpretationId, id));
     await tx.delete(bidDocumentFramework).where(eq(bidDocumentFramework.interpretationId, id));
 
     if (result.technicalSpecs && result.technicalSpecs.length > 0) {
@@ -979,21 +1052,24 @@ async function saveFrameworkItemsTx(
 ): Promise<void> {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    
-    const result = await tx.insert(bidDocumentFramework).values({
-      interpretationId,
-      chapterNumber: item.chapterNumber,
-      chapterTitle: item.chapterTitle,
-      chapterType: item.chapterType,
-      parentId: parentId || null,
-      level: item.level,
-      contentRequirement: item.contentRequirement,
-      formatRequirement: item.formatRequirement,
-      pageLimit: item.pageLimit,
-      originalText: item.originalText,
-      pageNumber: item.pageNumber,
-      sortOrder: i,
-    }).returning({ id: bidDocumentFramework.id });
+
+    const result = await tx
+      .insert(bidDocumentFramework)
+      .values({
+        interpretationId,
+        chapterNumber: item.chapterNumber,
+        chapterTitle: item.chapterTitle,
+        chapterType: item.chapterType,
+        parentId: parentId || null,
+        level: item.level,
+        contentRequirement: item.contentRequirement,
+        formatRequirement: item.formatRequirement,
+        pageLimit: item.pageLimit,
+        originalText: item.originalText,
+        pageNumber: item.pageNumber,
+        sortOrder: i,
+      })
+      .returning({ id: bidDocumentFramework.id });
 
     // 递归保存子章节
     if (item.children && item.children.length > 0) {
@@ -1011,7 +1087,7 @@ async function saveFrameworkItemsTx(
  */
 export async function getTechnicalSpecs(interpretationId: number, category?: string) {
   const conditions = [eq(bidTechnicalSpecs.interpretationId, interpretationId)];
-  
+
   if (category) {
     conditions.push(eq(bidTechnicalSpecs.specCategory, category));
   }
@@ -1054,7 +1130,12 @@ export async function updateTechnicalSpec(
     .limit(1);
 
   if (spec[0]) {
-    await createInterpretationLog(spec[0].interpretationId, 'update_spec', '更新技术规格响应', operatorId);
+    await createInterpretationLog(
+      spec[0].interpretationId,
+      'update_spec',
+      '更新技术规格响应',
+      operatorId
+    );
   }
 }
 
@@ -1067,7 +1148,7 @@ export async function updateTechnicalSpec(
  */
 export async function getScoringItems(interpretationId: number, category?: string) {
   const conditions = [eq(bidScoringItems.interpretationId, interpretationId)];
-  
+
   if (category) {
     conditions.push(eq(bidScoringItems.scoringCategory, category));
   }
@@ -1078,7 +1159,7 @@ export async function getScoringItems(interpretationId: number, category?: strin
     .where(and(...conditions))
     .orderBy(bidScoringItems.sortOrder);
 
-  return items.map(item => ({
+  return items.map((item) => ({
     ...item,
     deductionRules: item.deductionRules ? JSON.parse(item.deductionRules) : null,
     bonusRules: item.bonusRules ? JSON.parse(item.bonusRules) : null,
@@ -1114,7 +1195,12 @@ export async function updateScoringItem(
     .limit(1);
 
   if (item[0]) {
-    await createInterpretationLog(item[0].interpretationId, 'update_scoring', '更新评分项响应', operatorId);
+    await createInterpretationLog(
+      item[0].interpretationId,
+      'update_scoring',
+      '更新评分项响应',
+      operatorId
+    );
   }
 }
 
@@ -1127,7 +1213,7 @@ export async function updateScoringItem(
  */
 export async function getChecklist(interpretationId: number, category?: string) {
   const conditions = [eq(bidRequirementChecklist.interpretationId, interpretationId)];
-  
+
   if (category) {
     conditions.push(eq(bidRequirementChecklist.checklistCategory, category));
   }
@@ -1138,7 +1224,7 @@ export async function getChecklist(interpretationId: number, category?: string) 
     .where(and(...conditions))
     .orderBy(bidRequirementChecklist.sortOrder);
 
-  return items.map(item => ({
+  return items.map((item) => ({
     ...item,
     requiredDocuments: item.requiredDocuments ? JSON.parse(item.requiredDocuments) : null,
     proofDocuments: item.proofDocuments ? JSON.parse(item.proofDocuments) : null,
@@ -1208,7 +1294,12 @@ export async function updateChecklistItem(
     .limit(1);
 
   if (item[0]) {
-    await createInterpretationLog(item[0].interpretationId, 'update_checklist', '更新核对项状态', operatorId);
+    await createInterpretationLog(
+      item[0].interpretationId,
+      'update_checklist',
+      '更新核对项状态',
+      operatorId
+    );
   }
 }
 
@@ -1229,8 +1320,8 @@ export async function getDocumentFramework(interpretationId: number) {
   // 构建树形结构
   const buildTree = (parentId: number | null = null): FrameworkItem[] => {
     return items
-      .filter(item => (parentId === null ? item.parentId === null : item.parentId === parentId))
-      .map(item => ({
+      .filter((item) => (parentId === null ? item.parentId === null : item.parentId === parentId))
+      .map((item) => ({
         id: item.id,
         chapterNumber: item.chapterNumber || undefined,
         chapterTitle: item.chapterTitle,
@@ -1316,7 +1407,12 @@ export async function deleteTimeReminder(id: number, operatorId: number): Promis
   await db.delete(bidTimeReminders).where(eq(bidTimeReminders.id, id));
 
   if (reminder[0]) {
-    await createInterpretationLog(reminder[0].interpretationId, 'delete_reminder', '删除时间提醒', operatorId);
+    await createInterpretationLog(
+      reminder[0].interpretationId,
+      'delete_reminder',
+      '删除时间提醒',
+      operatorId
+    );
   }
 }
 
