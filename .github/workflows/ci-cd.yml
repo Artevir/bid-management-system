@@ -49,6 +49,9 @@ jobs:
       - name: W2-002 字段契约校验（CI 阻断）
         run: pnpm run docs:v3-w2-field-contract:check
 
+      - name: W4-002 DTO/Zod 漂移校验（CI 阻断）
+        run: pnpm run docs:v4-dto-zod:check
+
   # ============================================
   # 单元测试
   # ============================================
