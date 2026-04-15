@@ -26,6 +26,7 @@ import {
   Clock,
   AlertCircle,
   XCircle,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface SmartReviewDocument {
@@ -180,12 +181,20 @@ export default function SmartReviewPage() {
           <h1 className="text-2xl font-bold">文件智能审阅中枢</h1>
           <p className="text-gray-500">智能解析招标文件，自动提取关键信息</p>
         </div>
-        <Link href="/smart-review/upload">
-          <Button>
-            <Upload className="h-4 w-4 mr-2" />
-            上传招标文件
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/smart-review/governance">
+            <Button variant="outline">
+              <ShieldAlert className="h-4 w-4 mr-2" />
+              风险与冲突处置台
+            </Button>
+          </Link>
+          <Link href="/smart-review/upload">
+            <Button>
+              <Upload className="h-4 w-4 mr-2" />
+              上传招标文件
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

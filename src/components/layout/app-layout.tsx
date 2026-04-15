@@ -66,6 +66,7 @@ import {
   ClipboardList,
   Upload,
   List,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -81,18 +82,18 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: '工作台', href: '/', icon: LayoutDashboard },
-  { 
-    name: '招标信息抓取', 
-    href: '/tender-crawl', 
+  {
+    name: '招标信息抓取',
+    href: '/tender-crawl',
     icon: Globe,
     children: [
       { name: '招标信息列表', href: '/tender-crawl', icon: Globe },
       { name: '抓取源管理', href: '/tender-crawl/sources', icon: Settings },
     ],
   },
-  { 
-    name: '项目管理', 
-    href: '/projects', 
+  {
+    name: '项目管理',
+    href: '/projects',
     icon: FolderOpen,
     children: [
       { name: '项目列表', href: '/projects', icon: FolderOpen },
@@ -133,23 +134,23 @@ const navigation: NavItem[] = [
       { name: '签订书面合同', href: '/contract-signings', icon: FileSignature },
     ],
   },
-  { 
-    name: '政采对接', 
-    href: '/bidding-platforms', 
+  {
+    name: '政采对接',
+    href: '/bidding-platforms',
     icon: Building2,
     children: [
       { name: '对接单位管理', href: '/bidding-platforms', icon: Building2 },
       { name: '地图定位', href: '/bidding-platforms/map', icon: MapPin },
     ],
   },
-  { 
-    name: '智能报价', 
-    href: '/quote-analysis', 
+  {
+    name: '智能报价',
+    href: '/quote-analysis',
     icon: Calculator,
   },
-  { 
-    name: '电子签章', 
-    href: '/e-sign', 
+  {
+    name: '电子签章',
+    href: '/e-sign',
     icon: PenTool,
     children: [
       { name: '签署任务', href: '/e-sign', icon: FileCheck },
@@ -157,20 +158,21 @@ const navigation: NavItem[] = [
       { name: '签署配置', href: '/e-sign?tab=configs', icon: Settings },
     ],
   },
-  { 
-    name: '智能审阅中枢', 
-    href: '/smart-review', 
+  {
+    name: '智能审阅中枢',
+    href: '/smart-review',
     icon: FileCheck,
     children: [
       { name: '文档列表', href: '/smart-review', icon: FileText },
       { name: '上传文件', href: '/smart-review/upload', icon: Upload },
       { name: '审核工作台', href: '/smart-review/reviews', icon: ClipboardCheck },
       { name: '响应矩阵', href: '/smart-review/matrix', icon: List },
+      { name: '风险与冲突处置台', href: '/smart-review/governance', icon: ShieldAlert },
     ],
   },
-  { 
-    name: '审核中心', 
-    href: '/approval', 
+  {
+    name: '审核中心',
+    href: '/approval',
     icon: CheckCircle,
     children: [
       { name: '审核列表', href: '/approval', icon: ClipboardCheck },
@@ -179,13 +181,11 @@ const navigation: NavItem[] = [
       { name: '导出中心', href: '/exports', icon: Download },
     ],
   },
-  { 
-    name: '任务中心', 
-    href: '/tasks', 
+  {
+    name: '任务中心',
+    href: '/tasks',
     icon: ClipboardCheck,
-    children: [
-      { name: '任务列表', href: '/tasks', icon: ListTodo },
-    ],
+    children: [{ name: '任务列表', href: '/tasks', icon: ListTodo }],
   },
   {
     name: '工作流管理',
@@ -210,9 +210,9 @@ const navigation: NavItem[] = [
     href: '/search',
     icon: Search,
   },
-  { 
-    name: '知识库', 
-    href: '/knowledge', 
+  {
+    name: '知识库',
+    href: '/knowledge',
     icon: BookOpen,
     children: [
       { name: '知识列表', href: '/knowledge', icon: BookOpen },
@@ -230,9 +230,9 @@ const navigation: NavItem[] = [
       { name: '方案模板', href: '/schemes?isTemplate=true', icon: LayoutTemplate },
     ],
   },
-  { 
-    name: 'AI助手', 
-    href: '/prompts', 
+  {
+    name: 'AI助手',
+    href: '/prompts',
     icon: BrainCircuit,
     children: [
       { name: 'AI员工', href: '/prompts/agents', icon: Users },
@@ -252,18 +252,18 @@ const navigation: NavItem[] = [
       { name: '用量统计', href: '/llm/usage', icon: BarChart3 },
     ],
   },
-  { 
-    name: 'AI图片生成', 
-    href: '/image/generate', 
+  {
+    name: 'AI图片生成',
+    href: '/image/generate',
     icon: ImageIcon,
     children: [
       { name: '图片生成', href: '/image/generate', icon: Sparkles },
       { name: '图片库', href: '/image/library', icon: ImageIcon },
     ],
   },
-  { 
-    name: '文档框架', 
-    href: '/frameworks', 
+  {
+    name: '文档框架',
+    href: '/frameworks',
     icon: LayoutTemplate,
     children: [
       { name: '全部框架', href: '/frameworks', icon: LayoutTemplate },
@@ -271,18 +271,18 @@ const navigation: NavItem[] = [
       { name: '公司框架', href: '/frameworks?scope=company', icon: Building },
     ],
   },
-  { 
-    name: '标签管理', 
-    href: '/tags', 
+  {
+    name: '标签管理',
+    href: '/tags',
     icon: Tags,
     children: [
       { name: '标签列表', href: '/tags', icon: Tags },
       { name: '分类管理', href: '/tags?tab=categories', icon: FolderTree },
     ],
   },
-  { 
-    name: '公司管理', 
-    href: '/companies', 
+  {
+    name: '公司管理',
+    href: '/companies',
     icon: Building,
     children: [
       { name: '公司信息', href: '/companies', icon: Building },
@@ -298,12 +298,20 @@ const adminNavigation: NavItem[] = [
 ];
 
 // 子菜单项组件（支持三级导航）
-function NavChildItem({ child, pathname, level: _level = 1 }: { child: NavItem; pathname: string; level?: number }) {
+function NavChildItem({
+  child,
+  pathname,
+  level: _level = 1,
+}: {
+  child: NavItem;
+  pathname: string;
+  level?: number;
+}) {
   const hasChildren = child.children && child.children.length > 0;
   const isDirectActive = pathname === child.href;
-  const isChildActive = hasChildren && child.children!.some(c => pathname === c.href);
+  const isChildActive = hasChildren && child.children!.some((c) => pathname === c.href);
   const isActive = isDirectActive || isChildActive;
-  
+
   const [expanded, setExpanded] = useState(isChildActive);
 
   // 有三级菜单的情况
@@ -323,12 +331,7 @@ function NavChildItem({ child, pathname, level: _level = 1 }: { child: NavItem; 
             <child.icon className="h-4 w-4" />
             {child.name}
           </span>
-          <ChevronDown
-            className={cn(
-              'h-4 w-4 transition-transform',
-              expanded && 'rotate-180'
-            )}
-          />
+          <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
         </button>
         {expanded && (
           <div className="ml-4 space-y-1 border-l pl-2">
@@ -375,9 +378,13 @@ function NavChildItem({ child, pathname, level: _level = 1 }: { child: NavItem; 
 function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const hasChildren = item.children && item.children.length > 0;
   const isDirectActive = pathname === item.href;
-  const isChildActive = hasChildren && item.children!.some(c => pathname === c.href || (c.children && c.children.some(gc => pathname === gc.href)));
+  const isChildActive =
+    hasChildren &&
+    item.children!.some(
+      (c) => pathname === c.href || (c.children && c.children.some((gc) => pathname === gc.href))
+    );
   const isActive = isDirectActive || isChildActive;
-  
+
   const [expanded, setExpanded] = useState(isChildActive);
 
   // 有子菜单的情况
@@ -397,12 +404,7 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
             <item.icon className="h-4 w-4" />
             {item.name}
           </span>
-          <ChevronDown
-            className={cn(
-              'h-4 w-4 transition-transform',
-              expanded && 'rotate-180'
-            )}
-          />
+          <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
         </button>
         {expanded && (
           <div className="ml-4 space-y-1 border-l pl-2">
