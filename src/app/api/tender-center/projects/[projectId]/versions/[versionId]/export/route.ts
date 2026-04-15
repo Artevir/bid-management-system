@@ -17,6 +17,7 @@ import {
   isTenderCenterExportViewCode,
   type TenderCenterExportViewCode,
 } from '@/app/api/tender-center/_export';
+import { isTenderSnapshotType, type TenderSnapshotType } from '@/app/api/tender-center/_snapshot';
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/export
 export async function GET(
@@ -28,9 +29,23 @@ export async function GET(
   const url = new URL(request.url);
   const format = String(url.searchParams.get('format') || 'json').toLowerCase();
   const requestedView = String(url.searchParams.get('view') || 'requirements_export_view');
+  const requestedSnapshotType = url.searchParams.get('snapshotType');
   const viewCode: TenderCenterExportViewCode = isTenderCenterExportViewCode(requestedView)
     ? requestedView
     : 'requirements_export_view';
+  const snapshotType: TenderSnapshotType | null =
+    requestedSnapshotType && isTenderSnapshotType(requestedSnapshotType)
+      ? requestedSnapshotType
+      : null;
+  if (requestedSnapshotType && !snapshotType) {
+    return NextResponse.json(
+      {
+        error:
+          'snapshotType 非法，仅支持 requirements_snapshot/framework_snapshot/templates_snapshot/materials_snapshot/full_snapshot',
+      },
+      { status: 400 }
+    );
+  }
 
   return withAuth(request, async (_req, userId) => {
     const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
@@ -271,6 +286,20 @@ export async function GET(
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename=${viewCode}-${pid}-${versionId}.csv`,
+        },
+      });
+    }
+
+    if (snapshotType) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          projectId: pid,
+          versionId,
+          interpretationId: interpretation.id,
+          snapshotType,
+          snapshot: payload.snapshots[snapshotType],
+          generatedAt: payload.generatedAt,
         },
       });
     }

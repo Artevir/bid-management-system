@@ -19,6 +19,12 @@ import {
   getOrCreateTraceId,
   logTenderTraceEvent,
 } from '@/app/api/tender-center/_trace';
+import {
+  isTenderExportMode,
+  isTenderSnapshotType,
+  parseTenderSnapshotPayload,
+  type TenderSnapshotPayload,
+} from '@/app/api/tender-center/_snapshot';
 
 const IDEM_OPERATION_TYPE = 'idem_snapshot_create';
 
@@ -56,7 +62,8 @@ export async function GET(
 
     const snapshots = rows.map((row) => {
       try {
-        return JSON.parse(row.operationContent || '{}');
+        const parsed = JSON.parse(row.operationContent || '{}');
+        return parseTenderSnapshotPayload(parsed) ?? parsed;
       } catch {
         return { snapshotId: `legacy-${row.id}`, createdAt: String(row.createdAt || '') };
       }
@@ -93,6 +100,26 @@ export async function POST(
     }
 
     const body = await req.json().catch(() => ({}));
+    const snapshotType = String(body.snapshotType || '');
+    if (!isTenderSnapshotType(snapshotType)) {
+      return NextResponse.json(
+        {
+          error:
+            'snapshotType 非法，仅支持 requirements_snapshot/framework_snapshot/templates_snapshot/materials_snapshot/full_snapshot',
+        },
+        { status: 400 }
+      );
+    }
+    const exportModeRaw = String(body.exportMode || 'internal_consumption');
+    if (!isTenderExportMode(exportModeRaw)) {
+      return NextResponse.json(
+        {
+          error:
+            'exportMode 非法，仅支持 internal_consumption/downstream_module/manual_download/api_delivery',
+        },
+        { status: 400 }
+      );
+    }
     const traceId = getOrCreateTraceId(req.headers);
     const batchId = toBatchId(interpretation.id);
     const idempotencyKey = extractIdempotencyKey(req.headers);
@@ -103,6 +130,8 @@ export async function POST(
           interpretationId: interpretation.id,
           name: String(body.name || ''),
           note: String(body.note || ''),
+          snapshotType,
+          exportMode: exportModeRaw,
           action: 'create_snapshot',
         })
       : null;
@@ -149,14 +178,21 @@ export async function POST(
     }
 
     const snapshotId = buildSnapshotId(interpretation.id);
-    const payload = {
+    const payload: TenderSnapshotPayload = {
       snapshotId,
       interpretationId: interpretation.id,
       projectId: pid,
       versionId,
       name: body.name || `snapshot-${new Date().toISOString()}`,
       note: body.note || '',
+      snapshotType,
+      exportMode: exportModeRaw,
+      status: 'generated',
       createdAt: new Date().toISOString(),
+      publishedAt: null,
+      publishedBy: null,
+      invalidatedAt: null,
+      invalidatedBy: null,
       summary: {
         reviewStatus: interpretation.reviewStatus,
         parseProgress: interpretation.parseProgress,
