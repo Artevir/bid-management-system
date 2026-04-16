@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { submissionMaterials } from '@/db/schema';
+import {
+  hubBidTemplates,
+  scoringItems,
+  scoringSchemes,
+  submissionMaterials,
+  templateVariableBindings,
+  templateVariables,
+} from '@/db/schema';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/material-view
@@ -21,20 +28,81 @@ export async function GET(
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
     }
 
-    const rows = await db.query.submissionMaterials.findMany({
-      where: and(
-        eq(submissionMaterials.tenderProjectVersionId, version.id),
-        eq(submissionMaterials.isDeleted, false)
-      ),
-    });
+    const [materialRows, templateRows, scoringCountRow, signatureCountRow, sealCountRow] =
+      await Promise.all([
+        db.query.submissionMaterials.findMany({
+          where: and(
+            eq(submissionMaterials.tenderProjectVersionId, version.id),
+            eq(submissionMaterials.isDeleted, false)
+          ),
+        }),
+        db.query.hubBidTemplates.findMany({
+          where: and(
+            eq(hubBidTemplates.tenderProjectVersionId, version.id),
+            eq(hubBidTemplates.isDeleted, false)
+          ),
+        }),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(scoringItems)
+          .innerJoin(scoringSchemes, eq(scoringSchemes.id, scoringItems.scoringSchemeId))
+          .where(
+            and(
+              eq(scoringSchemes.tenderProjectVersionId, version.id),
+              eq(scoringSchemes.isDeleted, false),
+              eq(scoringItems.isDeleted, false)
+            )
+          ),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(submissionMaterials)
+          .where(
+            and(
+              eq(submissionMaterials.tenderProjectVersionId, version.id),
+              eq(submissionMaterials.isDeleted, false),
+              eq(submissionMaterials.needSignatureFlag, true)
+            )
+          ),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(submissionMaterials)
+          .where(
+            and(
+              eq(submissionMaterials.tenderProjectVersionId, version.id),
+              eq(submissionMaterials.isDeleted, false),
+              eq(submissionMaterials.needSealFlag, true)
+            )
+          ),
+      ]);
 
-    const total = rows.length;
-    const mandatory = rows.filter((r) => r.requiredFlag).length;
+    const total = materialRows.length;
+    const mandatory = materialRows.filter((r) => r.requiredFlag).length;
     const byCategory = new Map<string, number>();
-    for (const row of rows) {
-      const key = row.materialType;
+    for (const row of materialRows) {
+      const key = row.materialType || 'other';
       byCategory.set(key, (byCategory.get(key) || 0) + 1);
     }
+
+    const materialList = materialRows.map((m) => ({
+      materialId: m.id,
+      materialName: m.materialName,
+      materialType: m.materialType,
+      requiredFlag: m.requiredFlag,
+      needSignatureFlag: m.needSignatureFlag,
+      needSealFlag: m.needSealFlag,
+      sourceReason: m.sourceReason,
+      relatedRequirementId: m.relatedRequirementId,
+      relatedScoringItemId: m.relatedScoringItemId,
+      relatedTemplateId: m.relatedTemplateId,
+      reviewStatus: m.reviewStatus,
+    }));
+
+    const relatedTemplateIds = materialRows
+      .map((m) => m.relatedTemplateId)
+      .filter(Boolean) as number[];
+    const relatedTemplateNames = templateRows
+      .filter((t) => relatedTemplateIds.includes(t.id))
+      .map((t) => ({ id: t.id, name: t.templateName }));
 
     return NextResponse.json({
       success: true,
@@ -46,6 +114,12 @@ export async function GET(
           category,
           count,
         })),
+        relatedScoringItemCount: Number(scoringCountRow[0]?.count ?? 0),
+        relatedTemplateCount: templateRows.length,
+        signatureRequiredCount: Number(signatureCountRow[0]?.count ?? 0),
+        sealRequiredCount: Number(sealCountRow[0]?.count ?? 0),
+        materialList,
+        relatedTemplates: relatedTemplateNames,
       },
     });
   });
