@@ -76,6 +76,8 @@ export async function GET(
       status: c.reviewStatus,
     }));
 
+    const urgentLevels = ['urgent', 'critical'] as const;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -88,7 +90,9 @@ export async function GET(
           taskCount: taskData.length,
           pendingTaskCount: taskData.filter((t) => t.status === 'pending').length,
           clarificationCount: clarificationData.length,
-          urgentClarificationCount: clarificationData.filter((c) => c.urgency === 'high').length,
+          urgentClarificationCount: clarificationData.filter((c) =>
+            urgentLevels.includes(c.urgency as (typeof urgentLevels)[number])
+          ).length,
         },
       },
     });
