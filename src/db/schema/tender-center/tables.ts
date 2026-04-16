@@ -1169,6 +1169,8 @@ export const clarificationCandidates = pgTable(
         onDelete: 'set null',
       }
     ),
+    sourceRiskId: integer('source_risk_id'),
+    sourceConflictId: integer('source_conflict_id'),
     questionTitle: text('question_title').notNull(),
     questionContent: text('question_content'),
     questionReason: text('question_reason'),

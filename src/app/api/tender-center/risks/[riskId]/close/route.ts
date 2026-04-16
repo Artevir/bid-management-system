@@ -20,8 +20,8 @@ export async function POST(
   return withAuth(request, async (req, userId) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || 'close');
-    if (!['close', 'reopen'].includes(action)) {
-      return tenderCenterError('无效的 action，支持 close 或 reopen', 400);
+    if (!['close', 'mitigate', 'reopen'].includes(action)) {
+      return tenderCenterError('无效的 action，支持 close、mitigate 或 reopen', 400);
     }
     const note = String(body.comment || body.note || '').trim();
 
@@ -54,7 +54,8 @@ export async function POST(
     await db
       .update(riskItems)
       .set({
-        resolutionStatus: action === 'reopen' ? 'open' : 'closed',
+        resolutionStatus:
+          action === 'reopen' ? 'open' : action === 'mitigate' ? 'mitigated' : 'closed',
         reviewStatus: action === 'reopen' ? 'reviewing' : 'confirmed',
         ...(note ? { resolutionNote: note.slice(0, 4000) } : {}),
         updatedAt: new Date(),
@@ -63,7 +64,11 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      data: { riskId: `risk-${row.id}`, status: action === 'reopen' ? 'open' : 'closed', action },
+      data: {
+        riskId: `risk-${row.id}`,
+        status: action === 'reopen' ? 'open' : action === 'mitigate' ? 'mitigated' : 'closed',
+        action,
+      },
     });
   });
 }
