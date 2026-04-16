@@ -99,7 +99,7 @@ export async function POST(
       taskType = 'preparation';
     } else if (sourceType === 'risk') {
       const [riskRow] = await db
-        .select({ title: riskItems.title })
+        .select({ title: riskItems.riskTitle })
         .from(riskItems)
         .where(and(eq(riskItems.id, sourceId), eq(riskItems.tenderProjectVersionId, version.id)))
         .limit(1);
