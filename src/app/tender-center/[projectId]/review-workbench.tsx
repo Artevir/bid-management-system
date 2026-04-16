@@ -31,6 +31,17 @@ type SnapshotItem = {
   note?: string;
 };
 
+type ConfidenceItem = {
+  batchId: string;
+  batchNo: string;
+  documentParseBatchId: number;
+  confidence: number;
+  confidenceLevel: string;
+  extractionConfidence: number;
+  businessConfidence: number;
+  meta: Record<string, unknown> | null;
+};
+
 const REVIEW_DECISIONS = ['approved', 'rejected', 'needs_revision', 'deferred'] as const;
 const SNAPSHOT_TYPES = [
   'requirements_snapshot',
@@ -50,6 +61,7 @@ export function ReviewWorkbench({
   const [reviewRows, setReviewRows] = useState<ReviewTask[]>([]);
   const [conflictRows, setConflictRows] = useState<ConflictItem[]>([]);
   const [snapshotRows, setSnapshotRows] = useState<SnapshotItem[]>([]);
+  const [confidenceRows, setConfidenceRows] = useState<ConfidenceItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [creatingSnapshot, setCreatingSnapshot] = useState(false);
@@ -61,14 +73,16 @@ export function ReviewWorkbench({
     setLoading(true);
     setError('');
     try {
-      const [reviewsRes, conflictsRes, snapshotsRes] = await Promise.all([
+      const [reviewsRes, conflictsRes, snapshotsRes, confidenceRes] = await Promise.all([
         fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/reviews`),
         fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/conflicts`),
         fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/snapshots`),
+        fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/confidence`),
       ]);
       const reviewsPayload = await reviewsRes.json();
       const conflictsPayload = await conflictsRes.json();
       const snapshotsPayload = await snapshotsRes.json();
+      const confidencePayload = await confidenceRes.json();
       if (!reviewsRes.ok || !reviewsPayload.success) {
         throw new Error(reviewsPayload.error || reviewsPayload.message || '加载复核任务失败');
       }
@@ -81,6 +95,11 @@ export function ReviewWorkbench({
       setReviewRows(Array.isArray(reviewsPayload.data) ? reviewsPayload.data : []);
       setConflictRows(Array.isArray(conflictsPayload.data) ? conflictsPayload.data : []);
       setSnapshotRows(Array.isArray(snapshotsPayload.data) ? snapshotsPayload.data : []);
+      setConfidenceRows(
+        confidencePayload.success && Array.isArray(confidencePayload.data)
+          ? confidencePayload.data
+          : []
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载复核工作台失败');
     } finally {
@@ -181,6 +200,12 @@ export function ReviewWorkbench({
     }
   };
 
+  const confidenceLevelColors: Record<string, string> = {
+    high: 'bg-green-100 text-green-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    low: 'bg-red-100 text-red-800',
+  };
+
   return (
     <div className="space-y-4">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -254,6 +279,44 @@ export function ReviewWorkbench({
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle>置信度评估</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {confidenceRows.map((row) => (
+            <div key={row.batchId} className="rounded border p-3 space-y-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium">批次 {row.batchNo}</p>
+                  <p className="text-xs text-muted-foreground">
+                    文档批次ID: {row.documentParseBatchId}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${confidenceLevelColors[row.confidenceLevel] || 'bg-gray-100'}`}
+                  >
+                    {row.confidenceLevel} ({row.confidence}%)
+                  </span>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                抽取置信度: {row.extractionConfidence}% | 业务置信度: {row.businessConfidence}%
+              </div>
+              {row.meta && Object.keys(row.meta).length > 0 && (
+                <div className="text-xs bg-muted p-2 rounded">
+                  <pre className="whitespace-pre-wrap">{JSON.stringify(row.meta, null, 2)}</pre>
+                </div>
+              )}
+            </div>
+          ))}
+          {confidenceRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无置信度数据（请先运行解析任务）</p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="space-y-2">
           <CardTitle>快照中心</CardTitle>
           <div className="flex flex-wrap gap-2">
@@ -282,6 +345,12 @@ export function ReviewWorkbench({
         <CardContent className="space-y-3">
           {snapshotRows.map((row, index) => {
             const sid = row.snapshotId || '';
+            const confidenceLevelColors: Record<string, string> = {
+              high: 'bg-green-100 text-green-800',
+              medium: 'bg-yellow-100 text-yellow-800',
+              low: 'bg-red-100 text-red-800',
+            };
+
             return (
               <div key={`${sid}-${index}`} className="rounded border p-3 space-y-2">
                 <p className="text-sm font-medium">{row.name || sid || `snapshot-${index + 1}`}</p>
