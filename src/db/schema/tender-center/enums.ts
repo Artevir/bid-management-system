@@ -66,6 +66,26 @@ export const tcHubDocumentCategoryEnum = pgEnum('tc_hub_document_category', [
   'drawing',
 ]);
 
+export const tcHubDocumentParserTypeEnum = pgEnum('tc_hub_document_parser_type', [
+  // 030 document_parser_type
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'txt',
+  'unknown',
+]);
+
+export const tcHubObjectValidityStatusEnum = pgEnum('tc_hub_object_validity_status', [
+  // 030 object_validity_status
+  'valid',
+  'invalid',
+  'superseded',
+  'expired',
+  'deprecated',
+]);
+
 export const tcHubExtractStatusEnum = pgEnum('tc_hub_extract_status', [
   // 030 canonical text/structure extract statuses
   'not_started',
