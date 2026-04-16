@@ -4,13 +4,22 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 type HubTemplate = {
   templateId: number;
   name: string | null;
   category: string | null;
+  sourceTitle: string | null;
+  templateText: string | null;
   sourceNodeId: number | null;
   pageNumber: number | null;
+  fixedFormat: boolean;
+  originalFormatRequired: boolean;
+  signatureRequired: boolean;
+  sealRequired: boolean;
+  dateRequired: boolean;
+  reviewStatus: string;
 };
 
 export function TemplatesWorkbench({
@@ -51,9 +60,37 @@ export function TemplatesWorkbench({
 
   const filteredTemplates = keyword.trim()
     ? templates.filter((t) =>
-        `${t.name || ''} ${t.category || ''}`.toLowerCase().includes(keyword.trim().toLowerCase())
+        `${t.name || ''} ${t.category || ''} ${t.sourceTitle || ''}`
+          .toLowerCase()
+          .includes(keyword.trim().toLowerCase())
       )
     : templates;
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      draft: 'secondary',
+      confirmed: 'default',
+      rejected: 'destructive',
+    };
+    return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
+  };
+
+  const getRequirementBadges = (tpl: HubTemplate) => {
+    const badges: { label: string; present: boolean }[] = [
+      { label: '固定格式', present: tpl.fixedFormat },
+      { label: '原格式', present: tpl.originalFormatRequired },
+      { label: '需签字', present: tpl.signatureRequired },
+      { label: '需盖章', present: tpl.sealRequired },
+      { label: '需日期', present: tpl.dateRequired },
+    ];
+    return badges
+      .filter((b) => b.present)
+      .map((b) => (
+        <Badge key={b.label} variant="outline" className="text-xs">
+          {b.label}
+        </Badge>
+      ));
+  };
 
   return (
     <Card>
@@ -63,7 +100,7 @@ export function TemplatesWorkbench({
           <Input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索模板名称/类别"
+            placeholder="搜索模板名称/类别/来源标题"
             className="max-w-sm"
           />
           <Button variant="outline" onClick={() => void loadTemplates()} disabled={loading}>
@@ -79,12 +116,24 @@ export function TemplatesWorkbench({
           {filteredTemplates.map((tpl) => (
             <div key={tpl.templateId} className="rounded border p-3 space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="font-medium">{tpl.name || `模板 #${tpl.templateId}`}</p>
                   <p className="text-xs text-muted-foreground">
-                    类别：{tpl.category || 'other_template'} | 来源段落：{tpl.sourceNodeId ?? '-'} |
+                    类别：{tpl.category || 'other_template'} | 来源：{tpl.sourceTitle || '-'} |
                     页码：{tpl.pageNumber ?? '-'}
                   </p>
+                  {tpl.templateText && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      内容预览：{tpl.templateText.slice(0, 100)}
+                      {tpl.templateText.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {getStatusBadge(tpl.reviewStatus)}
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {getRequirementBadges(tpl)}
+                  </div>
                 </div>
               </div>
             </div>

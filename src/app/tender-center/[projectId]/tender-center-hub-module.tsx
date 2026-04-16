@@ -17,6 +17,9 @@ import { TimeNodesWorkbench } from './time-nodes-workbench';
 import { MoneyTermsWorkbench } from './money-terms-workbench';
 import { SegmentsWorkbench } from './segments-workbench';
 import { SectionsWorkbench } from './sections-workbench';
+import { DocumentsWorkbench } from './documents-workbench';
+import { PagesWorkbench } from './pages-workbench';
+import { OverviewWorkbench } from './overview-workbench';
 import { ConflictsWorkbench } from './conflicts-workbench';
 import { ClarificationsWorkbench } from './clarifications-workbench';
 import { RulesWorkbench } from './rules-workbench';
@@ -82,11 +85,14 @@ export function TenderCenterHubModuleView({
 
   const renderWorkbench = () => {
     if (!versionId) return null;
+    if (module === 'overview') {
+      return <OverviewWorkbench projectId={projectId} versionId={versionId} />;
+    }
     if (module === 'documents') {
-      return <div className="p-4 text-muted-foreground">文档与批次管理 - 入口</div>;
+      return <DocumentsWorkbench projectId={projectId} versionId={versionId} />;
     }
     if (module === 'pages') {
-      return <div className="p-4 text-muted-foreground">页码管理 - 入口</div>;
+      return <PagesWorkbench projectId={projectId} versionId={versionId} />;
     }
     if (module === 'segments') {
       return <SegmentsWorkbench projectId={projectId} versionId={versionId} />;

@@ -30,8 +30,16 @@ export async function GET(
       templateId: row.id,
       name: row.templateName,
       category: row.templateType,
+      sourceTitle: row.sourceTitle,
+      templateText: row.templateText,
       sourceNodeId: row.sourceSegmentId,
       pageNumber: row.sourcePageNo,
+      fixedFormat: row.fixedFormatFlag,
+      originalFormatRequired: row.originalFormatRequiredFlag,
+      signatureRequired: row.signatureRequiredFlag,
+      sealRequired: row.sealRequiredFlag,
+      dateRequired: row.dateRequiredFlag,
+      reviewStatus: row.reviewStatus,
     }));
     return NextResponse.json({ success: true, data });
   });
