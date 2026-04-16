@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { RequirementsWorkbench } from './requirements-workbench';
 import { RisksWorkbench } from './risks-workbench';
 import { ReviewWorkbench } from './review-workbench';
@@ -24,6 +25,21 @@ import { ConflictsWorkbench } from './conflicts-workbench';
 import { ClarificationsWorkbench } from './clarifications-workbench';
 import { RulesWorkbench } from './rules-workbench';
 import { AttachmentRequirementsWorkbench } from './attachment-requirements-workbench';
+
+type ProjectContext = {
+  projectId: number;
+  projectName: string;
+  projectCode: string;
+  versionId: number;
+  versionLabel: string;
+  parseStatus: string;
+  reviewStatus: string;
+  requirementCount: number;
+  riskCount: number;
+  conflictCount: number;
+  pendingReviewCount: number;
+  criticalRiskCount: number;
+};
 
 const moduleMap: Record<string, { title: string; endpoint: string; desc: string }> = {
   overview: { title: '概览', endpoint: 'overview', desc: '项目版本总览与指标统计' },
@@ -57,11 +73,26 @@ export function TenderCenterHubModuleView({
   const searchParams = useSearchParams();
   const versionId = searchParams.get('versionId') || '';
   const config = moduleMap[module] ?? null;
+  const [projectContext, setProjectContext] = useState<ProjectContext | null>(null);
+  const [loadingProject, setLoadingProject] = useState(false);
 
   const navList = useMemo(
     () => Object.entries(moduleMap).map(([key, item]) => ({ key, title: item.title })),
     []
   );
+
+  useEffect(() => {
+    if (!projectId) return;
+    setLoadingProject(true);
+    fetch(`/api/tender-center/projects/${projectId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setProjectContext(data.data);
+        }
+      })
+      .finally(() => setLoadingProject(false));
+  }, [projectId]);
 
   if (!config) {
     return (
@@ -149,6 +180,45 @@ export function TenderCenterHubModuleView({
 
   return (
     <div className="container mx-auto py-6 space-y-4">
+      {projectContext && (
+        <Card className="bg-muted/50">
+          <CardContent className="py-3">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <span className="font-medium">{projectContext.projectName || '未命名项目'}</span>
+                  <span className="text-muted-foreground text-sm ml-2">
+                    ({projectContext.projectCode || '无编码'})
+                  </span>
+                </div>
+                <Badge variant="outline">v{versionId || '?'}</Badge>
+                <Badge
+                  variant={projectContext.parseStatus === 'completed' ? 'default' : 'secondary'}
+                >
+                  解析: {projectContext.parseStatus || 'pending'}
+                </Badge>
+                <Badge
+                  variant={projectContext.reviewStatus === 'confirmed' ? 'default' : 'outline'}
+                >
+                  复核: {projectContext.reviewStatus || 'pending'}
+                </Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>要求: {projectContext.requirementCount || 0}</span>
+                <span>风险: {projectContext.riskCount || 0}</span>
+                <span>冲突: {projectContext.conflictCount || 0}</span>
+                <span>待复核: {projectContext.pendingReviewCount || 0}</span>
+                {projectContext.criticalRiskCount > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    高风险: {projectContext.criticalRiskCount}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {navList.map((item) => (
           <Link
