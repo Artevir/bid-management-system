@@ -78,8 +78,15 @@ export async function POST(
       return tenderCenterError('无效的 sourceType', 400);
     }
 
-    let taskTitle = '';
-    let taskType = 'preparation';
+    let taskType:
+      | 'prepare_material'
+      | 'write_chapter'
+      | 'fill_template'
+      | 'confirm_business_term'
+      | 'confirm_technical_term'
+      | 'prepare_clarification'
+      | 'review_risk'
+      | 'other_task' = 'other_task';
 
     if (sourceType === 'requirement') {
       const [reqRow] = await db
@@ -96,7 +103,7 @@ export async function POST(
         return tenderCenterError('源要求不存在', 404);
       }
       taskTitle = reqRow.title || `要求 #${sourceId}`;
-      taskType = 'preparation';
+      taskType = 'prepare_material';
     } else if (sourceType === 'risk') {
       const [riskRow] = await db
         .select({ title: riskItems.riskTitle })
@@ -149,11 +156,15 @@ export async function POST(
         taskTitle,
         taskType,
         status: 'pending',
-        priorityLevel: body.priority || 'medium',
-        ...(sourceType === 'requirement' ? { relatedRequirementId: sourceId } : {}),
-        ...(sourceType === 'material' ? { relatedMaterialId: sourceId } : {}),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        priorityLevel: body.priority || 'p2',
+        ...(sourceType === 'requirement'
+          ? { relatedRequirementId: sourceId, sourceObjectType: 'tender_requirement' }
+          : {}),
+        ...(sourceType === 'material'
+          ? { relatedMaterialId: sourceId, sourceObjectType: 'submission_material' }
+          : {}),
+        ...(sourceType === 'risk' ? { sourceObjectType: 'risk_item' } : {}),
+        ...(sourceType === 'framework' ? { sourceObjectType: 'bid_framework_node' } : {}),
       })
       .returning();
 
