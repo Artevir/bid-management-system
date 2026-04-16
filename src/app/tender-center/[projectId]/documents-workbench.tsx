@@ -29,6 +29,20 @@ type ParseBatch = {
   createdAt: string;
 };
 
+type AiTask = {
+  taskId: string;
+  taskType: string;
+  status: string;
+  batchId: string;
+  content: {
+    modelProvider: string | null;
+    modelName: string | null;
+    taskStatus: string | null;
+    errorMessage: string | null;
+  };
+  executedAt: string | null;
+};
+
 type HubData = {
   documents: SourceDocument[];
   batches: ParseBatch[];
@@ -44,6 +58,9 @@ export function DocumentsWorkbench({
   const [data, setData] = useState<HubData>({ documents: [], batches: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
+  const [aiTasks, setAiTasks] = useState<Record<number, AiTask[]>>({});
+  const [loadingTasks, setLoadingTasks] = useState<Record<number, boolean>>({});
 
   const loadData = async () => {
     if (!versionId) return;
@@ -85,6 +102,28 @@ export function DocumentsWorkbench({
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const toggleBatchExpand = async (batchId: number) => {
+    if (expandedBatchId === batchId) {
+      setExpandedBatchId(null);
+      return;
+    }
+    setExpandedBatchId(batchId);
+    if (!aiTasks[batchId] && !loadingTasks[batchId]) {
+      setLoadingTasks((prev) => ({ ...prev, [batchId]: true }));
+      try {
+        const res = await fetch(`/api/tender-center/batches/hub-batch-${batchId}/ai-tasks`);
+        const payload = await res.json();
+        if (res.ok && payload.success) {
+          setAiTasks((prev) => ({ ...prev, [batchId]: payload.data || [] }));
+        }
+      } catch (err) {
+        console.error('加载AI任务失败', err);
+      } finally {
+        setLoadingTasks((prev) => ({ ...prev, [batchId]: false }));
+      }
+    }
   };
 
   return (
@@ -155,8 +194,46 @@ export function DocumentsWorkbench({
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {getStatusBadge(batch.batchStatus)}
+                      <Button size="sm" variant="ghost" onClick={() => toggleBatchExpand(batch.id)}>
+                        {expandedBatchId === batch.id ? '收起' : '展开'}
+                      </Button>
                     </div>
                   </div>
+                  {expandedBatchId === batch.id && (
+                    <div className="mt-3 pt-3 border-t">
+                      <h4 className="text-xs font-medium mb-2">
+                        AI任务 ({aiTasks[batch.id]?.length || 0})
+                      </h4>
+                      {loadingTasks[batch.id] ? (
+                        <p className="text-xs text-muted-foreground">加载中...</p>
+                      ) : aiTasks[batch.id]?.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">暂无AI任务记录</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {aiTasks[batch.id]?.map((task) => (
+                            <div key={task.taskId} className="rounded bg-muted p-2 text-xs">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium">{task.taskType}</span>
+                                <Badge variant="outline">{task.status}</Badge>
+                              </div>
+                              <p className="text-muted-foreground mt-1">
+                                模型: {task.content.modelProvider || '-'} /{' '}
+                                {task.content.modelName || '-'}
+                              </p>
+                              {task.content.errorMessage && (
+                                <p className="text-red-500 mt-1">{task.content.errorMessage}</p>
+                              )}
+                              {task.executedAt && (
+                                <p className="text-muted-foreground">
+                                  执行时间: {new Date(task.executedAt).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
