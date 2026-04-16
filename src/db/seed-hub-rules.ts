@@ -44,8 +44,8 @@ export async function seedTenderCenterHubRulesFromContract(): Promise<void> {
         versionNo: r.versionNo ?? data.version,
         note: r.note ?? null,
       })
-      .onConflictDoNothing({ target: ruleDefinitions.ruleCode });
+      .onConflictDoNothing({ target: [ruleDefinitions.ruleCode, ruleDefinitions.versionNo] });
   }
 
-  console.log(`   ✓ 中枢内置规则种子：${data.rules.length} 条（幂等 rule_code）`);
+  console.log(`   ✓ 中枢内置规则种子：${data.rules.length} 条（幂等 rule_code + version_no）`);
 }

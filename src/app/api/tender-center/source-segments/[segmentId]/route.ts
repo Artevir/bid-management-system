@@ -49,7 +49,10 @@ export async function GET(
         eq(tenderProjectVersions.id, sourceDocuments.tenderProjectVersionId)
       )
       .innerJoin(tenderProjects, eq(tenderProjects.id, tenderProjectVersions.tenderProjectId))
-      .leftJoin(documentPages, eq(documentPages.id, sourceSegments.documentPageId))
+      .leftJoin(
+        documentPages,
+        and(eq(documentPages.id, sourceSegments.documentPageId), eq(documentPages.isDeleted, false))
+      )
       .where(and(eq(sourceSegments.id, id), eq(sourceSegments.isDeleted, false)))
       .limit(1);
     const row = rows[0];

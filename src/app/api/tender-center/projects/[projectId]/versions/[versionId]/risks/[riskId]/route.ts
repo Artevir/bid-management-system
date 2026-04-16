@@ -6,6 +6,10 @@ import { AppError } from '@/lib/api/error-handler';
 import { db } from '@/db';
 import { riskItems } from '@/db/schema';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
+import {
+  HubGovernanceTargetType,
+  recordHubPatchGovernance,
+} from '@/lib/tender-center/hub-governance';
 
 const REVIEW_STATUSES = new Set([
   'draft',
@@ -16,7 +20,17 @@ const REVIEW_STATUSES = new Set([
   'rejected',
   'closed',
 ]);
-const RESOLUTION_STATUSES = new Set(['open', 'acknowledged', 'mitigated', 'closed', 'waived']);
+const RESOLUTION_STATUSES = new Set([
+  'open',
+  'in_progress',
+  'accepted',
+  'mitigated',
+  'clarified',
+  'closed',
+  // legacy兼容
+  'acknowledged',
+  'waived',
+]);
 const RISK_LEVELS = new Set(['low', 'medium', 'high', 'critical']);
 
 // 040: PATCH /api/tender-center/projects/{projectId}/versions/{versionId}/risks/{riskId}
@@ -72,11 +86,40 @@ export async function PATCH(
       if (!RESOLUTION_STATUSES.has(value)) {
         throw AppError.badRequest('resolutionStatus 非法');
       }
-      patch.resolutionStatus = value as 'open' | 'acknowledged' | 'mitigated' | 'closed' | 'waived';
+      patch.resolutionStatus = value as
+        | 'open'
+        | 'in_progress'
+        | 'accepted'
+        | 'mitigated'
+        | 'clarified'
+        | 'closed'
+        | 'acknowledged'
+        | 'waived';
+    }
+    if (body.resolutionNote !== undefined) {
+      if (body.resolutionNote === null) {
+        patch.resolutionNote = null;
+      } else if (typeof body.resolutionNote === 'string') {
+        const v = body.resolutionNote.trim();
+        patch.resolutionNote = v ? v.slice(0, 4000) : null;
+      } else {
+        throw AppError.badRequest('resolutionNote 须为字符串或 null');
+      }
     }
 
     if (Object.keys(patch).length === 0) {
       throw AppError.badRequest('未提供可更新字段');
+    }
+
+    const before = await db.query.riskItems.findFirst({
+      where: and(
+        eq(riskItems.id, rid),
+        eq(riskItems.tenderProjectVersionId, version.id),
+        eq(riskItems.isDeleted, false)
+      ),
+    });
+    if (!before) {
+      throw AppError.notFound('风险');
     }
 
     patch.updatedAt = new Date();
@@ -97,6 +140,31 @@ export async function PATCH(
       throw AppError.notFound('风险');
     }
 
+    await recordHubPatchGovernance({
+      operatorId: userId,
+      tenderProjectVersionId: version.id,
+      targetObjectType: HubGovernanceTargetType.riskItem,
+      targetObjectId: row.id,
+      beforeJson: {
+        id: before.id,
+        riskTitle: before.riskTitle,
+        riskDescription: before.riskDescription,
+        riskLevel: before.riskLevel,
+        reviewStatus: before.reviewStatus,
+        resolutionStatus: before.resolutionStatus,
+        resolutionNote: before.resolutionNote,
+      },
+      afterJson: {
+        id: row.id,
+        riskTitle: row.riskTitle,
+        riskDescription: row.riskDescription,
+        riskLevel: row.riskLevel,
+        reviewStatus: row.reviewStatus,
+        resolutionStatus: row.resolutionStatus,
+        resolutionNote: row.resolutionNote,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       data: {
@@ -106,6 +174,7 @@ export async function PATCH(
         level: row.riskLevel,
         reviewStatus: row.reviewStatus,
         resolutionStatus: row.resolutionStatus,
+        resolutionNote: row.resolutionNote,
       },
     });
   });

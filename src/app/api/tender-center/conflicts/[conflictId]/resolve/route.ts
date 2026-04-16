@@ -61,7 +61,7 @@ export async function POST(
     if (row.projectCreatedBy && row.projectCreatedBy !== userId) {
       return tenderCenterError('无权处理该冲突', 403);
     }
-    if (row.reviewStatus === 'resolved') {
+    if (row.reviewStatus === 'resolved' || row.reviewStatus === 'closed') {
       return tenderCenterError('该冲突已处理完成', 409);
     }
 

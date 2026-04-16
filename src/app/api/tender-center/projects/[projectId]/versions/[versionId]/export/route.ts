@@ -19,7 +19,10 @@ import {
   submissionRequirements,
   technicalSpecGroups,
   technicalSpecItems,
+  templateBlocks,
+  templateVariableBindings,
   templateVariables,
+  formTableStructures,
   tenderRequirements,
   timeNodes,
 } from '@/db/schema';
@@ -216,7 +219,8 @@ export async function GET(
         .where(
           and(
             eq(bidFrameworkNodes.tenderProjectVersionId, version.id),
-            eq(bidFrameworkNodes.isDeleted, false)
+            eq(bidFrameworkNodes.isDeleted, false),
+            eq(frameworkRequirementBindings.isDeleted, false)
           )
         ),
     ]);
@@ -226,7 +230,38 @@ export async function GET(
       tplIds.length === 0
         ? []
         : await db.query.templateVariables.findMany({
-            where: inArray(templateVariables.bidTemplateId, tplIds),
+            where: and(
+              inArray(templateVariables.bidTemplateId, tplIds),
+              eq(templateVariables.isDeleted, false)
+            ),
+          });
+    const templateBlockDb =
+      tplIds.length === 0
+        ? []
+        : await db.query.templateBlocks.findMany({
+            where: and(
+              inArray(templateBlocks.bidTemplateId, tplIds),
+              eq(templateBlocks.isDeleted, false)
+            ),
+          });
+    const formTableStructDb =
+      tplIds.length === 0
+        ? []
+        : await db.query.formTableStructures.findMany({
+            where: and(
+              inArray(formTableStructures.bidTemplateId, tplIds),
+              eq(formTableStructures.isDeleted, false)
+            ),
+          });
+    const varIds = templateVarDb.map((v) => v.id);
+    const templateVarBindingDb =
+      varIds.length === 0
+        ? []
+        : await db.query.templateVariableBindings.findMany({
+            where: and(
+              inArray(templateVariableBindings.templateVariableId, varIds),
+              eq(templateVariableBindings.isDeleted, false)
+            ),
           });
 
     const risksExportView = riskRows.map((row) => ({
@@ -234,6 +269,10 @@ export async function GET(
       riskType: row.riskType,
       riskLevel: row.riskLevel,
       riskTitle: row.riskTitle,
+      riskDescription: row.riskDescription,
+      reviewStatus: row.reviewStatus,
+      resolutionStatus: row.resolutionStatus,
+      resolutionNote: row.resolutionNote,
       sourcePageNo: row.sourceSegmentId,
     }));
 
@@ -261,6 +300,32 @@ export async function GET(
       requiredFlag: v.requiredFlag,
       editableFlag: v.editableFlag,
       sourcePageNo: v.sourceSegmentId,
+    }));
+    const templateBlocksExportView = templateBlockDb.map((b) => ({
+      blockId: `block-${b.id}`,
+      templateId: `template-${b.bidTemplateId}`,
+      blockType: b.blockType,
+      orderNo: b.orderNo,
+      sourceSegmentId: b.sourceSegmentId,
+    }));
+    const templateVariableBindingsExportView = templateVarBindingDb.map((b) => ({
+      bindingId: `var-binding-${b.id}`,
+      templateVariableId: `var-${b.templateVariableId}`,
+      bindingTargetType: b.bindingTargetType,
+      bindingKey: b.bindingKey,
+      fallbackStrategy: b.fallbackStrategy,
+      note: b.note,
+    }));
+    const formTableStructuresExportView = formTableStructDb.map((f) => ({
+      cellId: `cell-${f.id}`,
+      templateId: `template-${f.bidTemplateId}`,
+      tableName: f.tableName,
+      rowNo: f.rowNo,
+      colNo: f.colNo,
+      cellKey: f.cellKey,
+      cellLabel: f.cellLabel,
+      cellType: f.cellType,
+      requiredFlag: f.requiredFlag,
     }));
 
     const materialsExportView = submissionMat.map((m) => ({
@@ -353,6 +418,10 @@ export async function GET(
       framework: frameworkSnapshot,
       frameworkBindings: frameworkBindingRows,
       templates: templatesSnapshot,
+      templateBlocks: templateBlocksExportView,
+      templateVariables: templateVariablesExportView,
+      templateVariableBindings: templateVariableBindingsExportView,
+      formTableStructures: formTableStructuresExportView,
       materials: materialsSnapshot,
       risks: risksExportView,
       conflicts: conflictsExportView,
@@ -426,6 +495,10 @@ export async function GET(
         responseTasks: responseTaskRows.length,
         attachmentRequirements: attachmentReqRows.length,
         frameworkBindings: frameworkBindingRows.length,
+        templateBlocks: templateBlocksExportView.length,
+        templateVariables: templateVariablesExportView.length,
+        templateVariableBindings: templateVariableBindingsExportView.length,
+        formTableStructures: formTableStructuresExportView.length,
       },
       views: {
         requirements_export_view: requirementsSnapshot,
@@ -436,6 +509,9 @@ export async function GET(
         framework_export_view: frameworkExportView,
         templates_export_view: templatesExportView,
         template_variables_export_view: templateVariablesExportView,
+        template_blocks_export_view: templateBlocksExportView,
+        template_variable_bindings_export_view: templateVariableBindingsExportView,
+        form_table_structures_export_view: formTableStructuresExportView,
         materials_export_view: materialsExportView,
         reviews_export_view: reviewsExportView,
       },

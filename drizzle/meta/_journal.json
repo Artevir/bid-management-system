@@ -15,6 +15,48 @@
       "when": 1774696000000,
       "tag": "0001_foundation_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774696100000,
+      "tag": "0002_risk_item_resolution_note",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774696200000,
+      "tag": "0003_hub_timestamps_soft_delete",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774696300000,
+      "tag": "0004_parse_batch_page_binding_soft_delete",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774696400000,
+      "tag": "0005_tc020_fk_and_index_alignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774696500000,
+      "tag": "0006_tc020_not_null_alignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774696600000,
+      "tag": "0007_tc030_status_enum_alignment",
+      "breakpoints": true
     }
   ]
 }

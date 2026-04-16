@@ -13,6 +13,7 @@ type TenderCenterRisk = {
   detail: string;
   reviewStatus: string;
   resolutionStatus: string;
+  resolutionNote: string | null;
   sourceRequirementId?: number | null;
 };
 
@@ -50,6 +51,7 @@ export async function GET(
       detail: row.riskDescription || '',
       reviewStatus: row.reviewStatus,
       resolutionStatus: row.resolutionStatus,
+      resolutionNote: row.resolutionNote ?? null,
       sourceRequirementId: row.relatedRequirementId,
     }));
 

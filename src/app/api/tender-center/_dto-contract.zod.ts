@@ -671,6 +671,17 @@ export const tenderCenterDtoContracts = {
       body: z.object({}),
     },
   },
+  getTemplatesTemplateIdStructureContract: {
+    method: 'GET',
+    path: '/api/tender-center/templates/[templateId]/structure',
+    request: {
+      path: z.object({
+        templateId: z.string().regex(/^\d+$/, 'templateId must be numeric id'),
+      }),
+      query: z.object({}),
+      body: z.object({}),
+    },
+  },
 } as const;
 
 export type TenderCenterDtoContractMap = typeof tenderCenterDtoContracts;

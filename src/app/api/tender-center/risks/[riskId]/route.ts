@@ -32,6 +32,7 @@ export async function GET(
         riskLevel: riskItems.riskLevel,
         reviewStatus: riskItems.reviewStatus,
         resolutionStatus: riskItems.resolutionStatus,
+        resolutionNote: riskItems.resolutionNote,
         relatedRequirementId: riskItems.relatedRequirementId,
         projectCreatedBy: tenderProjects.createdBy,
       })
@@ -67,6 +68,7 @@ export async function GET(
         detail: row.riskDescription || '',
         reviewStatus: row.reviewStatus,
         resolutionStatus: row.resolutionStatus,
+        resolutionNote: row.resolutionNote ?? null,
       },
     });
   });

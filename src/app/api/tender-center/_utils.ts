@@ -29,7 +29,7 @@ export async function resolveHubDocumentParseBatchContext(batchId: string) {
   const id = parseHubDocumentParseBatchId(batchId);
   if (id === null) return null;
   const batch = await db.query.documentParseBatches.findFirst({
-    where: eq(documentParseBatches.id, id),
+    where: and(eq(documentParseBatches.id, id), eq(documentParseBatches.isDeleted, false)),
   });
   if (!batch) return null;
   const version = await db.query.tenderProjectVersions.findFirst({

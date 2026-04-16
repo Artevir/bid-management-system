@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { assetExportSnapshots } from '@/db/schema';
@@ -34,28 +34,31 @@ function buildSnapshotId(versionId: number): string {
 
 function mapSnapshotTypeToHub(
   t: TenderSnapshotType
-): 'full_asset' | 'requirements_only' | 'risks_only' | 'templates_only' | 'custom' {
+):
+  | 'requirements_snapshot'
+  | 'framework_snapshot'
+  | 'templates_snapshot'
+  | 'materials_snapshot'
+  | 'full_snapshot' {
   switch (t) {
     case 'requirements_snapshot':
-      return 'requirements_only';
+      return 'requirements_snapshot';
     case 'framework_snapshot':
-      return 'custom';
+      return 'framework_snapshot';
     case 'templates_snapshot':
-      return 'templates_only';
+      return 'templates_snapshot';
     case 'materials_snapshot':
-      return 'custom';
+      return 'materials_snapshot';
     case 'full_snapshot':
     default:
-      return 'full_asset';
+      return 'full_snapshot';
   }
 }
 
 function mapExportModeToHub(
   m: TenderExportMode
-): 'json' | 'excel' | 'word' | 'pdf_bundle' | 'other' {
-  if (m === 'manual_download') return 'excel';
-  if (m === 'api_delivery') return 'json';
-  return 'json';
+): 'internal_consumption' | 'downstream_module' | 'manual_download' | 'api_delivery' {
+  return m;
 }
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/snapshots
@@ -76,7 +79,10 @@ export async function GET(
     }
 
     const rows = await db.query.assetExportSnapshots.findMany({
-      where: eq(assetExportSnapshots.tenderProjectVersionId, version.id),
+      where: and(
+        eq(assetExportSnapshots.tenderProjectVersionId, version.id),
+        eq(assetExportSnapshots.isDeleted, false)
+      ),
       orderBy: [desc(assetExportSnapshots.createdAt)],
     });
 
@@ -215,7 +221,7 @@ export async function POST(
     await db.insert(assetExportSnapshots).values({
       tenderProjectVersionId: version.id,
       snapshotType: mapSnapshotTypeToHub(snapshotType),
-      snapshotStatus: 'ready',
+      snapshotStatus: 'generated',
       exportMode: mapExportModeToHub(exportModeRaw),
       snapshotJson: payload as unknown as Record<string, unknown>,
       schemaVersion: 'hub-1',

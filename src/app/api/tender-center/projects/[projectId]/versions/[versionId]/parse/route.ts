@@ -97,7 +97,7 @@ export async function POST(
       .values({
         tenderProjectVersionId: version.id,
         batchNo: `parse-${Date.now()}`,
-        triggerSource: 'manual',
+        triggerSource: 'manual_reparse',
         batchStatus: 'running',
         parseStartedAt: new Date(),
         operatorId: userId,
@@ -110,17 +110,18 @@ export async function POST(
       batchId: batch.id,
     });
 
-    const finalBatchStatus: 'succeeded' | 'partial' | 'failed' =
+    const finalBatchStatus: 'succeeded' | 'partially_succeeded' | 'failed' =
       ingestResult.failedDocuments === 0
         ? 'succeeded'
         : ingestResult.parsedDocuments > 0
-          ? 'partial'
+          ? 'partially_succeeded'
           : 'failed';
     await db
       .update(documentParseBatches)
       .set({
         batchStatus: finalBatchStatus,
         parseFinishedAt: new Date(),
+        updatedAt: new Date(),
       })
       .where(eq(documentParseBatches.id, batch.id));
 

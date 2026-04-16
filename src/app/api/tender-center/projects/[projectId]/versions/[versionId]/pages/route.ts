@@ -28,11 +28,18 @@ export async function GET(
       })
       .from(documentPages)
       .innerJoin(sourceDocuments, eq(sourceDocuments.id, documentPages.sourceDocumentId))
-      .leftJoin(sourceSegments, eq(sourceSegments.documentPageId, documentPages.id))
+      .leftJoin(
+        sourceSegments,
+        and(
+          eq(sourceSegments.documentPageId, documentPages.id),
+          eq(sourceSegments.isDeleted, false)
+        )
+      )
       .where(
         and(
           eq(sourceDocuments.tenderProjectVersionId, version.id),
-          eq(sourceDocuments.isDeleted, false)
+          eq(sourceDocuments.isDeleted, false),
+          eq(documentPages.isDeleted, false)
         )
       )
       .groupBy(documentPages.pageNo);

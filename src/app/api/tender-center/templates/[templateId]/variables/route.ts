@@ -53,7 +53,10 @@ export async function GET(
     }
 
     const structuredVars = await db.query.templateVariables.findMany({
-      where: eq(templateVariables.bidTemplateId, row.id),
+      where: and(
+        eq(templateVariables.bidTemplateId, row.id),
+        eq(templateVariables.isDeleted, false)
+      ),
     });
     if (structuredVars.length > 0) {
       return NextResponse.json({

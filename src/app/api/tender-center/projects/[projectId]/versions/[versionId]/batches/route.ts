@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import { documentParseBatches } from '@/db/schema';
@@ -10,6 +10,7 @@ import type { TenderBatchStatus } from '@/lib/interpretation/status-machine';
 function mapHubBatchStatus(status: string): TenderBatchStatus {
   switch (status) {
     case 'running':
+    case 'partially_succeeded':
     case 'partial':
       return 'running';
     case 'succeeded':
@@ -41,7 +42,10 @@ export async function GET(
     }
 
     const rows = await db.query.documentParseBatches.findMany({
-      where: eq(documentParseBatches.tenderProjectVersionId, version.id),
+      where: and(
+        eq(documentParseBatches.tenderProjectVersionId, version.id),
+        eq(documentParseBatches.isDeleted, false)
+      ),
       orderBy: [desc(documentParseBatches.createdAt)],
     });
 
@@ -50,7 +54,14 @@ export async function GET(
       interpretationId: null as number | null,
       documentParseBatchId: row.id,
       status: mapHubBatchStatus(row.batchStatus),
-      progress: row.batchStatus === 'succeeded' ? 100 : row.batchStatus === 'running' ? 50 : 0,
+      progress:
+        row.batchStatus === 'succeeded'
+          ? 100
+          : row.batchStatus === 'partially_succeeded'
+            ? 80
+            : row.batchStatus === 'running'
+              ? 50
+              : 0,
       startedAt: row.parseStartedAt,
       completedAt: row.parseFinishedAt,
     }));

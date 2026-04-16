@@ -8,6 +8,7 @@ import { resolveHubDocumentParseBatchContext } from '@/app/api/tender-center/_ut
 function mapHubBatchStatus(status: string) {
   switch (status) {
     case 'running':
+    case 'partially_succeeded':
     case 'partial':
       return 'running';
     case 'succeeded':

@@ -56,7 +56,7 @@ export async function POST(
       .set({
         resolutionStatus: action === 'reopen' ? 'open' : 'closed',
         reviewStatus: action === 'reopen' ? 'reviewing' : 'confirmed',
-        riskDescription: note || undefined,
+        ...(note ? { resolutionNote: note.slice(0, 4000) } : {}),
         updatedAt: new Date(),
       })
       .where(eq(riskItems.id, row.id));

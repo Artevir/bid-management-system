@@ -28,26 +28,45 @@ import {
 
 const IDEM_OPERATION_TYPE_HUB = 'idem_review_submit_hub';
 
-type Decision = 'approved' | 'rejected' | 'needs_revision' | 'deferred';
+type Decision = 'accepted' | 'accepted_with_modification' | 'rejected' | 'reassigned' | 'deferred';
 
 function normalizeDecision(value: string): Decision {
+  if (value === 'accepted') return 'accepted';
+  if (value === 'accepted_with_modification') return 'accepted_with_modification';
+  if (value === 'reassigned') return 'reassigned';
+  // legacy兼容
   if (value === 'rejected') return 'rejected';
-  if (value === 'needs_revision') return 'needs_revision';
+  if (value === 'needs_revision') return 'accepted_with_modification';
   if (value === 'deferred') return 'deferred';
-  return 'approved';
+  if (value === 'approved') return 'accepted';
+  return 'accepted';
 }
 
-async function syncTargetReviewStatus(task: typeof reviewTasks.$inferSelect, decision: Decision) {
+function mapDecisionToTaskStatus(
+  decision: Decision
+): 'assigned' | 'reviewing' | 'confirmed' | 'modified' | 'rejected' {
+  if (decision === 'accepted') return 'confirmed';
+  if (decision === 'accepted_with_modification') return 'modified';
+  if (decision === 'rejected') return 'rejected';
+  if (decision === 'reassigned') return 'assigned';
+  return 'reviewing';
+}
+
+async function syncTargetReviewStatus(
+  task: typeof reviewTasks.$inferSelect,
+  decision: Decision,
+  resolutionComment: string | null
+) {
   if (task.targetObjectType === 'tender_requirement') {
     await db
       .update(tenderRequirements)
       .set({
         reviewStatus:
-          decision === 'approved'
+          decision === 'accepted'
             ? 'confirmed'
             : decision === 'rejected'
               ? 'rejected'
-              : decision === 'needs_revision'
+              : decision === 'accepted_with_modification'
                 ? 'modified'
                 : 'pending_review',
         updatedAt: new Date(),
@@ -61,13 +80,14 @@ async function syncTargetReviewStatus(task: typeof reviewTasks.$inferSelect, dec
       .update(riskItems)
       .set({
         reviewStatus:
-          decision === 'approved'
+          decision === 'accepted'
             ? 'confirmed'
             : decision === 'rejected'
               ? 'rejected'
-              : decision === 'needs_revision'
+              : decision === 'accepted_with_modification'
                 ? 'modified'
                 : 'pending_review',
+        ...(resolutionComment ? { resolutionNote: resolutionComment.slice(0, 4000) } : {}),
         updatedAt: new Date(),
       })
       .where(eq(riskItems.id, task.targetObjectId));
@@ -79,11 +99,7 @@ async function syncTargetReviewStatus(task: typeof reviewTasks.$inferSelect, dec
       .update(conflictItems)
       .set({
         reviewStatus:
-          decision === 'approved'
-            ? 'resolved'
-            : decision === 'rejected'
-              ? 'accepted_risk'
-              : 'under_review',
+          decision === 'accepted' ? 'resolved' : decision === 'rejected' ? 'ignored' : 'reviewing',
         updatedAt: new Date(),
       })
       .where(eq(conflictItems.id, task.targetObjectId));
@@ -100,7 +116,7 @@ export async function POST(
   return withAuth(request, async (req, userId) => {
     try {
       const body = await req.json();
-      const reviewResult = normalizeDecision(String(body.decision || 'approved').toLowerCase());
+      const reviewResult = normalizeDecision(String(body.decision || 'accepted').toLowerCase());
       const traceId = getOrCreateTraceId(req.headers);
       const idempotencyKey = extractIdempotencyKey(req.headers);
 
@@ -174,7 +190,7 @@ export async function POST(
       await db
         .update(reviewTasks)
         .set({
-          reviewStatus: 'completed',
+          reviewStatus: mapDecisionToTaskStatus(reviewResult),
           reviewResult,
           comment: body.comment || '',
           finalValueJson: body.reviewAccuracy
@@ -190,7 +206,8 @@ export async function POST(
           )
         );
 
-      await syncTargetReviewStatus(task, reviewResult);
+      const resolutionComment = String(body.comment || '').trim() || null;
+      await syncTargetReviewStatus(task, reviewResult, resolutionComment);
 
       await logTenderTraceEvent({
         interpretationId: null,

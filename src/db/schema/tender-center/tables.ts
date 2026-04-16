@@ -1,7 +1,10 @@
 /**
  * 招标文件智能审阅中枢 — 38 张主表 Drizzle 定义（对齐 000/110 文档表名与域划分）
+ * 软删表上的业务唯一约束：使用 uniqueIndex(...).where(is_deleted = false)，与迁移 0004 部分唯一索引一致。
  */
+import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   pgTable,
   serial,
   integer,
@@ -93,14 +96,19 @@ export const tenderProjects = pgTable(
     currentVersionId: integer('current_version_id'),
     parseStatus: tcHubParseStatusEnum('parse_status').notNull().default('not_started'),
     reviewStatus: tcHubReviewStatusEnum('review_status').notNull().default('draft'),
-    assetStatus: tcHubAssetStatusEnum('asset_status').notNull().default('draft'),
+    assetStatus: tcHubAssetStatusEnum('asset_status').notNull().default('not_generated'),
     createdBy: integer('created_by'),
     updatedBy: integer('updated_by'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
-    codeIdx: uniqueIndex('tender_project_code_uidx').on(t.projectCode),
+    codeIdx: uniqueIndex('tender_project_code_uidx')
+      .on(t.projectCode)
+      .where(sql`${t.isDeleted} = false`),
+    currentVersionIdx: index('tender_project_current_version_idx').on(t.currentVersionId),
+    parseStatusIdx: index('tender_project_parse_status_idx').on(t.parseStatus),
+    reviewStatusIdx: index('tender_project_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -121,11 +129,19 @@ export const tenderProjectVersions = pgTable(
     ...hubSoftDelete,
   },
   (t) => ({
-    projVerUid: uniqueIndex('tender_project_version_proj_ver_uidx').on(
-      t.tenderProjectId,
-      t.versionNo
-    ),
+    projVerUid: uniqueIndex('tender_project_version_proj_ver_uidx')
+      .on(t.tenderProjectId, t.versionNo)
+      .where(sql`${t.isDeleted} = false`),
+    projectCurrentUid: uniqueIndex('tender_project_version_project_current_uidx')
+      .on(t.tenderProjectId)
+      .where(sql`${t.isDeleted} = false and ${t.isCurrent} = true`),
     projIdx: index('tender_project_version_project_idx').on(t.tenderProjectId),
+    projectCurrentIdx: index('tender_project_version_project_current_idx').on(
+      t.tenderProjectId,
+      t.isCurrent
+    ),
+    effectiveDateIdx: index('tender_project_version_effective_date_idx').on(t.effectiveDate),
+    versionTypeIdx: index('tender_project_version_type_idx').on(t.versionType),
   })
 );
 
@@ -143,17 +159,25 @@ export const sourceDocuments = pgTable(
     storageKey: text('storage_key'),
     checksum: varchar('checksum', { length: 128 }),
     pageCount: integer('page_count'),
-    docCategory: tcHubDocumentCategoryEnum('doc_category').notNull().default('tender_document'),
+    docCategory: tcHubDocumentCategoryEnum('doc_category').notNull().default('main_document'),
     parseStatus: tcHubParseStatusEnum('parse_status').notNull().default('not_started'),
-    textExtractStatus: tcHubExtractStatusEnum('text_extract_status').notNull().default('pending'),
+    textExtractStatus: tcHubExtractStatusEnum('text_extract_status')
+      .notNull()
+      .default('not_started'),
     structureExtractStatus: tcHubExtractStatusEnum('structure_extract_status')
       .notNull()
-      .default('pending'),
+      .default('not_started'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
+    verChecksumUid: uniqueIndex('source_document_version_checksum_uidx')
+      .on(t.tenderProjectVersionId, t.checksum)
+      .where(sql`${t.isDeleted} = false and ${t.checksum} is not null`),
     verIdx: index('source_document_version_idx').on(t.tenderProjectVersionId),
+    categoryIdx: index('source_document_category_idx').on(t.docCategory),
+    parseStatusIdx: index('source_document_parse_status_idx').on(t.parseStatus),
+    checksumIdx: index('source_document_checksum_idx').on(t.checksum),
   })
 );
 
@@ -165,7 +189,9 @@ export const documentParseBatches = pgTable(
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
     batchNo: text('batch_no').notNull(),
-    triggerSource: tcHubBatchTriggerSourceEnum('trigger_source').notNull().default('manual'),
+    triggerSource: tcHubBatchTriggerSourceEnum('trigger_source')
+      .notNull()
+      .default('auto_on_upload'),
     modelProfile: text('model_profile'),
     promptProfile: text('prompt_profile'),
     ruleProfile: text('rule_profile'),
@@ -174,13 +200,16 @@ export const documentParseBatches = pgTable(
     batchStatus: tcHubBatchStatusEnum('batch_status').notNull().default('queued'),
     operatorId: integer('operator_id'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    verBatchUid: uniqueIndex('document_parse_batch_ver_batch_uidx').on(
-      t.tenderProjectVersionId,
-      t.batchNo
-    ),
+    verBatchUid: uniqueIndex('document_parse_batch_ver_batch_uidx')
+      .on(t.tenderProjectVersionId, t.batchNo)
+      .where(sql`${t.isDeleted} = false`),
     verIdx: index('document_parse_batch_version_idx').on(t.tenderProjectVersionId),
+    statusIdx: index('document_parse_batch_status_idx').on(t.batchStatus),
+    createdAtIdx: index('document_parse_batch_created_at_idx').on(t.createdAt),
+    modelProfileIdx: index('document_parse_batch_model_profile_idx').on(t.modelProfile),
   })
 );
 
@@ -199,10 +228,16 @@ export const documentPages = pgTable(
     hasTemplateBlock: boolean('has_template_block').notNull().default(false),
     hasSignatureBlock: boolean('has_signature_block').notNull().default(false),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    docPageUid: uniqueIndex('document_page_doc_page_uidx').on(t.sourceDocumentId, t.pageNo),
+    docPageUid: uniqueIndex('document_page_doc_page_uidx')
+      .on(t.sourceDocumentId, t.pageNo)
+      .where(sql`${t.isDeleted} = false`),
     docIdx: index('document_page_document_idx').on(t.sourceDocumentId),
+    pageNoIdx: index('document_page_page_no_idx').on(t.pageNo),
+    hasTableIdx: index('document_page_has_table_idx').on(t.hasTable),
+    hasTemplateBlockIdx: index('document_page_has_template_block_idx').on(t.hasTemplateBlock),
   })
 );
 
@@ -222,15 +257,23 @@ export const sourceSegments = pgTable(
     normalizedText: text('normalized_text'),
     bboxJson: jsonb('bbox_json'),
     orderNo: integer('order_no').notNull().default(0),
-    parentSegmentId: integer('parent_segment_id'),
+    parentSegmentId: integer('parent_segment_id').references((): AnyPgColumn => sourceSegments.id, {
+      onDelete: 'set null',
+    }),
     isHeading: boolean('is_heading').notNull().default(false),
     headingLevel: integer('heading_level'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
+    pageOrderUid: uniqueIndex('source_segment_page_order_uidx')
+      .on(t.documentPageId, t.orderNo)
+      .where(sql`${t.isDeleted} = false and ${t.documentPageId} is not null`),
     docIdx: index('source_segment_document_idx').on(t.sourceDocumentId),
     pageIdx: index('source_segment_page_idx').on(t.documentPageId),
+    typeIdx: index('source_segment_type_idx').on(t.segmentType),
+    sectionPathIdx: index('source_segment_section_path_idx').on(t.sectionPath),
+    headingIdx: index('source_segment_heading_idx').on(t.isHeading),
   })
 );
 
@@ -245,7 +288,9 @@ export const documentSectionNodes = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    parentId: integer('parent_id'),
+    parentId: integer('parent_id').references((): AnyPgColumn => documentSectionNodes.id, {
+      onDelete: 'set null',
+    }),
     sectionNo: text('section_no'),
     sectionTitle: text('section_title'),
     headingLevel: integer('heading_level'),
@@ -261,8 +306,15 @@ export const documentSectionNodes = pgTable(
     ...hubSoftDelete,
   },
   (t) => ({
+    versionPathUid: uniqueIndex('document_section_node_version_path_uidx')
+      .on(t.tenderProjectVersionId, t.pathText)
+      .where(sql`${t.isDeleted} = false and ${t.pathText} is not null`),
     verIdx: index('document_section_node_version_idx').on(t.tenderProjectVersionId),
     parentIdx: index('document_section_node_parent_idx').on(t.parentId),
+    headingLevelIdx: index('document_section_node_heading_level_idx').on(t.headingLevel),
+    startPageIdx: index('document_section_node_start_page_no_idx').on(t.startPageNo),
+    nodeTypeIdx: index('document_section_node_node_type_idx').on(t.nodeType),
+    pathTextIdx: index('document_section_node_path_text_idx').on(t.pathText),
   })
 );
 
@@ -273,13 +325,15 @@ export const bidFrameworkNodes = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    parentId: integer('parent_id'),
+    parentId: integer('parent_id').references((): AnyPgColumn => bidFrameworkNodes.id, {
+      onDelete: 'set null',
+    }),
     frameworkNo: text('framework_no'),
     frameworkTitle: text('framework_title'),
     levelNo: integer('level_no'),
     orderNo: integer('order_no').notNull().default(0),
     requiredType: tcHubRequiredTypeEnum('required_type').notNull().default('required'),
-    contentType: tcHubFrameworkContentTypeEnum('content_type').notNull().default('text'),
+    contentType: tcHubFrameworkContentTypeEnum('content_type').notNull().default('text_chapter'),
     generationMode: tcHubGenerationModeEnum('generation_mode').notNull().default('manual_only'),
     sourceSectionId: integer('source_section_id').references(() => documentSectionNodes.id, {
       onDelete: 'set null',
@@ -293,7 +347,15 @@ export const bidFrameworkNodes = pgTable(
     ...hubSoftDelete,
   },
   (t) => ({
+    frameworkNoParentUid: uniqueIndex('bid_framework_node_ver_no_parent_uidx')
+      .on(t.tenderProjectVersionId, t.frameworkNo, t.parentId)
+      .where(sql`${t.isDeleted} = false and ${t.frameworkNo} is not null`),
     verIdx: index('bid_framework_node_version_idx').on(t.tenderProjectVersionId),
+    parentIdx: index('bid_framework_node_parent_idx').on(t.parentId),
+    requiredTypeIdx: index('bid_framework_node_required_type_idx').on(t.requiredType),
+    contentTypeIdx: index('bid_framework_node_content_type_idx').on(t.contentType),
+    generationModeIdx: index('bid_framework_node_generation_mode_idx').on(t.generationMode),
+    reviewStatusIdx: index('bid_framework_node_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -335,6 +397,14 @@ export const tenderRequirements = pgTable(
       t.tenderProjectVersionId,
       t.requirementCode
     ),
+    typeIdx: index('tender_requirement_type_idx').on(t.requirementType),
+    subtypeIdx: index('tender_requirement_subtype_idx').on(t.requirementSubtype),
+    sourceSectionIdx: index('tender_requirement_source_section_idx').on(t.sourceSectionId),
+    riskLevelIdx: index('tender_requirement_risk_level_idx').on(t.riskLevel),
+    importanceLevelIdx: index('tender_requirement_importance_level_idx').on(t.importanceLevel),
+    reviewStatusIdx: index('tender_requirement_review_status_idx').on(t.reviewStatus),
+    conflictedIdx: index('tender_requirement_conflicted_idx').on(t.isConflicted),
+    templateRelatedIdx: index('tender_requirement_template_related_idx').on(t.isTemplateRelated),
   })
 );
 
@@ -352,12 +422,15 @@ export const frameworkRequirementBindings = pgTable(
     requiredLevel: text('required_level'),
     note: text('note'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    pairUid: uniqueIndex('framework_req_binding_pair_uidx').on(
-      t.bidFrameworkNodeId,
-      t.tenderRequirementId
-    ),
+    pairUid: uniqueIndex('framework_req_binding_pair_uidx')
+      .on(t.bidFrameworkNodeId, t.tenderRequirementId, t.bindingType)
+      .where(sql`${t.isDeleted} = false`),
+    frameworkIdx: index('framework_req_binding_framework_idx').on(t.bidFrameworkNodeId),
+    requirementIdx: index('framework_req_binding_requirement_idx').on(t.tenderRequirementId),
+    requiredLevelIdx: index('framework_req_binding_required_level_idx').on(t.requiredLevel),
   })
 );
 
@@ -383,6 +456,8 @@ export const attachmentRequirementNodes = pgTable(
   },
   (t) => ({
     verIdx: index('attachment_requirement_node_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('attachment_requirement_node_type_idx').on(t.attachmentType),
+    documentIdx: index('attachment_requirement_node_document_idx').on(t.sourceDocumentId),
   })
 );
 
@@ -397,7 +472,9 @@ export const qualificationRequirements = pgTable(
     tenderRequirementId: integer('tender_requirement_id')
       .notNull()
       .references(() => tenderRequirements.id, { onDelete: 'cascade' }),
-    qualificationType: tcHubQualificationTypeEnum('qualification_type').notNull().default('other'),
+    qualificationType: tcHubQualificationTypeEnum('qualification_type')
+      .notNull()
+      .default('other_qualification'),
     subjectScope: text('subject_scope'),
     yearRange: text('year_range'),
     amountRequirement: text('amount_requirement'),
@@ -405,9 +482,17 @@ export const qualificationRequirements = pgTable(
     proofMaterialHint: text('proof_material_hint'),
     hardConstraintFlag: boolean('hard_constraint_flag').notNull().default(false),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    reqUid: uniqueIndex('qualification_requirement_req_uidx').on(t.tenderRequirementId),
+    reqUid: uniqueIndex('qualification_requirement_req_uidx')
+      .on(t.tenderRequirementId)
+      .where(sql`${t.isDeleted} = false`),
+    typeIdx: index('qualification_requirement_type_idx').on(t.qualificationType),
+    hardConstraintIdx: index('qualification_requirement_hard_constraint_idx').on(
+      t.hardConstraintFlag
+    ),
+    yearRangeIdx: index('qualification_requirement_year_range_idx').on(t.yearRange),
   })
 );
 
@@ -418,7 +503,9 @@ export const commercialRequirements = pgTable(
     tenderRequirementId: integer('tender_requirement_id')
       .notNull()
       .references(() => tenderRequirements.id, { onDelete: 'cascade' }),
-    commercialType: tcHubCommercialTypeEnum('commercial_type').notNull().default('other'),
+    commercialType: tcHubCommercialTypeEnum('commercial_type')
+      .notNull()
+      .default('other_commercial'),
     amountText: text('amount_text'),
     amountValue: numeric('amount_value', { precision: 18, scale: 2 }),
     currency: varchar('currency', { length: 16 }),
@@ -428,9 +515,15 @@ export const commercialRequirements = pgTable(
     penaltyClause: text('penalty_clause'),
     proofMaterialHint: text('proof_material_hint'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    reqUid: uniqueIndex('commercial_requirement_req_uidx').on(t.tenderRequirementId),
+    reqUid: uniqueIndex('commercial_requirement_req_uidx')
+      .on(t.tenderRequirementId)
+      .where(sql`${t.isDeleted} = false`),
+    typeIdx: index('commercial_requirement_type_idx').on(t.commercialType),
+    deadlineIdx: index('commercial_requirement_deadline_time_idx').on(t.deadlineTime),
+    amountIdx: index('commercial_requirement_amount_value_idx').on(t.amountValue),
   })
 );
 
@@ -441,7 +534,7 @@ export const technicalRequirements = pgTable(
     tenderRequirementId: integer('tender_requirement_id')
       .notNull()
       .references(() => tenderRequirements.id, { onDelete: 'cascade' }),
-    technicalType: tcHubTechnicalTypeEnum('technical_type').notNull().default('other'),
+    technicalType: tcHubTechnicalTypeEnum('technical_type').notNull().default('other_technical'),
     categoryName: text('category_name'),
     requirementName: text('requirement_name'),
     requirementValue: text('requirement_value'),
@@ -452,9 +545,16 @@ export const technicalRequirements = pgTable(
     hardConstraintFlag: boolean('hard_constraint_flag').notNull().default(false),
     proofMaterialHint: text('proof_material_hint'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
-    reqUid: uniqueIndex('technical_requirement_req_uidx').on(t.tenderRequirementId),
+    reqUid: uniqueIndex('technical_requirement_req_uidx')
+      .on(t.tenderRequirementId)
+      .where(sql`${t.isDeleted} = false`),
+    typeIdx: index('technical_requirement_type_idx').on(t.technicalType),
+    starFlagIdx: index('technical_requirement_star_flag_idx').on(t.starFlag),
+    allowDeviationIdx: index('technical_requirement_allow_deviation_idx').on(t.allowDeviationFlag),
+    hardConstraintIdx: index('technical_requirement_hard_constraint_idx').on(t.hardConstraintFlag),
   })
 );
 
@@ -465,7 +565,7 @@ export const timeNodes = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    nodeType: tcHubTimeNodeTypeEnum('node_type').notNull().default('other'),
+    nodeType: tcHubTimeNodeTypeEnum('node_type').notNull().default('other_time_node'),
     nodeName: text('node_name'),
     timeText: text('time_text'),
     timeValue: timestamp('time_value'),
@@ -480,6 +580,9 @@ export const timeNodes = pgTable(
   },
   (t) => ({
     verIdx: index('time_node_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('time_node_type_idx').on(t.nodeType),
+    valueIdx: index('time_node_time_value_idx').on(t.timeValue),
+    reviewStatusIdx: index('time_node_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -490,7 +593,7 @@ export const moneyTerms = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    moneyType: tcHubMoneyTypeEnum('money_type').notNull().default('other'),
+    moneyType: tcHubMoneyTypeEnum('money_type').notNull().default('other_money'),
     amountText: text('amount_text'),
     amountValue: numeric('amount_value', { precision: 18, scale: 2 }),
     currency: varchar('currency', { length: 16 }),
@@ -504,6 +607,9 @@ export const moneyTerms = pgTable(
   },
   (t) => ({
     verIdx: index('money_term_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('money_term_type_idx').on(t.moneyType),
+    amountIdx: index('money_term_amount_value_idx').on(t.amountValue),
+    reviewStatusIdx: index('money_term_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -514,7 +620,9 @@ export const submissionRequirements = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    submissionType: tcHubSubmissionTypeEnum('submission_type').notNull().default('document'),
+    submissionType: tcHubSubmissionTypeEnum('submission_type')
+      .notNull()
+      .default('other_submission'),
     requirementText: text('requirement_text'),
     copiesText: text('copies_text'),
     submissionLocation: text('submission_location'),
@@ -528,6 +636,11 @@ export const submissionRequirements = pgTable(
   },
   (t) => ({
     verIdx: index('submission_requirement_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('submission_requirement_type_idx').on(t.submissionType),
+    signatureFlagIdx: index('submission_requirement_signature_flag_idx').on(
+      t.signatureRequiredFlag
+    ),
+    sealFlagIdx: index('submission_requirement_seal_flag_idx').on(t.sealRequiredFlag),
   })
 );
 
@@ -544,16 +657,23 @@ export const ruleDefinitions = pgTable(
     ruleType: tcHubRuleTypeEnum('rule_type').notNull().default('expression'),
     ruleCategory: text('rule_category'),
     expressionJson: jsonb('expression_json'),
-    severityLevel: tcHubRuleSeverityLevelEnum('severity_level').notNull().default('medium'),
+    severityLevel: tcHubRuleSeverityLevelEnum('severity_level').notNull().default('warning'),
     enabledFlag: boolean('enabled_flag').notNull().default(true),
     applicableIndustry: text('applicable_industry'),
-    versionNo: text('version_no'),
+    versionNo: text('version_no').notNull().default('v1'),
     note: text('note'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
-    codeUid: uniqueIndex('rule_definition_code_uidx').on(t.ruleCode),
+    codeVersionUid: uniqueIndex('rule_definition_code_version_uidx')
+      .on(t.ruleCode, t.versionNo)
+      .where(sql`${t.isDeleted} = false`),
+    codeIdx: index('rule_definition_code_idx').on(t.ruleCode),
+    typeIdx: index('rule_definition_type_idx').on(t.ruleType),
+    categoryIdx: index('rule_definition_category_idx').on(t.ruleCategory),
+    enabledIdx: index('rule_definition_enabled_idx').on(t.enabledFlag),
+    industryIdx: index('rule_definition_industry_idx').on(t.applicableIndustry),
   })
 );
 
@@ -570,7 +690,7 @@ export const riskItems = pgTable(
         onDelete: 'set null',
       }
     ),
-    riskType: tcHubRiskTypeEnum('risk_type').notNull().default('other'),
+    riskType: tcHubRiskTypeEnum('risk_type').notNull().default('other_risk'),
     riskTitle: text('risk_title').notNull(),
     riskDescription: text('risk_description'),
     riskLevel: tcHubRiskLevelEnum('risk_level').notNull().default('medium'),
@@ -583,11 +703,17 @@ export const riskItems = pgTable(
     confidenceScore: numeric('confidence_score', { precision: 5, scale: 4 }),
     reviewStatus: tcHubReviewStatusEnum('review_status').notNull().default('draft'),
     resolutionStatus: tcHubRiskResolutionStatusEnum('resolution_status').notNull().default('open'),
+    resolutionNote: text('resolution_note'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
     verIdx: index('risk_item_version_idx').on(t.tenderProjectVersionId),
+    requirementIdx: index('risk_item_requirement_idx').on(t.relatedRequirementId),
+    typeIdx: index('risk_item_type_idx').on(t.riskType),
+    levelIdx: index('risk_item_level_idx').on(t.riskLevel),
+    reviewStatusIdx: index('risk_item_review_status_idx').on(t.reviewStatus),
+    resolutionStatusIdx: index('risk_item_resolution_status_idx').on(t.resolutionStatus),
   })
 );
 
@@ -598,7 +724,7 @@ export const conflictItems = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    conflictType: tcHubConflictTypeEnum('conflict_type').notNull().default('other'),
+    conflictType: tcHubConflictTypeEnum('conflict_type').notNull().default('other_conflict'),
     fieldName: text('field_name'),
     candidateA: text('candidate_a'),
     candidateB: text('candidate_b'),
@@ -609,13 +735,17 @@ export const conflictItems = pgTable(
       onDelete: 'set null',
     }),
     conflictLevel: tcHubConflictLevelEnum('conflict_level').notNull().default('minor'),
-    reviewStatus: tcHubConflictReviewStatusEnum('review_status').notNull().default('open'),
+    reviewStatus: tcHubConflictReviewStatusEnum('review_status').notNull().default('detected'),
     finalResolution: text('final_resolution'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
   (t) => ({
     verIdx: index('conflict_item_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('conflict_item_type_idx').on(t.conflictType),
+    fieldNameIdx: index('conflict_item_field_name_idx').on(t.fieldName),
+    levelIdx: index('conflict_item_level_idx').on(t.conflictLevel),
+    reviewStatusIdx: index('conflict_item_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -631,14 +761,17 @@ export const ruleHitRecords = pgTable(
       .references(() => ruleDefinitions.id, { onDelete: 'cascade' }),
     targetObjectType: varchar('target_object_type', { length: 64 }).notNull(),
     targetObjectId: integer('target_object_id').notNull(),
-    hitResult: tcHubRuleHitResultEnum('hit_result').notNull().default('unknown'),
+    hitResult: tcHubRuleHitResultEnum('hit_result').notNull().default('uncertain'),
     hitDetailJson: jsonb('hit_detail_json'),
-    severityLevel: tcHubRuleSeverityLevelEnum('severity_level').notNull().default('medium'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    severityLevel: tcHubRuleSeverityLevelEnum('severity_level').notNull().default('warning'),
+    ...hubTimestamps,
   },
   (t) => ({
     batchIdx: index('rule_hit_record_batch_idx').on(t.documentParseBatchId),
+    ruleIdx: index('rule_hit_record_rule_idx').on(t.ruleDefinitionId),
     targetIdx: index('rule_hit_record_target_idx').on(t.targetObjectType, t.targetObjectId),
+    severityIdx: index('rule_hit_record_severity_idx').on(t.severityLevel),
+    createdAtIdx: index('rule_hit_record_created_at_idx').on(t.createdAt),
   })
 );
 
@@ -654,10 +787,13 @@ export const confidenceAssessments = pgTable(
     generatedByBatchId: integer('generated_by_batch_id').references(() => documentParseBatches.id, {
       onDelete: 'set null',
     }),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    ...hubTimestamps,
   },
   (t) => ({
     targetIdx: index('confidence_assessment_target_idx').on(t.targetObjectType, t.targetObjectId),
+    batchIdx: index('confidence_assessment_batch_idx').on(t.generatedByBatchId),
+    extractionIdx: index('confidence_assessment_extraction_idx').on(t.extractionConfidence),
+    businessIdx: index('confidence_assessment_business_idx').on(t.businessConfidence),
   })
 );
 
@@ -686,6 +822,7 @@ export const scoringSchemes = pgTable(
   },
   (t) => ({
     verIdx: index('scoring_scheme_version_idx').on(t.tenderProjectVersionId),
+    reviewStatusIdx: index('scoring_scheme_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -696,7 +833,9 @@ export const scoringItems = pgTable(
     scoringSchemeId: integer('scoring_scheme_id')
       .notNull()
       .references(() => scoringSchemes.id, { onDelete: 'cascade' }),
-    parentId: integer('parent_id'),
+    parentId: integer('parent_id').references((): AnyPgColumn => scoringItems.id, {
+      onDelete: 'set null',
+    }),
     categoryName: text('category_name'),
     itemName: text('item_name'),
     scoreText: text('score_text'),
@@ -713,6 +852,10 @@ export const scoringItems = pgTable(
   },
   (t) => ({
     schemeIdx: index('scoring_item_scheme_idx').on(t.scoringSchemeId),
+    parentIdx: index('scoring_item_parent_idx').on(t.parentId),
+    categoryIdx: index('scoring_item_category_idx').on(t.categoryName),
+    scoreValueIdx: index('scoring_item_score_value_idx').on(t.scoreValue),
+    reviewStatusIdx: index('scoring_item_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -734,6 +877,8 @@ export const technicalSpecGroups = pgTable(
   },
   (t) => ({
     verIdx: index('technical_spec_group_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('technical_spec_group_type_idx').on(t.groupType),
+    orderNoIdx: index('technical_spec_group_order_no_idx').on(t.orderNo),
   })
 );
 
@@ -762,6 +907,12 @@ export const technicalSpecItems = pgTable(
   },
   (t) => ({
     groupIdx: index('technical_spec_item_group_idx').on(t.technicalSpecGroupId),
+    starFlagIdx: index('technical_spec_item_star_flag_idx').on(t.starFlag),
+    allowDeviationIdx: index('technical_spec_item_allow_deviation_idx').on(t.allowDeviationFlag),
+    negativeDeviationForbiddenIdx: index('technical_spec_item_negative_dev_forbidden_idx').on(
+      t.negativeDeviationForbiddenFlag
+    ),
+    reviewStatusIdx: index('technical_spec_item_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -777,7 +928,7 @@ export const hubBidTemplates = pgTable(
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
     templateName: text('template_name').notNull(),
-    templateType: tcHubTemplateTypeEnum('template_type').notNull().default('other'),
+    templateType: tcHubTemplateTypeEnum('template_type').notNull().default('other_template'),
     sourceTitle: text('source_title'),
     templateText: text('template_text'),
     templateHtml: text('template_html'),
@@ -797,6 +948,12 @@ export const hubBidTemplates = pgTable(
   },
   (t) => ({
     verIdx: index('bid_template_hub_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('bid_template_hub_type_idx').on(t.templateType),
+    fixedFormatIdx: index('bid_template_hub_fixed_format_idx').on(t.fixedFormatFlag),
+    originalRequiredIdx: index('bid_template_hub_original_required_idx').on(
+      t.originalFormatRequiredFlag
+    ),
+    reviewStatusIdx: index('bid_template_hub_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -807,7 +964,7 @@ export const templateBlocks = pgTable(
     bidTemplateId: integer('bid_template_id')
       .notNull()
       .references(() => hubBidTemplates.id, { onDelete: 'cascade' }),
-    blockType: tcHubTemplateBlockTypeEnum('block_type').notNull().default('paragraph'),
+    blockType: tcHubTemplateBlockTypeEnum('block_type').notNull().default('text_block'),
     orderNo: integer('order_no').notNull().default(0),
     blockText: text('block_text'),
     blockTableJson: jsonb('block_table_json'),
@@ -815,9 +972,14 @@ export const templateBlocks = pgTable(
       onDelete: 'set null',
     }),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
+    templateOrderUid: uniqueIndex('template_block_template_order_uidx')
+      .on(t.bidTemplateId, t.orderNo)
+      .where(sql`${t.isDeleted} = false`),
     tplIdx: index('template_block_template_idx').on(t.bidTemplateId),
+    typeIdx: index('template_block_type_idx').on(t.blockType),
   })
 );
 
@@ -844,9 +1006,16 @@ export const templateVariables = pgTable(
     editableFlag: boolean('editable_flag').notNull().default(true),
     reviewStatus: tcHubReviewStatusEnum('review_status').notNull().default('draft'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
+    templateVarNameUid: uniqueIndex('template_variable_template_name_uidx')
+      .on(t.bidTemplateId, t.variableName)
+      .where(sql`${t.isDeleted} = false`),
     tplIdx: index('template_variable_template_idx').on(t.bidTemplateId),
+    typeIdx: index('template_variable_type_idx').on(t.variableType),
+    requiredIdx: index('template_variable_required_idx').on(t.requiredFlag),
+    reviewStatusIdx: index('template_variable_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -858,13 +1027,18 @@ export const templateVariableBindings = pgTable(
       .notNull()
       .references(() => templateVariables.id, { onDelete: 'cascade' }),
     bindingTargetType: tcHubBindingTargetTypeEnum('binding_target_type').notNull().default('other'),
-    bindingKey: text('binding_key'),
+    bindingKey: text('binding_key').notNull(),
     fallbackStrategy: text('fallback_strategy'),
     ...hubNoteColumns,
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
+    varTargetKeyUid: uniqueIndex('template_var_binding_target_key_uidx')
+      .on(t.templateVariableId, t.bindingTargetType, t.bindingKey)
+      .where(sql`${t.isDeleted} = false`),
     varIdx: index('template_variable_binding_var_idx').on(t.templateVariableId),
+    targetTypeIdx: index('template_variable_binding_target_type_idx').on(t.bindingTargetType),
   })
 );
 
@@ -875,9 +1049,9 @@ export const formTableStructures = pgTable(
     bidTemplateId: integer('bid_template_id')
       .notNull()
       .references(() => hubBidTemplates.id, { onDelete: 'cascade' }),
-    tableName: text('table_name'),
-    rowNo: integer('row_no'),
-    colNo: integer('col_no'),
+    tableName: text('table_name').notNull(),
+    rowNo: integer('row_no').notNull(),
+    colNo: integer('col_no').notNull(),
     cellKey: text('cell_key'),
     cellLabel: text('cell_label'),
     cellType: varchar('cell_type', { length: 64 }),
@@ -886,9 +1060,15 @@ export const formTableStructures = pgTable(
       onDelete: 'set null',
     }),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
+    tableCellUid: uniqueIndex('form_table_structure_cell_uidx')
+      .on(t.bidTemplateId, t.tableName, t.rowNo, t.colNo)
+      .where(sql`${t.isDeleted} = false`),
     tplIdx: index('form_table_structure_template_idx').on(t.bidTemplateId),
+    tableNameIdx: index('form_table_structure_table_name_idx').on(t.tableName),
+    requiredIdx: index('form_table_structure_required_idx').on(t.requiredFlag),
   })
 );
 
@@ -904,7 +1084,7 @@ export const submissionMaterials = pgTable(
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
     materialName: text('material_name').notNull(),
-    materialType: tcHubMaterialTypeEnum('material_type').notNull().default('other'),
+    materialType: tcHubMaterialTypeEnum('material_type').notNull().default('other_material'),
     requiredFlag: boolean('required_flag').notNull().default(true),
     sourceReason: text('source_reason'),
     relatedRequirementId: integer('related_requirement_id').references(
@@ -928,6 +1108,11 @@ export const submissionMaterials = pgTable(
   },
   (t) => ({
     verIdx: index('submission_material_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('submission_material_type_idx').on(t.materialType),
+    requiredIdx: index('submission_material_required_idx').on(t.requiredFlag),
+    reviewStatusIdx: index('submission_material_review_status_idx').on(t.reviewStatus),
+    signatureIdx: index('submission_material_signature_idx').on(t.needSignatureFlag),
+    sealIdx: index('submission_material_seal_idx').on(t.needSealFlag),
   })
 );
 
@@ -938,7 +1123,7 @@ export const responseTaskItems = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    taskType: tcHubResponseTaskTypeEnum('task_type').notNull().default('other'),
+    taskType: tcHubResponseTaskTypeEnum('task_type').notNull().default('other_task'),
     taskTitle: text('task_title').notNull(),
     sourceObjectType: varchar('source_object_type', { length: 64 }),
     sourceObjectId: integer('source_object_id'),
@@ -952,6 +1137,11 @@ export const responseTaskItems = pgTable(
   },
   (t) => ({
     verIdx: index('response_task_item_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('response_task_item_type_idx').on(t.taskType),
+    roleIdx: index('response_task_item_role_idx').on(t.responsibilityRole),
+    priorityIdx: index('response_task_item_priority_idx').on(t.priorityLevel),
+    statusIdx: index('response_task_item_status_idx').on(t.status),
+    deadlineIdx: index('response_task_item_deadline_idx').on(t.deadlineTime),
   })
 );
 
@@ -981,6 +1171,9 @@ export const clarificationCandidates = pgTable(
   },
   (t) => ({
     verIdx: index('clarification_candidate_version_idx').on(t.tenderProjectVersionId),
+    requirementIdx: index('clarification_candidate_requirement_idx').on(t.relatedRequirementId),
+    urgencyIdx: index('clarification_candidate_urgency_idx').on(t.urgencyLevel),
+    reviewStatusIdx: index('clarification_candidate_review_status_idx').on(t.reviewStatus),
   })
 );
 
@@ -1006,10 +1199,18 @@ export const aiTaskRuns = pgTable(
     latencyMs: integer('latency_ms'),
     taskStatus: tcHubAiTaskStatusEnum('task_status').notNull().default('queued'),
     errorMessage: text('error_message'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    ...hubTimestamps,
   },
   (t) => ({
+    batchTaskUid: uniqueIndex('ai_task_run_batch_task_uidx')
+      .on(t.documentParseBatchId, t.taskType, t.taskName)
+      .where(sql`${t.taskName} is not null`),
     batchIdx: index('ai_task_run_batch_idx').on(t.documentParseBatchId),
+    typeIdx: index('ai_task_run_type_idx').on(t.taskType),
+    providerIdx: index('ai_task_run_provider_idx').on(t.modelProvider),
+    modelIdx: index('ai_task_run_model_idx').on(t.modelName),
+    statusIdx: index('ai_task_run_status_idx').on(t.taskStatus),
+    createdAtIdx: index('ai_task_run_created_at_idx').on(t.createdAt),
   })
 );
 
@@ -1022,9 +1223,9 @@ export const reviewTasks = pgTable(
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
     targetObjectType: varchar('target_object_type', { length: 64 }).notNull(),
     targetObjectId: integer('target_object_id').notNull(),
-    reviewReason: tcHubReviewReasonEnum('review_reason').notNull().default('other'),
+    reviewReason: tcHubReviewReasonEnum('review_reason').notNull().default('manual_sampling'),
     assignedTo: integer('assigned_to'),
-    reviewStatus: tcHubReviewTaskStatusEnum('review_status').notNull().default('pending'),
+    reviewStatus: tcHubReviewTaskStatusEnum('review_status').notNull().default('pending_assign'),
     reviewResult: tcHubReviewResultEnum('review_result'),
     finalValueJson: jsonb('final_value_json'),
     comment: text('comment'),
@@ -1034,6 +1235,10 @@ export const reviewTasks = pgTable(
   (t) => ({
     verIdx: index('review_task_version_idx').on(t.tenderProjectVersionId),
     targetIdx: index('review_task_target_idx').on(t.targetObjectType, t.targetObjectId),
+    assignedIdx: index('review_task_assigned_idx').on(t.assignedTo),
+    statusIdx: index('review_task_status_idx').on(t.reviewStatus),
+    reasonIdx: index('review_task_reason_idx').on(t.reviewReason),
+    reviewedAtIdx: index('review_task_reviewed_at_idx').on(t.reviewedAt),
   })
 );
 
@@ -1047,10 +1252,12 @@ export const objectChangeLogs = pgTable(
     beforeJson: jsonb('before_json'),
     afterJson: jsonb('after_json'),
     operatorId: integer('operator_id'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    ...hubTimestamps,
   },
   (t) => ({
     targetIdx: index('object_change_log_target_idx').on(t.targetObjectType, t.targetObjectId),
+    operatorIdx: index('object_change_log_operator_idx').on(t.operatorId),
+    changeTypeIdx: index('object_change_log_change_type_idx').on(t.changeType),
     createdIdx: index('object_change_log_created_idx').on(t.createdAt),
   })
 );
@@ -1062,16 +1269,20 @@ export const assetExportSnapshots = pgTable(
     tenderProjectVersionId: integer('tender_project_version_id')
       .notNull()
       .references(() => tenderProjectVersions.id, { onDelete: 'cascade' }),
-    snapshotType: tcHubSnapshotTypeEnum('snapshot_type').notNull().default('full_asset'),
-    snapshotStatus: tcHubSnapshotStatusEnum('snapshot_status').notNull().default('draft'),
-    exportMode: tcHubExportModeEnum('export_mode').notNull().default('json'),
+    snapshotType: tcHubSnapshotTypeEnum('snapshot_type').notNull().default('full_snapshot'),
+    snapshotStatus: tcHubSnapshotStatusEnum('snapshot_status').notNull().default('generating'),
+    exportMode: tcHubExportModeEnum('export_mode').notNull().default('internal_consumption'),
     snapshotJson: jsonb('snapshot_json'),
     schemaVersion: text('schema_version'),
     exportedAt: timestamp('exported_at'),
     exportedBy: integer('exported_by'),
     ...hubTimestamps,
+    ...hubSoftDelete,
   },
   (t) => ({
     verIdx: index('asset_export_snapshot_version_idx').on(t.tenderProjectVersionId),
+    typeIdx: index('asset_export_snapshot_type_idx').on(t.snapshotType),
+    schemaVersionIdx: index('asset_export_snapshot_schema_version_idx').on(t.schemaVersion),
+    exportedAtIdx: index('asset_export_snapshot_exported_at_idx').on(t.exportedAt),
   })
 );

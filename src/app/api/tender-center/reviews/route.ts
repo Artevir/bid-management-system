@@ -22,6 +22,14 @@ import {
 const IDEM_OPERATION_TYPE = 'idem_review_create';
 
 const HUB_REVIEW_REASONS = [
+  'low_confidence',
+  'high_risk',
+  'conflict_detected',
+  'template_ambiguity',
+  'framework_ambiguity',
+  'manual_sampling',
+  'rule_exception',
+  // legacy兼容
   'accuracy',
   'compliance',
   'conflict_resolution',
@@ -95,10 +103,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const reasonRaw = String(body.reviewReason || 'other');
+      const reasonRaw = String(body.reviewReason || 'manual_sampling');
       const reviewReason = (HUB_REVIEW_REASONS as readonly string[]).includes(reasonRaw)
         ? (reasonRaw as (typeof HUB_REVIEW_REASONS)[number])
-        : 'other';
+        : 'manual_sampling';
 
       const [inserted] = await db
         .insert(reviewTasks)
@@ -108,7 +116,7 @@ export async function POST(request: NextRequest) {
           targetObjectId: version.id,
           reviewReason,
           assignedTo: body.assignedReviewerId ? Number(body.assignedReviewerId) : null,
-          reviewStatus: 'pending',
+          reviewStatus: 'pending_assign',
         })
         .returning({ id: reviewTasks.id });
 

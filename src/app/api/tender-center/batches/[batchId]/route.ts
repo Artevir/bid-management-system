@@ -6,6 +6,7 @@ import type { TenderBatchStatus } from '@/lib/interpretation/status-machine';
 function mapHubBatchStatus(status: string): TenderBatchStatus {
   switch (status) {
     case 'running':
+    case 'partially_succeeded':
     case 'partial':
       return 'running';
     case 'succeeded':
@@ -45,9 +46,11 @@ export async function GET(
         progress:
           hub.batch.batchStatus === 'succeeded'
             ? 100
-            : hub.batch.batchStatus === 'running'
-              ? 50
-              : 0,
+            : hub.batch.batchStatus === 'partially_succeeded'
+              ? 80
+              : hub.batch.batchStatus === 'running'
+                ? 50
+                : 0,
         parseError: null,
         createdAt: hub.batch.createdAt,
         updatedAt: hub.batch.updatedAt,

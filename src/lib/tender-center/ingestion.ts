@@ -162,8 +162,10 @@ function splitPageToSegments(pageText: string): string[] {
 
 function classifyRequirementType(
   text: string
-): 'qualification' | 'commercial' | 'technical' | 'submission' | 'other' {
+): 'qualification' | 'commercial' | 'technical' | 'time' | 'money' | 'submission' | 'other' {
   if (/(资格|资质|证书|业绩|人员)/.test(text)) return 'qualification';
+  if (/(开标|截止|时点|时间|日期|递交截止|报名)/.test(text)) return 'time';
+  if (/(预算|限价|控制价|保证金|金额|报价|价款|费用|人民币)/.test(text)) return 'money';
   if (/(报价|商务|付款|保证金|保函|税费|价格)/.test(text)) return 'commercial';
   if (/(技术|参数|性能|规格|标准|方案)/.test(text)) return 'technical';
   if (/(递交|提交|开标|截止|时间|日期|地点)/.test(text)) return 'submission';
@@ -179,13 +181,25 @@ function classifyImportanceLevel(text: string): 'low' | 'medium' | 'high' | 'cri
 
 function classifyRiskType(
   text: string
-): 'compliance' | 'commercial' | 'technical' | 'legal' | 'schedule' | 'other' {
-  if (/(违法|合规|审查|资质)/.test(text)) return 'compliance';
-  if (/(报价|付款|保证金|成本|税)/.test(text)) return 'commercial';
-  if (/(参数|技术|性能|方案)/.test(text)) return 'technical';
-  if (/(合同|违约|责任|索赔)/.test(text)) return 'legal';
-  if (/(延期|逾期|工期|时间|节点)/.test(text)) return 'schedule';
-  return 'other';
+):
+  | 'bid_rejection_risk'
+  | 'invalid_bid_risk'
+  | 'qualification_risk'
+  | 'timeline_risk'
+  | 'amount_risk'
+  | 'template_risk'
+  | 'framework_risk'
+  | 'technical_deviation_risk'
+  | 'other_risk' {
+  if (/(废标|否决|不予受理|无效标)/.test(text)) return 'bid_rejection_risk';
+  if (/(无效|不合规|违法|违规|不满足)/.test(text)) return 'invalid_bid_risk';
+  if (/(资质|资格|证书|人员|业绩)/.test(text)) return 'qualification_risk';
+  if (/(延期|逾期|工期|时间|节点|截止)/.test(text)) return 'timeline_risk';
+  if (/(报价|付款|保证金|成本|税|金额|预算|限价)/.test(text)) return 'amount_risk';
+  if (/(模板|格式|表单)/.test(text)) return 'template_risk';
+  if (/(章节|框架|目录|结构)/.test(text)) return 'framework_risk';
+  if (/(参数|技术|性能|偏离)/.test(text)) return 'technical_deviation_risk';
+  return 'other_risk';
 }
 
 function riskLevelFromImportance(
@@ -207,50 +221,111 @@ function shouldRaiseRisk(
 
 function inferQualificationType(
   text: string
-): 'enterprise' | 'personnel' | 'performance' | 'financial' | 'certificate' | 'other' {
-  if (/(业绩|合同|类似项目)/.test(text)) return 'performance';
-  if (/(财务|审计|资金|纳税)/.test(text)) return 'financial';
-  if (/(证书|资质认定|认证)/.test(text)) return 'certificate';
-  if (/(项目经理|人员|工程师|建造师)/.test(text)) return 'personnel';
-  if (/(企业|法人|营业执照|公司)/.test(text)) return 'enterprise';
-  return 'other';
+):
+  | 'enterprise_qualification'
+  | 'personnel_qualification'
+  | 'project_experience'
+  | 'financial_requirement'
+  | 'credit_requirement'
+  | 'social_security_requirement'
+  | 'certification_requirement'
+  | 'other_qualification' {
+  if (/(业绩|合同|类似项目)/.test(text)) return 'project_experience';
+  if (/(财务|审计|资金|纳税)/.test(text)) return 'financial_requirement';
+  if (/(信用|失信|征信)/.test(text)) return 'credit_requirement';
+  if (/(社保|公积金)/.test(text)) return 'social_security_requirement';
+  if (/(证书|资质认定|认证)/.test(text)) return 'certification_requirement';
+  if (/(项目经理|人员|工程师|建造师)/.test(text)) return 'personnel_qualification';
+  if (/(企业|法人|营业执照|公司)/.test(text)) return 'enterprise_qualification';
+  return 'other_qualification';
 }
 
 function inferCommercialType(
   text: string
-): 'price' | 'payment' | 'bond' | 'tax' | 'warranty' | 'other' {
-  if (/(报价|价格|限价|单价|总价)/.test(text)) return 'price';
-  if (/(付款|支付|结算|发票)/.test(text)) return 'payment';
-  if (/(保证金|保函)/.test(text)) return 'bond';
-  if (/(税|增值税|税率)/.test(text)) return 'tax';
-  if (/(质保|保修)/.test(text)) return 'warranty';
-  return 'other';
+):
+  | 'bid_bond'
+  | 'performance_bond'
+  | 'document_fee'
+  | 'payment_terms'
+  | 'delivery_period'
+  | 'warranty_period'
+  | 'after_sales_commitment'
+  | 'service_response'
+  | 'penalty_clause'
+  | 'other_commercial' {
+  if (/(履约保证金|履约保函)/.test(text)) return 'performance_bond';
+  if (/(保证金|保函)/.test(text)) return 'bid_bond';
+  if (/(标书费|招标文件费|文件费)/.test(text)) return 'document_fee';
+  if (/(付款|支付|结算|发票)/.test(text)) return 'payment_terms';
+  if (/(交付|工期|供货周期|期限)/.test(text)) return 'delivery_period';
+  if (/(质保|保修)/.test(text)) return 'warranty_period';
+  if (/(售后|维保|服务响应)/.test(text)) return 'service_response';
+  if (/(承诺|承诺函)/.test(text)) return 'after_sales_commitment';
+  if (/(罚则|违约|处罚)/.test(text)) return 'penalty_clause';
+  return 'other_commercial';
 }
 
 function inferTechnicalType(
   text: string
-): 'parameter' | 'standard' | 'scope' | 'delivery' | 'service' | 'other' {
-  if (/(参数|指标|性能)/.test(text)) return 'parameter';
-  if (/(标准|规范|国标|行标)/.test(text)) return 'standard';
-  if (/(范围|供货|采购内容)/.test(text)) return 'scope';
-  if (/(交付|工期|进度)/.test(text)) return 'delivery';
-  if (/(服务|运维|售后)/.test(text)) return 'service';
-  return 'other';
+):
+  | 'functional_requirement'
+  | 'performance_requirement'
+  | 'parameter_requirement'
+  | 'compatibility_requirement'
+  | 'deployment_requirement'
+  | 'security_requirement'
+  | 'interface_requirement'
+  | 'training_requirement'
+  | 'other_technical' {
+  if (/(功能|用途|业务能力)/.test(text)) return 'functional_requirement';
+  if (/(性能|吞吐|响应|并发)/.test(text)) return 'performance_requirement';
+  if (/(参数|指标)/.test(text)) return 'parameter_requirement';
+  if (/(兼容|适配|互通)/.test(text)) return 'compatibility_requirement';
+  if (/(部署|安装|上线)/.test(text)) return 'deployment_requirement';
+  if (/(安全|加密|权限|审计)/.test(text)) return 'security_requirement';
+  if (/(接口|协议|对接)/.test(text)) return 'interface_requirement';
+  if (/(培训|交底|指导)/.test(text)) return 'training_requirement';
+  return 'other_technical';
 }
 
-function inferTimeNodeType(text: string): 'submission' | 'open_bid' | 'register' | 'other' {
-  if (/(开标|唱标)/.test(text)) return 'open_bid';
-  if (/(递交|提交|截止|报名)/.test(text)) return 'submission';
-  if (/(登记|注册)/.test(text)) return 'register';
-  return 'other';
+function inferTimeNodeType(
+  text: string
+):
+  | 'document_obtain_deadline'
+  | 'question_deadline'
+  | 'answer_release_time'
+  | 'site_visit_time'
+  | 'bid_submission_deadline'
+  | 'bid_opening_time'
+  | 'bond_deadline'
+  | 'other_time_node' {
+  if (/(开标|唱标)/.test(text)) return 'bid_opening_time';
+  if (/(递交|提交|投标截止|截止)/.test(text)) return 'bid_submission_deadline';
+  if (/(答疑|答复|澄清发布时间)/.test(text)) return 'answer_release_time';
+  if (/(提问|疑问|质疑截止)/.test(text)) return 'question_deadline';
+  if (/(踏勘|现场|勘察)/.test(text)) return 'site_visit_time';
+  if (/(获取|领取|下载招标文件)/.test(text)) return 'document_obtain_deadline';
+  if (/(保证金截止|保函截止)/.test(text)) return 'bond_deadline';
+  return 'other_time_node';
 }
 
-function inferMoneyType(text: string): 'deposit' | 'budget' | 'tender_fee' | 'payment' | 'other' {
-  if (/(保证金|保函)/.test(text)) return 'deposit';
-  if (/(预算|最高限价|控制价)/.test(text)) return 'budget';
-  if (/(标书费|招标文件费|文件费)/.test(text)) return 'tender_fee';
-  if (/(价款|付款|合同价)/.test(text)) return 'payment';
-  return 'other';
+function inferMoneyType(
+  text: string
+):
+  | 'project_budget'
+  | 'max_price'
+  | 'document_fee'
+  | 'bid_bond'
+  | 'performance_bond'
+  | 'penalty_amount'
+  | 'other_money' {
+  if (/(预算)/.test(text)) return 'project_budget';
+  if (/(最高限价|控制价)/.test(text)) return 'max_price';
+  if (/(标书费|招标文件费|文件费)/.test(text)) return 'document_fee';
+  if (/(履约保证金|履约保函)/.test(text)) return 'performance_bond';
+  if (/(保证金|保函)/.test(text)) return 'bid_bond';
+  if (/(罚款|违约金|处罚金额)/.test(text)) return 'penalty_amount';
+  return 'other_money';
 }
 
 function looksLikeTimeClause(text: string): boolean {
@@ -287,7 +362,7 @@ type HubTechRequirementInsert = {
 };
 type HubSubmissionRequirementInsert = {
   tenderProjectVersionId: number;
-  submissionType: 'document';
+  submissionType: 'other_submission';
   requirementText: string;
   sourceSegmentId: number;
 };
@@ -408,7 +483,7 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
       const exists = await db
         .select({ id: documentPages.id })
         .from(documentPages)
-        .where(eq(documentPages.sourceDocumentId, doc.id))
+        .where(and(eq(documentPages.sourceDocumentId, doc.id), eq(documentPages.isDeleted, false)))
         .limit(1);
       if (exists.length > 0) {
         continue;
@@ -683,7 +758,7 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
             if (req.sourceSegmentId) {
               subRows.push({
                 tenderProjectVersionId: versionId,
-                submissionType: 'document',
+                submissionType: 'other_submission',
                 requirementText: text.slice(0, 800),
                 sourceSegmentId: req.sourceSegmentId,
               });
@@ -1051,8 +1126,8 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
           tenderProjectVersionId: versionId,
           targetObjectType: 'risk_item',
           targetObjectId: riskRow.id,
-          reviewReason: 'compliance',
-          reviewStatus: 'pending',
+          reviewReason: 'high_risk',
+          reviewStatus: 'pending_assign',
         });
         reviewTasksInserted += 1;
         const req = riskCandidates[i];
@@ -1095,7 +1170,7 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
       await db.insert(objectChangeLogs).values({
         targetObjectType: 'tender_project_version',
         targetObjectId: versionId,
-        changeType: 'update',
+        changeType: 'updated',
         beforeJson: null,
         afterJson: {
           event: 'hub_ingestion_document_parsed',
@@ -1118,8 +1193,8 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
         .set({
           pageCount: insertedPages.length,
           parseStatus: 'parsed',
-          textExtractStatus: 'done',
-          structureExtractStatus: 'done',
+          textExtractStatus: 'extracted',
+          structureExtractStatus: 'structured',
           updatedAt: new Date(),
         })
         .where(eq(sourceDocuments.id, doc.id));
@@ -1131,8 +1206,8 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
         .update(sourceDocuments)
         .set({
           parseStatus: 'parse_failed',
-          textExtractStatus: 'failed',
-          structureExtractStatus: 'failed',
+          textExtractStatus: 'extract_failed',
+          structureExtractStatus: 'structure_failed',
           updatedAt: new Date(),
         })
         .where(eq(sourceDocuments.id, doc.id));

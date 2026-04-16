@@ -47,7 +47,8 @@ export async function GET(
           eq(bidFrameworkNodes.tenderProjectVersionId, version.id),
           eq(bidFrameworkNodes.isDeleted, false),
           eq(tenderRequirements.tenderProjectVersionId, version.id),
-          eq(tenderRequirements.isDeleted, false)
+          eq(tenderRequirements.isDeleted, false),
+          eq(frameworkRequirementBindings.isDeleted, false)
         )
       )
       .orderBy(asc(frameworkRequirementBindings.id));

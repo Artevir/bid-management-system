@@ -13,13 +13,45 @@ import {
   getOrCreateTraceId,
   logTenderTraceEvent,
 } from '@/app/api/tender-center/_trace';
+import {
+  HubGovernanceTargetType,
+  recordHubPatchGovernance,
+} from '@/lib/tender-center/hub-governance';
 
 type HubSnapshotRow = {
   id: number;
   tenderProjectVersionId: number;
-  snapshotType: 'full_asset' | 'requirements_only' | 'risks_only' | 'templates_only' | 'custom';
-  snapshotStatus: 'draft' | 'building' | 'ready' | 'failed' | 'superseded';
-  exportMode: 'json' | 'excel' | 'word' | 'pdf_bundle' | 'other';
+  snapshotType:
+    | 'requirements_snapshot'
+    | 'framework_snapshot'
+    | 'templates_snapshot'
+    | 'materials_snapshot'
+    | 'full_snapshot'
+    | 'full_asset'
+    | 'requirements_only'
+    | 'risks_only'
+    | 'templates_only'
+    | 'custom';
+  snapshotStatus:
+    | 'generating'
+    | 'generated'
+    | 'published'
+    | 'invalidated'
+    | 'draft'
+    | 'building'
+    | 'ready'
+    | 'failed'
+    | 'superseded';
+  exportMode:
+    | 'internal_consumption'
+    | 'downstream_module'
+    | 'manual_download'
+    | 'api_delivery'
+    | 'json'
+    | 'excel'
+    | 'word'
+    | 'pdf_bundle'
+    | 'other';
   snapshotJson: unknown;
   exportedAt: Date | null;
   createdAt: Date;
@@ -31,6 +63,16 @@ function mapHubSnapshotTypeToPayload(
   value: HubSnapshotRow['snapshotType']
 ): TenderSnapshotPayload['snapshotType'] {
   switch (value) {
+    case 'requirements_snapshot':
+      return 'requirements_snapshot';
+    case 'framework_snapshot':
+      return 'framework_snapshot';
+    case 'templates_snapshot':
+      return 'templates_snapshot';
+    case 'materials_snapshot':
+      return 'materials_snapshot';
+    case 'full_snapshot':
+      return 'full_snapshot';
     case 'requirements_only':
       return 'requirements_snapshot';
     case 'templates_only':
@@ -48,6 +90,10 @@ function mapHubSnapshotTypeToPayload(
 function mapHubExportModeToPayload(
   value: HubSnapshotRow['exportMode']
 ): TenderSnapshotPayload['exportMode'] {
+  if (value === 'internal_consumption') return 'internal_consumption';
+  if (value === 'downstream_module') return 'downstream_module';
+  if (value === 'manual_download') return 'manual_download';
+  if (value === 'api_delivery') return 'api_delivery';
   if (value === 'excel') return 'manual_download';
   if (value === 'json') return 'api_delivery';
   return 'internal_consumption';
@@ -56,6 +102,9 @@ function mapHubExportModeToPayload(
 function mapHubSnapshotStatusToPayload(
   value: HubSnapshotRow['snapshotStatus']
 ): TenderSnapshotPayload['status'] {
+  if (value === 'generated') return 'generated';
+  if (value === 'published') return 'published';
+  if (value === 'invalidated') return 'invalidated';
   if (value === 'superseded') return 'invalidated';
   return 'generated';
 }
@@ -63,8 +112,9 @@ function mapHubSnapshotStatusToPayload(
 function mapPayloadStatusToHub(
   value: TenderSnapshotPayload['status']
 ): HubSnapshotRow['snapshotStatus'] {
-  if (value === 'invalidated') return 'superseded';
-  return 'ready';
+  if (value === 'invalidated') return 'invalidated';
+  if (value === 'published') return 'published';
+  return 'generated';
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -129,7 +179,7 @@ async function resolveSnapshot(snapshotId: string): Promise<HubSnapshotRow | nul
         eq(tenderProjectVersions.id, assetExportSnapshots.tenderProjectVersionId)
       )
       .innerJoin(tenderProjects, eq(tenderProjects.id, tenderProjectVersions.tenderProjectId))
-      .where(eq(assetExportSnapshots.id, numericId))
+      .where(and(eq(assetExportSnapshots.id, numericId), eq(assetExportSnapshots.isDeleted, false)))
       .limit(1);
     if (byId[0]) return byId[0] as HubSnapshotRow;
   }
@@ -142,7 +192,12 @@ async function resolveSnapshot(snapshotId: string): Promise<HubSnapshotRow | nul
       eq(tenderProjectVersions.id, assetExportSnapshots.tenderProjectVersionId)
     )
     .innerJoin(tenderProjects, eq(tenderProjects.id, tenderProjectVersions.tenderProjectId))
-    .where(sql`${assetExportSnapshots.snapshotJson} ->> 'snapshotId' = ${snapshotId}`)
+    .where(
+      and(
+        sql`${assetExportSnapshots.snapshotJson} ->> 'snapshotId' = ${snapshotId}`,
+        eq(assetExportSnapshots.isDeleted, false)
+      )
+    )
     .limit(1);
   return (byPayloadId[0] as HubSnapshotRow | undefined) ?? null;
 }
@@ -227,6 +282,32 @@ export async function PATCH(
           eq(assetExportSnapshots.tenderProjectVersionId, row.tenderProjectVersionId)
         )
       );
+
+    const afterRow = await resolveSnapshot(String(row.id));
+    const afterPayload = afterRow ? buildPayload(afterRow) : result.payload;
+
+    await recordHubPatchGovernance({
+      operatorId: userId,
+      tenderProjectVersionId: row.tenderProjectVersionId,
+      targetObjectType: HubGovernanceTargetType.assetExportSnapshot,
+      targetObjectId: row.id,
+      beforeJson: {
+        hubSnapshotId: row.id,
+        tenderProjectVersionId: row.tenderProjectVersionId,
+        snapshotType: row.snapshotType,
+        snapshotStatus: row.snapshotStatus,
+        exportMode: row.exportMode,
+        payload: currentPayload,
+      },
+      afterJson: {
+        hubSnapshotId: row.id,
+        tenderProjectVersionId: row.tenderProjectVersionId,
+        snapshotType: afterRow?.snapshotType ?? row.snapshotType,
+        snapshotStatus: afterRow?.snapshotStatus ?? mapPayloadStatusToHub(result.payload.status),
+        exportMode: afterRow?.exportMode ?? row.exportMode,
+        payload: afterPayload,
+      },
+    });
 
     await logTenderTraceEvent({
       interpretationId: null,

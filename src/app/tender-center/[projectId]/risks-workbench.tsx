@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 type RiskItem = {
   riskId: string;
@@ -14,6 +15,7 @@ type RiskItem = {
   detail: string;
   reviewStatus: string;
   resolutionStatus: string;
+  resolutionNote: string | null;
   sourceRequirementId?: number | null;
 };
 
@@ -25,6 +27,7 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
   const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [resolutionMap, setResolutionMap] = useState<Record<string, string>>({});
+  const [resolutionNoteMap, setResolutionNoteMap] = useState<Record<string, string>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadRows = async () => {
@@ -48,6 +51,13 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
         }
         return next;
       });
+      setResolutionNoteMap((prev) => {
+        const next = { ...prev };
+        for (const item of nextRows) {
+          next[item.riskId] = item.resolutionNote ?? next[item.riskId] ?? '';
+        }
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载风险失败');
     } finally {
@@ -63,7 +73,8 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
     if (!keyword.trim()) return rows;
     const kw = keyword.trim().toLowerCase();
     return rows.filter((row) => {
-      const text = `${row.title} ${row.detail} ${row.type}`.toLowerCase();
+      const text =
+        `${row.title} ${row.detail} ${row.type} ${row.resolutionNote ?? ''}`.toLowerCase();
       return text.includes(kw);
     });
   }, [rows, keyword]);
@@ -92,6 +103,44 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
       setResolutionMap((prev) => ({ ...prev, [riskIdRaw]: payload.data.resolutionStatus }));
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新处置状态失败');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const saveResolutionNote = async (riskIdRaw: string) => {
+    const numericId = Number(String(riskIdRaw).replace(/^risk-/, ''));
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+      setError(`非法 riskId: ${riskIdRaw}`);
+      return;
+    }
+    const resolutionNote = (resolutionNoteMap[riskIdRaw] ?? '').trim() || null;
+    setUpdatingId(riskIdRaw);
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/risks/${numericId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolutionNote }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) {
+        throw new Error(payload.error || payload.message || '保存处置说明失败');
+      }
+      setResolutionNoteMap((prev) => ({
+        ...prev,
+        [riskIdRaw]: payload.data.resolutionNote ?? '',
+      }));
+      setRows((prev) =>
+        prev.map((r) =>
+          r.riskId === riskIdRaw ? { ...r, resolutionNote: payload.data.resolutionNote ?? null } : r
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存处置说明失败');
     } finally {
       setUpdatingId(null);
     }
@@ -150,6 +199,29 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
                 </div>
               </div>
               <p className="text-sm whitespace-pre-wrap">{row.detail || '-'}</p>
+              <div className="space-y-1">
+                <Label htmlFor={`risk-resolution-note-${row.riskId}`} className="text-xs">
+                  处置说明（resolution_note）
+                </Label>
+                <Textarea
+                  id={`risk-resolution-note-${row.riskId}`}
+                  className="min-h-[72px] text-sm"
+                  value={resolutionNoteMap[row.riskId] ?? ''}
+                  disabled={updatingId === row.riskId}
+                  onChange={(e) =>
+                    setResolutionNoteMap((prev) => ({ ...prev, [row.riskId]: e.target.value }))
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={updatingId === row.riskId}
+                  onClick={() => void saveResolutionNote(row.riskId)}
+                >
+                  保存处置说明
+                </Button>
+              </div>
             </div>
           ))}
           {!loading && filteredRows.length === 0 ? (

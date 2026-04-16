@@ -6,6 +6,10 @@ import { AppError } from '@/lib/api/error-handler';
 import { db } from '@/db';
 import { tenderRequirements } from '@/db/schema';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
+import {
+  HubGovernanceTargetType,
+  recordHubPatchGovernance,
+} from '@/lib/tender-center/hub-governance';
 
 const REVIEW_STATUSES = new Set([
   'draft',
@@ -18,6 +22,18 @@ const REVIEW_STATUSES = new Set([
 ]);
 
 const IMPORTANCE_LEVELS = new Set(['low', 'medium', 'high', 'critical']);
+const REQUIREMENT_TYPES = new Set([
+  'basic_info',
+  'qualification',
+  'commercial',
+  'technical',
+  'time',
+  'money',
+  'submission',
+  'format',
+  'signature',
+  'other',
+]);
 
 // 040: PATCH /api/tender-center/projects/{projectId}/versions/{versionId}/requirements/{requirementId}
 export async function PATCH(
@@ -49,12 +65,17 @@ export async function PATCH(
     }
     if (typeof body.category === 'string') {
       const category = body.category.trim();
-      if (['qualification', 'commercial', 'technical', 'submission', 'other'].includes(category)) {
+      if (REQUIREMENT_TYPES.has(category)) {
         patch.requirementType = category as
+          | 'basic_info'
           | 'qualification'
           | 'commercial'
           | 'technical'
+          | 'time'
+          | 'money'
           | 'submission'
+          | 'format'
+          | 'signature'
           | 'other';
       }
     }
@@ -84,6 +105,17 @@ export async function PATCH(
       throw AppError.badRequest('未提供可更新字段');
     }
 
+    const before = await db.query.tenderRequirements.findFirst({
+      where: and(
+        eq(tenderRequirements.id, rid),
+        eq(tenderRequirements.tenderProjectVersionId, version.id),
+        eq(tenderRequirements.isDeleted, false)
+      ),
+    });
+    if (!before) {
+      throw AppError.notFound('要求');
+    }
+
     patch.updatedAt = new Date();
 
     const rows = await db
@@ -101,6 +133,29 @@ export async function PATCH(
     if (!row) {
       throw AppError.notFound('要求');
     }
+
+    await recordHubPatchGovernance({
+      operatorId: userId,
+      tenderProjectVersionId: version.id,
+      targetObjectType: HubGovernanceTargetType.tenderRequirement,
+      targetObjectId: row.id,
+      beforeJson: {
+        id: before.id,
+        requirementType: before.requirementType,
+        title: before.title,
+        content: before.content,
+        importanceLevel: before.importanceLevel,
+        reviewStatus: before.reviewStatus,
+      },
+      afterJson: {
+        id: row.id,
+        requirementType: row.requirementType,
+        title: row.title,
+        content: row.content,
+        importanceLevel: row.importanceLevel,
+        reviewStatus: row.reviewStatus,
+      },
+    });
 
     return NextResponse.json({
       success: true,

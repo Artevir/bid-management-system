@@ -60,17 +60,32 @@ export async function GET(
     const [qualRow] = await db
       .select()
       .from(qualificationRequirements)
-      .where(eq(qualificationRequirements.tenderRequirementId, id))
+      .where(
+        and(
+          eq(qualificationRequirements.tenderRequirementId, id),
+          eq(qualificationRequirements.isDeleted, false)
+        )
+      )
       .limit(1);
     const [commRow] = await db
       .select()
       .from(commercialRequirements)
-      .where(eq(commercialRequirements.tenderRequirementId, id))
+      .where(
+        and(
+          eq(commercialRequirements.tenderRequirementId, id),
+          eq(commercialRequirements.isDeleted, false)
+        )
+      )
       .limit(1);
     const [techRow] = await db
       .select()
       .from(technicalRequirements)
-      .where(eq(technicalRequirements.tenderRequirementId, id))
+      .where(
+        and(
+          eq(technicalRequirements.tenderRequirementId, id),
+          eq(technicalRequirements.isDeleted, false)
+        )
+      )
       .limit(1);
 
     return NextResponse.json({

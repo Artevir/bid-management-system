@@ -70,10 +70,10 @@ export async function POST(
       throw AppError.notFound('版本');
     }
 
-    const cat = typeof rawDocCategory === 'string' ? rawDocCategory : 'tender_document';
+    const cat = typeof rawDocCategory === 'string' ? rawDocCategory : 'main_document';
     const docCategory = (DOC_CATEGORIES as readonly string[]).includes(cat)
       ? (cat as (typeof DOC_CATEGORIES)[number])
-      : 'tender_document';
+      : 'main_document';
 
     const [row] = await db
       .insert(sourceDocuments)
@@ -88,8 +88,8 @@ export async function POST(
         pageCount: documentPageCount != null ? Number(documentPageCount) : null,
         docCategory,
         parseStatus: 'not_started',
-        textExtractStatus: 'pending',
-        structureExtractStatus: 'pending',
+        textExtractStatus: 'not_started',
+        structureExtractStatus: 'not_started',
       })
       .returning({ id: sourceDocuments.id });
 

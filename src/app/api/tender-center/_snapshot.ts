@@ -17,7 +17,12 @@ export const TENDER_EXPORT_MODES = [
 
 export type TenderExportMode = (typeof TENDER_EXPORT_MODES)[number];
 
-export const TENDER_SNAPSHOT_STATUSES = ['generated', 'published', 'invalidated'] as const;
+export const TENDER_SNAPSHOT_STATUSES = [
+  'generating',
+  'generated',
+  'published',
+  'invalidated',
+] as const;
 
 export type TenderSnapshotStatus = (typeof TENDER_SNAPSHOT_STATUSES)[number];
 
