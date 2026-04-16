@@ -99,6 +99,7 @@ export function ReviewWorkbench({
     conflictStatus: '',
     conflictCategory: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -201,6 +202,125 @@ export function ReviewWorkbench({
     if (selectedConflictId === null) return null;
     return conflictRows.find((c) => c.conflictId === selectedConflictId) ?? null;
   }, [conflictRows, selectedConflictId]);
+
+  const handleConfirmObject = async (reviewTaskId: string) => {
+    const key = `confirm_object-${reviewTaskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/reviews/${reviewTaskId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision: 'approved' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleModifyAndConfirm = async (reviewTaskId: string) => {
+    const key = `modify_and_confirm-${reviewTaskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/reviews/${reviewTaskId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision: 'modified' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '修改后确认失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '修改后确认失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleRejectObject = async (reviewTaskId: string) => {
+    const key = `reject_object-${reviewTaskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/reviews/${reviewTaskId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision: 'rejected' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '驳回失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '驳回失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleReassignReview = async (reviewTaskId: string) => {
+    const key = `reassign_review-${reviewTaskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/reviews/${reviewTaskId}/reassign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: '重新分派' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '重新分派失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '重新分派失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleResolveConflict = async (conflictId: number) => {
+    const key = `resolve_conflict-${conflictId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/conflicts/conflict-${conflictId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolutionType: 'manual_override', note: '复核页定案' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '冲突定案失败');
+      setConflictRows((prev) =>
+        prev.map((c) => (c.conflictId === conflictId ? { ...c, reviewStatus: 'resolved' } : c))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '冲突定案失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleRollbackResolution = async (conflictId: number) => {
+    const key = `rollback_resolution-${conflictId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/conflicts/conflict-${conflictId}/reopen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '回退定案失败');
+      setConflictRows((prev) =>
+        prev.map((c) => (c.conflictId === conflictId ? { ...c, reviewStatus: 'reviewing' } : c))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '回退定案失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const submitReview = async (
     reviewTaskId: string,
@@ -355,16 +475,36 @@ export function ReviewWorkbench({
               </div>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`confirm_object-${selectedReview.reviewTaskId}`]}
+                onClick={() => handleConfirmObject(selectedReview.reviewTaskId)}
+              >
                 确认 (confirm_object)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`modify_and_confirm-${selectedReview.reviewTaskId}`]}
+                onClick={() => handleModifyAndConfirm(selectedReview.reviewTaskId)}
+              >
                 修改后确认 (modify_and_confirm)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`reject_object-${selectedReview.reviewTaskId}`]}
+                onClick={() => handleRejectObject(selectedReview.reviewTaskId)}
+              >
                 驳回 (reject_object)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`reassign_review-${selectedReview.reviewTaskId}`]}
+                onClick={() => handleReassignReview(selectedReview.reviewTaskId)}
+              >
                 重新分派 (reassign_review)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedReviewId(null)}>
@@ -413,10 +553,20 @@ export function ReviewWorkbench({
               <p className="whitespace-pre-wrap">{selectedConflict.detail ?? '-'}</p>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`resolve_conflict-${selectedConflict.conflictId}`]}
+                onClick={() => handleResolveConflict(selectedConflict.conflictId)}
+              >
                 冲突定案 (resolve_conflict)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`rollback_resolution-${selectedConflict.conflictId}`]}
+                onClick={() => handleRollbackResolution(selectedConflict.conflictId)}
+              >
                 回退定案 (rollback_resolution)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedConflictId(null)}>

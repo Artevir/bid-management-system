@@ -82,6 +82,7 @@ export function TemplatesWorkbench({
     seal: '',
     reviewStatus: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadTemplates = async () => {
     if (!versionId) return;
@@ -190,6 +191,58 @@ export function TemplatesWorkbench({
     return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
+  const handleConfirmObject = async (templateId: number) => {
+    const key = `confirm_object-${templateId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/templates/${templateId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认对象失败');
+      setTemplates((prev) =>
+        prev.map((t) => (t.templateId === templateId ? { ...t, reviewStatus: 'confirmed' } : t))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认对象失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleModifyAndConfirm = async (templateId: number) => {
+    const key = `modify_and_confirm-${templateId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/templates/${templateId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed', modifiedFlag: true }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '修改后确认失败');
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.templateId === templateId ? { ...t, reviewStatus: 'confirmed', modifiedFlag: true } : t
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '修改后确认失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const renderDetailPanel = () => {
     if (activeTab === 'templates' && selectedTemplate) {
       return (
@@ -252,10 +305,20 @@ export function TemplatesWorkbench({
               </div>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`confirm_object-${selectedTemplate.templateId}`]}
+                onClick={() => handleConfirmObject(selectedTemplate.templateId)}
+              >
                 确认对象 (confirm_object)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`modify_and_confirm-${selectedTemplate.templateId}`]}
+                onClick={() => handleModifyAndConfirm(selectedTemplate.templateId)}
+              >
                 修改后确认 (modify_and_confirm)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedTemplateId(null)}>

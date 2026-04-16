@@ -65,6 +65,7 @@ export function ScoringWorkbench({
     materialRequired: '',
     reviewStatus: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     if (!versionId) return;
@@ -149,6 +150,78 @@ export function ScoringWorkbench({
     if (selectedItemId === null) return null;
     return items.find((i) => i.scoringItemId === selectedItemId) ?? null;
   }, [items, selectedItemId]);
+
+  const handleCreateReview = async (scoringItemId: number) => {
+    const key = `create_review-${scoringItemId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch('/api/tender-center/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          versionId,
+          note: `评分项 #${scoringItemId} 发起复核`,
+        }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '发起复核失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '发起复核失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleConfirmObject = async (scoringItemId: number) => {
+    const key = `confirm_object-${scoringItemId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/scoring-items/${scoringItemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认对象失败');
+      setItems((prev) =>
+        prev.map((i) =>
+          i.scoringItemId === scoringItemId ? { ...i, reviewStatus: 'confirmed' } : i
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认对象失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleMaterializeRequirement = async (scoringItemId: number) => {
+    const key = `materialize_requirement-${scoringItemId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/materials`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceType: 'scoring_item', sourceId: scoringItemId }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '转材料清单失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '转材料清单失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const totalFilteredScore = filteredItems.reduce(
     (sum, item) => sum + (Number(item.maxScore) || 0),
@@ -361,13 +434,28 @@ export function ScoringWorkbench({
                 </div>
               )}
               <div className="flex gap-2 pt-2">
-                <Button size="sm" variant="outline" disabled>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading[`create_review-${selectedItem.scoringItemId}`]}
+                  onClick={() => handleCreateReview(selectedItem.scoringItemId)}
+                >
                   发起复核 (create_review)
                 </Button>
-                <Button size="sm" variant="outline" disabled>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading[`confirm_object-${selectedItem.scoringItemId}`]}
+                  onClick={() => handleConfirmObject(selectedItem.scoringItemId)}
+                >
                   确认对象 (confirm_object)
                 </Button>
-                <Button size="sm" variant="outline" disabled>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading[`materialize_requirement-${selectedItem.scoringItemId}`]}
+                  onClick={() => handleMaterializeRequirement(selectedItem.scoringItemId)}
+                >
                   转材料清单 (materialize_requirement)
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setSelectedItemId(null)}>

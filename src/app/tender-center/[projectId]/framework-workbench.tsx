@@ -65,6 +65,7 @@ export function FrameworkWorkbench({
     reviewStatus: '',
     boundStatus: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     if (!versionId) return;
@@ -180,6 +181,53 @@ export function FrameworkWorkbench({
     if (selectedNodeId === null) return null;
     return nodes.find((n) => n.nodeId === selectedNodeId) ?? null;
   }, [nodes, selectedNodeId]);
+
+  const handleConfirmObject = async (nodeId: number) => {
+    const key = `confirm_object-${nodeId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/framework-nodes/${nodeId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认对象失败');
+      setNodes((prev) =>
+        prev.map((n) => (n.nodeId === nodeId ? { ...n, reviewStatus: 'confirmed' } : n))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认对象失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleCreateResponseTask = async (nodeId: number, nodeTitle: string) => {
+    const key = `create_response_task-${nodeId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/response-tasks`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceType: 'framework', sourceId: nodeId }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '转响应任务失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '转响应任务失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const selectedBinding = useMemo(() => {
     if (selectedBindingId === null) return null;
@@ -300,10 +348,22 @@ export function FrameworkWorkbench({
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`confirm_object-${selectedNode.nodeId}`]}
+                onClick={() => handleConfirmObject(selectedNode.nodeId)}
+              >
                 确认对象 (confirm_object)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`create_response_task-${selectedNode.nodeId}`]}
+                onClick={() =>
+                  handleCreateResponseTask(selectedNode.nodeId, selectedNode.title || '')
+                }
+              >
                 转响应任务 (create_response_task)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedNodeId(null)}>

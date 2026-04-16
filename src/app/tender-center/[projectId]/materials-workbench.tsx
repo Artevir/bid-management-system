@@ -100,6 +100,7 @@ export function MaterialsWorkbench({
     clarStatus: '',
     clarUrgency: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     if (!versionId) return;
@@ -223,6 +224,60 @@ export function MaterialsWorkbench({
     return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
+  const handleConfirmObject = async (materialId: number) => {
+    const key = `confirm_object-${materialId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/materials/${materialId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认对象失败');
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              materials: prev.materials.map((m) =>
+                m.id === materialId ? { ...m, status: 'confirmed' } : m
+              ),
+            }
+          : prev
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认对象失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleCreateResponseTask = async (materialId: number, materialName: string) => {
+    const key = `create_response_task-${materialId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/response-tasks`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceType: 'material', sourceId: materialId }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '转响应任务失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '转响应任务失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const renderDetailPanel = () => {
     if (activeTab === 'materials' && selectedMaterial) {
       return (
@@ -279,10 +334,22 @@ export function MaterialsWorkbench({
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`confirm_object-${selectedMaterial.id}`]}
+                onClick={() => handleConfirmObject(selectedMaterial.id)}
+              >
                 确认对象 (confirm_object)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`create_response_task-${selectedMaterial.id}`]}
+                onClick={() =>
+                  handleCreateResponseTask(selectedMaterial.id, selectedMaterial.name || '')
+                }
+              >
                 转响应任务 (create_response_task)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedMaterialId(null)}>

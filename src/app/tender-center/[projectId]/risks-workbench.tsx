@@ -70,6 +70,7 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
     resolutionStatus: '',
     conflictLevel: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadRows = async () => {
     if (!versionId) return;
@@ -241,6 +242,94 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
     }
   };
 
+  const handleCloseRisk = async (riskId: string) => {
+    const key = `close_risk-${riskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/risks/${riskId}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'close' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '关闭风险失败');
+      setRiskRows((prev) =>
+        prev.map((r) => (r.riskId === riskId ? { ...r, resolutionStatus: 'closed' } : r))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '关闭风险失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleMitigateRisk = async (riskId: string) => {
+    const key = `mitigate_risk-${riskId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/risks/${riskId}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mitigate' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '标记已缓释失败');
+      setRiskRows((prev) =>
+        prev.map((r) => (r.riskId === riskId ? { ...r, resolutionStatus: 'mitigated' } : r))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '标记已缓释失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleCreateClarification = async (sourceType: string, sourceId: number, title: string) => {
+    const key = `create_clarification-${sourceType}-${sourceId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/clarifications`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceType, sourceId, title }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '生成澄清候选失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '生成澄清候选失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleResolveConflict = async (conflictId: number) => {
+    const key = `resolve_conflict-${conflictId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/conflicts/conflict-${conflictId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolutionType: 'manual_override', note: '人工确认处理' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '冲突定案失败');
+      setConflictRows((prev) =>
+        prev.map((c) => (c.conflictId === conflictId ? { ...c, reviewStatus: 'resolved' } : c))
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '冲突定案失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   const renderRiskItem = (row: RiskItem) => (
     <div
       key={row.riskId}
@@ -389,13 +478,34 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
                 保存
               </Button>
             </div>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`close_risk-${selectedRisk.riskId}`]}
+              onClick={() => handleCloseRisk(selectedRisk.riskId)}
+            >
               关闭风险 (close_risk)
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`mitigate_risk-${selectedRisk.riskId}`]}
+              onClick={() => handleMitigateRisk(selectedRisk.riskId)}
+            >
               标记已缓释 (mitigate_risk)
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`create_clarification-risk-${selectedRisk.riskId}`]}
+              onClick={() =>
+                handleCreateClarification(
+                  'risk',
+                  Number(selectedRisk.riskId.replace('risk-', '')),
+                  selectedRisk.title
+                )
+              }
+            >
               生成澄清候选 (create_clarification)
             </Button>
             <Button size="sm" variant="outline" onClick={() => setSelectedRiskId(null)}>
@@ -445,10 +555,28 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actionLoading[`resolve_conflict-${selectedConflict.conflictId}`]}
+                onClick={() => handleResolveConflict(selectedConflict.conflictId)}
+              >
                 冲突定案 (resolve_conflict)
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={
+                  actionLoading[`create_clarification-conflict-${selectedConflict.conflictId}`]
+                }
+                onClick={() =>
+                  handleCreateClarification(
+                    'conflict',
+                    selectedConflict.conflictId,
+                    selectedConflict.conflictType
+                  )
+                }
+              >
                 生成澄清候选 (create_clarification)
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedConflictId(null)}>

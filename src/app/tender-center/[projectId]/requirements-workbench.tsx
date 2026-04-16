@@ -121,6 +121,7 @@ export function RequirementsWorkbench({
     templateBound: '',
     importance: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadRows = async () => {
     if (!versionId) return;
@@ -265,6 +266,101 @@ export function RequirementsWorkbench({
       setError(err instanceof Error ? err.message : '更新状态失败');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleMarkKey = async (requirementId: number) => {
+    const key = `mark_key-${requirementId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/requirements/req-${requirementId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ importanceLevel: 'high' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '标记重点失败');
+      setRows((prev) =>
+        prev.map((row) =>
+          row.requirementId === requirementId ? { ...row, importanceLevel: 'high' } : row
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '标记重点失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleQuickAccept = async (requirementId: number) => {
+    const key = `quick_accept-${requirementId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/requirements/req-${requirementId}/quick-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'quick_accept' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '快速接受失败');
+      setRows((prev) =>
+        prev.map((row) =>
+          row.requirementId === requirementId ? { ...row, checkStatus: 'confirmed' } : row
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '快速接受失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleQuickReject = async (requirementId: number) => {
+    const key = `quick_reject-${requirementId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(`/api/tender-center/requirements/req-${requirementId}/quick-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'quick_reject' }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '快速驳回失败');
+      setRows((prev) =>
+        prev.map((row) =>
+          row.requirementId === requirementId ? { ...row, checkStatus: 'rejected' } : row
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '快速驳回失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleCreateReview = async (requirementId: number) => {
+    const key = `create_review-${requirementId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch('/api/tender-center/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          versionId,
+          note: `要求 #${requirementId} 发起复核`,
+        }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '发起复核失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '发起复核失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -489,16 +585,36 @@ export function RequirementsWorkbench({
             <p className="whitespace-pre-wrap text-xs">{selectedRequirement.description || '-'}</p>
           </div>
           <div className="flex gap-2 pt-2">
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`create_review-${selectedRequirement.requirementId}`]}
+              onClick={() => handleCreateReview(selectedRequirement.requirementId)}
+            >
               发起复核 (create_review)
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`mark_key-${selectedRequirement.requirementId}`]}
+              onClick={() => handleMarkKey(selectedRequirement.requirementId)}
+            >
               标记重点 (mark_key)
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`quick_accept-${selectedRequirement.requirementId}`]}
+              onClick={() => handleQuickAccept(selectedRequirement.requirementId)}
+            >
               快速接受 (quick_accept)
             </Button>
-            <Button size="sm" variant="outline" disabled>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actionLoading[`quick_reject-${selectedRequirement.requirementId}`]}
+              onClick={() => handleQuickReject(selectedRequirement.requirementId)}
+            >
               快速驳回 (quick_reject)
             </Button>
             <Button size="sm" variant="outline" onClick={() => setSelectedReqId(null)}>

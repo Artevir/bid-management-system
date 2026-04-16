@@ -62,6 +62,7 @@ export function TechnicalWorkbench({
     negativeDeviation: '',
     reviewStatus: '',
   });
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     if (!versionId) return;
@@ -152,6 +153,60 @@ export function TechnicalWorkbench({
     if (selectedItemId === null) return null;
     return items.find((i) => i.technicalItemId === selectedItemId) ?? null;
   }, [items, selectedItemId]);
+
+  const handleConfirmObject = async (technicalItemId: number) => {
+    const key = `confirm_object-${technicalItemId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/technical-items/${technicalItemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'confirmed' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '确认对象失败');
+      setItems((prev) =>
+        prev.map((i) =>
+          i.technicalItemId === technicalItemId ? { ...i, reviewStatus: 'confirmed' } : i
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认对象失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleModifyAndConfirm = async (technicalItemId: number) => {
+    const key = `modify_and_confirm-${technicalItemId}`;
+    setActionLoading((prev) => ({ ...prev, [key]: true }));
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/tender-center/projects/${projectId}/versions/${versionId}/technical-items/${technicalItemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewStatus: 'modified' }),
+        }
+      );
+      const payload = await res.json();
+      if (!res.ok || !payload.success) throw new Error(payload.error || '修改后确认失败');
+      setItems((prev) =>
+        prev.map((i) =>
+          i.technicalItemId === technicalItemId ? { ...i, reviewStatus: 'modified' } : i
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '修改后确认失败');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -373,10 +428,20 @@ export function TechnicalWorkbench({
                 </div>
               )}
               <div className="flex gap-2 pt-2">
-                <Button size="sm" variant="outline" disabled>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading[`confirm_object-${selectedItem.technicalItemId}`]}
+                  onClick={() => handleConfirmObject(selectedItem.technicalItemId)}
+                >
                   确认对象 (confirm_object)
                 </Button>
-                <Button size="sm" variant="outline" disabled>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={actionLoading[`modify_and_confirm-${selectedItem.technicalItemId}`]}
+                  onClick={() => handleModifyAndConfirm(selectedItem.technicalItemId)}
+                >
                   修改后确认 (modify_and_confirm)
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setSelectedItemId(null)}>
