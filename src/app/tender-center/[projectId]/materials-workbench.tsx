@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
 type Material = {
@@ -17,6 +18,9 @@ type Material = {
   status: string;
   note: string | null;
   sourceReason: string | null;
+  sourceType?: string | null;
+  relatedScoringItemId?: number | null;
+  relatedTemplateId?: number | null;
 };
 
 type Task = {
@@ -56,6 +60,19 @@ type PreparationData = {
 
 type TabType = 'materials' | 'tasks' | 'clarifications';
 
+type FilterState = {
+  materialType: string;
+  required: string;
+  signature: string;
+  seal: string;
+  sourceType: string;
+  reviewStatus: string;
+  taskStatus: string;
+  taskPriority: string;
+  clarStatus: string;
+  clarUrgency: string;
+};
+
 export function MaterialsWorkbench({
   projectId,
   versionId,
@@ -68,6 +85,21 @@ export function MaterialsWorkbench({
   const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('materials');
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [selectedClarId, setSelectedClarId] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    materialType: '',
+    required: '',
+    signature: '',
+    seal: '',
+    sourceType: '',
+    reviewStatus: '',
+    taskStatus: '',
+    taskPriority: '',
+    clarStatus: '',
+    clarUrgency: '',
+  });
 
   const loadData = async () => {
     if (!versionId) return;
@@ -93,32 +125,91 @@ export function MaterialsWorkbench({
     void loadData();
   }, [projectId, versionId]);
 
-  const filteredMaterials =
-    data?.materials.filter((m) =>
-      keyword.trim()
-        ? `${m.name || ''} ${m.subType || ''}`.toLowerCase().includes(keyword.trim().toLowerCase())
-        : true
-    ) ?? [];
+  const stats = useMemo(() => {
+    if (!data?.summary) return null;
+    const materialCount = data.materials.length;
+    const requiredCount = data.materials.filter((m) => m.required).length;
+    const signatureCount = data.materials.filter((m) => m.needSignature).length;
+    const sealCount = data.materials.filter((m) => m.needSeal).length;
+    const scoringRelatedCount = data.materials.filter((m) => m.relatedScoringItemId).length;
+    const templateRelatedCount = data.materials.filter((m) => m.relatedTemplateId).length;
+    return {
+      materialCount,
+      requiredCount,
+      signatureCount,
+      sealCount,
+      scoringRelatedCount,
+      templateRelatedCount,
+      taskCount: data.tasks.length,
+      pendingTaskCount: data.tasks.filter((t) => t.status !== 'completed').length,
+      clarCount: data.clarifications.length,
+      urgentClarCount: data.clarifications.filter((c) => c.urgency === 'high').length,
+    };
+  }, [data]);
 
-  const filteredTasks =
-    data?.tasks.filter((t) =>
-      keyword.trim()
-        ? `${t.name || ''} ${t.subType || ''}`.toLowerCase().includes(keyword.trim().toLowerCase())
-        : true
-    ) ?? [];
+  const filteredMaterials = useMemo(() => {
+    if (!data?.materials) return [];
+    let result = data.materials;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((m) =>
+        `${m.name || ''} ${m.subType || ''}`.toLowerCase().includes(kw)
+      );
+    }
+    if (filters.materialType) result = result.filter((m) => m.subType === filters.materialType);
+    if (filters.required === 'yes') result = result.filter((m) => m.required);
+    if (filters.required === 'no') result = result.filter((m) => !m.required);
+    if (filters.signature === 'yes') result = result.filter((m) => m.needSignature);
+    if (filters.signature === 'no') result = result.filter((m) => !m.needSignature);
+    if (filters.seal === 'yes') result = result.filter((m) => m.needSeal);
+    if (filters.seal === 'no') result = result.filter((m) => !m.needSeal);
+    if (filters.sourceType) result = result.filter((m) => m.sourceType === filters.sourceType);
+    if (filters.reviewStatus) result = result.filter((m) => m.status === filters.reviewStatus);
+    return result;
+  }, [data?.materials, keyword, filters]);
 
-  const filteredClarifications =
-    data?.clarifications.filter((c) =>
-      keyword.trim()
-        ? `${c.name || ''} ${c.content || ''}`.toLowerCase().includes(keyword.trim().toLowerCase())
-        : true
-    ) ?? [];
+  const filteredTasks = useMemo(() => {
+    if (!data?.tasks) return [];
+    let result = data.tasks;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((t) =>
+        `${t.name || ''} ${t.subType || ''}`.toLowerCase().includes(kw)
+      );
+    }
+    if (filters.taskStatus) result = result.filter((t) => t.status === filters.taskStatus);
+    if (filters.taskPriority) result = result.filter((t) => t.priority === filters.taskPriority);
+    return result;
+  }, [data?.tasks, keyword, filters]);
 
-  const tabs: { key: TabType; label: string; count: number }[] = [
-    { key: 'materials', label: '材料清单', count: filteredMaterials.length },
-    { key: 'tasks', label: '响应任务', count: filteredTasks.length },
-    { key: 'clarifications', label: '澄清候选', count: filteredClarifications.length },
-  ];
+  const filteredClarifications = useMemo(() => {
+    if (!data?.clarifications) return [];
+    let result = data.clarifications;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((c) =>
+        `${c.name || ''} ${c.content || ''}`.toLowerCase().includes(kw)
+      );
+    }
+    if (filters.clarStatus) result = result.filter((c) => c.status === filters.clarStatus);
+    if (filters.clarUrgency) result = result.filter((c) => c.urgency === filters.clarUrgency);
+    return result;
+  }, [data?.clarifications, keyword, filters]);
+
+  const selectedMaterial = useMemo(() => {
+    if (selectedMaterialId === null || !data?.materials) return null;
+    return data.materials.find((m) => m.id === selectedMaterialId) ?? null;
+  }, [data?.materials, selectedMaterialId]);
+
+  const selectedTask = useMemo(() => {
+    if (selectedTaskId === null || !data?.tasks) return null;
+    return data.tasks.find((t) => t.id === selectedTaskId) ?? null;
+  }, [data?.tasks, selectedTaskId]);
+
+  const selectedClar = useMemo(() => {
+    if (selectedClarId === null || !data?.clarifications) return null;
+    return data.clarifications.find((c) => c.id === selectedClarId) ?? null;
+  }, [data?.clarifications, selectedClarId]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -132,28 +223,219 @@ export function MaterialsWorkbench({
     return <Badge variant={variants[status] || 'secondary'}>{status}</Badge>;
   };
 
+  const renderDetailPanel = () => {
+    if (activeTab === 'materials' && selectedMaterial) {
+      return (
+        <Card className="h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">材料详情</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <Label className="text-muted-foreground">材料名称</Label>
+              <p className="font-medium">{selectedMaterial.name ?? '-'}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">材料类型</Label>
+              <p>{selectedMaterial.subType ?? 'other'}</p>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {selectedMaterial.required && <Badge variant="destructive">必须</Badge>}
+              {selectedMaterial.needSignature && <Badge variant="outline">需签字</Badge>}
+              {selectedMaterial.needSeal && <Badge variant="outline">需盖章</Badge>}
+            </div>
+            <div>
+              <Label className="text-muted-foreground">复核状态</Label>
+              <div className="mt-1">{getStatusBadge(selectedMaterial.status)}</div>
+            </div>
+            {selectedMaterial.sourceReason && (
+              <div>
+                <Label className="text-muted-foreground">来源原因</Label>
+                <p>{selectedMaterial.sourceReason}</p>
+              </div>
+            )}
+            {selectedMaterial.sourceType && (
+              <div>
+                <Label className="text-muted-foreground">来源对象类型</Label>
+                <p>{selectedMaterial.sourceType}</p>
+              </div>
+            )}
+            {selectedMaterial.relatedScoringItemId && (
+              <div>
+                <Label className="text-muted-foreground">关联评分项</Label>
+                <p>ID: {selectedMaterial.relatedScoringItemId}</p>
+              </div>
+            )}
+            {selectedMaterial.relatedTemplateId && (
+              <div>
+                <Label className="text-muted-foreground">关联模板</Label>
+                <p>ID: {selectedMaterial.relatedTemplateId}</p>
+              </div>
+            )}
+            {selectedMaterial.note && (
+              <div>
+                <Label className="text-muted-foreground">备注</Label>
+                <p>{selectedMaterial.note}</p>
+              </div>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setSelectedMaterialId(null)}>
+              关闭
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    if (activeTab === 'tasks' && selectedTask) {
+      return (
+        <Card className="h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">任务详情</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <Label className="text-muted-foreground">任务名称</Label>
+              <p className="font-medium">{selectedTask.name ?? '-'}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">任务类型</Label>
+              <p>{selectedTask.subType ?? 'other'}</p>
+            </div>
+            <div className="flex gap-4">
+              <div>
+                <Label className="text-muted-foreground">状态</Label>
+                <div className="mt-1">{getStatusBadge(selectedTask.status)}</div>
+              </div>
+              {selectedTask.priority && (
+                <div>
+                  <Label className="text-muted-foreground">优先级</Label>
+                  <Badge variant={selectedTask.priority === 'high' ? 'destructive' : 'secondary'}>
+                    {selectedTask.priority}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label className="text-muted-foreground">责任角色</Label>
+              <p>{selectedTask.responsibilityRole ?? '-'}</p>
+            </div>
+            {selectedTask.deadline && (
+              <div>
+                <Label className="text-muted-foreground">截止时间</Label>
+                <p>{new Date(selectedTask.deadline).toLocaleString()}</p>
+              </div>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setSelectedTaskId(null)}>
+              关闭
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    if (activeTab === 'clarifications' && selectedClar) {
+      return (
+        <Card className="h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">澄清详情</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <Label className="text-muted-foreground">澄清名称</Label>
+              <p className="font-medium">{selectedClar.name ?? '-'}</p>
+            </div>
+            <div className="flex gap-4">
+              <div>
+                <Label className="text-muted-foreground">状态</Label>
+                <div className="mt-1">{getStatusBadge(selectedClar.status)}</div>
+              </div>
+              {selectedClar.urgency && (
+                <div>
+                  <Label className="text-muted-foreground">紧急程度</Label>
+                  <Badge variant={selectedClar.urgency === 'high' ? 'destructive' : 'outline'}>
+                    {selectedClar.urgency}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            {selectedClar.content && (
+              <div>
+                <Label className="text-muted-foreground">澄清内容</Label>
+                <p className="whitespace-pre-wrap">{selectedClar.content}</p>
+              </div>
+            )}
+            {selectedClar.reason && (
+              <div>
+                <Label className="text-muted-foreground">原因</Label>
+                <p>{selectedClar.reason}</p>
+              </div>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setSelectedClarId(null)}>
+              关闭
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    return (
+      <Card className="h-fit">
+        <CardContent className="py-8 text-center text-muted-foreground">
+          <p>点击左侧项查看详情</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const tabs: { key: TabType; label: string; count: number }[] = [
+    { key: 'materials', label: '材料清单', count: filteredMaterials.length },
+    { key: 'tasks', label: '响应任务', count: filteredTasks.length },
+    { key: 'clarifications', label: '澄清候选', count: filteredClarifications.length },
+  ];
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'materials':
         return (
           <div className="space-y-3">
             {filteredMaterials.map((mat) => (
-              <div key={mat.id} className="rounded border p-3 space-y-2">
+              <div
+                key={mat.id}
+                className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                  selectedMaterialId === mat.id
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:bg-muted/30'
+                }`}
+                onClick={() => setSelectedMaterialId(mat.id)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">
                       {mat.name || `材料 #${mat.id}`}
                       {mat.required && <span className="text-red-500 ml-1">*必填</span>}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      类型：{mat.subType || 'other_material'}
-                    </p>
+                    <p className="text-xs text-muted-foreground">类型：{mat.subType || 'other'}</p>
                   </div>
                   {getStatusBadge(mat.status)}
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {mat.needSignature && <Badge variant="outline">需签名</Badge>}
-                  {mat.needSeal && <Badge variant="outline">需盖章</Badge>}
+                <div className="flex flex-wrap gap-1">
+                  {mat.needSignature && (
+                    <Badge variant="outline" className="text-[10px]">
+                      需签名
+                    </Badge>
+                  )}
+                  {mat.needSeal && (
+                    <Badge variant="outline" className="text-[10px]">
+                      需盖章
+                    </Badge>
+                  )}
+                  {mat.relatedScoringItemId && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      关联评分
+                    </Badge>
+                  )}
+                  {mat.relatedTemplateId && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      关联模板
+                    </Badge>
+                  )}
                 </div>
                 {mat.note && <p className="text-sm text-muted-foreground">备注：{mat.note}</p>}
               </div>
@@ -167,7 +449,13 @@ export function MaterialsWorkbench({
         return (
           <div className="space-y-3">
             {filteredTasks.map((task) => (
-              <div key={task.id} className="rounded border p-3 space-y-2">
+              <div
+                key={task.id}
+                className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                  selectedTaskId === task.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
+                }`}
+                onClick={() => setSelectedTaskId(task.id)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{task.name || `任务 #${task.id}`}</p>
@@ -200,7 +488,13 @@ export function MaterialsWorkbench({
         return (
           <div className="space-y-3">
             {filteredClarifications.map((clar) => (
-              <div key={clar.id} className="rounded border p-3 space-y-2">
+              <div
+                key={clar.id}
+                className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                  selectedClarId === clar.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'
+                }`}
+                onClick={() => setSelectedClarId(clar.id)}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{clar.name || `澄清 #${clar.id}`}</p>
@@ -233,60 +527,194 @@ export function MaterialsWorkbench({
   };
 
   return (
-    <Card>
-      <CardHeader className="space-y-3">
-        <CardTitle>投标准备工作台</CardTitle>
-        <div className="flex flex-wrap gap-2">
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索材料/任务/澄清"
-            className="max-w-sm"
-          />
-          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-            刷新
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 space-y-4">
+        <Card>
+          <CardHeader className="pb-3 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-lg">材料清单</CardTitle>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                刷新
+              </Button>
+            </div>
+            {stats && (
+              <div className="flex flex-wrap gap-2">
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  材料: <strong>{stats.materialCount}</strong>
+                </div>
+                <div className="text-sm bg-destructive/10 text-destructive px-3 py-1 rounded">
+                  必须: <strong>{stats.requiredCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  需签字: <strong>{stats.signatureCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  需盖章: <strong>{stats.sealCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  关联评分: <strong>{stats.scoringRelatedCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  关联模板: <strong>{stats.templateRelatedCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  任务: <strong>{stats.taskCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  待处理: <strong>{stats.pendingTaskCount}</strong>
+                </div>
+                <div className="text-sm bg-muted px-3 py-1 rounded">
+                  澄清: <strong>{stats.clarCount}</strong>
+                </div>
+                <div className="text-sm bg-destructive/10 text-destructive px-3 py-1 rounded">
+                  紧急: <strong>{stats.urgentClarCount}</strong>
+                </div>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
 
-        {data?.summary && (
-          <div className="flex flex-wrap gap-4 text-sm">
-            <Badge variant="outline">
-              材料 {data.summary.materialCount} (必填{data.summary.requiredMaterialCount})
-            </Badge>
-            <Badge variant="outline">
-              任务 {data.summary.taskCount} (待处理{data.summary.pendingTaskCount})
-            </Badge>
-            <Badge variant="outline">
-              澄清 {data.summary.clarificationCount} (紧急{data.summary.urgentClarificationCount})
-            </Badge>
-          </div>
-        )}
+            <div className="flex flex-wrap gap-2 items-center border-b pb-2">
+              <Input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="关键词搜索"
+                className="max-w-[200px]"
+              />
+              {activeTab === 'materials' && (
+                <>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.materialType}
+                    onChange={(e) => setFilters((f) => ({ ...f, materialType: e.target.value }))}
+                  >
+                    <option value="">材料类型</option>
+                    <option value="certificate">资质证书</option>
+                    <option value="declaration">声明文件</option>
+                    <option value="form">表单</option>
+                    <option value="other">其他</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.required}
+                    onChange={(e) => setFilters((f) => ({ ...f, required: e.target.value }))}
+                  >
+                    <option value="">必须</option>
+                    <option value="yes">是</option>
+                    <option value="no">否</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.signature}
+                    onChange={(e) => setFilters((f) => ({ ...f, signature: e.target.value }))}
+                  >
+                    <option value="">需签字</option>
+                    <option value="yes">是</option>
+                    <option value="no">否</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.seal}
+                    onChange={(e) => setFilters((f) => ({ ...f, seal: e.target.value }))}
+                  >
+                    <option value="">需盖章</option>
+                    <option value="yes">是</option>
+                    <option value="no">否</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.reviewStatus}
+                    onChange={(e) => setFilters((f) => ({ ...f, reviewStatus: e.target.value }))}
+                  >
+                    <option value="">状态</option>
+                    <option value="draft">draft</option>
+                    <option value="pending">pending</option>
+                    <option value="confirmed">confirmed</option>
+                  </select>
+                </>
+              )}
+              {activeTab === 'tasks' && (
+                <>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.taskStatus}
+                    onChange={(e) => setFilters((f) => ({ ...f, taskStatus: e.target.value }))}
+                  >
+                    <option value="">任务状态</option>
+                    <option value="pending">pending</option>
+                    <option value="in_progress">in_progress</option>
+                    <option value="completed">completed</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.taskPriority}
+                    onChange={(e) => setFilters((f) => ({ ...f, taskPriority: e.target.value }))}
+                  >
+                    <option value="">优先级</option>
+                    <option value="high">high</option>
+                    <option value="medium">medium</option>
+                    <option value="low">low</option>
+                  </select>
+                </>
+              )}
+              {activeTab === 'clarifications' && (
+                <>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.clarStatus}
+                    onChange={(e) => setFilters((f) => ({ ...f, clarStatus: e.target.value }))}
+                  >
+                    <option value="">状态</option>
+                    <option value="draft">draft</option>
+                    <option value="pending">pending</option>
+                    <option value="resolved">resolved</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.clarUrgency}
+                    onChange={(e) => setFilters((f) => ({ ...f, clarUrgency: e.target.value }))}
+                  >
+                    <option value="">紧急程度</option>
+                    <option value="high">high</option>
+                    <option value="medium">medium</option>
+                    <option value="low">low</option>
+                  </select>
+                </>
+              )}
+            </div>
 
-        <div className="flex flex-wrap gap-1 border-b">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
-                activeTab === tab.key
-                  ? 'border-primary text-primary font-medium'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
-        </div>
+            <div className="flex flex-wrap gap-1 border-b">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    setSelectedMaterialId(null);
+                    setSelectedTaskId(null);
+                    setSelectedClarId(null);
+                  }}
+                  className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
 
-        <p className="text-xs text-muted-foreground">
-          共 {tabs.find((t) => t.key === activeTab)?.count || 0} 条
-        </p>
-        {renderTabContent()}
-      </CardContent>
-    </Card>
+            <p className="text-xs text-muted-foreground">
+              共 {tabs.find((t) => t.key === activeTab)?.count || 0} 条
+            </p>
+            {renderTabContent()}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-4">{renderDetailPanel()}</div>
+    </div>
   );
 }

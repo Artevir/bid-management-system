@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 type ReviewTask = {
   reviewLogId: number;
@@ -13,6 +15,13 @@ type ReviewTask = {
   operationTime: string;
   reviewStatus: string;
   reviewResult: string | null;
+  objectType?: string | null;
+  objectId?: number | null;
+  originalValue?: string | null;
+  aiValue?: string | null;
+  suggestedValue?: string | null;
+  assignedTo?: string | null;
+  reason?: string | null;
 };
 
 type ConflictItem = {
@@ -21,6 +30,7 @@ type ConflictItem = {
   category: string;
   status: string;
   detail: string;
+  riskLevel?: string | null;
 };
 
 type SnapshotItem = {
@@ -51,6 +61,16 @@ const SNAPSHOT_TYPES = [
   'full_snapshot',
 ] as const;
 
+type TabType = 'reviews' | 'conflicts' | 'confidence' | 'snapshots';
+
+type FilterState = {
+  reviewStatus: string;
+  reviewResult: string;
+  objectType: string;
+  conflictStatus: string;
+  conflictCategory: string;
+};
+
 export function ReviewWorkbench({
   projectId,
   versionId,
@@ -68,6 +88,17 @@ export function ReviewWorkbench({
   const [snapshotName, setSnapshotName] = useState('');
   const [snapshotType, setSnapshotType] =
     useState<(typeof SNAPSHOT_TYPES)[number]>('full_snapshot');
+  const [activeTab, setActiveTab] = useState<TabType>('reviews');
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
+  const [selectedConflictId, setSelectedConflictId] = useState<number | null>(null);
+  const [keyword, setKeyword] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    reviewStatus: '',
+    reviewResult: '',
+    objectType: '',
+    conflictStatus: '',
+    conflictCategory: '',
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -110,6 +141,66 @@ export function ReviewWorkbench({
   useEffect(() => {
     void loadData();
   }, [projectId, versionId]);
+
+  const stats = useMemo(() => {
+    const pendingCount = reviewRows.filter((r) => r.reviewStatus === 'pending').length;
+    const approvedCount = reviewRows.filter((r) => r.reviewResult === 'approved').length;
+    const rejectedCount = reviewRows.filter((r) => r.reviewResult === 'rejected').length;
+    const todayAdded = reviewRows.filter((r) => {
+      const today = new Date().toDateString();
+      return new Date(r.operationTime).toDateString() === today;
+    }).length;
+    const closedConflicts = conflictRows.filter((c) => c.status === 'resolved').length;
+    const pendingConflicts = conflictRows.filter((c) => c.status !== 'resolved').length;
+    return {
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      todayAdded,
+      closedConflicts,
+      pendingConflicts,
+    };
+  }, [reviewRows, conflictRows]);
+
+  const filteredReviews = useMemo(() => {
+    let result = reviewRows;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((r) =>
+        `${r.reviewTaskId} ${r.type} ${r.content || ''}`.toLowerCase().includes(kw)
+      );
+    }
+    if (filters.reviewStatus)
+      result = result.filter((r) => r.reviewStatus === filters.reviewStatus);
+    if (filters.reviewResult)
+      result = result.filter((r) => r.reviewResult === filters.reviewResult);
+    if (filters.objectType) result = result.filter((r) => r.objectType === filters.objectType);
+    return result;
+  }, [reviewRows, keyword, filters]);
+
+  const filteredConflicts = useMemo(() => {
+    let result = conflictRows;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((c) =>
+        `${c.title} ${c.category} ${c.detail || ''}`.toLowerCase().includes(kw)
+      );
+    }
+    if (filters.conflictStatus) result = result.filter((c) => c.status === filters.conflictStatus);
+    if (filters.conflictCategory)
+      result = result.filter((c) => c.category === filters.conflictCategory);
+    return result;
+  }, [conflictRows, keyword, filters]);
+
+  const selectedReview = useMemo(() => {
+    if (!selectedReviewId) return null;
+    return reviewRows.find((r) => r.reviewTaskId === selectedReviewId) ?? null;
+  }, [reviewRows, selectedReviewId]);
+
+  const selectedConflict = useMemo(() => {
+    if (selectedConflictId === null) return null;
+    return conflictRows.find((c) => c.conflictId === selectedConflictId) ?? null;
+  }, [conflictRows, selectedConflictId]);
 
   const submitReview = async (
     reviewTaskId: string,
@@ -200,6 +291,133 @@ export function ReviewWorkbench({
     }
   };
 
+  const tabs: { key: TabType; label: string; count: number }[] = [
+    { key: 'reviews', label: '复核任务', count: filteredReviews.length },
+    { key: 'conflicts', label: '冲突处理', count: filteredConflicts.length },
+    { key: 'confidence', label: '置信度', count: confidenceRows.length },
+    { key: 'snapshots', label: '快照中心', count: snapshotRows.length },
+  ];
+
+  const renderDetailPanel = () => {
+    if (activeTab === 'reviews' && selectedReview) {
+      return (
+        <Card className="h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">复核详情</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <Label className="text-muted-foreground">复核任务ID</Label>
+              <p className="font-medium">{selectedReview.reviewTaskId}</p>
+            </div>
+            <div className="flex gap-4">
+              <div>
+                <Label className="text-muted-foreground">对象类型</Label>
+                <p>{selectedReview.objectType ?? '-'}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">对象ID</Label>
+                <p>{selectedReview.objectId ?? '-'}</p>
+              </div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">复核原因</Label>
+              <p>{selectedReview.reason ?? selectedReview.type}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">原始值</Label>
+              <p className="p-2 bg-muted rounded text-xs">{selectedReview.originalValue ?? '-'}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">AI识别值</Label>
+              <p className="p-2 bg-muted rounded text-xs">{selectedReview.aiValue ?? '-'}</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">建议值</Label>
+              <p className="p-2 bg-muted rounded text-xs">{selectedReview.suggestedValue ?? '-'}</p>
+            </div>
+            <div className="flex gap-4">
+              <div>
+                <Label className="text-muted-foreground">状态</Label>
+                <Badge
+                  variant={selectedReview.reviewStatus === 'confirmed' ? 'default' : 'secondary'}
+                >
+                  {selectedReview.reviewStatus}
+                </Badge>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">结果</Label>
+                <Badge
+                  variant={selectedReview.reviewResult === 'approved' ? 'default' : 'secondary'}
+                >
+                  {selectedReview.reviewResult ?? '-'}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" onClick={() => setSelectedReviewId(null)}>
+                关闭
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    if (activeTab === 'conflicts' && selectedConflict) {
+      return (
+        <Card className="h-fit">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">冲突详情</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <Label className="text-muted-foreground">冲突标题</Label>
+              <p className="font-medium">{selectedConflict.title}</p>
+            </div>
+            <div className="flex gap-4">
+              <div>
+                <Label className="text-muted-foreground">分类</Label>
+                <p>{selectedConflict.category}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">状态</Label>
+                <Badge variant={selectedConflict.status === 'resolved' ? 'default' : 'secondary'}>
+                  {selectedConflict.status}
+                </Badge>
+              </div>
+            </div>
+            {selectedConflict.riskLevel && (
+              <div>
+                <Label className="text-muted-foreground">风险等级</Label>
+                <Badge
+                  variant={selectedConflict.riskLevel === 'high' ? 'destructive' : 'secondary'}
+                >
+                  {selectedConflict.riskLevel}
+                </Badge>
+              </div>
+            )}
+            <div>
+              <Label className="text-muted-foreground">详情</Label>
+              <p className="whitespace-pre-wrap">{selectedConflict.detail ?? '-'}</p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" onClick={() => setSelectedConflictId(null)}>
+                关闭
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    return (
+      <Card className="h-fit">
+        <CardContent className="py-8 text-center text-muted-foreground">
+          <p>点击左侧项查看详情</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const confidenceLevelColors: Record<string, string> = {
     high: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
@@ -207,184 +425,311 @@ export function ReviewWorkbench({
   };
 
   return (
-    <div className="space-y-4">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? <p className="text-sm text-muted-foreground">加载中...</p> : null}
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>复核任务</CardTitle>
-          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-            刷新
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {reviewRows.map((row) => (
-            <div key={row.reviewLogId} className="rounded border p-3 space-y-2">
-              <p className="text-sm font-medium">
-                任务 {row.reviewTaskId} | 类型 {row.type}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                状态: {row.reviewStatus} | 结果: {row.reviewResult || '-'} | 时间:{' '}
-                {row.operationTime}
-              </p>
-              <p className="text-sm">{row.content || '-'}</p>
-              <div className="flex flex-wrap gap-2">
-                {REVIEW_DECISIONS.map((decision) => (
-                  <Button
-                    key={decision}
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void submitReview(row.reviewTaskId, decision)}
-                  >
-                    提交 {decision}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ))}
-          {reviewRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无复核任务。</p>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>冲突处理</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {conflictRows.map((row) => (
-            <div key={row.conflictId} className="rounded border p-3 space-y-2">
-              <p className="text-sm font-medium">
-                conflict-{row.conflictId} | {row.title}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                分类: {row.category} | 状态: {row.status}
-              </p>
-              <p className="text-sm">{row.detail || '-'}</p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void resolveConflict(row.conflictId)}
-              >
-                标记为已处理
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 space-y-4">
+        <Card>
+          <CardHeader className="pb-3 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-lg">复核与留痕</CardTitle>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                刷新
               </Button>
             </div>
-          ))}
-          {conflictRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无冲突数据。</p>
-          ) : null}
-        </CardContent>
-      </Card>
+            <div className="flex flex-wrap gap-2">
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                待复核: <strong>{stats.pendingCount}</strong>
+              </div>
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                已通过: <strong>{stats.approvedCount}</strong>
+              </div>
+              <div className="text-sm bg-destructive/10 text-destructive px-3 py-1 rounded">
+                已驳回: <strong>{stats.rejectedCount}</strong>
+              </div>
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                今日新增: <strong>{stats.todayAdded}</strong>
+              </div>
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                冲突待定: <strong>{stats.pendingConflicts}</strong>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>置信度评估</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {confidenceRows.map((row) => (
-            <div key={row.batchId} className="rounded border p-3 space-y-2">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-medium">批次 {row.batchNo}</p>
-                  <p className="text-xs text-muted-foreground">
-                    文档批次ID: {row.documentParseBatchId}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <span
-                    className={`text-xs px-2 py-1 rounded ${confidenceLevelColors[row.confidenceLevel] || 'bg-gray-100'}`}
+            <div className="flex flex-wrap gap-2 items-center border-b pb-2">
+              <Input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="关键词搜索"
+                className="max-w-[200px]"
+              />
+              {activeTab === 'reviews' && (
+                <>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.reviewStatus}
+                    onChange={(e) => setFilters((f) => ({ ...f, reviewStatus: e.target.value }))}
                   >
-                    {row.confidenceLevel} ({row.confidence}%)
-                  </span>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                抽取置信度: {row.extractionConfidence}% | 业务置信度: {row.businessConfidence}%
-              </div>
-              {row.meta && Object.keys(row.meta).length > 0 && (
-                <div className="text-xs bg-muted p-2 rounded">
-                  <pre className="whitespace-pre-wrap">{JSON.stringify(row.meta, null, 2)}</pre>
-                </div>
+                    <option value="">复核状态</option>
+                    <option value="draft">draft</option>
+                    <option value="pending">pending</option>
+                    <option value="confirmed">confirmed</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.reviewResult}
+                    onChange={(e) => setFilters((f) => ({ ...f, reviewResult: e.target.value }))}
+                  >
+                    <option value="">复核结果</option>
+                    <option value="approved">approved</option>
+                    <option value="rejected">rejected</option>
+                    <option value="needs_revision">needs_revision</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.objectType}
+                    onChange={(e) => setFilters((f) => ({ ...f, objectType: e.target.value }))}
+                  >
+                    <option value="">对象类型</option>
+                    <option value="requirement">requirement</option>
+                    <option value="risk">risk</option>
+                    <option value="conflict">conflict</option>
+                    <option value="template">template</option>
+                  </select>
+                </>
+              )}
+              {activeTab === 'conflicts' && (
+                <>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.conflictStatus}
+                    onChange={(e) => setFilters((f) => ({ ...f, conflictStatus: e.target.value }))}
+                  >
+                    <option value="">冲突状态</option>
+                    <option value="pending">pending</option>
+                    <option value="resolved">resolved</option>
+                  </select>
+                  <select
+                    className="rounded border px-2 py-1 text-sm"
+                    value={filters.conflictCategory}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, conflictCategory: e.target.value }))
+                    }
+                  >
+                    <option value="">冲突分类</option>
+                    <option value="value_conflict">value_conflict</option>
+                    <option value="requirement_conflict">requirement_conflict</option>
+                  </select>
+                </>
               )}
             </div>
-          ))}
-          {confidenceRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无置信度数据（请先运行解析任务）</p>
-          ) : null}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="space-y-2">
-          <CardTitle>快照中心</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={snapshotName}
-              onChange={(e) => setSnapshotName(e.target.value)}
-              placeholder="快照名称（可选）"
-              className="max-w-xs"
-            />
-            <select
-              className="rounded border px-2 py-1 text-sm bg-background"
-              value={snapshotType}
-              onChange={(e) => setSnapshotType(e.target.value as (typeof SNAPSHOT_TYPES)[number])}
-            >
-              {SNAPSHOT_TYPES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
+            <div className="flex flex-wrap gap-1 border-b">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    setSelectedReviewId(null);
+                    setSelectedConflictId(null);
+                  }}
+                  className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
               ))}
-            </select>
-            <Button onClick={() => void createSnapshot()} disabled={creatingSnapshot}>
-              {creatingSnapshot ? '创建中...' : '创建快照'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {snapshotRows.map((row, index) => {
-            const sid = row.snapshotId || '';
-            const confidenceLevelColors: Record<string, string> = {
-              high: 'bg-green-100 text-green-800',
-              medium: 'bg-yellow-100 text-yellow-800',
-              low: 'bg-red-100 text-red-800',
-            };
+            </div>
 
-            return (
-              <div key={`${sid}-${index}`} className="rounded border p-3 space-y-2">
-                <p className="text-sm font-medium">{row.name || sid || `snapshot-${index + 1}`}</p>
-                <p className="text-xs text-muted-foreground">
-                  snapshotId: {sid || '-'} | 状态: {row.status || '-'} | 创建时间:{' '}
-                  {row.createdAt || '-'}
-                </p>
-                <p className="text-sm">{row.note || '-'}</p>
-                {sid ? (
-                  <div className="flex flex-wrap gap-2">
+            {activeTab === 'reviews' && (
+              <div className="space-y-3">
+                {filteredReviews.map((row) => (
+                  <div
+                    key={row.reviewLogId}
+                    className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                      selectedReviewId === row.reviewTaskId
+                        ? 'border-primary bg-primary/5'
+                        : 'hover:bg-muted/30'
+                    }`}
+                    onClick={() => setSelectedReviewId(row.reviewTaskId)}
+                  >
+                    <p className="text-sm font-medium">
+                      任务 {row.reviewTaskId} | 类型 {row.type}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      状态: {row.reviewStatus} | 结果: {row.reviewResult || '-'} | 时间:{' '}
+                      {row.operationTime}
+                    </p>
+                    <p className="text-sm">{row.content || '-'}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {REVIEW_DECISIONS.map((decision) => (
+                        <Button
+                          key={decision}
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void submitReview(row.reviewTaskId, decision);
+                          }}
+                        >
+                          {decision}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {filteredReviews.length === 0 && (
+                  <p className="text-sm text-muted-foreground">暂无复核任务。</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'conflicts' && (
+              <div className="space-y-3">
+                {filteredConflicts.map((row) => (
+                  <div
+                    key={row.conflictId}
+                    className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                      selectedConflictId === row.conflictId
+                        ? 'border-primary bg-primary/5'
+                        : 'hover:bg-muted/30'
+                    }`}
+                    onClick={() => setSelectedConflictId(row.conflictId)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium">
+                          conflict-{row.conflictId} | {row.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          分类: {row.category} | 状态: {row.status}
+                        </p>
+                      </div>
+                      <Badge variant={row.status === 'resolved' ? 'default' : 'secondary'}>
+                        {row.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm">{row.detail || '-'}</p>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => void updateSnapshot(sid, 'publish')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void resolveConflict(row.conflictId);
+                      }}
                     >
-                      发布
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void updateSnapshot(sid, 'invalidate')}
-                    >
-                      失效
+                      标记为已处理
                     </Button>
                   </div>
-                ) : null}
+                ))}
+                {filteredConflicts.length === 0 && (
+                  <p className="text-sm text-muted-foreground">暂无冲突数据。</p>
+                )}
               </div>
-            );
-          })}
-          {snapshotRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无快照数据。</p>
-          ) : null}
-        </CardContent>
-      </Card>
+            )}
+
+            {activeTab === 'confidence' && (
+              <div className="space-y-3">
+                {confidenceRows.map((row) => (
+                  <div key={row.batchId} className="rounded border p-3 space-y-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium">批次 {row.batchNo}</p>
+                        <p className="text-xs text-muted-foreground">
+                          文档批次ID: {row.documentParseBatchId}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${confidenceLevelColors[row.confidenceLevel] || 'bg-gray-100'}`}
+                      >
+                        {row.confidenceLevel} ({row.confidence}%)
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      抽取置信度: {row.extractionConfidence}% | 业务置信度: {row.businessConfidence}
+                      %
+                    </div>
+                  </div>
+                ))}
+                {confidenceRows.length === 0 && (
+                  <p className="text-sm text-muted-foreground">暂无置信度数据</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'snapshots' && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Input
+                    value={snapshotName}
+                    onChange={(e) => setSnapshotName(e.target.value)}
+                    placeholder="快照名称（可选）"
+                    className="max-w-xs"
+                  />
+                  <select
+                    className="rounded border px-2 py-1 text-sm bg-background"
+                    value={snapshotType}
+                    onChange={(e) =>
+                      setSnapshotType(e.target.value as (typeof SNAPSHOT_TYPES)[number])
+                    }
+                  >
+                    {SNAPSHOT_TYPES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                  <Button onClick={() => void createSnapshot()} disabled={creatingSnapshot}>
+                    {creatingSnapshot ? '创建中...' : '创建快照'}
+                  </Button>
+                </div>
+                {snapshotRows.map((row, index) => {
+                  const sid = row.snapshotId || '';
+                  return (
+                    <div key={`${sid}-${index}`} className="rounded border p-3 space-y-2">
+                      <p className="text-sm font-medium">
+                        {row.name || sid || `snapshot-${index + 1}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        snapshotId: {sid || '-'} | 状态: {row.status || '-'} | 创建时间:{' '}
+                        {row.createdAt || '-'}
+                      </p>
+                      <p className="text-sm">{row.note || '-'}</p>
+                      {sid && (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void updateSnapshot(sid, 'publish')}
+                          >
+                            发布
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void updateSnapshot(sid, 'invalidate')}
+                          >
+                            失效
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {snapshotRows.length === 0 && (
+                  <p className="text-sm text-muted-foreground">暂无快照数据。</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-4">{renderDetailPanel()}</div>
     </div>
   );
 }

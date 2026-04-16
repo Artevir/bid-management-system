@@ -15,6 +15,10 @@ type RequirementItem = {
   mandatory: boolean;
   checkStatus: string;
   pageNumber: number | null;
+  riskLevel?: string | null;
+  conflictFlag?: boolean;
+  templateBoundFlag?: boolean;
+  importanceLevel?: string | null;
 };
 
 type QualificationRequirement = {
@@ -75,7 +79,20 @@ const CHECK_STATUS_OPTIONS = [
   'closed',
 ];
 
+const CATEGORY_OPTIONS = ['qualification', 'commercial', 'technical', 'submission', 'other'];
+const RISK_LEVEL_OPTIONS = ['high', 'medium', 'low', 'none'];
+const IMPORTANCE_OPTIONS = ['critical', 'high', 'normal', 'low'];
+
 type TabType = 'main' | 'qualification' | 'commercial' | 'technical' | 'submission';
+
+type FilterState = {
+  category: string;
+  checkStatus: string;
+  riskLevel: string;
+  conflictFlag: string;
+  templateBound: string;
+  importance: string;
+};
 
 export function RequirementsWorkbench({
   projectId,
@@ -95,6 +112,15 @@ export function RequirementsWorkbench({
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [parsing, setParsing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('main');
+  const [selectedReqId, setSelectedReqId] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    category: '',
+    checkStatus: '',
+    riskLevel: '',
+    conflictFlag: '',
+    templateBound: '',
+    importance: '',
+  });
 
   const loadRows = async () => {
     if (!versionId) return;
@@ -144,15 +170,55 @@ export function RequirementsWorkbench({
     void loadRows();
   }, [projectId, versionId]);
 
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const pendingReview = rows.filter(
+      (r) => r.checkStatus === 'pending_review' || r.checkStatus === 'reviewing'
+    ).length;
+    const highRisk = rows.filter((r) => r.riskLevel === 'high').length;
+    const conflicts = rows.filter((r) => r.conflictFlag === true).length;
+    return { total, pendingReview, highRisk, conflicts };
+  }, [rows]);
+
   const filteredRows = useMemo(() => {
-    if (!keyword.trim()) return rows;
-    const kw = keyword.trim().toLowerCase();
-    return rows.filter((row) => {
-      const text =
-        `${row.title || ''} ${row.description || ''} ${row.category || ''}`.toLowerCase();
-      return text.includes(kw);
-    });
-  }, [rows, keyword]);
+    let result = rows;
+    if (keyword.trim()) {
+      const kw = keyword.trim().toLowerCase();
+      result = result.filter((row) => {
+        const text =
+          `${row.title || ''} ${row.description || ''} ${row.category || ''}`.toLowerCase();
+        return text.includes(kw);
+      });
+    }
+    if (filters.category) {
+      result = result.filter((r) => r.category === filters.category);
+    }
+    if (filters.checkStatus) {
+      result = result.filter((r) => r.checkStatus === filters.checkStatus);
+    }
+    if (filters.riskLevel) {
+      result = result.filter((r) => r.riskLevel === filters.riskLevel);
+    }
+    if (filters.conflictFlag === 'yes') {
+      result = result.filter((r) => r.conflictFlag === true);
+    } else if (filters.conflictFlag === 'no') {
+      result = result.filter((r) => r.conflictFlag !== true);
+    }
+    if (filters.templateBound === 'yes') {
+      result = result.filter((r) => r.templateBoundFlag === true);
+    } else if (filters.templateBound === 'no') {
+      result = result.filter((r) => r.templateBoundFlag !== true);
+    }
+    if (filters.importance) {
+      result = result.filter((r) => r.importanceLevel === filters.importance);
+    }
+    return result;
+  }, [rows, keyword, filters]);
+
+  const selectedRequirement = useMemo(() => {
+    if (activeTab !== 'main' || selectedReqId === null) return null;
+    return rows.find((r) => r.requirementId === selectedReqId) ?? null;
+  }, [rows, activeTab, selectedReqId]);
 
   const triggerParse = async () => {
     setParsing(true);
@@ -216,7 +282,15 @@ export function RequirementsWorkbench({
         return (
           <div className="space-y-3">
             {filteredRows.map((row) => (
-              <div key={row.requirementId} className="rounded border p-3 space-y-2">
+              <div
+                key={row.requirementId}
+                className={`rounded border p-3 space-y-2 cursor-pointer transition-colors ${
+                  selectedReqId === row.requirementId
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:bg-muted/30'
+                }`}
+                onClick={() => setSelectedReqId(row.requirementId)}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{row.title || `要求 #${row.requirementId}`}</p>
@@ -234,6 +308,7 @@ export function RequirementsWorkbench({
                       className="w-full rounded border px-2 py-1 text-sm bg-background"
                       value={row.checkStatus}
                       disabled={updatingId === row.requirementId}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={(e) => void updateStatus(row.requirementId, e.target.value)}
                     >
                       {CHECK_STATUS_OPTIONS.map((item) => (
@@ -243,6 +318,18 @@ export function RequirementsWorkbench({
                       ))}
                     </select>
                   </div>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {row.riskLevel && row.riskLevel !== 'none' && (
+                    <Badge variant={row.riskLevel === 'high' ? 'destructive' : 'secondary'}>
+                      {row.riskLevel}
+                    </Badge>
+                  )}
+                  {row.conflictFlag && <Badge variant="outline">冲突</Badge>}
+                  {row.templateBoundFlag && <Badge variant="outline">已绑定模板</Badge>}
+                  {row.importanceLevel && row.importanceLevel === 'critical' && (
+                    <Badge variant="destructive">重要</Badge>
+                  )}
                 </div>
                 <p className="text-sm whitespace-pre-wrap">{row.description || '-'}</p>
               </div>
@@ -361,52 +448,206 @@ export function RequirementsWorkbench({
     }
   };
 
+  const renderDetailPanel = () => {
+    if (!selectedRequirement) return null;
+    return (
+      <Card className="h-fit">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">要求详情</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div>
+            <Label className="text-muted-foreground">要求ID</Label>
+            <p>{selectedRequirement.requirementId}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">标题</Label>
+            <p className="font-medium">{selectedRequirement.title || '-'}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">要求类别</Label>
+            <p>{selectedRequirement.category || 'other'}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">必填</Label>
+            <p>{selectedRequirement.mandatory ? '是' : '否'}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">来源页码</Label>
+            <p>{selectedRequirement.pageNumber ?? '-'}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">风险等级</Label>
+            <p>{selectedRequirement.riskLevel || '未评估'}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">复核状态</Label>
+            <p>{selectedRequirement.checkStatus}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground">完整内容</Label>
+            <p className="whitespace-pre-wrap text-xs">{selectedRequirement.description || '-'}</p>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button size="sm" variant="outline" onClick={() => setSelectedReqId(null)}>
+              关闭
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <Card>
-      <CardHeader className="space-y-3">
-        <CardTitle>招标要求工作台</CardTitle>
-        <div className="flex flex-wrap gap-2">
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="搜索标题/正文/类别"
-            className="max-w-sm"
-          />
-          <Button variant="outline" onClick={() => void loadRows()} disabled={loading}>
-            刷新
-          </Button>
-          <Button onClick={() => void triggerParse()} disabled={parsing}>
-            {parsing ? '解析中...' : '触发解析'}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 space-y-4">
+        <Card>
+          <CardHeader className="pb-3 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-lg">招标要求</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => void loadRows()} disabled={loading}>
+                  刷新
+                </Button>
+                <Button onClick={() => void triggerParse()} disabled={parsing}>
+                  {parsing ? '解析中...' : '触发解析'}
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                要求总数: <strong>{stats.total}</strong>
+              </div>
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                待复核: <strong>{stats.pendingReview}</strong>
+              </div>
+              <div className="text-sm bg-destructive/10 text-destructive px-3 py-1 rounded">
+                高风险: <strong>{stats.highRisk}</strong>
+              </div>
+              <div className="text-sm bg-muted px-3 py-1 rounded">
+                冲突: <strong>{stats.conflicts}</strong>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
 
-        <div className="flex flex-wrap gap-1 border-b">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
-                activeTab === tab.key
-                  ? 'border-primary text-primary font-medium'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
-        </div>
+            <div className="flex flex-wrap gap-2 items-center border-b pb-2">
+              <Input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="关键词搜索"
+                className="max-w-[200px]"
+              />
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.category}
+                onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
+              >
+                <option value="">全部类别</option>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.checkStatus}
+                onChange={(e) => setFilters((f) => ({ ...f, checkStatus: e.target.value }))}
+              >
+                <option value="">全部状态</option>
+                {CHECK_STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.riskLevel}
+                onChange={(e) => setFilters((f) => ({ ...f, riskLevel: e.target.value }))}
+              >
+                <option value="">全部风险</option>
+                {RISK_LEVEL_OPTIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.conflictFlag}
+                onChange={(e) => setFilters((f) => ({ ...f, conflictFlag: e.target.value }))}
+              >
+                <option value="">冲突筛选</option>
+                <option value="yes">有冲突</option>
+                <option value="no">无冲突</option>
+              </select>
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.templateBound}
+                onChange={(e) => setFilters((f) => ({ ...f, templateBound: e.target.value }))}
+              >
+                <option value="">模板绑定</option>
+                <option value="yes">已绑定</option>
+                <option value="no">未绑定</option>
+              </select>
+              <select
+                className="rounded border px-2 py-1 text-sm"
+                value={filters.importance}
+                onChange={(e) => setFilters((f) => ({ ...f, importance: e.target.value }))}
+              >
+                <option value="">重要度</option>
+                {IMPORTANCE_OPTIONS.map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <p className="text-xs text-muted-foreground">
-          {activeTab === 'main'
-            ? `共 ${filteredRows.length} 条（原始 ${rows.length} 条）`
-            : `共 ${tabs.find((t) => t.key === activeTab)?.count || 0} 条`}
-        </p>
-        {renderTabContent()}
-      </CardContent>
-    </Card>
+            <div className="flex flex-wrap gap-1 border-b">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    setSelectedReqId(null);
+                  }}
+                  className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {activeTab === 'main'
+                ? `显示 ${filteredRows.length} 条（总计 ${rows.length} 条）`
+                : `共 ${tabs.find((t) => t.key === activeTab)?.count || 0} 条`}
+            </p>
+            {renderTabContent()}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-4">
+        {selectedRequirement ? (
+          renderDetailPanel()
+        ) : (
+          <Card className="h-fit">
+            <CardContent className="py-8 text-center text-muted-foreground">
+              <p>点击左侧要求查看详情</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
   );
 }
