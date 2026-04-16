@@ -14,16 +14,17 @@ export const tcHubParseStatusEnum = pgEnum('tc_hub_parse_status', [
 export const tcHubReviewStatusEnum = pgEnum('tc_hub_review_status', [
   // 030: project review status
   'not_reviewed',
+  'reviewing',
   'partially_reviewed',
+  'reviewed',
   'review_failed',
+  'closed',
   // 030: object review status
   'draft',
   'pending_review',
-  'reviewing',
   'confirmed',
   'modified',
   'rejected',
-  'closed',
 ]);
 
 export const tcHubAssetStatusEnum = pgEnum('tc_hub_asset_status', [
