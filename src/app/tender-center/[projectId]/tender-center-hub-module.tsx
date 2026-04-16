@@ -15,9 +15,15 @@ import { TemplatesWorkbench } from './templates-workbench';
 import { MaterialsWorkbench } from './materials-workbench';
 import { TimeNodesWorkbench } from './time-nodes-workbench';
 import { MoneyTermsWorkbench } from './money-terms-workbench';
+import { SegmentsWorkbench } from './segments-workbench';
+import { SectionsWorkbench } from './sections-workbench';
 
 const moduleMap: Record<string, { title: string; endpoint: string; desc: string }> = {
   overview: { title: '概览', endpoint: 'overview', desc: '项目版本总览与指标统计' },
+  documents: { title: '文档', endpoint: 'documents', desc: '原始文件与解析批次' },
+  pages: { title: '页码', endpoint: 'pages', desc: '页级对象与元信息' },
+  segments: { title: '分段', endpoint: 'segments', desc: '原文分片与溯源锚点' },
+  sections: { title: '章节', endpoint: 'sections', desc: '正文章节树结构' },
   requirements: { title: '要求', endpoint: 'requirements', desc: '招标要求主数据' },
   timeNodes: { title: '时间', endpoint: 'time-nodes', desc: '关键时间节点' },
   moneyTerms: { title: '金额', endpoint: 'money-terms', desc: '金额条款与费用' },
@@ -70,6 +76,18 @@ export function TenderCenterHubModuleView({
 
   const renderWorkbench = () => {
     if (!versionId) return null;
+    if (module === 'documents') {
+      return <div className="p-4 text-muted-foreground">文档与批次管理 - 入口</div>;
+    }
+    if (module === 'pages') {
+      return <div className="p-4 text-muted-foreground">页码管理 - 入口</div>;
+    }
+    if (module === 'segments') {
+      return <SegmentsWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'sections') {
+      return <SectionsWorkbench projectId={projectId} versionId={versionId} />;
+    }
     if (module === 'requirements') {
       return <RequirementsWorkbench projectId={projectId} versionId={versionId} />;
     }
