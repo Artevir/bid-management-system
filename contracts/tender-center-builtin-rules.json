@@ -1,0 +1,66 @@
+{
+  "version": "1",
+  "description": "招标文件智能审阅中枢内置规则种子（010 §6.4.3）。仅由 db:seed / seed-hub-rules 写入 DB；运行期由 evaluate-rules 读取 expression_json 解释执行。",
+  "rules": [
+    {
+      "ruleCode": "TC-HUB-R-002",
+      "ruleName": "否决与废标风险表述",
+      "ruleCategory": "compliance",
+      "ruleType": "keyword",
+      "expressionJson": {
+        "kind": "keyword",
+        "matchMode": "any",
+        "keywords": ["废标", "否决投标", "无效标", "不予受理"],
+        "priority": 100
+      },
+      "severityLevel": "blocker",
+      "versionNo": "1",
+      "note": "与投标有效性直接相关的表述。"
+    },
+    {
+      "ruleCode": "TC-HUB-R-003",
+      "ruleName": "保证金与价款金额表述",
+      "ruleCategory": "commercial",
+      "ruleType": "keyword",
+      "expressionJson": {
+        "kind": "keyword",
+        "matchMode": "any",
+        "keywords": ["保证金", "保函", "预算", "控制价", "价款"],
+        "priority": 80
+      },
+      "severityLevel": "high",
+      "versionNo": "1",
+      "note": "金额与担保类条款，需重点核对。"
+    },
+    {
+      "ruleCode": "TC-HUB-R-004",
+      "ruleName": "时间与递交节点表述",
+      "ruleCategory": "schedule",
+      "ruleType": "expression",
+      "expressionJson": {
+        "kind": "regex",
+        "pattern": "(截止|开标|递交|提交).{0,40}(时间|日期|\\d{4}\\s*年|\\d{1,2}\\s*月|\\d{1,2}\\s*日|\\d{1,2}:\\d{2})",
+        "flags": "",
+        "priority": 70
+      },
+      "severityLevel": "high",
+      "versionNo": "1",
+      "note": "程序性时间节点。"
+    },
+    {
+      "ruleCode": "TC-HUB-R-001",
+      "ruleName": "强制性义务表述",
+      "ruleCategory": "compliance",
+      "ruleType": "keyword",
+      "expressionJson": {
+        "kind": "keyword",
+        "matchMode": "any",
+        "keywords": ["必须", "应当", "须", "不得", "严禁"],
+        "priority": 40
+      },
+      "severityLevel": "medium",
+      "versionNo": "1",
+      "note": "用于识别义务强度较高的条款，辅助风险分级。"
+    }
+  ]
+}

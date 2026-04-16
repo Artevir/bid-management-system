@@ -37,10 +37,7 @@ import {
   tenderRequirements,
   timeNodes,
 } from '@/db/schema';
-import {
-  ensureBuiltinHubRuleDefinitions,
-  resolveBuiltinRuleHit,
-} from '@/lib/tender-center/builtin-rules';
+import { evaluateBestMatchingHubRule } from '@/lib/tender-center/evaluate-rules';
 
 const MAX_PAGES_PER_DOCUMENT = 500;
 const MAX_REQUIREMENTS_PER_DOCUMENT = 200;
@@ -387,8 +384,6 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
   let reviewTasksInserted = 0;
   let clarificationCandidatesInserted = 0;
   let conflictItemsInserted = 0;
-
-  const ruleIdMap = await ensureBuiltinHubRuleDefinitions();
 
   const docs = await db
     .select({
@@ -750,18 +745,24 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
         .filter((req) => shouldRaiseRisk(req.content || '', req.importanceLevel))
         .slice(0, 120);
 
-      const riskValues = riskCandidates.map((req, idx) => {
-        const riskLevel = riskLevelFromImportance(req.importanceLevel);
-        const hit = resolveBuiltinRuleHit(req.content || '', ruleIdMap);
+      const riskRuleEvals = await Promise.all(
+        riskCandidates.map(async (req) => ({
+          req,
+          hit: await evaluateBestMatchingHubRule(req.content || ''),
+        }))
+      );
+
+      const riskValues = riskRuleEvals.map((x, idx) => {
+        const riskLevel = riskLevelFromImportance(x.req.importanceLevel);
         return {
           tenderProjectVersionId: versionId,
-          relatedRequirementId: req.id,
-          riskType: classifyRiskType(req.content || ''),
+          relatedRequirementId: x.req.id,
+          riskType: classifyRiskType(x.req.content || ''),
           riskTitle: `风险识别 ${idx + 1}`,
-          riskDescription: (req.content || '').slice(0, 240),
+          riskDescription: (x.req.content || '').slice(0, 240),
           riskLevel,
-          sourceSegmentId: req.sourceSegmentId,
-          hitRuleId: hit?.ruleId ?? null,
+          sourceSegmentId: x.req.sourceSegmentId,
+          hitRuleId: x.hit?.ruleId ?? null,
           confidenceScore: '0.6500',
           reviewStatus: 'draft' as const,
           resolutionStatus: 'open' as const,
@@ -780,15 +781,18 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
       const ruleHitRows = insertedRisks
         .map((r, idx) => {
           if (!r.hitRuleId) return null;
-          const hitMeta = resolveBuiltinRuleHit(riskCandidates[idx]?.content || '', ruleIdMap);
+          const hit = riskRuleEvals[idx]?.hit;
           return {
             documentParseBatchId: batchId,
             ruleDefinitionId: r.hitRuleId,
             targetObjectType: 'risk_item',
             targetObjectId: r.id,
             hitResult: 'fail' as const,
-            hitDetailJson: { engine: 'builtin_keyword_v1' },
-            severityLevel: hitMeta?.severityLevel ?? ('medium' as const),
+            hitDetailJson: {
+              engine: 'rule_definition_expression_v1',
+              ruleCode: hit?.ruleCode ?? null,
+            },
+            severityLevel: hit?.severityLevel ?? ('medium' as const),
           };
         })
         .filter((v): v is NonNullable<typeof v> => v !== null);

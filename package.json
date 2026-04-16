@@ -20,6 +20,7 @@
     "db:studio": "drizzle-kit studio",
     "db:sync": "tsx src/db/sync.ts",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:hub-rules": "tsx src/db/run-seed-hub-rules.ts",
     "db:reset": "tsx src/db/reset.ts",
     "db:init": "pnpm db:push && pnpm db:sync && pnpm db:seed",
     "db:init:prod": "cross-env NODE_ENV=production pnpm db:push",

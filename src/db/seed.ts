@@ -28,6 +28,7 @@ import {
 } from './schema';
 import { hash } from 'bcryptjs';
 import { and, eq } from 'drizzle-orm';
+import { seedTenderCenterHubRulesFromContract } from './seed-hub-rules';
 
 // 环境安全检查
 function checkEnvironment() {
@@ -671,6 +672,8 @@ async function main() {
     }
 
     const w8ScenarioIds = await seedW8SampleProjects();
+
+    await seedTenderCenterHubRulesFromContract();
 
     console.log('\n═══════════════════════════════════════════════════');
     console.log('✅ 种子数据初始化完成！');
