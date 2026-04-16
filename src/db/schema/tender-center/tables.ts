@@ -163,6 +163,7 @@ export const sourceDocuments = pgTable(
     checksum: varchar('checksum', { length: 128 }),
     pageCount: integer('page_count'),
     docCategory: tcHubDocumentCategoryEnum('doc_category').notNull().default('main_document'),
+    parserType: tcHubDocumentParserTypeEnum('parser_type').notNull().default('unknown'),
     ingestStatus: tcHubDocumentIngestStatusEnum('ingest_status').notNull().default('uploaded'),
     parseStatus: tcHubParseStatusEnum('parse_status').notNull().default('not_started'),
     textExtractStatus: tcHubExtractStatusEnum('text_extract_status')
@@ -180,6 +181,7 @@ export const sourceDocuments = pgTable(
       .where(sql`${t.isDeleted} = false and ${t.checksum} is not null`),
     verIdx: index('source_document_version_idx').on(t.tenderProjectVersionId),
     categoryIdx: index('source_document_category_idx').on(t.docCategory),
+    parserTypeIdx: index('source_document_parser_type_idx').on(t.parserType),
     ingestStatusIdx: index('source_document_ingest_status_idx').on(t.ingestStatus),
     parseStatusIdx: index('source_document_parse_status_idx').on(t.parseStatus),
     checksumIdx: index('source_document_checksum_idx').on(t.checksum),
@@ -580,6 +582,7 @@ export const timeNodes = pgTable(
     }),
     confidenceScore: numeric('confidence_score', { precision: 5, scale: 4 }),
     reviewStatus: tcHubReviewStatusEnum('review_status').notNull().default('draft'),
+    validityStatus: tcHubObjectValidityStatusEnum('validity_status').notNull().default('valid'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
@@ -588,6 +591,7 @@ export const timeNodes = pgTable(
     typeIdx: index('time_node_type_idx').on(t.nodeType),
     valueIdx: index('time_node_time_value_idx').on(t.timeValue),
     reviewStatusIdx: index('time_node_review_status_idx').on(t.reviewStatus),
+    validityStatusIdx: index('time_node_validity_status_idx').on(t.validityStatus),
   })
 );
 
@@ -607,6 +611,7 @@ export const moneyTerms = pgTable(
       onDelete: 'set null',
     }),
     reviewStatus: tcHubReviewStatusEnum('review_status').notNull().default('draft'),
+    validityStatus: tcHubObjectValidityStatusEnum('validity_status').notNull().default('valid'),
     ...hubTimestamps,
     ...hubSoftDelete,
   },
@@ -615,6 +620,7 @@ export const moneyTerms = pgTable(
     typeIdx: index('money_term_type_idx').on(t.moneyType),
     amountIdx: index('money_term_amount_value_idx').on(t.amountValue),
     reviewStatusIdx: index('money_term_review_status_idx').on(t.reviewStatus),
+    validityStatusIdx: index('money_term_validity_status_idx').on(t.validityStatus),
   })
 );
 
