@@ -25,6 +25,7 @@ import { ConflictsWorkbench } from './conflicts-workbench';
 import { ClarificationsWorkbench } from './clarifications-workbench';
 import { RulesWorkbench } from './rules-workbench';
 import { AttachmentRequirementsWorkbench } from './attachment-requirements-workbench';
+import { SourceViewWorkbench } from './source-view-workbench';
 
 type ProjectContext = {
   projectId: number;
@@ -61,6 +62,7 @@ const moduleMap: Record<string, { title: string; endpoint: string; desc: string 
   templates: { title: '模板', endpoint: 'templates', desc: '模板、变量与表格结构' },
   materials: { title: '材料', endpoint: 'materials', desc: '递交材料与响应任务' },
   review: { title: '复核', endpoint: 'reviews', desc: '复核任务与确认结果' },
+  sourceView: { title: '原文', endpoint: 'source-view', desc: '原文定位视图与证据面板' },
 };
 
 export function TenderCenterHubModuleView({
@@ -174,6 +176,9 @@ export function TenderCenterHubModuleView({
     }
     if (module === 'materials') {
       return <MaterialsWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'sourceView') {
+      return <SourceViewWorkbench projectId={projectId} versionId={versionId} />;
     }
     return null;
   };
