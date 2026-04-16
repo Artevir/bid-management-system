@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { documentParseBatches } from '@/db/schema';
+import { aiTaskRuns, documentParseBatches } from '@/db/schema';
 import { toHubDocumentParseBatchId } from '@/app/api/tender-center/_utils';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import {
@@ -123,6 +123,16 @@ export async function POST(
         parseFinishedAt: new Date(),
       })
       .where(eq(documentParseBatches.id, batch.id));
+
+    await db.insert(aiTaskRuns).values({
+      documentParseBatchId: batch.id,
+      taskType: 'document_parse',
+      taskName: '招标文件文本解析与资产抽取',
+      modelProvider: 'other',
+      taskStatus: finalBatchStatus === 'failed' ? 'failed' : 'succeeded',
+      inputRefJson: { projectId: project.id, versionId: version.id },
+      outputRefJson: ingestResult,
+    });
 
     const batchId = toHubDocumentParseBatchId(batch.id);
     const taskId = `parse-${batch.id}`;

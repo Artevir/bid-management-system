@@ -1,24 +1,46 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { and, eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import {
+  attachmentRequirementNodes,
+  bidFrameworkNodes,
+  clarificationCandidates,
   commercialRequirements,
   confidenceAssessments,
+  conflictItems,
   documentPages,
   documentSectionNodes,
+  frameworkRequirementBindings,
+  hubBidTemplates,
   moneyTerms,
   objectChangeLogs,
   qualificationRequirements,
+  responseTaskItems,
+  reviewTasks,
   riskItems,
+  ruleHitRecords,
+  scoringItems,
+  scoringSchemes,
   sourceDocuments,
   sourceSegments,
+  submissionMaterials,
   submissionRequirements,
   technicalRequirements,
+  technicalSpecGroups,
+  technicalSpecItems,
+  formTableStructures,
+  templateBlocks,
+  templateVariableBindings,
+  templateVariables,
   tenderProjects,
   tenderRequirements,
   timeNodes,
 } from '@/db/schema';
+import {
+  ensureBuiltinHubRuleDefinitions,
+  resolveBuiltinRuleHit,
+} from '@/lib/tender-center/builtin-rules';
 
 const MAX_PAGES_PER_DOCUMENT = 500;
 const MAX_REQUIREMENTS_PER_DOCUMENT = 200;
@@ -42,6 +64,18 @@ export type IngestResult = {
   moneyTermsInserted: number;
   confidenceRowsInserted: number;
   changeLogRowsInserted: number;
+  frameworkNodesInserted: number;
+  frameworkBindingsInserted: number;
+  ruleHitsInserted: number;
+  attachmentNodesInserted: number;
+  scoringItemsInserted: number;
+  technicalSpecItemsInserted: number;
+  hubTemplatesInserted: number;
+  submissionMaterialsInserted: number;
+  responseTasksInserted: number;
+  reviewTasksInserted: number;
+  clarificationCandidatesInserted: number;
+  conflictItemsInserted: number;
 };
 
 function normalizeStorageKey(storageKey: string): string {
@@ -341,6 +375,20 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
   let moneyTermsInserted = 0;
   let confidenceRowsInserted = 0;
   let changeLogRowsInserted = 0;
+  let frameworkNodesInserted = 0;
+  let frameworkBindingsInserted = 0;
+  let ruleHitsInserted = 0;
+  let attachmentNodesInserted = 0;
+  let scoringItemsInserted = 0;
+  let technicalSpecItemsInserted = 0;
+  let hubTemplatesInserted = 0;
+  let submissionMaterialsInserted = 0;
+  let responseTasksInserted = 0;
+  let reviewTasksInserted = 0;
+  let clarificationCandidatesInserted = 0;
+  let conflictItemsInserted = 0;
+
+  const ruleIdMap = await ensureBuiltinHubRuleDefinitions();
 
   const docs = await db
     .select({
@@ -484,6 +532,61 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
         }
       }
 
+      const segById = new Map(insertedSegments.map((s) => [s.id, s]));
+
+      const [fwRootRow] = await db
+        .insert(bidFrameworkNodes)
+        .values({
+          tenderProjectVersionId: versionId,
+          parentId: null,
+          frameworkTitle: `投标响应框架·${doc.fileName?.trim() || `源文件-${doc.id}`}`,
+          levelNo: 0,
+          orderNo: docIdx,
+          sourceSectionId: rootSectionId,
+          generationMode: 'semi_auto',
+          contentType: 'text',
+          reviewStatus: 'draft',
+        })
+        .returning({ id: bidFrameworkNodes.id });
+      const fwRootId = fwRootRow?.id;
+      if (!fwRootId) {
+        throw new Error('bid_framework_node 根节点写入失败');
+      }
+
+      const fwChildValues = insertedClauses.map((row, idx) => {
+        const text =
+          (row.sourceSegmentId ? segById.get(row.sourceSegmentId)?.rawText : undefined) || '';
+        return {
+          tenderProjectVersionId: versionId,
+          parentId: fwRootId,
+          frameworkTitle: text.split('\n')[0]?.slice(0, 120) || `响应章节-${idx + 1}`,
+          levelNo: 1,
+          orderNo: idx + 1,
+          sourceSectionId: row.id,
+          sourceSegmentId: row.sourceSegmentId,
+          generationMode: 'semi_auto' as const,
+          contentType: 'text' as const,
+          reviewStatus: 'draft' as const,
+        };
+      });
+
+      const fwChildren =
+        fwChildValues.length > 0
+          ? await db.insert(bidFrameworkNodes).values(fwChildValues).returning({
+              id: bidFrameworkNodes.id,
+              sourceSectionId: bidFrameworkNodes.sourceSectionId,
+            })
+          : [];
+
+      frameworkNodesInserted += 1 + fwChildren.length;
+
+      const sectionIdToFwNodeId = new Map<number, number>();
+      for (const f of fwChildren) {
+        if (f.sourceSectionId) {
+          sectionIdToFwNodeId.set(f.sourceSectionId, f.id);
+        }
+      }
+
       const requirementValues = insertedSegments
         .slice(0, MAX_REQUIREMENTS_PER_DOCUMENT)
         .filter((seg) => {
@@ -522,9 +625,28 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
               content: tenderRequirements.content,
               importanceLevel: tenderRequirements.importanceLevel,
               sourceSegmentId: tenderRequirements.sourceSegmentId,
+              sourceSectionId: tenderRequirements.sourceSectionId,
             })
           : [];
       requirementsInserted += insertedRequirements.length;
+
+      const bindRows = insertedRequirements
+        .map((r) => {
+          if (!r.sourceSectionId) return null;
+          const fwN = sectionIdToFwNodeId.get(r.sourceSectionId);
+          if (!fwN) return null;
+          return {
+            bidFrameworkNodeId: fwN,
+            tenderRequirementId: r.id,
+            bindingType: 'inferred' as const,
+            note: '解析启发式绑定',
+          };
+        })
+        .filter((v): v is NonNullable<typeof v> => v !== null);
+      if (bindRows.length > 0) {
+        await db.insert(frameworkRequirementBindings).values(bindRows);
+      }
+      frameworkBindingsInserted += bindRows.length;
 
       const qualRows: HubQualRequirementInsert[] = [];
       const commRows: HubCommRequirementInsert[] = [];
@@ -624,29 +746,326 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
       timeNodesInserted += timeRows.length;
       moneyTermsInserted += moneyRows.length;
 
-      const riskValues = insertedRequirements
+      const riskCandidates = insertedRequirements
         .filter((req) => shouldRaiseRisk(req.content || '', req.importanceLevel))
-        .slice(0, 120)
-        .map((req, idx) => {
-          const riskLevel = riskLevelFromImportance(req.importanceLevel);
+        .slice(0, 120);
+
+      const riskValues = riskCandidates.map((req, idx) => {
+        const riskLevel = riskLevelFromImportance(req.importanceLevel);
+        const hit = resolveBuiltinRuleHit(req.content || '', ruleIdMap);
+        return {
+          tenderProjectVersionId: versionId,
+          relatedRequirementId: req.id,
+          riskType: classifyRiskType(req.content || ''),
+          riskTitle: `风险识别 ${idx + 1}`,
+          riskDescription: (req.content || '').slice(0, 240),
+          riskLevel,
+          sourceSegmentId: req.sourceSegmentId,
+          hitRuleId: hit?.ruleId ?? null,
+          confidenceScore: '0.6500',
+          reviewStatus: 'draft' as const,
+          resolutionStatus: 'open' as const,
+        };
+      });
+
+      const insertedRisks =
+        riskValues.length > 0
+          ? await db.insert(riskItems).values(riskValues).returning({
+              id: riskItems.id,
+              hitRuleId: riskItems.hitRuleId,
+            })
+          : [];
+      risksInserted += insertedRisks.length;
+
+      const ruleHitRows = insertedRisks
+        .map((r, idx) => {
+          if (!r.hitRuleId) return null;
+          const hitMeta = resolveBuiltinRuleHit(riskCandidates[idx]?.content || '', ruleIdMap);
           return {
+            documentParseBatchId: batchId,
+            ruleDefinitionId: r.hitRuleId,
+            targetObjectType: 'risk_item',
+            targetObjectId: r.id,
+            hitResult: 'fail' as const,
+            hitDetailJson: { engine: 'builtin_keyword_v1' },
+            severityLevel: hitMeta?.severityLevel ?? ('medium' as const),
+          };
+        })
+        .filter((v): v is NonNullable<typeof v> => v !== null);
+      if (ruleHitRows.length > 0) {
+        await db.insert(ruleHitRecords).values(ruleHitRows);
+      }
+      ruleHitsInserted += ruleHitRows.length;
+
+      const attachmentSegs = insertedSegments
+        .filter((s) => {
+          const t = s.rawText || '';
+          return (
+            t.length >= 6 &&
+            /(附件\s*清单|附件\s*\d|投标文件格式|纸质标书|签字盖章|密封要求)/.test(t)
+          );
+        })
+        .slice(0, 24);
+      if (attachmentSegs.length > 0) {
+        await db.insert(attachmentRequirementNodes).values(
+          attachmentSegs.map((s, i) => ({
+            tenderProjectVersionId: versionId,
+            attachmentName: (s.rawText || '').split('\n')[0]?.slice(0, 120) || `附件要求-${i + 1}`,
+            attachmentNo: `ATT-${doc.id}-${i + 1}`,
+            attachmentType: 'other' as const,
+            requiredType: 'required' as const,
+            sourceDocumentId: doc.id,
+            sourceSegmentId: s.id,
+          }))
+        );
+      }
+      attachmentNodesInserted += attachmentSegs.length;
+
+      const [{ schemeCount }] = await db
+        .select({ schemeCount: count() })
+        .from(scoringSchemes)
+        .where(
+          and(
+            eq(scoringSchemes.tenderProjectVersionId, versionId),
+            eq(scoringSchemes.isDeleted, false)
+          )
+        );
+      if (schemeCount === 0) {
+        const scoringSegs = insertedSegments
+          .filter((s) => {
+            const t = s.rawText || '';
+            return (
+              t.length >= 10 && /(评分标准|评标办法|分值构成|商务分|技术分|价格分|综合评分)/.test(t)
+            );
+          })
+          .slice(0, 30);
+        if (scoringSegs.length > 0) {
+          const [scheme] = await db
+            .insert(scoringSchemes)
+            .values({
+              tenderProjectVersionId: versionId,
+              schemeName: `评分条款摘录·${doc.fileName ?? doc.id}`,
+              reviewStatus: 'draft',
+            })
+            .returning({ id: scoringSchemes.id });
+          if (scheme?.id) {
+            await db.insert(scoringItems).values(
+              scoringSegs.map((s, i) => ({
+                scoringSchemeId: scheme.id,
+                itemName: (s.rawText || '').split('\n')[0]?.slice(0, 120) || `评分项-${i + 1}`,
+                criteriaText: (s.rawText || '').slice(0, 600),
+                orderNo: i + 1,
+                sourceSegmentId: s.id,
+                reviewStatus: 'draft' as const,
+              }))
+            );
+            scoringItemsInserted += scoringSegs.length;
+          }
+        }
+      }
+
+      const [{ techGroupCount }] = await db
+        .select({ techGroupCount: count() })
+        .from(technicalSpecGroups)
+        .where(
+          and(
+            eq(technicalSpecGroups.tenderProjectVersionId, versionId),
+            eq(technicalSpecGroups.isDeleted, false)
+          )
+        );
+      if (techGroupCount === 0) {
+        const specSegs = insertedSegments
+          .filter((s) => {
+            const t = s.rawText || '';
+            return t.length >= 8 && /(技术参数|技术规格|★|星号项|指标要求)/.test(t);
+          })
+          .slice(0, 40);
+        if (specSegs.length > 0) {
+          const [group] = await db
+            .insert(technicalSpecGroups)
+            .values({
+              tenderProjectVersionId: versionId,
+              groupName: '技术条款摘录',
+              groupType: 'mixed',
+              orderNo: 0,
+            })
+            .returning({ id: technicalSpecGroups.id });
+          if (group?.id) {
+            await db.insert(technicalSpecItems).values(
+              specSegs.map((s, i) => ({
+                technicalSpecGroupId: group.id,
+                specName: `条目-${i + 1}`,
+                specRequirement: (s.rawText || '').slice(0, 800),
+                sourceSegmentId: s.id,
+                reviewStatus: 'draft' as const,
+              }))
+            );
+            technicalSpecItemsInserted += specSegs.length;
+          }
+        }
+      }
+
+      const tplSeg = insertedSegments.find((s) => {
+        const t = s.rawText || '';
+        return t.length >= 12 && /(响应文件格式|投标函|授权委托书|按所附格式|固定格式)/.test(t);
+      });
+      if (tplSeg) {
+        const [tpl] = await db
+          .insert(hubBidTemplates)
+          .values({
+            tenderProjectVersionId: versionId,
+            templateName: `格式模板摘录·${doc.fileName ?? doc.id}`,
+            templateType: 'other',
+            sourceTitle: (tplSeg.rawText || '').slice(0, 80),
+            templateText: (tplSeg.rawText || '').slice(0, 4000),
+            sourceSegmentId: tplSeg.id,
+            sourcePageNo: tplSeg.documentPageId
+              ? (pageNoMap.get(tplSeg.documentPageId) ?? null)
+              : null,
+            fixedFormatFlag: true,
+            reviewStatus: 'draft',
+          })
+          .returning({ id: hubBidTemplates.id });
+        if (tpl?.id) {
+          const [block] = await db
+            .insert(templateBlocks)
+            .values({
+              bidTemplateId: tpl.id,
+              blockType: 'paragraph',
+              orderNo: 1,
+              blockText: (tplSeg.rawText || '').slice(0, 2000),
+              sourceSegmentId: tplSeg.id,
+            })
+            .returning({ id: templateBlocks.id });
+          const [variable] = await db
+            .insert(templateVariables)
+            .values({
+              bidTemplateId: tpl.id,
+              variableName: 'bidder_name',
+              variableLabel: '投标人名称',
+              variableType: 'text',
+              requiredFlag: true,
+              sourceBlockId: block?.id ?? null,
+              sourceSegmentId: tplSeg.id,
+              defaultValueHint: '与营业执照一致',
+              reviewStatus: 'draft',
+            })
+            .returning({ id: templateVariables.id });
+          if (variable?.id) {
+            await db.insert(templateVariableBindings).values({
+              templateVariableId: variable.id,
+              bindingTargetType: 'requirement',
+              bindingKey: 'tender_requirement.title',
+              fallbackStrategy: 'manual',
+              note: '占位绑定，后续人工或规则细化',
+            });
+            await db.insert(formTableStructures).values({
+              bidTemplateId: tpl.id,
+              tableName: '格式摘录占位表',
+              rowNo: 1,
+              colNo: 1,
+              cellKey: 'bidder_name',
+              cellLabel: '投标人名称',
+              cellType: 'text',
+              requiredFlag: true,
+              sourceSegmentId: tplSeg.id,
+            });
+          }
+          hubTemplatesInserted += 1;
+        }
+      }
+
+      const matRows = insertedRequirements
+        .filter((r) => r.requirementType === 'qualification')
+        .slice(0, 40)
+        .map((r) => ({
+          tenderProjectVersionId: versionId,
+          materialName: (r.content || '').slice(0, 120) || `资质材料-${r.id}`,
+          materialType: 'authorization' as const,
+          requiredFlag: true,
+          sourceReason: '资格要求启发式生成',
+          relatedRequirementId: r.id,
+          needSignatureFlag: /(签字|签署)/.test(r.content || ''),
+          needSealFlag: /(盖章|公章)/.test(r.content || ''),
+          reviewStatus: 'draft' as const,
+        }));
+      if (matRows.length > 0) {
+        await db.insert(submissionMaterials).values(matRows);
+      }
+      submissionMaterialsInserted += matRows.length;
+
+      for (let i = 0; i < insertedRequirements.length; i += 1) {
+        for (let j = i + 1; j < insertedRequirements.length; j += 1) {
+          const a = insertedRequirements[i];
+          const b = insertedRequirements[j];
+          const na = (a.content || '').replace(/\s+/g, '').slice(0, 48);
+          const nb = (b.content || '').replace(/\s+/g, '').slice(0, 48);
+          if (na.length >= 12 && na === nb) {
+            await db.insert(conflictItems).values({
+              tenderProjectVersionId: versionId,
+              conflictType: 'other',
+              fieldName: 'tender_requirement.content',
+              candidateA: (a.content || '').slice(0, 400),
+              candidateB: (b.content || '').slice(0, 400),
+              sourceASegmentId: a.sourceSegmentId,
+              sourceBSegmentId: b.sourceSegmentId,
+              conflictLevel: 'minor',
+              reviewStatus: 'open',
+            });
+            conflictItemsInserted += 1;
+            await db.insert(clarificationCandidates).values({
+              tenderProjectVersionId: versionId,
+              relatedRequirementId: a.id,
+              questionTitle: '疑似重复条款',
+              questionContent: '两条要求在正文摘录中完全一致，请确认是否重复或分段表述。',
+              questionReason: '启发式冲突检测',
+              urgencyLevel: 'normal',
+              sourceSegmentId: a.sourceSegmentId,
+              reviewStatus: 'draft',
+            });
+            clarificationCandidatesInserted += 1;
+          }
+        }
+      }
+
+      for (let i = 0; i < insertedRisks.length; i += 1) {
+        const rv = riskValues[i];
+        const riskRow = insertedRisks[i];
+        if (!riskRow || !rv || rv.riskLevel !== 'critical') continue;
+        await db.insert(responseTaskItems).values({
+          tenderProjectVersionId: versionId,
+          taskType: 'internal_review',
+          taskTitle: `复核风险 #${riskRow.id}`,
+          sourceObjectType: 'risk_item',
+          sourceObjectId: riskRow.id,
+          priorityLevel: 'p0',
+          status: 'pending',
+          note: '关键风险项，需人工确认',
+        });
+        responseTasksInserted += 1;
+        await db.insert(reviewTasks).values({
+          tenderProjectVersionId: versionId,
+          targetObjectType: 'risk_item',
+          targetObjectId: riskRow.id,
+          reviewReason: 'compliance',
+          reviewStatus: 'pending',
+        });
+        reviewTasksInserted += 1;
+        const req = riskCandidates[i];
+        if (req?.sourceSegmentId) {
+          await db.insert(clarificationCandidates).values({
             tenderProjectVersionId: versionId,
             relatedRequirementId: req.id,
-            riskType: classifyRiskType(req.content || ''),
-            riskTitle: `风险识别 ${idx + 1}`,
-            riskDescription: (req.content || '').slice(0, 240),
-            riskLevel,
+            questionTitle: '关键条款澄清',
+            questionContent: (req.content || '').slice(0, 500),
+            questionReason: '高风险条款建议向招标人澄清',
+            urgencyLevel: 'urgent',
             sourceSegmentId: req.sourceSegmentId,
-            confidenceScore: '0.6500',
-            reviewStatus: 'draft' as const,
-            resolutionStatus: 'open' as const,
-          };
-        });
-
-      if (riskValues.length > 0) {
-        await db.insert(riskItems).values(riskValues);
+            reviewStatus: 'draft',
+          });
+          clarificationCandidatesInserted += 1;
+        }
       }
-      risksInserted += riskValues.length;
 
       const extractionConf = Math.min(
         0.95,
@@ -662,7 +1081,7 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
           pages: insertedPages.length,
           segments: insertedSegments.length,
           requirements: insertedRequirements.length,
-          risks: riskValues.length,
+          risks: insertedRisks.length,
           sectionNodes: 1 + insertedClauses.length,
         },
         generatedByBatchId: batchId,
@@ -681,7 +1100,7 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
           pages: insertedPages.length,
           segments: insertedSegments.length,
           requirements: insertedRequirements.length,
-          risks: riskValues.length,
+          risks: insertedRisks.length,
           specializedRows: qualRows.length + commRows.length + techRows.length + subRows.length,
           timeNodes: timeRows.length,
           moneyTerms: moneyRows.length,
@@ -752,5 +1171,17 @@ export async function ingestTenderVersionDocuments(options: IngestOptions): Prom
     moneyTermsInserted,
     confidenceRowsInserted,
     changeLogRowsInserted,
+    frameworkNodesInserted,
+    frameworkBindingsInserted,
+    ruleHitsInserted,
+    attachmentNodesInserted,
+    scoringItemsInserted,
+    technicalSpecItemsInserted,
+    hubTemplatesInserted,
+    submissionMaterialsInserted,
+    responseTasksInserted,
+    reviewTasksInserted,
+    clarificationCandidatesInserted,
+    conflictItemsInserted,
   };
 }
