@@ -300,6 +300,12 @@ export function FrameworkWorkbench({
               </div>
             )}
             <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                确认对象 (confirm_object)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                转响应任务 (create_response_task)
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedNodeId(null)}>
                 关闭
               </Button>

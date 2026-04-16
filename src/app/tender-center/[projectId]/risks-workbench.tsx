@@ -389,6 +389,15 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
                 保存
               </Button>
             </div>
+            <Button size="sm" variant="outline" disabled>
+              关闭风险 (close_risk)
+            </Button>
+            <Button size="sm" variant="outline" disabled>
+              标记已缓释 (mitigate_risk)
+            </Button>
+            <Button size="sm" variant="outline" disabled>
+              生成澄清候选 (create_clarification)
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setSelectedRiskId(null)}>
               关闭
             </Button>
@@ -436,6 +445,12 @@ export function RisksWorkbench({ projectId, versionId }: { projectId: string; ve
               </div>
             )}
             <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                冲突定案 (resolve_conflict)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                生成澄清候选 (create_clarification)
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedConflictId(null)}>
                 关闭
               </Button>

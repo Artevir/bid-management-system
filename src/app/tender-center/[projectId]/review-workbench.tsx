@@ -355,6 +355,18 @@ export function ReviewWorkbench({
               </div>
             </div>
             <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                确认 (confirm_object)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                修改后确认 (modify_and_confirm)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                驳回 (reject_object)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                重新分派 (reassign_review)
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedReviewId(null)}>
                 关闭
               </Button>
@@ -401,6 +413,12 @@ export function ReviewWorkbench({
               <p className="whitespace-pre-wrap">{selectedConflict.detail ?? '-'}</p>
             </div>
             <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                冲突定案 (resolve_conflict)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                回退定案 (rollback_resolution)
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectedConflictId(null)}>
                 关闭
               </Button>

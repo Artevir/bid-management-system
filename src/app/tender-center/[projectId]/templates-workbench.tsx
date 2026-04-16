@@ -251,9 +251,17 @@ export function TemplatesWorkbench({
                 ))}
               </div>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setSelectedTemplateId(null)}>
-              关闭
-            </Button>
+            <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                确认对象 (confirm_object)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                修改后确认 (modify_and_confirm)
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectedTemplateId(null)}>
+                关闭
+              </Button>
+            </div>
           </CardContent>
         </Card>
       );

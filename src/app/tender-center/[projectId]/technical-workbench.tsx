@@ -373,6 +373,12 @@ export function TechnicalWorkbench({
                 </div>
               )}
               <div className="flex gap-2 pt-2">
+                <Button size="sm" variant="outline" disabled>
+                  确认对象 (confirm_object)
+                </Button>
+                <Button size="sm" variant="outline" disabled>
+                  修改后确认 (modify_and_confirm)
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => setSelectedItemId(null)}>
                   关闭
                 </Button>

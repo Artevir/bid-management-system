@@ -489,6 +489,18 @@ export function RequirementsWorkbench({
             <p className="whitespace-pre-wrap text-xs">{selectedRequirement.description || '-'}</p>
           </div>
           <div className="flex gap-2 pt-2">
+            <Button size="sm" variant="outline" disabled>
+              发起复核 (create_review)
+            </Button>
+            <Button size="sm" variant="outline" disabled>
+              标记重点 (mark_key)
+            </Button>
+            <Button size="sm" variant="outline" disabled>
+              快速接受 (quick_accept)
+            </Button>
+            <Button size="sm" variant="outline" disabled>
+              快速驳回 (quick_reject)
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setSelectedReqId(null)}>
               关闭
             </Button>

@@ -347,29 +347,45 @@ export function OverviewWorkbench({
 
       <Card>
         <CardHeader>
-          <CardTitle>页面关键动作</CardTitle>
+          <CardTitle>标准动作区 (F1) - 页面主要动作</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Link href={`/tender-center/${projectId}/risks?versionId=${versionId}`}>
-            <Button variant="default" size="sm">
-              跳转风险页
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="default" size="sm" disabled>
+              触发解析 (start_parse)
             </Button>
-          </Link>
-          <Link href={`/tender-center/${projectId}/review?versionId=${versionId}`}>
-            <Button variant="default" size="sm">
-              跳转复核页
+            <Button variant="default" size="sm" disabled>
+              生成快照 (generate_snapshot)
             </Button>
-          </Link>
-          <Link href={`/tender-center/${projectId}/framework?versionId=${versionId}`}>
-            <Button variant="default" size="sm">
-              跳转框架页
+            <Button variant="default" size="sm" disabled>
+              导出筛选结果 (export_filtered_result)
             </Button>
-          </Link>
-          <Link href={`/tender-center/${projectId}/templates?versionId=${versionId}`}>
-            <Button variant="default" size="sm">
-              跳转模板页
-            </Button>
-          </Link>
+          </div>
+          <div className="border-t pt-4">
+            <p className="text-sm text-muted-foreground mb-2">快速导航</p>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/tender-center/${projectId}/risks?versionId=${versionId}`}>
+                <Button variant="outline" size="sm">
+                  跳转风险页
+                </Button>
+              </Link>
+              <Link href={`/tender-center/${projectId}/review?versionId=${versionId}`}>
+                <Button variant="outline" size="sm">
+                  跳转复核页
+                </Button>
+              </Link>
+              <Link href={`/tender-center/${projectId}/framework?versionId=${versionId}`}>
+                <Button variant="outline" size="sm">
+                  跳转框架页
+                </Button>
+              </Link>
+              <Link href={`/tender-center/${projectId}/templates?versionId=${versionId}`}>
+                <Button variant="outline" size="sm">
+                  跳转模板页
+                </Button>
+              </Link>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

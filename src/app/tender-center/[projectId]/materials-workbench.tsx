@@ -278,9 +278,17 @@ export function MaterialsWorkbench({
                 <p>{selectedMaterial.note}</p>
               </div>
             )}
-            <Button size="sm" variant="outline" onClick={() => setSelectedMaterialId(null)}>
-              关闭
-            </Button>
+            <div className="flex gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled>
+                确认对象 (confirm_object)
+              </Button>
+              <Button size="sm" variant="outline" disabled>
+                转响应任务 (create_response_task)
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectedMaterialId(null)}>
+                关闭
+              </Button>
+            </div>
           </CardContent>
         </Card>
       );
