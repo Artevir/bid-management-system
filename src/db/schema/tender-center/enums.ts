@@ -66,6 +66,15 @@ export const tcHubDocumentCategoryEnum = pgEnum('tc_hub_document_category', [
   'drawing',
 ]);
 
+export const tcHubDocumentIngestStatusEnum = pgEnum('tc_hub_document_ingest_status', [
+  // 030: document_ingest_status
+  'uploaded',
+  'queued',
+  'ingesting',
+  'ingested',
+  'ingest_failed',
+]);
+
 export const tcHubDocumentParserTypeEnum = pgEnum('tc_hub_document_parser_type', [
   // 030 document_parser_type
   'pdf',

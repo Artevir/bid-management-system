@@ -31,6 +31,7 @@ import {
   tcHubConflictReviewStatusEnum,
   tcHubConflictTypeEnum,
   tcHubDocumentCategoryEnum,
+  tcHubDocumentIngestStatusEnum,
   tcHubDocumentParserTypeEnum,
   tcHubExportModeEnum,
   tcHubExtractStatusEnum,
@@ -162,6 +163,7 @@ export const sourceDocuments = pgTable(
     checksum: varchar('checksum', { length: 128 }),
     pageCount: integer('page_count'),
     docCategory: tcHubDocumentCategoryEnum('doc_category').notNull().default('main_document'),
+    ingestStatus: tcHubDocumentIngestStatusEnum('ingest_status').notNull().default('uploaded'),
     parseStatus: tcHubParseStatusEnum('parse_status').notNull().default('not_started'),
     textExtractStatus: tcHubExtractStatusEnum('text_extract_status')
       .notNull()
@@ -178,6 +180,7 @@ export const sourceDocuments = pgTable(
       .where(sql`${t.isDeleted} = false and ${t.checksum} is not null`),
     verIdx: index('source_document_version_idx').on(t.tenderProjectVersionId),
     categoryIdx: index('source_document_category_idx').on(t.docCategory),
+    ingestStatusIdx: index('source_document_ingest_status_idx').on(t.ingestStatus),
     parseStatusIdx: index('source_document_parse_status_idx').on(t.parseStatus),
     checksumIdx: index('source_document_checksum_idx').on(t.checksum),
   })
