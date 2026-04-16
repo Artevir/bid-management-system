@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { tenderProjects, tenderProjectVersions, tenderRequirements } from '@/db/schema';
+import {
+  commercialRequirements,
+  qualificationRequirements,
+  technicalRequirements,
+  tenderProjects,
+  tenderProjectVersions,
+  tenderRequirements,
+} from '@/db/schema';
 import { tenderCenterError } from '@/app/api/tender-center/_response';
 
 function parseRequirementId(value: string): number | null {
@@ -49,6 +56,23 @@ export async function GET(
     if (row.projectCreatedBy && row.projectCreatedBy !== userId) {
       return tenderCenterError('无权访问该要求', 403);
     }
+
+    const [qualRow] = await db
+      .select()
+      .from(qualificationRequirements)
+      .where(eq(qualificationRequirements.tenderRequirementId, id))
+      .limit(1);
+    const [commRow] = await db
+      .select()
+      .from(commercialRequirements)
+      .where(eq(commercialRequirements.tenderRequirementId, id))
+      .limit(1);
+    const [techRow] = await db
+      .select()
+      .from(technicalRequirements)
+      .where(eq(technicalRequirements.tenderRequirementId, id))
+      .limit(1);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -64,6 +88,11 @@ export async function GET(
         mandatory: row.mandatory === 'critical' || row.mandatory === 'high',
         originalText: row.originalText,
         pageNumber: row.pageNumber,
+        specialization: {
+          qualificationRequirement: qualRow ?? null,
+          commercialRequirement: commRow ?? null,
+          technicalRequirement: techRow ?? null,
+        },
       },
     });
   });

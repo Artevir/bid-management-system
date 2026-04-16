@@ -3,18 +3,25 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
 import {
+  attachmentRequirementNodes,
   bidFrameworkNodes,
+  clarificationCandidates,
   conflictItems,
+  frameworkRequirementBindings,
   hubBidTemplates,
+  moneyTerms,
+  responseTaskItems,
+  reviewTasks,
   riskItems,
   scoringItems,
   scoringSchemes,
   submissionMaterials,
+  submissionRequirements,
   technicalSpecGroups,
   technicalSpecItems,
   templateVariables,
   tenderRequirements,
-  reviewTasks,
+  timeNodes,
 } from '@/db/schema';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import {
@@ -75,6 +82,13 @@ export async function GET(
       scoringJoined,
       technicalJoined,
       reviewTaskRows,
+      timeNodeRows,
+      moneyTermRows,
+      submissionReqRows,
+      clarificationRows,
+      responseTaskRows,
+      attachmentReqRows,
+      frameworkBindingRows,
     ] = await Promise.all([
       db.query.tenderRequirements.findMany({
         where: and(verFilter, notDelReq),
@@ -151,6 +165,60 @@ export async function GET(
       db.query.reviewTasks.findMany({
         where: eq(reviewTasks.tenderProjectVersionId, version.id),
       }),
+      db.query.timeNodes.findMany({
+        where: and(
+          eq(timeNodes.tenderProjectVersionId, version.id),
+          eq(timeNodes.isDeleted, false)
+        ),
+      }),
+      db.query.moneyTerms.findMany({
+        where: and(
+          eq(moneyTerms.tenderProjectVersionId, version.id),
+          eq(moneyTerms.isDeleted, false)
+        ),
+      }),
+      db.query.submissionRequirements.findMany({
+        where: and(
+          eq(submissionRequirements.tenderProjectVersionId, version.id),
+          eq(submissionRequirements.isDeleted, false)
+        ),
+      }),
+      db.query.clarificationCandidates.findMany({
+        where: and(
+          eq(clarificationCandidates.tenderProjectVersionId, version.id),
+          eq(clarificationCandidates.isDeleted, false)
+        ),
+      }),
+      db.query.responseTaskItems.findMany({
+        where: and(
+          eq(responseTaskItems.tenderProjectVersionId, version.id),
+          eq(responseTaskItems.isDeleted, false)
+        ),
+      }),
+      db.query.attachmentRequirementNodes.findMany({
+        where: and(
+          eq(attachmentRequirementNodes.tenderProjectVersionId, version.id),
+          eq(attachmentRequirementNodes.isDeleted, false)
+        ),
+      }),
+      db
+        .select({
+          bindingId: frameworkRequirementBindings.id,
+          bidFrameworkNodeId: frameworkRequirementBindings.bidFrameworkNodeId,
+          tenderRequirementId: frameworkRequirementBindings.tenderRequirementId,
+          bindingType: frameworkRequirementBindings.bindingType,
+        })
+        .from(frameworkRequirementBindings)
+        .innerJoin(
+          bidFrameworkNodes,
+          eq(bidFrameworkNodes.id, frameworkRequirementBindings.bidFrameworkNodeId)
+        )
+        .where(
+          and(
+            eq(bidFrameworkNodes.tenderProjectVersionId, version.id),
+            eq(bidFrameworkNodes.isDeleted, false)
+          )
+        ),
     ]);
 
     const tplIds = templateRows.map((t) => t.id);
@@ -283,6 +351,7 @@ export async function GET(
       },
       requirements: requirementsSnapshot,
       framework: frameworkSnapshot,
+      frameworkBindings: frameworkBindingRows,
       templates: templatesSnapshot,
       materials: materialsSnapshot,
       risks: risksExportView,
@@ -301,6 +370,44 @@ export async function GET(
         specRequirement: item.specRequirement,
         sourcePageNo: item.sourcePageNo,
       })),
+      timeNodes: timeNodeRows.map((t) => ({
+        timeNodeId: t.id,
+        nodeType: t.nodeType,
+        nodeName: t.nodeName,
+        timeText: t.timeText,
+        sourceSegmentId: t.sourceSegmentId,
+      })),
+      moneyTerms: moneyTermRows.map((m) => ({
+        moneyTermId: m.id,
+        moneyType: m.moneyType,
+        amountText: m.amountText,
+        sourceSegmentId: m.sourceSegmentId,
+      })),
+      submissionRequirements: submissionReqRows.map((s) => ({
+        submissionRequirementId: s.id,
+        submissionType: s.submissionType,
+        requirementText: s.requirementText,
+        sourceSegmentId: s.sourceSegmentId,
+      })),
+      clarificationCandidates: clarificationRows.map((c) => ({
+        clarificationCandidateId: c.id,
+        questionTitle: c.questionTitle,
+        urgencyLevel: c.urgencyLevel,
+        relatedRequirementId: c.relatedRequirementId,
+      })),
+      responseTaskItems: responseTaskRows.map((r) => ({
+        responseTaskId: r.id,
+        taskType: r.taskType,
+        taskTitle: r.taskTitle,
+        status: r.status,
+        priorityLevel: r.priorityLevel,
+      })),
+      attachmentRequirementNodes: attachmentReqRows.map((a) => ({
+        attachmentNodeId: a.id,
+        attachmentName: a.attachmentName,
+        attachmentType: a.attachmentType,
+        sourceSegmentId: a.sourceSegmentId,
+      })),
     };
 
     const payload = {
@@ -312,6 +419,13 @@ export async function GET(
         requirements: requirements.length,
         technicalItems: technicalJoined.length,
         scoringItems: scoringJoined.length,
+        timeNodes: timeNodeRows.length,
+        moneyTerms: moneyTermRows.length,
+        submissionRequirements: submissionReqRows.length,
+        clarifications: clarificationRows.length,
+        responseTasks: responseTaskRows.length,
+        attachmentRequirements: attachmentReqRows.length,
+        frameworkBindings: frameworkBindingRows.length,
       },
       views: {
         requirements_export_view: requirementsSnapshot,
