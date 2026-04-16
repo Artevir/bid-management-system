@@ -8,6 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { RequirementsWorkbench } from './requirements-workbench';
 import { RisksWorkbench } from './risks-workbench';
 import { ReviewWorkbench } from './review-workbench';
+import { ScoringWorkbench } from './scoring-workbench';
+import { TechnicalWorkbench } from './technical-workbench';
+import { FrameworkWorkbench } from './framework-workbench';
+import { TemplatesWorkbench } from './templates-workbench';
+import { MaterialsWorkbench } from './materials-workbench';
 
 const moduleMap: Record<string, { title: string; endpoint: string; desc: string }> = {
   overview: { title: '概览', endpoint: 'overview', desc: '项目版本总览与指标统计' },
@@ -69,6 +74,21 @@ export function TenderCenterHubModuleView({
     }
     if (module === 'review') {
       return <ReviewWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'scoring') {
+      return <ScoringWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'technical') {
+      return <TechnicalWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'framework') {
+      return <FrameworkWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'templates') {
+      return <TemplatesWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'materials') {
+      return <MaterialsWorkbench projectId={projectId} versionId={versionId} />;
     }
     return null;
   };
