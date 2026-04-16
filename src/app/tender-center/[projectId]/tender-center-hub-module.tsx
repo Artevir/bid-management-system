@@ -23,6 +23,7 @@ import { OverviewWorkbench } from './overview-workbench';
 import { ConflictsWorkbench } from './conflicts-workbench';
 import { ClarificationsWorkbench } from './clarifications-workbench';
 import { RulesWorkbench } from './rules-workbench';
+import { AttachmentRequirementsWorkbench } from './attachment-requirements-workbench';
 
 const moduleMap: Record<string, { title: string; endpoint: string; desc: string }> = {
   overview: { title: '概览', endpoint: 'overview', desc: '项目版本总览与指标统计' },
@@ -30,6 +31,7 @@ const moduleMap: Record<string, { title: string; endpoint: string; desc: string 
   pages: { title: '页码', endpoint: 'pages', desc: '页级对象与元信息' },
   segments: { title: '分段', endpoint: 'segments', desc: '原文分片与溯源锚点' },
   sections: { title: '章节', endpoint: 'sections', desc: '正文章节树结构' },
+  attachments: { title: '附件', endpoint: 'attachment-requirements', desc: '附件要求与表单' },
   requirements: { title: '要求', endpoint: 'requirements', desc: '招标要求主数据' },
   timeNodes: { title: '时间', endpoint: 'time-nodes', desc: '关键时间节点' },
   moneyTerms: { title: '金额', endpoint: 'money-terms', desc: '金额条款与费用' },
@@ -99,6 +101,9 @@ export function TenderCenterHubModuleView({
     }
     if (module === 'sections') {
       return <SectionsWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'attachments') {
+      return <AttachmentRequirementsWorkbench projectId={projectId} versionId={versionId} />;
     }
     if (module === 'requirements') {
       return <RequirementsWorkbench projectId={projectId} versionId={versionId} />;

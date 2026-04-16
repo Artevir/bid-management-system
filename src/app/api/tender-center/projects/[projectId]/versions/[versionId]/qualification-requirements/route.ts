@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import { db } from '@/db';
-import { qualificationRequirements } from '@/db/schema';
+import { qualificationRequirements, tenderRequirements } from '@/db/schema';
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/qualification-requirements
 export async function GET(
@@ -33,7 +33,17 @@ export async function GET(
         hardConstraintFlag: qualificationRequirements.hardConstraintFlag,
       })
       .from(qualificationRequirements)
-      .where(eq(qualificationRequirements.isDeleted, false));
+      .innerJoin(
+        tenderRequirements,
+        eq(tenderRequirements.id, qualificationRequirements.tenderRequirementId)
+      )
+      .where(
+        and(
+          eq(tenderRequirements.tenderProjectVersionId, version.id),
+          eq(tenderRequirements.isDeleted, false),
+          eq(qualificationRequirements.isDeleted, false)
+        )
+      );
     return NextResponse.json({ success: true, data: rows });
   });
 }
