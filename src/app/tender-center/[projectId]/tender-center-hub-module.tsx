@@ -13,10 +13,14 @@ import { TechnicalWorkbench } from './technical-workbench';
 import { FrameworkWorkbench } from './framework-workbench';
 import { TemplatesWorkbench } from './templates-workbench';
 import { MaterialsWorkbench } from './materials-workbench';
+import { TimeNodesWorkbench } from './time-nodes-workbench';
+import { MoneyTermsWorkbench } from './money-terms-workbench';
 
 const moduleMap: Record<string, { title: string; endpoint: string; desc: string }> = {
   overview: { title: '概览', endpoint: 'overview', desc: '项目版本总览与指标统计' },
   requirements: { title: '要求', endpoint: 'requirements', desc: '招标要求主数据' },
+  timeNodes: { title: '时间', endpoint: 'time-nodes', desc: '关键时间节点' },
+  moneyTerms: { title: '金额', endpoint: 'money-terms', desc: '金额条款与费用' },
   risks: { title: '风险', endpoint: 'risks', desc: '风险识别与处置状态' },
   scoring: { title: '评分', endpoint: 'scoring-schemes', desc: '评分方案与评分项' },
   technical: { title: '技术', endpoint: 'technical-groups', desc: '技术规格组与技术条目' },
@@ -68,6 +72,12 @@ export function TenderCenterHubModuleView({
     if (!versionId) return null;
     if (module === 'requirements') {
       return <RequirementsWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'timeNodes') {
+      return <TimeNodesWorkbench projectId={projectId} versionId={versionId} />;
+    }
+    if (module === 'moneyTerms') {
+      return <MoneyTermsWorkbench projectId={projectId} versionId={versionId} />;
     }
     if (module === 'risks') {
       return <RisksWorkbench projectId={projectId} versionId={versionId} />;
