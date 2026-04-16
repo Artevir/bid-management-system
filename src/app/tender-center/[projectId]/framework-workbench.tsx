@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 type FrameworkNode = {
   nodeId: number;
@@ -18,6 +19,19 @@ type FrameworkNode = {
   sortOrder: number;
 };
 
+type FrameworkBinding = {
+  bindingId: number;
+  bidFrameworkNodeId: number;
+  tenderRequirementId: number;
+  bindingType: string;
+  requiredLevel: string | null;
+  frameworkTitle: string | null;
+  requirementTitle: string | null;
+  requirementType: string | null;
+};
+
+type TabType = 'nodes' | 'bindings';
+
 export function FrameworkWorkbench({
   projectId,
   versionId,
@@ -26,36 +40,40 @@ export function FrameworkWorkbench({
   versionId: string;
 }) {
   const [nodes, setNodes] = useState<FrameworkNode[]>([]);
+  const [bindings, setBindings] = useState<FrameworkBinding[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [activeTab, setActiveTab] = useState<TabType>('nodes');
 
-  const loadNodes = async () => {
+  const loadData = async () => {
     if (!versionId) return;
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(
-        `/api/tender-center/projects/${projectId}/versions/${versionId}/framework`
-      );
-      const payload = await res.json();
-      if (!res.ok || !payload.success) {
-        throw new Error(payload.error || payload.message || '加载框架节点失败');
-      }
-      setNodes(Array.isArray(payload.data) ? payload.data : []);
-      if (payload.data?.length > 0) {
-        setExpandedIds(new Set(payload.data.slice(0, 5).map((n: FrameworkNode) => n.nodeId)));
+      const [nodesRes, bindingsRes] = await Promise.all([
+        fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/framework`),
+        fetch(`/api/tender-center/projects/${projectId}/versions/${versionId}/framework-bindings`),
+      ]);
+      const nodesPayload = await nodesRes.json();
+      const bindingsPayload = await bindingsRes.json();
+      if (nodesRes.ok && nodesPayload.success)
+        setNodes(Array.isArray(nodesPayload.data) ? nodesPayload.data : []);
+      if (bindingsRes.ok && bindingsPayload.success)
+        setBindings(Array.isArray(bindingsPayload.data) ? bindingsPayload.data : []);
+      if (nodesPayload.data?.length > 0) {
+        setExpandedIds(new Set(nodesPayload.data.slice(0, 5).map((n: FrameworkNode) => n.nodeId)));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载框架数据失败');
+      setError(err instanceof Error ? err.message : '加载数据失败');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadNodes();
+    void loadData();
   }, [projectId, versionId]);
 
   const filteredNodes = useMemo(() => {
@@ -66,6 +84,15 @@ export function FrameworkWorkbench({
       return text.includes(kw);
     });
   }, [nodes, keyword]);
+
+  const filteredBindings = useMemo(() => {
+    if (!keyword.trim()) return bindings;
+    const kw = keyword.trim().toLowerCase();
+    return bindings.filter((b) => {
+      const text = `${b.frameworkTitle || ''} ${b.requirementTitle || ''}`.toLowerCase();
+      return text.includes(kw);
+    });
+  }, [bindings, keyword]);
 
   const nodeMap = useMemo(() => {
     const map = new Map<number, FrameworkNode>();
@@ -86,11 +113,8 @@ export function FrameworkWorkbench({
   const toggleExpand = (nodeId: number) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
-      } else {
-        next.add(nodeId);
-      }
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
       return next;
     });
   };
@@ -137,23 +161,87 @@ export function FrameworkWorkbench({
             placeholder="搜索框架标题/章节号"
             className="max-w-sm"
           />
-          <Button variant="outline" onClick={() => void loadNodes()} disabled={loading}>
+          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
             刷新
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        {loading ? <p className="text-sm text-muted-foreground">加载中...</p> : null}
-        <p className="text-xs text-muted-foreground">
-          共 {filteredNodes.length} 个框架节点（根节点 {rootNodes.length} 个）
-        </p>
-        <div className="border rounded p-3 space-y-1">
-          {rootNodes.map((node) => renderNode(node))}
-          {filteredNodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无框架节点数据</p>
-          ) : null}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {loading && <p className="text-sm text-muted-foreground">加载中...</p>}
+
+        <div className="flex flex-wrap gap-1 border-b">
+          <button
+            onClick={() => setActiveTab('nodes')}
+            className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
+              activeTab === 'nodes'
+                ? 'border-primary text-primary font-medium'
+                : 'border-transparent text-muted-foreground'
+            }`}
+          >
+            框架节点 ({nodes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('bindings')}
+            className={`px-3 py-1.5 text-sm border-b-2 -mb-px transition-colors ${
+              activeTab === 'bindings'
+                ? 'border-primary text-primary font-medium'
+                : 'border-transparent text-muted-foreground'
+            }`}
+          >
+            要求绑定 ({bindings.length})
+          </button>
         </div>
+
+        {activeTab === 'nodes' && (
+          <>
+            <p className="text-xs text-muted-foreground">
+              共 {filteredNodes.length} 个框架节点（根节点 {rootNodes.length} 个）
+            </p>
+            <div className="border rounded p-3 space-y-1">
+              {rootNodes.map((node) => renderNode(node))}
+              {filteredNodes.length === 0 && (
+                <p className="text-sm text-muted-foreground">暂无框架节点数据</p>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'bindings' && (
+          <>
+            <p className="text-xs text-muted-foreground">共 {filteredBindings.length} 条绑定关系</p>
+            <div className="space-y-2">
+              {filteredBindings.map((binding) => (
+                <div key={binding.bindingId} className="rounded border p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium">
+                        {binding.frameworkTitle || `框架节点 #${binding.bidFrameworkNodeId}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        → {binding.requirementTitle || `要求 #${binding.tenderRequirementId}`}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Badge variant="outline">{binding.bindingType}</Badge>
+                      {binding.requiredLevel && (
+                        <Badge variant="secondary">{binding.requiredLevel}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  {binding.requirementType && (
+                    <p className="text-xs text-muted-foreground">
+                      要求类型：{binding.requirementType}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {filteredBindings.length === 0 && (
+                <p className="text-sm text-muted-foreground">暂无绑定关系</p>
+              )}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
