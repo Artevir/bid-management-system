@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -74,6 +75,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [_viewType, _setViewType] = useState<'month' | 'week'>('month');
   const [filterType, setFilterType] = useState<string>('all');
@@ -89,10 +91,10 @@ export default function CalendarPage() {
       const response = await fetch('/api/projects');
       const data = await response.json();
       const projects: Project[] = data?.data?.items || data?.projects || [];
-      
+
       // 转换为日历事件
       const calendarEvents: CalendarEvent[] = [];
-      
+
       projects.forEach((project: Project) => {
         // 投标截止日期
         if (project.submissionDeadline) {
@@ -107,7 +109,7 @@ export default function CalendarPage() {
             status: project.status,
           });
         }
-        
+
         // 开标日期
         if (project.openBidDate) {
           calendarEvents.push({
@@ -121,7 +123,7 @@ export default function CalendarPage() {
             status: project.status,
           });
         }
-        
+
         // 答疑截止
         if (project.questionDeadline) {
           calendarEvents.push({
@@ -136,7 +138,7 @@ export default function CalendarPage() {
           });
         }
       });
-      
+
       setEvents(calendarEvents);
     } catch (error) {
       console.error('Failed to fetch calendar data:', error);
@@ -152,33 +154,33 @@ export default function CalendarPage() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startPadding = firstDay.getDay(); // 周日开始
-    
+
     const days: Date[] = [];
-    
+
     // 上个月的填充天数
     for (let i = startPadding - 1; i >= 0; i--) {
       const date = new Date(year, month, -i);
       days.push(date);
     }
-    
+
     // 当月天数
     for (let i = 1; i <= lastDay.getDate(); i++) {
       days.push(new Date(year, month, i));
     }
-    
+
     // 下个月的填充天数（填满6行）
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
       days.push(new Date(year, month + 1, i));
     }
-    
+
     return { year, month, days, firstDay, lastDay };
   }, [currentDate]);
 
   // 获取某天的事件
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => {
+    return events.filter((event) => {
       const eventDate = new Date(event.date).toISOString().split('T')[0];
       return eventDate === dateStr;
     });
@@ -187,12 +189,12 @@ export default function CalendarPage() {
   // 过滤事件
   const _filteredEvents = useMemo(() => {
     if (filterType === 'all') return events;
-    return events.filter(e => e.type === filterType);
+    return events.filter((e) => e.type === filterType);
   }, [events, filterType]);
 
   // 月份导航
   const navigateMonth = (direction: number) => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + direction);
       return newDate;
@@ -219,9 +221,9 @@ export default function CalendarPage() {
   const upcomingEvents = useMemo(() => {
     const now = new Date();
     const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
+
     return events
-      .filter(e => {
+      .filter((e) => {
         const eventDate = new Date(e.date);
         return eventDate >= now && eventDate <= weekLater;
       })
@@ -287,7 +289,7 @@ export default function CalendarPage() {
             ) : (
               <div className="grid grid-cols-7 gap-1">
                 {/* 星期标题 */}
-                {weekdays.map(day => (
+                {weekdays.map((day) => (
                   <div
                     key={day}
                     className="text-center text-sm font-medium text-muted-foreground py-2"
@@ -295,13 +297,13 @@ export default function CalendarPage() {
                     {day}
                   </div>
                 ))}
-                
+
                 {/* 日期格子 */}
                 {monthInfo.days.map((date, index) => {
                   const dayEvents = getEventsForDate(date);
                   const today = isToday(date);
                   const currentMonth = isCurrentMonth(date);
-                  
+
                   return (
                     <div
                       key={index}
@@ -309,18 +311,22 @@ export default function CalendarPage() {
                         !currentMonth ? 'bg-muted/30' : 'bg-background'
                       } ${today ? 'ring-2 ring-primary' : ''}`}
                     >
-                      <div className={`text-sm mb-1 ${!currentMonth ? 'text-muted-foreground' : ''}`}>
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
-                          today ? 'bg-primary text-primary-foreground font-bold' : ''
-                        }`}>
+                      <div
+                        className={`text-sm mb-1 ${!currentMonth ? 'text-muted-foreground' : ''}`}
+                      >
+                        <span
+                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
+                            today ? 'bg-primary text-primary-foreground font-bold' : ''
+                          }`}
+                        >
                           {date.getDate()}
                         </span>
                       </div>
                       <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map(event => {
+                        {dayEvents.slice(0, 2).map((event) => {
                           const config = eventTypeConfig[event.type];
                           const Icon = config.icon;
-                          
+
                           return (
                             <div
                               key={event.id}
@@ -360,18 +366,16 @@ export default function CalendarPage() {
             </CardHeader>
             <CardContent>
               {upcomingEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  未来7天暂无重要节点
-                </p>
+                <ListStateBlock state="empty" emptyText="未来7天暂无重要节点" />
               ) : (
                 <div className="space-y-3">
-                  {upcomingEvents.map(event => {
+                  {upcomingEvents.map((event) => {
                     const config = eventTypeConfig[event.type];
                     const Icon = config.icon;
                     const daysUntil = Math.ceil(
                       (new Date(event.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                     );
-                    
+
                     return (
                       <div
                         key={event.id}
@@ -380,17 +384,27 @@ export default function CalendarPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">
-                              {event.projectName}
-                            </p>
+                            <p className="font-medium text-sm truncate">{event.projectName}</p>
                             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Icon className="h-3 w-3" />
                               {config.label}
                             </p>
                           </div>
                           <div className="text-right">
-                            <Badge variant={daysUntil <= 1 ? 'destructive' : daysUntil <= 3 ? 'default' : 'secondary'}>
-                              {daysUntil === 0 ? '今天' : daysUntil === 1 ? '明天' : `${daysUntil}天后`}
+                            <Badge
+                              variant={
+                                daysUntil <= 1
+                                  ? 'destructive'
+                                  : daysUntil <= 3
+                                    ? 'default'
+                                    : 'secondary'
+                              }
+                            >
+                              {daysUntil === 0
+                                ? '今天'
+                                : daysUntil === 1
+                                  ? '明天'
+                                  : `${daysUntil}天后`}
                             </Badge>
                           </div>
                         </div>
@@ -432,19 +446,23 @@ export default function CalendarPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-red-500">
-                    {events.filter(e => {
-                      const eventDate = new Date(e.date);
-                      return eventDate.getMonth() === monthInfo.month && e.type === 'deadline';
-                    }).length}
+                    {
+                      events.filter((e) => {
+                        const eventDate = new Date(e.date);
+                        return eventDate.getMonth() === monthInfo.month && e.type === 'deadline';
+                      }).length
+                    }
                   </p>
                   <p className="text-xs text-muted-foreground">投标截止</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-500">
-                    {events.filter(e => {
-                      const eventDate = new Date(e.date);
-                      return eventDate.getMonth() === monthInfo.month && e.type === 'openbid';
-                    }).length}
+                    {
+                      events.filter((e) => {
+                        const eventDate = new Date(e.date);
+                        return eventDate.getMonth() === monthInfo.month && e.type === 'openbid';
+                      }).length
+                    }
                   </p>
                   <p className="text-xs text-muted-foreground">开标日期</p>
                 </div>

@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -54,7 +60,7 @@ import {
   MapPin as _MapPin,
   FileCheck,
 } from 'lucide-react';
-import { TableSkeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { formatDate } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/error-message';
 
@@ -154,27 +160,27 @@ export default function ContractSigningsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 筛选条件
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  
+
   // 新增/编辑对话框
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // 详情对话框
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<ContractSigning | null>(null);
-  
+
   // 推送任务中
   const [pushingTaskId, setPushingTaskId] = useState<number | null>(null);
-  
+
   // 下拉选项
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
+
   // 表单数据
   const [formData, setFormData] = useState({
     projectId: '',
@@ -220,16 +226,16 @@ export default function ContractSigningsPage() {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       if (keyword) params.append('keyword', keyword);
-      
+
       const response = await fetch(`/api/contract-signings?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setContracts(result.data);
       } else {
         setError(extractErrorMessage(result, '加载数据失败'));
       }
-      
+
       // 加载统计
       const statsResponse = await fetch('/api/contract-signings?stats=true');
       const statsResult = await statsResponse.json();
@@ -293,7 +299,9 @@ export default function ContractSigningsPage() {
       contractName: contract.contractName,
       contractType: contract.contractType || 'formal',
       contractAmount: contract.contractAmount || '',
-      notificationIssuedAt: contract.notificationIssuedAt ? contract.notificationIssuedAt.split('T')[0] : '',
+      notificationIssuedAt: contract.notificationIssuedAt
+        ? contract.notificationIssuedAt.split('T')[0]
+        : '',
       signingDeadline: contract.signingDeadline ? contract.signingDeadline.split('T')[0] : '',
       signedAt: contract.signedAt ? contract.signedAt.split('T')[0] : '',
       contractStartDate: contract.contractStartDate ? contract.contractStartDate.split('T')[0] : '',
@@ -374,7 +382,7 @@ export default function ContractSigningsPage() {
 
   // 从用户选择填充姓名
   const handleHandlerSelect = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       setFormData({
         ...formData,
@@ -386,7 +394,7 @@ export default function ContractSigningsPage() {
 
   // 从用户选择填充审核人
   const handleReviewerSelect = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       setFormData({
         ...formData,
@@ -410,7 +418,7 @@ export default function ContractSigningsPage() {
   useEffect(() => {
     if (formData.notificationIssuedAt && !formData.signingDeadline) {
       const deadline = calculateDeadline(formData.notificationIssuedAt);
-      setFormData(prev => ({ ...prev, signingDeadline: deadline }));
+      setFormData((prev) => ({ ...prev, signingDeadline: deadline }));
     }
   }, [formData.notificationIssuedAt]);
 
@@ -509,8 +517,8 @@ export default function ContractSigningsPage() {
     if (status === 'signed') {
       const confirmed = confirm(
         `确认该合同已签订？\n\n${
-          projectName 
-            ? `此操作将同时把项目「${projectName}」标记为已完结，该投标项目流程结束。` 
+          projectName
+            ? `此操作将同时把项目「${projectName}」标记为已完结，该投标项目流程结束。`
             : '此操作将同时将关联项目标记为已完结，该投标项目流程结束。'
         }\n\n是否继续？`
       );
@@ -541,7 +549,7 @@ export default function ContractSigningsPage() {
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
-    const statusConfig = CONTRACT_STATUS.find(s => s.value === status);
+    const statusConfig = CONTRACT_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -560,7 +568,7 @@ export default function ContractSigningsPage() {
 
   // 获取合同类型显示
   const _getContractTypeLabel = (type: string) => {
-    const typeConfig = CONTRACT_TYPES.find(t => t.value === type);
+    const typeConfig = CONTRACT_TYPES.find((t) => t.value === type);
     return typeConfig?.label || type;
   };
 
@@ -587,7 +595,8 @@ export default function ContractSigningsPage() {
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          <strong>重要提醒：</strong>中标通知书发出后30日内必须签订书面合同！条款需与招标/投标文件一致，不得擅自更改。逾期未签订可能导致中标资格被取消。
+          <strong>重要提醒：</strong>
+          中标通知书发出后30日内必须签订书面合同！条款需与招标/投标文件一致，不得擅自更改。逾期未签订可能导致中标资格被取消。
         </AlertDescription>
       </Alert>
 
@@ -700,12 +709,9 @@ export default function ContractSigningsPage() {
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : contracts.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileSignature className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无合同签订数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无合同签订数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -733,7 +739,9 @@ export default function ContractSigningsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-green-600">{contract.contractAmount || '-'}</div>
+                      <div className="font-medium text-green-600">
+                        {contract.contractAmount || '-'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {contract.signingDeadline ? (
@@ -741,13 +749,17 @@ export default function ContractSigningsPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDate(contract.signingDeadline)}
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       <div>
                         <div>{contract.partyAName || '-'}</div>
                         {contract.partyAContact && (
-                          <div className="text-sm text-muted-foreground">{contract.partyAContact}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {contract.partyAContact}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -755,7 +767,9 @@ export default function ContractSigningsPage() {
                       <div>
                         <div>{contract.handlerName || '-'}</div>
                         {contract.handlerPhone && (
-                          <div className="text-sm text-muted-foreground">{contract.handlerPhone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {contract.handlerPhone}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -763,53 +777,49 @@ export default function ContractSigningsPage() {
                       {contract.termsConsistent === false ? (
                         <Badge variant="destructive">不一致</Badge>
                       ) : (
-                        <Badge variant="default" className="bg-green-100 text-green-800">一致</Badge>
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          一致
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>{getStatusBadge(contract.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(contract)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleView(contract)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(contract)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(contract)}>
                           <FileText className="h-4 w-4" />
                         </Button>
-                        {contract.status !== 'signed' && contract.status !== 'cancelled' && contract.status !== 'overdue' && (
-                          <>
-                            {!contract.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handlePushTask(contract.id)}
-                                disabled={pushingTaskId === contract.id}
-                              >
-                                {pushingTaskId === contract.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            {contract.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => router.push(`/tasks/${contract.taskId}`)}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
+                        {contract.status !== 'signed' &&
+                          contract.status !== 'cancelled' &&
+                          contract.status !== 'overdue' && (
+                            <>
+                              {!contract.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePushTask(contract.id)}
+                                  disabled={pushingTaskId === contract.id}
+                                >
+                                  {pushingTaskId === contract.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                              {contract.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/tasks/${contract.taskId}`)}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          )}
                         {contract.status === 'pending' && (
                           <Button
                             variant="ghost"
@@ -841,16 +851,14 @@ export default function ContractSigningsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleUpdateStatus(contract.id, 'signed', contract.projectName)}
+                            onClick={() =>
+                              handleUpdateStatus(contract.id, 'signed', contract.projectName)
+                            }
                           >
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(contract.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(contract.id)}>
                           <Ban className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -868,9 +876,7 @@ export default function ContractSigningsPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? '编辑合同签订' : '新增合同签订'}</DialogTitle>
-            <DialogDescription>
-              中标通知书发出后30日内必须签订书面合同
-            </DialogDescription>
+            <DialogDescription>中标通知书发出后30日内必须签订书面合同</DialogDescription>
           </DialogHeader>
 
           {error && (
@@ -889,10 +895,10 @@ export default function ContractSigningsPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>关联项目</Label>
-                  <Select 
-                    value={formData.projectId} 
+                  <Select
+                    value={formData.projectId}
                     onValueChange={(value) => {
-                      const project = projects.find(p => p.id === parseInt(value));
+                      const project = projects.find((p) => p.id === parseInt(value));
                       setFormData({
                         ...formData,
                         projectId: value,
@@ -988,7 +994,9 @@ export default function ContractSigningsPage() {
                     <Input
                       type="date"
                       value={formData.notificationIssuedAt}
-                      onChange={(e) => setFormData({ ...formData, notificationIssuedAt: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, notificationIssuedAt: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -996,7 +1004,9 @@ export default function ContractSigningsPage() {
                     <Input
                       type="date"
                       value={formData.signingDeadline}
-                      onChange={(e) => setFormData({ ...formData, signingDeadline: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, signingDeadline: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -1014,7 +1024,9 @@ export default function ContractSigningsPage() {
                     <Input
                       type="date"
                       value={formData.contractStartDate}
-                      onChange={(e) => setFormData({ ...formData, contractStartDate: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, contractStartDate: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -1022,7 +1034,9 @@ export default function ContractSigningsPage() {
                     <Input
                       type="date"
                       value={formData.contractEndDate}
-                      onChange={(e) => setFormData({ ...formData, contractEndDate: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, contractEndDate: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -1105,7 +1119,7 @@ export default function ContractSigningsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.termsConsistent}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, termsConsistent: checked as boolean })
                       }
                     />
@@ -1114,7 +1128,7 @@ export default function ContractSigningsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.termsModified}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, termsModified: checked as boolean })
                       }
                     />
@@ -1126,7 +1140,9 @@ export default function ContractSigningsPage() {
                     <Label>不一致条款说明</Label>
                     <Textarea
                       value={formData.inconsistentTerms}
-                      onChange={(e) => setFormData({ ...formData, inconsistentTerms: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, inconsistentTerms: e.target.value })
+                      }
                       placeholder="请说明与招标/投标文件不一致的条款"
                       rows={2}
                     />
@@ -1137,7 +1153,9 @@ export default function ContractSigningsPage() {
                     <Label>修改原因</Label>
                     <Textarea
                       value={formData.modificationReason}
-                      onChange={(e) => setFormData({ ...formData, modificationReason: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, modificationReason: e.target.value })
+                      }
                       placeholder="请说明条款修改的原因"
                       rows={2}
                     />
@@ -1154,10 +1172,7 @@ export default function ContractSigningsPage() {
               <CardContent className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>经办人</Label>
-                  <Select
-                    value={formData.handlerId}
-                    onValueChange={handleHandlerSelect}
-                  >
+                  <Select value={formData.handlerId} onValueChange={handleHandlerSelect}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择经办人" />
                     </SelectTrigger>
@@ -1197,10 +1212,7 @@ export default function ContractSigningsPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>审核人</Label>
-                  <Select
-                    value={formData.reviewerId}
-                    onValueChange={handleReviewerSelect}
-                  >
+                  <Select value={formData.reviewerId} onValueChange={handleReviewerSelect}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择审核人" />
                     </SelectTrigger>
@@ -1270,7 +1282,7 @@ export default function ContractSigningsPage() {
           <DialogHeader>
             <DialogTitle>合同签订详情</DialogTitle>
           </DialogHeader>
-          
+
           {selectedContract && (
             <div className="space-y-4">
               {/* 基本信息 */}
@@ -1289,7 +1301,9 @@ export default function ContractSigningsPage() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">合同金额</Label>
-                  <p className="font-medium text-green-600">{selectedContract.contractAmount || '-'}</p>
+                  <p className="font-medium text-green-600">
+                    {selectedContract.contractAmount || '-'}
+                  </p>
                 </div>
               </div>
 
@@ -1299,17 +1313,29 @@ export default function ContractSigningsPage() {
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <div>
                     <span className="text-sm">中标通知书发出日期：</span>
-                    <span>{selectedContract.notificationIssuedAt ? formatDate(selectedContract.notificationIssuedAt) : '-'}</span>
+                    <span>
+                      {selectedContract.notificationIssuedAt
+                        ? formatDate(selectedContract.notificationIssuedAt)
+                        : '-'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-sm">签订截止日期：</span>
-                    <span className={selectedContract.status === 'overdue' ? 'text-red-600 font-medium' : ''}>
-                      {selectedContract.signingDeadline ? formatDate(selectedContract.signingDeadline) : '-'}
+                    <span
+                      className={
+                        selectedContract.status === 'overdue' ? 'text-red-600 font-medium' : ''
+                      }
+                    >
+                      {selectedContract.signingDeadline
+                        ? formatDate(selectedContract.signingDeadline)
+                        : '-'}
                     </span>
                   </div>
                   <div>
                     <span className="text-sm">实际签订日期：</span>
-                    <span>{selectedContract.signedAt ? formatDate(selectedContract.signedAt) : '-'}</span>
+                    <span>
+                      {selectedContract.signedAt ? formatDate(selectedContract.signedAt) : '-'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-sm">合同期限：</span>
@@ -1355,7 +1381,9 @@ export default function ContractSigningsPage() {
                       )}
                     </div>
                   ) : (
-                    <Badge variant="default" className="bg-green-100 text-green-800">条款一致</Badge>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      条款一致
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -1368,7 +1396,9 @@ export default function ContractSigningsPage() {
                     <p className="text-sm font-medium">经办人</p>
                     <p className="text-sm">{selectedContract.handlerName || '-'}</p>
                     {selectedContract.handlerPhone && (
-                      <p className="text-sm text-muted-foreground">{selectedContract.handlerPhone}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedContract.handlerPhone}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -1403,12 +1433,14 @@ export default function ContractSigningsPage() {
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
               关闭
             </Button>
-            <Button onClick={() => {
-              setDetailOpen(false);
-              if (selectedContract) {
-                handleEdit(selectedContract);
-              }
-            }}>
+            <Button
+              onClick={() => {
+                setDetailOpen(false);
+                if (selectedContract) {
+                  handleEdit(selectedContract);
+                }
+              }}
+            >
               编辑
             </Button>
           </DialogFooter>

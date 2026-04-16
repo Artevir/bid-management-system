@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -86,6 +87,7 @@ export default function ReviewConfigPage() {
   const [rules, setRules] = useState<ReviewRule[]>([]);
   const [templates, setTemplates] = useState<ReviewTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('configs');
 
   // 弹窗状态
@@ -100,11 +102,14 @@ export default function ReviewConfigPage() {
 
   async function fetchData() {
     setLoading(true);
+    setError('');
     try {
       const [configsRes, rulesRes, templatesRes] = await Promise.all([
         fetch('/api/review/config').catch(() => ({ json: () => ({ configs: [] }) })),
         fetch('/api/review/config?type=rules').catch(() => ({ json: () => ({ rules: [] }) })),
-        fetch('/api/review/config?type=templates').catch(() => ({ json: () => ({ templates: [] }) })),
+        fetch('/api/review/config?type=templates').catch(() => ({
+          json: () => ({ templates: [] }),
+        })),
       ]);
 
       const [configsData, rulesData, templatesData] = await Promise.all([
@@ -118,6 +123,7 @@ export default function ReviewConfigPage() {
       setTemplates(templatesData.templates || []);
     } catch (error) {
       console.error('Failed to fetch review config data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -140,6 +146,7 @@ export default function ReviewConfigPage() {
       }
     } catch (error) {
       console.error('Failed to save config:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('保存失败');
     } finally {
       setSubmitting(false);
@@ -163,6 +170,7 @@ export default function ReviewConfigPage() {
       }
     } catch (error) {
       console.error('Failed to save rule:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('保存失败');
     } finally {
       setSubmitting(false);
@@ -186,6 +194,7 @@ export default function ReviewConfigPage() {
       }
     } catch (error) {
       console.error('Failed to save template:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('保存失败');
     } finally {
       setSubmitting(false);
@@ -193,7 +202,10 @@ export default function ReviewConfigPage() {
   }
 
   const getSeverityBadge = (severity: string) => {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+    const variants: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }
+    > = {
       critical: { variant: 'destructive', label: '严重' },
       major: { variant: 'default', label: '重要' },
       minor: { variant: 'secondary', label: '次要' },
@@ -245,12 +257,14 @@ export default function ReviewConfigPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+              {error ? (
+                <ListStateBlock
+                  state="error"
+                  error={error}
+                  onRetry={() => window.location.reload()}
+                />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -265,11 +279,7 @@ export default function ReviewConfigPage() {
                   </TableHeader>
                   <TableBody>
                     {configs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          暂无配置
-                        </TableCell>
-                      </TableRow>
+                      <ListStateBlock state="empty" emptyText="暂无配置" />
                     ) : (
                       configs.map((config) => (
                         <TableRow key={config.id}>
@@ -325,11 +335,7 @@ export default function ReviewConfigPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -344,11 +350,7 @@ export default function ReviewConfigPage() {
                   </TableHeader>
                   <TableBody>
                     {rules.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          暂无规则
-                        </TableCell>
-                      </TableRow>
+                      <ListStateBlock state="empty" emptyText="暂无规则" />
                     ) : (
                       rules.map((rule) => (
                         <TableRow key={rule.id}>
@@ -364,11 +366,7 @@ export default function ReviewConfigPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setRuleDialog(rule)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => setRuleDialog(rule)}>
                               <Edit2 className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="sm">
@@ -405,20 +403,15 @@ export default function ReviewConfigPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : templates.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无模板</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无模板" />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {templates.map((template) => (
-                    <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                    <Card
+                      key={template.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => setTemplateDialog(template)}
                     >
                       <CardHeader className="pb-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -138,10 +139,11 @@ export default function TagsManagementPage() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [_viewMode, _setViewMode] = useState<'list' | 'tree'>('list');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [showSidePanel, setShowSidePanel] = useState(true);
-  
+
   // Dialog States
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
@@ -149,9 +151,13 @@ export default function TagsManagementPage() {
   const [_versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
-  const [deletingItem, setDeletingItem] = useState<{ type: 'category' | 'tag'; id: number; name: string } | null>(null);
+  const [deletingItem, setDeletingItem] = useState<{
+    type: 'category' | 'tag';
+    id: number;
+    name: string;
+  } | null>(null);
   const [_viewingTagVersions, setViewingTagVersions] = useState<Tag | null>(null);
-  
+
   // Form States
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -162,7 +168,7 @@ export default function TagsManagementPage() {
     parentId: '',
     sortOrder: 0,
   });
-  
+
   const [tagForm, setTagForm] = useState({
     name: '',
     code: '',
@@ -191,51 +197,59 @@ export default function TagsManagementPage() {
     }
   }, []);
 
-  const fetchTags = useCallback(async (filters?: SearchFilters) => {
-    setLoading(true);
-    try {
-      if (filters && Object.keys(filters).some(key => {
-        const k = key as keyof SearchFilters;
-        const v = filters[k];
-        if (k === 'keyword' || k === 'sortBy' || k === 'sortOrder') return false;
-        if (typeof v === 'string') return v !== '' && v !== 'name' && v !== 'asc';
-        if (Array.isArray(v)) return v.length > 0;
-        if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0;
-        return v !== undefined;
-      })) {
-        // 使用高级搜索
-        const response = await fetch('/api/tags/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...filters,
-            page: 1,
-            pageSize: 100,
-          }),
-        });
-        const data = await response.json();
-        setTags(data.items || []);
-      } else {
-        // 使用普通搜索
-        const params = new URLSearchParams();
-        if (selectedCategory) {
-          params.set('categoryId', selectedCategory.id.toString());
-        }
-        if (filters?.keyword || searchKeyword) {
-          params.set('keyword', filters?.keyword || searchKeyword);
-        }
-        params.set('pageSize', '100');
+  const fetchTags = useCallback(
+    async (filters?: SearchFilters) => {
+      setLoading(true);
+      setError('');
+      try {
+        if (
+          filters &&
+          Object.keys(filters).some((key) => {
+            const k = key as keyof SearchFilters;
+            const v = filters[k];
+            if (k === 'keyword' || k === 'sortBy' || k === 'sortOrder') return false;
+            if (typeof v === 'string') return v !== '' && v !== 'name' && v !== 'asc';
+            if (Array.isArray(v)) return v.length > 0;
+            if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0;
+            return v !== undefined;
+          })
+        ) {
+          // 使用高级搜索
+          const response = await fetch('/api/tags/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...filters,
+              page: 1,
+              pageSize: 100,
+            }),
+          });
+          const data = await response.json();
+          setTags(data.items || []);
+        } else {
+          // 使用普通搜索
+          const params = new URLSearchParams();
+          if (selectedCategory) {
+            params.set('categoryId', selectedCategory.id.toString());
+          }
+          if (filters?.keyword || searchKeyword) {
+            params.set('keyword', filters?.keyword || searchKeyword);
+          }
+          params.set('pageSize', '100');
 
-        const response = await fetch(`/api/tags?${params.toString()}`);
-        const data = await response.json();
-        setTags(data.items || []);
+          const response = await fetch(`/api/tags?${params.toString()}`);
+          const data = await response.json();
+          setTags(data.items || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tags:', error);
+        setError(error instanceof Error ? error.message : '加载标签列表失败');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, searchKeyword]);
+    },
+    [selectedCategory, searchKeyword]
+  );
 
   useEffect(() => {
     fetchCategories();
@@ -296,14 +310,10 @@ export default function TagsManagementPage() {
 
   const handleSaveCategory = async () => {
     try {
-      const url = editingCategory
-        ? '/api/tags/categories'
-        : '/api/tags/categories';
-      
+      const url = editingCategory ? '/api/tags/categories' : '/api/tags/categories';
+
       const method = editingCategory ? 'PUT' : 'POST';
-      const body = editingCategory
-        ? { id: editingCategory.id, ...categoryForm }
-        : categoryForm;
+      const body = editingCategory ? { id: editingCategory.id, ...categoryForm } : categoryForm;
 
       const response = await fetch(url, {
         method,
@@ -388,9 +398,7 @@ export default function TagsManagementPage() {
     try {
       const url = editingTag ? '/api/tags' : '/api/tags';
       const method = editingTag ? 'PUT' : 'POST';
-      const body = editingTag
-        ? { id: editingTag.id, ...tagForm }
-        : tagForm;
+      const body = editingTag ? { id: editingTag.id, ...tagForm } : tagForm;
 
       const response = await fetch(url, {
         method,
@@ -404,10 +412,10 @@ export default function TagsManagementPage() {
       }
 
       const data = await response.json();
-      
+
       // 记录访问
       recordVisit('tag', data.item.id, data.item.name);
-      
+
       setTagDialogOpen(false);
       fetchTags();
     } catch (error: any) {
@@ -474,11 +482,9 @@ export default function TagsManagementPage() {
           }),
         });
       }
-      
+
       // 更新本地状态
-      setTags(tags.map(t => 
-        t.id === tag.id ? { ...t, isFavorite: !t.isFavorite } : t
-      ));
+      setTags(tags.map((t) => (t.id === tag.id ? { ...t, isFavorite: !t.isFavorite } : t)));
     } catch (error) {
       console.error('收藏操作失败:', error);
     }
@@ -527,11 +533,7 @@ export default function TagsManagementPage() {
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               高级搜索
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSidePanel(!showSidePanel)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowSidePanel(!showSidePanel)}>
               <BarChart3 className="h-4 w-4 mr-2" />
               {showSidePanel ? '隐藏面板' : '显示面板'}
             </Button>
@@ -573,17 +575,13 @@ export default function TagsManagementPage() {
               <button
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors',
-                  !selectedCategory
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'hover:bg-muted'
+                  !selectedCategory ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
                 )}
                 onClick={() => handleSelectCategory(null)}
               >
                 <Layers className="h-4 w-4" />
                 <span>全部标签</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {tags.length}
-                </span>
+                <span className="ml-auto text-xs text-muted-foreground">{tags.length}</span>
               </button>
 
               {/* Category Tree */}
@@ -623,18 +621,10 @@ export default function TagsManagementPage() {
                 <span className="text-sm text-muted-foreground">
                   已选择 {selectedTags.length} 个标签
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedTags([])}
-                >
+                <Button variant="outline" size="sm" onClick={() => setSelectedTags([])}>
                   取消选择
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleBatchDelete}
-                >
+                <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
                   批量删除
                 </Button>
               </div>
@@ -644,17 +634,11 @@ export default function TagsManagementPage() {
           {/* Tags List */}
           <ScrollArea className="flex-1">
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <ListStateBlock state="loading" />
+            ) : error ? (
+              <ListStateBlock state="error" error={error} onRetry={() => fetchTags()} />
             ) : tags.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <Tag className="h-12 w-12 mb-4 opacity-50" />
-                <p>暂无标签</p>
-                <Button variant="link" onClick={handleCreateTag}>
-                  创建第一个标签
-                </Button>
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无标签" />
             ) : (
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {tags.map((tag) => (
@@ -700,11 +684,11 @@ export default function TagsManagementPage() {
               <TabsContent value="favorites" className="flex-1 mt-0">
                 <FavoritesPanel
                   onSelectTag={(tagId) => {
-                    const tag = tags.find(t => t.id === tagId);
+                    const tag = tags.find((t) => t.id === tagId);
                     if (tag) handleEditTag(tag);
                   }}
                   onSelectCategory={(categoryId) => {
-                    const category = categories.find(c => c.id === categoryId);
+                    const category = categories.find((c) => c.id === categoryId);
                     handleSelectCategory(category || null);
                   }}
                 />
@@ -721,12 +705,8 @@ export default function TagsManagementPage() {
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingCategory ? '编辑分类' : '新建分类'}
-            </DialogTitle>
-            <DialogDescription>
-              创建标签分类，用于组织和管理标签
-            </DialogDescription>
+            <DialogTitle>{editingCategory ? '编辑分类' : '新建分类'}</DialogTitle>
+            <DialogDescription>创建标签分类，用于组织和管理标签</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -734,9 +714,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">名称 *</Label>
               <Input
                 value={categoryForm.name}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, name: e.target.value })
-                }
+                onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -745,9 +723,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">代码</Label>
               <Input
                 value={categoryForm.code}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, code: e.target.value })
-                }
+                onChange={(e) => setCategoryForm({ ...categoryForm, code: e.target.value })}
                 placeholder="可选，唯一标识"
                 className="col-span-3"
               />
@@ -757,9 +733,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">实体类型</Label>
               <Select
                 value={categoryForm.entityType}
-                onValueChange={(value) =>
-                  setCategoryForm({ ...categoryForm, entityType: value })
-                }
+                onValueChange={(value) => setCategoryForm({ ...categoryForm, entityType: value })}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
@@ -780,16 +754,12 @@ export default function TagsManagementPage() {
                 <Input
                   type="color"
                   value={categoryForm.color}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, color: e.target.value })
-                  }
+                  onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
                   className="w-12 h-10 p-1 cursor-pointer"
                 />
                 <Input
                   value={categoryForm.color}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, color: e.target.value })
-                  }
+                  onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
                   className="flex-1"
                 />
               </div>
@@ -799,9 +769,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">描述</Label>
               <Textarea
                 value={categoryForm.description}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, description: e.target.value })
-                }
+                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                 placeholder="分类描述"
                 className="col-span-3"
                 rows={3}
@@ -813,9 +781,7 @@ export default function TagsManagementPage() {
             <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveCategory}>
-              {editingCategory ? '保存' : '创建'}
-            </Button>
+            <Button onClick={handleSaveCategory}>{editingCategory ? '保存' : '创建'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -824,12 +790,8 @@ export default function TagsManagementPage() {
       <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingTag ? '编辑标签' : '新建标签'}
-            </DialogTitle>
-            <DialogDescription>
-              创建标签，用于分类和检索实体
-            </DialogDescription>
+            <DialogTitle>{editingTag ? '编辑标签' : '新建标签'}</DialogTitle>
+            <DialogDescription>创建标签，用于分类和检索实体</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -856,9 +818,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">分类</Label>
               <Select
                 value={tagForm.categoryId}
-                onValueChange={(value) =>
-                  setTagForm({ ...tagForm, categoryId: value })
-                }
+                onValueChange={(value) => setTagForm({ ...tagForm, categoryId: value })}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="选择分类" />
@@ -896,16 +856,12 @@ export default function TagsManagementPage() {
                 <Input
                   type="color"
                   value={tagForm.color}
-                  onChange={(e) =>
-                    setTagForm({ ...tagForm, color: e.target.value })
-                  }
+                  onChange={(e) => setTagForm({ ...tagForm, color: e.target.value })}
                   className="w-12 h-10 p-1 cursor-pointer"
                 />
                 <Input
                   value={tagForm.color}
-                  onChange={(e) =>
-                    setTagForm({ ...tagForm, color: e.target.value })
-                  }
+                  onChange={(e) => setTagForm({ ...tagForm, color: e.target.value })}
                   className="flex-1"
                 />
               </div>
@@ -915,9 +871,7 @@ export default function TagsManagementPage() {
               <Label className="text-right">描述</Label>
               <Textarea
                 value={tagForm.description}
-                onChange={(e) =>
-                  setTagForm({ ...tagForm, description: e.target.value })
-                }
+                onChange={(e) => setTagForm({ ...tagForm, description: e.target.value })}
                 placeholder="标签描述"
                 className="col-span-3"
                 rows={3}
@@ -929,9 +883,7 @@ export default function TagsManagementPage() {
             <Button variant="outline" onClick={() => setTagDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveTag}>
-              {editingTag ? '保存' : '创建'}
-            </Button>
+            <Button onClick={handleSaveTag}>{editingTag ? '保存' : '创建'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -942,18 +894,14 @@ export default function TagsManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除{deletingItem?.type === 'category' ? '分类' : '标签'} "
-              {deletingItem?.name}" 吗？此操作无法撤销。
+              确定要删除{deletingItem?.type === 'category' ? '分类' : '标签'} "{deletingItem?.name}"
+              吗？此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
-              onClick={
-                deletingItem?.type === 'category'
-                  ? handleDeleteCategory
-                  : handleDeleteTag
-              }
+              onClick={deletingItem?.type === 'category' ? handleDeleteCategory : handleDeleteTag}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               删除
@@ -1017,18 +965,10 @@ function CategoryTreeItem({
 
         {!hasChildren && <span className="w-5" />}
 
-        <div
-          className="flex-1 flex items-center gap-2"
-          onClick={() => onSelect(category)}
-        >
-          <div
-            className="w-3 h-3 rounded-sm"
-            style={{ backgroundColor: category.color }}
-          />
+        <div className="flex-1 flex items-center gap-2" onClick={() => onSelect(category)}>
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: category.color }} />
           <span className="flex-1 truncate">{category.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {category.tagCount}
-          </span>
+          <span className="text-xs text-muted-foreground">{category.tagCount}</span>
         </div>
 
         <DropdownMenu>
@@ -1046,10 +986,7 @@ function CategoryTreeItem({
               编辑
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => onDelete(category)}
-            >
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(category)}>
               <Trash2 className="h-4 w-4 mr-2" />
               删除
             </DropdownMenuItem>
@@ -1112,19 +1049,14 @@ function TagCard({
 
       <CardHeader className="pb-2 pt-8">
         <div className="flex items-center gap-2">
-          <div
-            className="w-4 h-4 rounded-sm"
-            style={{ backgroundColor: tag.color }}
-          />
+          <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: tag.color }} />
           <CardTitle className="text-base">{tag.name}</CardTitle>
           {tag.isSystem && (
             <Badge variant="secondary" className="text-xs">
               系统
             </Badge>
           )}
-          {tag.isFavorite && (
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-          )}
+          {tag.isFavorite && <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />}
         </div>
       </CardHeader>
 
@@ -1144,17 +1076,13 @@ function TagCard({
             </div>
           )}
 
-          {tag.description && (
-            <p className="text-xs line-clamp-2">{tag.description}</p>
-          )}
+          {tag.description && <p className="text-xs line-clamp-2">{tag.description}</p>}
 
           <div className="flex items-center gap-2 pt-2">
             <Badge variant="outline" className="text-xs">
               {tag.type === 'tag' ? '标签' : '目录'}
             </Badge>
-            <span className="text-xs ml-auto">
-              使用 {tag.useCount} 次
-            </span>
+            <span className="text-xs ml-auto">使用 {tag.useCount} 次</span>
           </div>
         </div>
 

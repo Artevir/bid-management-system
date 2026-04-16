@@ -1,7 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { db } from '@/db';
-import { bidInterpretationLogs } from '@/db/schema';
-import { toBatchId } from '@/app/api/tender-center/_utils';
 
 export type TenderTraceContext = {
   traceId: string;
@@ -30,14 +27,17 @@ export function getOrCreateTraceId(headers: Headers): string {
 }
 
 export function buildTenderTraceContext(params: {
-  interpretationId: number;
+  interpretationId?: number | null;
   traceId: string;
   taskId: string;
   event: string;
+  /** 中枢批次：hub-batch-{id} */
+  batchId?: string | null;
 }) {
+  const batchId = params.batchId?.trim() || 'unknown';
   const context: TenderTraceContext = {
     traceId: params.traceId,
-    batchId: toBatchId(params.interpretationId),
+    batchId,
     taskId: params.taskId,
     event: params.event,
     timestamp: new Date().toISOString(),
@@ -46,7 +46,7 @@ export function buildTenderTraceContext(params: {
 }
 
 export async function logTenderTraceEvent(params: {
-  interpretationId: number;
+  interpretationId?: number | null;
   userId: number;
   trace: TenderTraceContext;
   detail?: Record<string, unknown>;
@@ -56,14 +56,5 @@ export async function logTenderTraceEvent(params: {
     detail: params.detail ?? {},
   };
 
-  // 保留一条统一可检索的结构化日志
   console.info('[TENDER_TRACE]', JSON.stringify(payload));
-
-  await db.insert(bidInterpretationLogs).values({
-    interpretationId: params.interpretationId,
-    operationType: 'trace_event',
-    operationContent: JSON.stringify(payload),
-    operatorId: params.userId,
-    operatorName: 'system',
-  });
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -114,13 +115,14 @@ const APPROVAL_LEVEL_LABELS: Record<string, { label: string; color: string }> = 
 export default function ProjectDocumentsPage() {
   const params = useParams();
   const projectId = params?.id as string;
-  
+
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [approvalFlows, setApprovalFlows] = useState<ApprovalFlow[]>([]);
   const [knowledgeRecs, setKnowledgeRecs] = useState<KnowledgeRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
@@ -202,6 +204,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch documents:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -217,6 +220,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch chapters:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -229,6 +233,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch approval flows:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -245,6 +250,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch knowledge recommendations:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -259,7 +265,7 @@ export default function ProjectDocumentsPage() {
 
   const handleCreateDocument = async () => {
     if (!newDocName.trim()) return;
-    
+
     try {
       const res = await fetch('/api/bid/documents', {
         method: 'POST',
@@ -278,6 +284,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to create document:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -293,12 +300,12 @@ export default function ProjectDocumentsPage() {
           useKnowledge: true,
         }),
       });
-      
+
       if (res.ok) {
         const reader = res.body?.getReader();
         const decoder = new TextDecoder();
         let content = '';
-        
+
         if (reader) {
           while (true) {
             const { done, value } = await reader.read();
@@ -307,17 +314,18 @@ export default function ProjectDocumentsPage() {
             content += text;
           }
         }
-        
+
         await fetch('/api/bid/generate?action=accept', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chapterId, content }),
         });
-        
+
         fetchChapters(selectedDocument!.id);
       }
     } catch (error) {
       console.error('Failed to generate content:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setGenerating(false);
     }
@@ -386,6 +394,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to generate document:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setGenerating(false);
     }
@@ -407,6 +416,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to submit for approval:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -434,6 +444,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to approve:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -461,6 +472,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to reject:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -475,12 +487,12 @@ export default function ProjectDocumentsPage() {
           types: ['compliance', 'format', 'content', 'completeness'],
         }),
       });
-      
+
       if (res.ok) {
         const reader = res.body?.getReader();
         const decoder = new TextDecoder();
         let fullResult = '';
-        
+
         if (reader) {
           while (true) {
             const { done, value } = await reader.read();
@@ -489,7 +501,7 @@ export default function ProjectDocumentsPage() {
             fullResult += text;
           }
         }
-        
+
         try {
           const data = JSON.parse(fullResult);
           setReviewResults(data);
@@ -501,6 +513,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to review document:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setGenerating(false);
     }
@@ -528,6 +541,7 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to export document:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setGenerating(false);
     }
@@ -543,15 +557,20 @@ export default function ProjectDocumentsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch history:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
   const getApprovalAction = () => {
     if (!selectedDocument) return null;
-    const pendingFlow = approvalFlows.find(f => f.status === 'pending');
+    const pendingFlow = approvalFlows.find((f) => f.status === 'pending');
     if (!pendingFlow) return null;
     return pendingFlow;
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -592,9 +611,7 @@ export default function ProjectDocumentsPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {documents.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  暂无文档，请创建新文档
-                </p>
+                <ListStateBlock state="empty" emptyText="暂无文档，请创建新文档" />
               ) : (
                 documents.map((doc) => (
                   <div
@@ -620,14 +637,17 @@ export default function ProjectDocumentsPage() {
                     <div className="text-xs text-muted-foreground space-y-1">
                       <div className="flex justify-between">
                         <span>章节进度</span>
-                        <span>{doc.completedChapters}/{doc.totalChapters}</span>
+                        <span>
+                          {doc.completedChapters}/{doc.totalChapters}
+                        </span>
                       </div>
                       <Progress value={doc.progress} className="h-1" />
                       {doc.currentApprovalLevel && (
                         <div className="flex justify-between mt-1">
                           <span>审核状态</span>
                           <Badge variant="outline" className="text-xs">
-                            {APPROVAL_LEVEL_LABELS[doc.currentApprovalLevel]?.label || doc.currentApprovalLevel}
+                            {APPROVAL_LEVEL_LABELS[doc.currentApprovalLevel]?.label ||
+                              doc.currentApprovalLevel}
                           </Badge>
                         </div>
                       )}
@@ -651,7 +671,8 @@ export default function ProjectDocumentsPage() {
                       <div>
                         <h3 className="font-medium">{selectedDocument.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {selectedDocument.completedChapters}/{selectedDocument.totalChapters} 章节已完成
+                          {selectedDocument.completedChapters}/{selectedDocument.totalChapters}{' '}
+                          章节已完成
                         </p>
                       </div>
                     </div>
@@ -709,10 +730,7 @@ export default function ProjectDocumentsPage() {
                         历史
                       </Button>
                       {selectedDocument.status === 'writing' && (
-                        <Button
-                          size="sm"
-                          onClick={() => setSubmitDialogOpen(true)}
-                        >
+                        <Button size="sm" onClick={() => setSubmitDialogOpen(true)}>
                           <Send className="w-4 h-4 mr-1" />
                           提交审核
                         </Button>
@@ -734,15 +752,20 @@ export default function ProjectDocumentsPage() {
                   <CardContent>
                     <div className="flex items-center gap-2 overflow-x-auto pb-2">
                       {['first', 'second', 'third', 'final'].map((level, idx) => {
-                        const flow = approvalFlows.find(f => f.level === level);
+                        const flow = approvalFlows.find((f) => f.level === level);
                         return (
                           <div key={level} className="flex items-center">
-                            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                              flow?.status === 'approved' ? 'border-green-500 bg-green-50' :
-                              flow?.status === 'rejected' ? 'border-red-500 bg-red-50' :
-                              flow?.status === 'pending' ? 'border-yellow-500 bg-yellow-50' :
-                              'border-muted bg-muted/30'
-                            }`}>
+                            <div
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                                flow?.status === 'approved'
+                                  ? 'border-green-500 bg-green-50'
+                                  : flow?.status === 'rejected'
+                                    ? 'border-red-500 bg-red-50'
+                                    : flow?.status === 'pending'
+                                      ? 'border-yellow-500 bg-yellow-50'
+                                      : 'border-muted bg-muted/30'
+                              }`}
+                            >
                               {flow?.status === 'approved' ? (
                                 <CheckCircle className="w-4 h-4 text-green-500" />
                               ) : flow?.status === 'rejected' ? (
@@ -756,12 +779,14 @@ export default function ProjectDocumentsPage() {
                                 {APPROVAL_LEVEL_LABELS[level]?.label || level}
                               </span>
                             </div>
-                            {idx < 3 && <ArrowRight className="w-4 h-4 text-muted-foreground mx-1" />}
+                            {idx < 3 && (
+                              <ArrowRight className="w-4 h-4 text-muted-foreground mx-1" />
+                            )}
                           </div>
                         );
                       })}
                     </div>
-                    
+
                     {/* Approval Actions */}
                     {getApprovalAction() && (
                       <div className="mt-4 p-3 bg-muted/30 rounded-lg">
@@ -791,9 +816,7 @@ export default function ProjectDocumentsPage() {
                         <div
                           key={chapter.id}
                           className={`p-3 rounded-lg border ${
-                            chapter.isCompleted
-                              ? 'border-green-200 bg-green-50/50'
-                              : 'border-muted'
+                            chapter.isCompleted ? 'border-green-200 bg-green-50/50' : 'border-muted'
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -807,7 +830,9 @@ export default function ProjectDocumentsPage() {
                                 {chapter.serialNumber || '-'}. {chapter.title}
                               </span>
                               {chapter.isRequired && (
-                                <Badge variant="outline" className="text-xs">必填</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  必填
+                                </Badge>
                               )}
                               {chapter.type && (
                                 <Badge variant="secondary" className="text-xs">
@@ -856,10 +881,13 @@ export default function ProjectDocumentsPage() {
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {knowledgeRecs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">暂无推荐知识</p>
+              <ListStateBlock state="empty" emptyText="暂无推荐知识" />
             ) : (
               knowledgeRecs.map((rec) => (
-                <div key={rec.id} className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <div
+                  key={rec.id}
+                  className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium">{rec.title}</span>
                     <Badge variant="outline" className="text-xs">
@@ -872,7 +900,9 @@ export default function ProjectDocumentsPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setKnowledgePanelOpen(false)}>关闭</Button>
+            <Button variant="outline" onClick={() => setKnowledgePanelOpen(false)}>
+              关闭
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -889,7 +919,9 @@ export default function ProjectDocumentsPage() {
             <p className="text-sm text-muted-foreground mt-2">提交后将进入一级审核流程</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSubmitDialogOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setSubmitDialogOpen(false)}>
+              取消
+            </Button>
             <Button onClick={handleSubmitForApproval}>确认提交</Button>
           </DialogFooter>
         </DialogContent>
@@ -943,15 +975,21 @@ export default function ProjectDocumentsPage() {
                   <div className="h-10 w-px bg-border" />
                   <div className="flex-1 grid grid-cols-4 gap-2 text-center">
                     <div>
-                      <p className="text-lg font-medium text-red-500">{reviewResults.statistics.errors || 0}</p>
+                      <p className="text-lg font-medium text-red-500">
+                        {reviewResults.statistics.errors || 0}
+                      </p>
                       <p className="text-xs text-muted-foreground">错误</p>
                     </div>
                     <div>
-                      <p className="text-lg font-medium text-yellow-500">{reviewResults.statistics.warnings || 0}</p>
+                      <p className="text-lg font-medium text-yellow-500">
+                        {reviewResults.statistics.warnings || 0}
+                      </p>
                       <p className="text-xs text-muted-foreground">警告</p>
                     </div>
                     <div>
-                      <p className="text-lg font-medium text-blue-500">{reviewResults.statistics.infos || 0}</p>
+                      <p className="text-lg font-medium text-blue-500">
+                        {reviewResults.statistics.infos || 0}
+                      </p>
                       <p className="text-xs text-muted-foreground">提示</p>
                     </div>
                     <div>
@@ -964,17 +1002,34 @@ export default function ProjectDocumentsPage() {
               {reviewResults.issues && reviewResults.issues.length > 0 && (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {reviewResults.issues.map((issue: any, idx: number) => (
-                    <div key={idx} className={`p-3 rounded-lg border-l-4 ${
-                      issue.type === 'error' ? 'border-red-500 bg-red-50' :
-                      issue.type === 'warning' ? 'border-yellow-500 bg-yellow-50' :
-                      'border-blue-500 bg-blue-50'
-                    }`}>
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-lg border-l-4 ${
+                        issue.type === 'error'
+                          ? 'border-red-500 bg-red-50'
+                          : issue.type === 'warning'
+                            ? 'border-yellow-500 bg-yellow-50'
+                            : 'border-blue-500 bg-blue-50'
+                      }`}
+                    >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">{issue.severity === 'critical' ? '严重' : issue.severity === 'major' ? '重要' : '一般'}</span>
-                        <Badge variant={issue.severity === 'critical' ? 'destructive' : 'outline'}>{issue.type}</Badge>
+                        <span className="font-medium">
+                          {issue.severity === 'critical'
+                            ? '严重'
+                            : issue.severity === 'major'
+                              ? '重要'
+                              : '一般'}
+                        </span>
+                        <Badge variant={issue.severity === 'critical' ? 'destructive' : 'outline'}>
+                          {issue.type}
+                        </Badge>
                       </div>
                       <p className="text-sm">{issue.message}</p>
-                      {issue.suggestion && <p className="text-sm text-muted-foreground mt-1">建议: {issue.suggestion}</p>}
+                      {issue.suggestion && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          建议: {issue.suggestion}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -986,7 +1041,9 @@ export default function ProjectDocumentsPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReviewPanelOpen(false)}>关闭</Button>
+            <Button variant="outline" onClick={() => setReviewPanelOpen(false)}>
+              关闭
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1000,17 +1057,21 @@ export default function ProjectDocumentsPage() {
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {generationHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">暂无生成历史</p>
+              <ListStateBlock state="empty" emptyText="暂无生成历史" />
             ) : (
               generationHistory.map((item, idx) => (
                 <div key={idx} className="p-3 rounded-lg border">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{item.document?.name || `文档 #${item.documentId}`}</span>
+                    <span className="font-medium text-sm">
+                      {item.document?.name || `文档 #${item.documentId}`}
+                    </span>
                     <Badge variant={item.status === 'completed' ? 'default' : 'outline'}>
                       {item.status || 'unknown'}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-1">生成时间: {new Date(item.createdAt).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    生成时间: {new Date(item.createdAt).toLocaleString()}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     进度: {item.generatedChapters || 0}/{item.totalChapters || 0} 章节
                   </p>
@@ -1019,7 +1080,9 @@ export default function ProjectDocumentsPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setHistoryOpen(false)}>关闭</Button>
+            <Button variant="outline" onClick={() => setHistoryOpen(false)}>
+              关闭
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1057,8 +1120,12 @@ export default function ProjectDocumentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>取消</Button>
-            <Button onClick={handleCreateDocument} disabled={!newDocName.trim()}>创建</Button>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleCreateDocument} disabled={!newDocName.trim()}>
+              创建
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

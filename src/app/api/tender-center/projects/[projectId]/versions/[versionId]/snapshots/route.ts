@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
-import { parseResourceId } from '@/lib/api/validators';
 import { db } from '@/db';
-import { bidDocumentInterpretations, bidInterpretationLogs } from '@/db/schema';
-import {
-  resolveInterpretationByProjectAndVersion,
-  toBatchId,
-} from '@/app/api/tender-center/_utils';
+import { assetExportSnapshots } from '@/db/schema';
+import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
-  lookupIdempotentResponse,
-  recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  lookupHubIdempotentResponse,
+  recordHubIdempotentResponse,
+} from '@/app/api/tender-center/_hub-idempotency';
 import {
   buildTenderTraceContext,
   getOrCreateTraceId,
@@ -23,13 +21,41 @@ import {
   isTenderExportMode,
   isTenderSnapshotType,
   parseTenderSnapshotPayload,
+  type TenderExportMode,
   type TenderSnapshotPayload,
+  type TenderSnapshotType,
 } from '@/app/api/tender-center/_snapshot';
 
 const IDEM_OPERATION_TYPE = 'idem_snapshot_create';
 
-function buildSnapshotId(interpretationId: number): string {
-  return `snap-${interpretationId}-${Date.now()}`;
+function buildSnapshotId(versionId: number): string {
+  return `snap-hub-${versionId}-${Date.now()}`;
+}
+
+function mapSnapshotTypeToHub(
+  t: TenderSnapshotType
+): 'full_asset' | 'requirements_only' | 'risks_only' | 'templates_only' | 'custom' {
+  switch (t) {
+    case 'requirements_snapshot':
+      return 'requirements_only';
+    case 'framework_snapshot':
+      return 'custom';
+    case 'templates_snapshot':
+      return 'templates_only';
+    case 'materials_snapshot':
+      return 'custom';
+    case 'full_snapshot':
+    default:
+      return 'full_asset';
+  }
+}
+
+function mapExportModeToHub(
+  m: TenderExportMode
+): 'json' | 'excel' | 'word' | 'pdf_bundle' | 'other' {
+  if (m === 'manual_download') return 'excel';
+  if (m === 'api_delivery') return 'json';
+  return 'json';
 }
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/snapshots
@@ -38,44 +64,43 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   const { projectId, versionId } = await params;
-  const pid = parseResourceId(projectId, '项目');
 
   return withAuth(request, async (_req, userId) => {
-    const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
-    if (!interpretation) {
+    const { project, version } = await resolveHubProjectAndVersion({
+      projectId,
+      versionId,
+      userId,
+    });
+    if (!version) {
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
     }
-    if (interpretation.uploaderId !== userId) {
-      return NextResponse.json({ error: '无权访问该版本' }, { status: 403 });
-    }
 
-    const rows = await db
-      .select()
-      .from(bidInterpretationLogs)
-      .where(
-        and(
-          eq(bidInterpretationLogs.interpretationId, interpretation.id),
-          eq(bidInterpretationLogs.operationType, 'snapshot_created')
-        )
-      )
-      .orderBy(desc(bidInterpretationLogs.createdAt));
+    const rows = await db.query.assetExportSnapshots.findMany({
+      where: eq(assetExportSnapshots.tenderProjectVersionId, version.id),
+      orderBy: [desc(assetExportSnapshots.createdAt)],
+    });
 
     const snapshots = rows.map((row) => {
-      try {
-        const parsed = JSON.parse(row.operationContent || '{}');
-        return parseTenderSnapshotPayload(parsed) ?? parsed;
-      } catch {
-        return { snapshotId: `legacy-${row.id}`, createdAt: String(row.createdAt || '') };
+      const raw = row.snapshotJson;
+      if (raw && typeof raw === 'object') {
+        const parsed = parseTenderSnapshotPayload(raw);
+        return parsed ?? raw;
       }
+      return {
+        snapshotId: String(row.id),
+        createdAt: String(row.createdAt || ''),
+        snapshotType: row.snapshotType,
+        snapshotStatus: row.snapshotStatus,
+      };
     });
 
     return NextResponse.json({
       success: true,
       data: snapshots,
       meta: {
-        projectId: pid,
-        versionId,
-        interpretationId: interpretation.id,
+        projectId: project.id,
+        versionId: version.id,
+        interpretationId: null,
         total: snapshots.length,
       },
     });
@@ -88,19 +113,19 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   const { projectId, versionId } = await params;
-  const pid = parseResourceId(projectId, '项目');
 
   return withAuth(request, async (req, userId) => {
-    const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
-    if (!interpretation) {
+    const { project, version } = await resolveHubProjectAndVersion({
+      projectId,
+      versionId,
+      userId,
+    });
+    if (!version) {
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
-    }
-    if (interpretation.uploaderId !== userId) {
-      return NextResponse.json({ error: '无权操作该版本' }, { status: 403 });
     }
 
     const body = await req.json().catch(() => ({}));
-    const snapshotType = String(body.snapshotType || '');
+    const snapshotType = String(body.snapshotType || '') as TenderSnapshotType;
     if (!isTenderSnapshotType(snapshotType)) {
       return NextResponse.json(
         {
@@ -110,7 +135,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    const exportModeRaw = String(body.exportMode || 'internal_consumption');
+    const exportModeRaw = String(body.exportMode || 'internal_consumption') as TenderExportMode;
     if (!isTenderExportMode(exportModeRaw)) {
       return NextResponse.json(
         {
@@ -120,14 +145,14 @@ export async function POST(
         { status: 400 }
       );
     }
+
     const traceId = getOrCreateTraceId(req.headers);
-    const batchId = toBatchId(interpretation.id);
+    const batchId = `snap-trace-${version.id}`;
     const idempotencyKey = extractIdempotencyKey(req.headers);
     const requestDigest = idempotencyKey
       ? buildIdempotencyDigest({
-          projectId: pid,
-          versionId,
-          interpretationId: interpretation.id,
+          projectId: project.id,
+          versionId: version.id,
           name: String(body.name || ''),
           note: String(body.note || ''),
           snapshotType,
@@ -137,26 +162,13 @@ export async function POST(
       : null;
 
     if (idempotencyKey && requestDigest) {
-      const lookup = await lookupIdempotentResponse<{
+      const lookup = await lookupHubIdempotentResponse<{
         success: boolean;
-        data: {
-          snapshotId: string;
-          interpretationId: number;
-          projectId: number;
-          versionId: string;
-          name: string;
-          note: string;
-          createdAt: string;
-          summary: {
-            reviewStatus: string | null;
-            parseProgress: number | null;
-            checklistCount: number | null;
-          };
-        };
+        data: TenderSnapshotPayload & { traceId?: string; batchId?: string };
         message: string;
       }>({
-        interpretationId: interpretation.id,
-        operationType: IDEM_OPERATION_TYPE,
+        tenderProjectVersionId: version.id,
+        idemOp: IDEM_OPERATION_TYPE,
         idempotencyKey,
         requestDigest,
       });
@@ -177,12 +189,12 @@ export async function POST(
       }
     }
 
-    const snapshotId = buildSnapshotId(interpretation.id);
+    const snapshotId = buildSnapshotId(version.id);
     const payload: TenderSnapshotPayload = {
       snapshotId,
-      interpretationId: interpretation.id,
-      projectId: pid,
-      versionId,
+      interpretationId: 0,
+      projectId: project.id,
+      versionId: String(version.id),
       name: body.name || `snapshot-${new Date().toISOString()}`,
       note: body.note || '',
       snapshotType,
@@ -194,39 +206,38 @@ export async function POST(
       invalidatedAt: null,
       invalidatedBy: null,
       summary: {
-        reviewStatus: interpretation.reviewStatus,
-        parseProgress: interpretation.parseProgress,
-        checklistCount: interpretation.checklistCount,
+        reviewStatus: null,
+        parseProgress: null,
+        checklistCount: null,
       },
     };
 
-    await db.insert(bidInterpretationLogs).values({
-      interpretationId: interpretation.id,
-      operationType: 'snapshot_created',
-      operationContent: JSON.stringify(payload),
-      operatorId: userId,
-      operatorName: 'system',
+    await db.insert(assetExportSnapshots).values({
+      tenderProjectVersionId: version.id,
+      snapshotType: mapSnapshotTypeToHub(snapshotType),
+      snapshotStatus: 'ready',
+      exportMode: mapExportModeToHub(exportModeRaw),
+      snapshotJson: payload as unknown as Record<string, unknown>,
+      schemaVersion: 'hub-1',
+      exportedAt: new Date(),
+      exportedBy: userId,
     });
 
     await logTenderTraceEvent({
-      interpretationId: interpretation.id,
+      interpretationId: null,
       userId,
       trace: buildTenderTraceContext({
-        interpretationId: interpretation.id,
+        interpretationId: null,
         traceId,
         taskId: snapshotId,
         event: 'snapshot_created',
+        batchId,
       }),
       detail: {
-        projectId: pid,
-        versionId,
+        projectId: project.id,
+        versionId: version.id,
       },
     });
-
-    await db
-      .update(bidDocumentInterpretations)
-      .set({ updatedAt: new Date() })
-      .where(eq(bidDocumentInterpretations.id, interpretation.id));
 
     const responsePayload = {
       success: true,
@@ -239,9 +250,9 @@ export async function POST(
     };
 
     if (idempotencyKey && requestDigest) {
-      await recordIdempotentResponse({
-        interpretationId: interpretation.id,
-        operationType: IDEM_OPERATION_TYPE,
+      await recordHubIdempotentResponse({
+        tenderProjectVersionId: version.id,
+        idemOp: IDEM_OPERATION_TYPE,
         idempotencyKey,
         requestDigest,
         response: responsePayload,

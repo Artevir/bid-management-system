@@ -3,7 +3,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth/middleware';
+import { withProjectPermission } from '@/lib/auth/project-middleware';
+import { parseResourceId } from '@/lib/api/validators';
 import type {
   MergedChapter,
   FrameworkMergeOptions,
@@ -309,5 +310,18 @@ function convertChaptersToBase(chapters: any[]): BaseChapter[] {
 }
 
 export async function POST(request: NextRequest) {
-  return withAuth(request, (req, userId) => createDocumentFromMerge(req, userId));
+  const body = await request
+    .clone()
+    .json()
+    .catch(() => ({}));
+  let projectId: number;
+  try {
+    projectId = parseResourceId(body.projectId?.toString(), '项目');
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || '项目ID格式错误' }, { status: 400 });
+  }
+
+  return withProjectPermission(request, projectId, 'edit', (req, userId) =>
+    createDocumentFromMerge(req, userId)
+  );
 }

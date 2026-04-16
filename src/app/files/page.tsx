@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Table,
   TableBody,
@@ -268,11 +269,7 @@ export default function FilesPage() {
       red: 'bg-red-100 text-red-800',
     };
     const color = DOCUMENT_SECURITY_COLORS[level];
-    return (
-      <Badge className={colorMap[color]}>
-        {DOCUMENT_SECURITY_LABELS[level]}
-      </Badge>
-    );
+    return <Badge className={colorMap[color]}>{DOCUMENT_SECURITY_LABELS[level]}</Badge>;
   };
 
   const getFileIcon = (mimeType: string) => {
@@ -346,9 +343,7 @@ export default function FilesPage() {
               <Label>文件分类</Label>
               <Select
                 value={uploadForm.categoryId}
-                onValueChange={(value) =>
-                  setUploadForm({ ...uploadForm, categoryId: value })
-                }
+                onValueChange={(value) => setUploadForm({ ...uploadForm, categoryId: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="请选择文件分类" />
@@ -535,14 +530,9 @@ export default function FilesPage() {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListStateBlock state="loading" />
           ) : files.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <FolderOpen className="h-12 w-12 mb-4" />
-              <p>暂无文件数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无文件数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -587,18 +577,10 @@ export default function FilesPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(file)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(file)}>
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(file.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(file.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

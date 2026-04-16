@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Progress } from '@/components/ui/progress';
 import {
   Table,
@@ -79,6 +80,7 @@ export default function QuoteAnalysisPage() {
   const _router = useRouter();
   const [requests, setRequests] = useState<QuoteAnalysisRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<QuoteAnalysisRequest | null>(null);
   const [schemes, setSchemes] = useState<QuoteScheme[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
@@ -119,7 +121,7 @@ export default function QuoteAnalysisPage() {
         body: JSON.stringify({ status: 'analyzing' }),
       });
       // 模拟分析过程
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       await fetchRequests();
     } catch (error) {
       console.error('Analysis failed:', error);
@@ -142,7 +144,14 @@ export default function QuoteAnalysisPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
+    const statusMap: Record<
+      string,
+      {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+        icon: React.ElementType;
+      }
+    > = {
       pending: { label: '待分析', variant: 'outline', icon: Clock },
       analyzing: { label: '分析中', variant: 'default', icon: BrainCircuit },
       completed: { label: '已完成', variant: 'secondary', icon: CheckCircle },
@@ -169,7 +178,10 @@ export default function QuoteAnalysisPage() {
   };
 
   const getRiskLevelBadge = (level: string) => {
-    const levelMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
+    const levelMap: Record<
+      string,
+      { label: string; variant: 'default' | 'secondary' | 'destructive' }
+    > = {
       low: { label: '低风险', variant: 'default' },
       medium: { label: '中风险', variant: 'secondary' },
       high: { label: '高风险', variant: 'destructive' },
@@ -222,7 +234,7 @@ export default function QuoteAnalysisPage() {
               <Target className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">
-                  {requests.filter(r => r.status === 'completed').length}
+                  {requests.filter((r) => r.status === 'completed').length}
                 </p>
                 <p className="text-sm text-muted-foreground">已完成分析</p>
               </div>
@@ -234,9 +246,7 @@ export default function QuoteAnalysisPage() {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-purple-500" />
               <div>
-                <p className="text-2xl font-bold">
-                  {schemes.filter(s => s.isAdopted).length}
-                </p>
+                <p className="text-2xl font-bold">{schemes.filter((s) => s.isAdopted).length}</p>
                 <p className="text-sm text-muted-foreground">已采纳方案</p>
               </div>
             </div>
@@ -250,10 +260,11 @@ export default function QuoteAnalysisPage() {
                 <p className="text-2xl font-bold">
                   {Math.round(
                     requests
-                      .filter(r => r.confidenceLevel)
+                      .filter((r) => r.confidenceLevel)
                       .reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) /
-                      Math.max(requests.filter(r => r.confidenceLevel).length, 1)
-                  )}%
+                      Math.max(requests.filter((r) => r.confidenceLevel).length, 1)
+                  )}
+                  %
                 </p>
                 <p className="text-sm text-muted-foreground">平均置信度</p>
               </div>
@@ -272,17 +283,9 @@ export default function QuoteAnalysisPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : requests.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无分析请求</p>
-              <p className="text-sm mt-2">点击"新建分析"开始智能报价分析</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无分析请求" />
           ) : (
             <Table>
               <TableHeader>
@@ -311,7 +314,9 @@ export default function QuoteAnalysisPage() {
                         <span className="text-green-600 font-medium">
                           ¥{request.suggestedQuote}
                         </span>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       {request.confidenceLevel !== null ? (
@@ -319,16 +324,14 @@ export default function QuoteAnalysisPage() {
                           <Progress value={request.confidenceLevel} className="w-16" />
                           <span className="text-sm">{request.confidenceLevel}%</span>
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(request)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetail(request)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         {request.status === 'pending' && (
@@ -407,7 +410,9 @@ export default function QuoteAnalysisPage() {
                       <div
                         key={scheme.id}
                         className={`p-4 rounded-lg border ${
-                          scheme.isAdopted ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : ''
+                          scheme.isAdopted
+                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                            : ''
                         }`}
                       >
                         <div className="flex items-center justify-between">

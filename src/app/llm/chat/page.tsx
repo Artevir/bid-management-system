@@ -64,6 +64,7 @@ interface _Conversation {
 export default function LLMChatPage() {
   const [configs, setConfigs] = useState<LLMConfig[]>([]);
   const [selectedConfigId, setSelectedConfigId] = useState<string>('');
+  const [error, setError] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -91,6 +92,7 @@ export default function LLMChatPage() {
 
   const loadConfigs = async () => {
     try {
+      setError('');
       const res = await fetch('/api/llm/configs');
       const data = await res.json();
       if (data.configs && data.configs.length > 0) {
@@ -108,6 +110,7 @@ export default function LLMChatPage() {
       }
     } catch (error) {
       console.error('加载配置失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -247,6 +250,14 @@ export default function LLMChatPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {error && (
+                <p className="text-xs text-red-600 mt-2">
+                  配置加载失败: {error}
+                  <button className="ml-2 underline" onClick={loadConfigs}>
+                    重试
+                  </button>
+                </p>
+              )}
             </div>
 
             {selectedConfig && (
@@ -377,9 +388,7 @@ export default function LLMChatPage() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${
-                    message.role === 'user' ? 'flex-row-reverse' : ''
-                  }`}
+                  className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
                   <div
                     className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -395,15 +404,11 @@ export default function LLMChatPage() {
                     )}
                   </div>
                   <div
-                    className={`flex-1 max-w-[80%] ${
-                      message.role === 'user' ? 'text-right' : ''
-                    }`}
+                    className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}
                   >
                     <div
                       className={`inline-block p-3 rounded-lg text-left ${
-                        message.role === 'user'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100'
+                        message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100'
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
@@ -457,11 +462,7 @@ export default function LLMChatPage() {
                 }
               }}
             />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || loading}
-              className="self-end"
-            >
+            <Button onClick={handleSend} disabled={!input.trim() || loading} className="self-end">
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

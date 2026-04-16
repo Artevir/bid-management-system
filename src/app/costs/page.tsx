@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -127,6 +128,7 @@ const statusColors: Record<string, string> = {
 
 export default function CostManagementPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [summary, setSummary] = useState<CostSummary | null>(null);
@@ -172,6 +174,7 @@ export default function CostManagementPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       // 并行加载概览和预算
       const [summaryRes, budgetsRes, recordsRes] = await Promise.all([
@@ -317,9 +320,7 @@ export default function CostManagementPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">投标成本管理</h1>
-            <p className="text-gray-500 text-sm">
-              管理投标项目的预算与成本支出
-            </p>
+            <p className="text-gray-500 text-sm">管理投标项目的预算与成本支出</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -338,8 +339,10 @@ export default function CostManagementPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12">加载中...</div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={fetchProjects} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : !selectedProject ? (
         <div className="text-center py-12 text-gray-500">请选择项目</div>
       ) : (
@@ -390,9 +393,7 @@ export default function CostManagementPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">使用率</p>
-                    <p className="text-2xl font-bold">
-                      {summary?.usageRate || 0}%
-                    </p>
+                    <p className="text-2xl font-bold">{summary?.usageRate || 0}%</p>
                   </div>
                   <BarChart3 className="h-10 w-10 text-purple-500" />
                 </div>
@@ -421,9 +422,7 @@ export default function CostManagementPage() {
                   </CardHeader>
                   <CardContent>
                     {Object.keys(summary?.byType || {}).length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        暂无数据
-                      </div>
+                      <ListStateBlock state="empty" emptyText="暂无数据" />
                     ) : (
                       <div className="space-y-4">
                         {Object.entries(summary?.byType || {}).map(([type, data]) => (
@@ -450,9 +449,7 @@ export default function CostManagementPage() {
                   </CardHeader>
                   <CardContent>
                     {Object.keys(summary?.byStatus || {}).length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        暂无数据
-                      </div>
+                      <ListStateBlock state="empty" emptyText="暂无数据" />
                     ) : (
                       <div className="space-y-4">
                         {Object.entries(summary?.byStatus || {}).map(([status, count]) => (
@@ -484,9 +481,7 @@ export default function CostManagementPage() {
                 </CardHeader>
                 <CardContent>
                   {budgets.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      暂无预算数据
-                    </div>
+                    <ListStateBlock state="empty" emptyText="暂无预算数据" />
                   ) : (
                     <Table>
                       <TableHeader>
@@ -506,8 +501,11 @@ export default function CostManagementPage() {
                             <TableCell className="font-medium">{budget.name}</TableCell>
                             <TableCell>
                               <Badge variant="outline">
-                                {budget.type === 'total' ? '总预算' : 
-                                 budget.type === 'phase' ? '阶段预算' : '分类预算'}
+                                {budget.type === 'total'
+                                  ? '总预算'
+                                  : budget.type === 'phase'
+                                    ? '阶段预算'
+                                    : '分类预算'}
                               </Badge>
                             </TableCell>
                             <TableCell>{formatAmount(budget.amount)}</TableCell>
@@ -551,34 +549,42 @@ export default function CostManagementPage() {
                 <CardContent>
                   {/* 筛选 */}
                   <div className="flex gap-4 mb-4">
-                    <Select value={filterType || "all"} onValueChange={(v) => setFilterType(v === "all" ? "" : v)}>
+                    <Select
+                      value={filterType || 'all'}
+                      onValueChange={(v) => setFilterType(v === 'all' ? '' : v)}
+                    >
                       <SelectTrigger className="w-32">
                         <SelectValue placeholder="类型" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">全部</SelectItem>
                         {Object.entries(costTypeNames).map(([key, name]) => (
-                          <SelectItem key={key} value={key}>{name}</SelectItem>
+                          <SelectItem key={key} value={key}>
+                            {name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
+                    <Select
+                      value={filterStatus || 'all'}
+                      onValueChange={(v) => setFilterStatus(v === 'all' ? '' : v)}
+                    >
                       <SelectTrigger className="w-32">
                         <SelectValue placeholder="状态" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">全部</SelectItem>
                         {Object.entries(statusNames).map(([key, name]) => (
-                          <SelectItem key={key} value={key}>{name}</SelectItem>
+                          <SelectItem key={key} value={key}>
+                            {name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   {records.data.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      暂无成本记录
-                    </div>
+                    <ListStateBlock state="empty" emptyText="暂无成本记录" />
                   ) : (
                     <Table>
                       <TableHeader>
@@ -739,7 +745,9 @@ export default function CostManagementPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(costTypeNames).map(([key, name]) => (
-                    <SelectItem key={key} value={key}>{name}</SelectItem>
+                    <SelectItem key={key} value={key}>
+                      {name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

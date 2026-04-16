@@ -9,13 +9,8 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -142,15 +137,12 @@ const FILE_TYPE_LABELS: Record<string, string> = {
   other: '其他',
 };
 
-export default function CompanyDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [companyInfo, setCompanyInfo] = useState<CompanyFullInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -159,6 +151,7 @@ export default function CompanyDetailPage({
 
   const fetchCompanyInfo = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch(`/api/company-sync?action=full-info&companyId=${id}`);
       const data = await res.json();
@@ -200,6 +193,10 @@ export default function CompanyDetailPage({
     if (!date) return '-';
     return format(new Date(date), 'yyyy-MM-dd', { locale: zhCN });
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -258,13 +255,9 @@ export default function CompanyDetailPage({
                   默认公司
                 </Badge>
               )}
-              {!company.isActive && (
-                <Badge variant="secondary">已停用</Badge>
-              )}
+              {!company.isActive && <Badge variant="secondary">已停用</Badge>}
             </div>
-            <p className="text-sm text-muted-foreground">
-              统一社会信用代码：{company.creditCode}
-            </p>
+            <p className="text-sm text-muted-foreground">统一社会信用代码：{company.creditCode}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -438,7 +431,9 @@ export default function CompanyDetailPage({
                   <div>
                     <p className="text-sm text-muted-foreground">所属行业</p>
                     <p className="font-medium">
-                      {company.industry ? INDUSTRY_LABELS[company.industry] || company.industry : '-'}
+                      {company.industry
+                        ? INDUSTRY_LABELS[company.industry] || company.industry
+                        : '-'}
                     </p>
                   </div>
                   <div>
@@ -615,9 +610,7 @@ export default function CompanyDetailPage({
             </CardHeader>
             <CardContent>
               {contacts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无对接人信息
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无对接人信息" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -700,9 +693,7 @@ export default function CompanyDetailPage({
             </CardHeader>
             <CardContent>
               {files.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无资质文件
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无资质文件" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -717,9 +708,7 @@ export default function CompanyDetailPage({
                     {files.map((file) => (
                       <TableRow key={file.id}>
                         <TableCell className="font-medium">{file.fileName}</TableCell>
-                        <TableCell>
-                          {FILE_TYPE_LABELS[file.fileType] || file.fileType}
-                        </TableCell>
+                        <TableCell>{FILE_TYPE_LABELS[file.fileType] || file.fileType}</TableCell>
                         <TableCell>
                           {file.validTo ? formatDate(file.validTo) : '长期有效'}
                         </TableCell>
@@ -756,9 +745,7 @@ export default function CompanyDetailPage({
             </CardHeader>
             <CardContent>
               {frameworks.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无文档框架
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无文档框架" />
               ) : (
                 <div className="grid gap-4">
                   {frameworks.map((framework) => (

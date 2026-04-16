@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,6 +73,7 @@ export default function KnowledgeApprovalPage() {
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [myRequests, setMyRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<ApprovalDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionDialog, setActionDialog] = useState<'approve' | 'reject' | 'return' | null>(null);
@@ -84,21 +86,22 @@ export default function KnowledgeApprovalPage() {
 
   async function fetchApprovalData() {
     setLoading(true);
+    setError('');
     try {
       const [pendingRes, myRes] = await Promise.all([
         fetch('/api/knowledge/approval').catch(() => ({ json: () => ({ approvals: [] }) })),
-        fetch('/api/knowledge/approval?action=my').catch(() => ({ json: () => ({ requests: [] }) })),
+        fetch('/api/knowledge/approval?action=my').catch(() => ({
+          json: () => ({ requests: [] }),
+        })),
       ]);
 
-      const [pendingData, myData] = await Promise.all([
-        pendingRes.json(),
-        myRes.json(),
-      ]);
+      const [pendingData, myData] = await Promise.all([pendingRes.json(), myRes.json()]);
 
       setPendingApprovals(pendingData.approvals || []);
       setMyRequests(myData.requests || []);
     } catch (error) {
       console.error('Failed to fetch approval data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -114,6 +117,7 @@ export default function KnowledgeApprovalPage() {
       }
     } catch (error) {
       console.error('Failed to fetch request detail:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setDetailLoading(false);
     }
@@ -146,6 +150,7 @@ export default function KnowledgeApprovalPage() {
       }
     } catch (error) {
       console.error('Failed to process approval:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('操作失败');
     } finally {
       setSubmitting(false);
@@ -153,7 +158,10 @@ export default function KnowledgeApprovalPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+    const variants: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }
+    > = {
       pending: { variant: 'secondary', label: '待处理' },
       approved: { variant: 'default', label: '已通过' },
       rejected: { variant: 'destructive', label: '已拒绝' },
@@ -178,12 +186,8 @@ export default function KnowledgeApprovalPage() {
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending">
-            待处理 ({pendingApprovals.length})
-          </TabsTrigger>
-          <TabsTrigger value="my">
-            我的申请 ({myRequests.length})
-          </TabsTrigger>
+          <TabsTrigger value="pending">待处理 ({pendingApprovals.length})</TabsTrigger>
+          <TabsTrigger value="my">我的申请 ({myRequests.length})</TabsTrigger>
         </TabsList>
 
         {/* 待处理列表 */}
@@ -194,17 +198,16 @@ export default function KnowledgeApprovalPage() {
               <CardDescription>以下知识条目等待您审批</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
+              {error ? (
+                <ListStateBlock
+                  state="error"
+                  error={error}
+                  onRetry={() => window.location.reload()}
+                />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : pendingApprovals.length === 0 ? (
-                <div className="py-12 text-center">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-50" />
-                  <p className="text-muted-foreground">暂无待处理审批</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无待处理审批" />
               ) : (
                 <div className="space-y-4">
                   {pendingApprovals.map((approval) => (
@@ -253,15 +256,9 @@ export default function KnowledgeApprovalPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : myRequests.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  暂无申请记录
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无申请记录" />
               ) : (
                 <div className="space-y-4">
                   {myRequests.map((request) => (
@@ -296,9 +293,7 @@ export default function KnowledgeApprovalPage() {
             <>
               <DialogHeader>
                 <DialogTitle>审批详情</DialogTitle>
-                <DialogDescription>
-                  知识条目: {selectedRequest.itemTitle}
-                </DialogDescription>
+                <DialogDescription>知识条目: {selectedRequest.itemTitle}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-4">
@@ -318,7 +313,9 @@ export default function KnowledgeApprovalPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">审批进度</p>
-                    <p>{selectedRequest.currentStep} / {selectedRequest.totalSteps} 步</p>
+                    <p>
+                      {selectedRequest.currentStep} / {selectedRequest.totalSteps} 步
+                    </p>
                   </div>
                 </div>
 
@@ -342,22 +339,31 @@ export default function KnowledgeApprovalPage() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            step.action === 'approve' ? 'bg-green-100' :
-                            step.action === 'reject' ? 'bg-red-100' :
-                            step.action === 'return' ? 'bg-orange-100' :
-                            'bg-gray-100'
-                          }`}>
-                            {step.action === 'approve' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                            {step.action === 'reject' && <XCircle className="h-4 w-4 text-red-600" />}
-                            {step.action === 'return' && <RotateCcw className="h-4 w-4 text-orange-600" />}
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              step.action === 'approve'
+                                ? 'bg-green-100'
+                                : step.action === 'reject'
+                                  ? 'bg-red-100'
+                                  : step.action === 'return'
+                                    ? 'bg-orange-100'
+                                    : 'bg-gray-100'
+                            }`}
+                          >
+                            {step.action === 'approve' && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                            {step.action === 'reject' && (
+                              <XCircle className="h-4 w-4 text-red-600" />
+                            )}
+                            {step.action === 'return' && (
+                              <RotateCcw className="h-4 w-4 text-orange-600" />
+                            )}
                             {!step.action && <Clock className="h-4 w-4 text-gray-400" />}
                           </div>
                           <div>
                             <p className="font-medium">{step.reviewerName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              步骤 {step.stepOrder}
-                            </p>
+                            <p className="text-xs text-muted-foreground">步骤 {step.stepOrder}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -365,9 +371,7 @@ export default function KnowledgeApprovalPage() {
                             <>
                               {getStatusBadge(step.action)}
                               {step.comment && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {step.comment}
-                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">{step.comment}</p>
                               )}
                             </>
                           ) : (
@@ -381,17 +385,11 @@ export default function KnowledgeApprovalPage() {
               </div>
 
               <DialogFooter className="gap-2">
-                <Button
-                  variant="destructive"
-                  onClick={() => setActionDialog('reject')}
-                >
+                <Button variant="destructive" onClick={() => setActionDialog('reject')}>
                   <XCircle className="h-4 w-4 mr-2" />
                   拒绝
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setActionDialog('return')}
-                >
+                <Button variant="outline" onClick={() => setActionDialog('return')}>
                   <RotateCcw className="h-4 w-4 mr-2" />
                   退回
                 </Button>
@@ -441,7 +439,13 @@ export default function KnowledgeApprovalPage() {
               取消
             </Button>
             <Button
-              variant={actionDialog === 'approve' ? 'default' : actionDialog === 'reject' ? 'destructive' : 'outline'}
+              variant={
+                actionDialog === 'approve'
+                  ? 'default'
+                  : actionDialog === 'reject'
+                    ? 'destructive'
+                    : 'outline'
+              }
               onClick={handleAction}
               disabled={submitting || (actionDialog !== 'approve' && !comment.trim())}
             >

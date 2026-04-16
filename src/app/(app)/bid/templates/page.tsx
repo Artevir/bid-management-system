@@ -8,8 +8,15 @@
 import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -68,6 +75,7 @@ export default function BidTemplatesPage() {
   const _router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [companyId, setCompanyId] = useState<string>('all');
   const [category, setCategory] = useState<string>('all');
@@ -87,6 +95,7 @@ export default function BidTemplatesPage() {
   const loadTemplates = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       if (companyId !== 'all') {
         params.append('companyId', companyId);
@@ -102,6 +111,7 @@ export default function BidTemplatesPage() {
       }
     } catch (error) {
       console.error('Failed to load templates:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -120,7 +130,13 @@ export default function BidTemplatesPage() {
 
       if (response.ok) {
         setCreateDialog(false);
-        setFormData({ name: '', description: '', category: 'general', companyId: '', isDefault: false });
+        setFormData({
+          name: '',
+          description: '',
+          category: 'general',
+          companyId: '',
+          isDefault: false,
+        });
         loadTemplates();
       }
     } catch (error) {
@@ -165,9 +181,7 @@ export default function BidTemplatesPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>创建文档模板</DialogTitle>
-              <DialogDescription>
-                创建一个新的投标文档模板
-              </DialogDescription>
+              <DialogDescription>创建一个新的投标文档模板</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
@@ -188,7 +202,10 @@ export default function BidTemplatesPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">分类</label>
-                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                <Select
+                  value={formData.category}
+                  onValueChange={(v) => setFormData({ ...formData, category: v })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -202,7 +219,10 @@ export default function BidTemplatesPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">所属公司</label>
-                <Select value={formData.companyId} onValueChange={(v) => setFormData({ ...formData, companyId: v })}>
+                <Select
+                  value={formData.companyId}
+                  onValueChange={(v) => setFormData({ ...formData, companyId: v })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="选择公司" />
                   </SelectTrigger>
@@ -228,9 +248,7 @@ export default function BidTemplatesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              总模板数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">总模板数</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{templates.length}</div>
@@ -239,40 +257,28 @@ export default function BidTemplatesPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              默认模板
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">默认模板</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => t.isDefault).length}
-            </div>
+            <div className="text-2xl font-bold">{templates.filter((t) => t.isDefault).length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              公司模板
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">公司模板</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => t.companyId).length}
-            </div>
+            <div className="text-2xl font-bold">{templates.filter((t) => t.companyId).length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              系统模板
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">系统模板</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => !t.companyId).length}
-            </div>
+            <div className="text-2xl font-bold">{templates.filter((t) => !t.companyId).length}</div>
           </CardContent>
         </Card>
       </div>
@@ -318,19 +324,12 @@ export default function BidTemplatesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={loadTemplates} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : templates.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <LayoutTemplate className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>暂无模板</p>
-              <Button className="mt-4" onClick={() => setCreateDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                创建模板
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无模板" />
           ) : (
             <Table>
               <TableHeader>
@@ -384,9 +383,7 @@ export default function BidTemplatesPage() {
                         </Button>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {new Date(template.createdAt).toLocaleString()}
-                    </TableCell>
+                    <TableCell>{new Date(template.createdAt).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm">

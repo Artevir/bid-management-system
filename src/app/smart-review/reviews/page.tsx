@@ -6,23 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { ListStateBlock, TableListStateRow } from '@/components/ui/list-states';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { 
-  FileText, 
-  Search, 
-  CheckCircle, 
-  XCircle, 
-  Clock,
-  Eye,
-  User
-} from 'lucide-react';
+import { FileText, Search, Eye } from 'lucide-react';
 
 interface ReviewDocument {
   id: number;
@@ -48,11 +41,13 @@ export default function SmartReviewWorkbenchPage() {
   const router = useRouter();
   const [documents, setDocuments] = useState<ReviewDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
 
   const fetchDocuments = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams({
         page: '1',
@@ -60,15 +55,16 @@ export default function SmartReviewWorkbenchPage() {
         keyword,
         reviewStatus: statusFilter,
       });
-      
+
       const res = await fetch(`/api/smart-review?${params}`);
       const data = await res.json();
-      
+
       if (data.documents) {
         setDocuments(data.documents);
       }
     } catch (error) {
       console.error('Fetch documents error:', error);
+      setError(error instanceof Error ? error.message : '加载审核列表失败');
     } finally {
       setLoading(false);
     }
@@ -90,7 +86,7 @@ export default function SmartReviewWorkbenchPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card 
+        <Card
           className={`cursor-pointer ${statusFilter === 'pending' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setStatusFilter('pending')}
         >
@@ -99,11 +95,11 @@ export default function SmartReviewWorkbenchPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {documents.filter(d => d.reviewStatus === 'pending').length}
+              {documents.filter((d) => d.reviewStatus === 'pending').length}
             </div>
           </CardContent>
         </Card>
-        <Card 
+        <Card
           className={`cursor-pointer ${statusFilter === 'in_progress' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setStatusFilter('in_progress')}
         >
@@ -112,11 +108,11 @@ export default function SmartReviewWorkbenchPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {documents.filter(d => d.reviewStatus === 'in_progress').length}
+              {documents.filter((d) => d.reviewStatus === 'in_progress').length}
             </div>
           </CardContent>
         </Card>
-        <Card 
+        <Card
           className={`cursor-pointer ${statusFilter === 'approved' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setStatusFilter('approved')}
         >
@@ -125,11 +121,11 @@ export default function SmartReviewWorkbenchPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {documents.filter(d => d.reviewStatus === 'approved').length}
+              {documents.filter((d) => d.reviewStatus === 'approved').length}
             </div>
           </CardContent>
         </Card>
-        <Card 
+        <Card
           className={`cursor-pointer ${statusFilter === 'rejected' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setStatusFilter('rejected')}
         >
@@ -138,7 +134,7 @@ export default function SmartReviewWorkbenchPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {documents.filter(d => d.reviewStatus === 'rejected').length}
+              {documents.filter((d) => d.reviewStatus === 'rejected').length}
             </div>
           </CardContent>
         </Card>
@@ -179,18 +175,8 @@ export default function SmartReviewWorkbenchPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    加载中...
-                  </TableCell>
-                </TableRow>
-              ) : documents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    暂无待审核文档
-                  </TableCell>
-                </TableRow>
+              {loading || error || documents.length === 0 ? (
+                <ListStateBlock state="empty" emptyText="暂无待审核文档" />
               ) : (
                 documents.map((doc) => (
                   <TableRow key={doc.id}>
@@ -203,19 +189,15 @@ export default function SmartReviewWorkbenchPage() {
                     <TableCell>{doc.projectName || '-'}</TableCell>
                     <TableCell>{doc.projectCode || '-'}</TableCell>
                     <TableCell>
-                      <Badge className={reviewStatusLabels[doc.status]?.color}>
-                        {doc.status}
-                      </Badge>
+                      <Badge className={reviewStatusLabels[doc.status]?.color}>{doc.status}</Badge>
                     </TableCell>
                     <TableCell>
                       {doc.extractionAccuracy ? `${doc.extractionAccuracy}%` : '-'}
                     </TableCell>
+                    <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => router.push(`/smart-review/${doc.id}`)}
                       >

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge as _Badge } from '@/components/ui/badge';
@@ -62,6 +63,7 @@ export default function BidInterpretationsPage() {
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [activeTab, setActiveTab] = useState('list');
 
@@ -78,22 +80,29 @@ export default function BidInterpretationsPage() {
       const data = await response.json();
       if (data.success) {
         setDocument(data.data);
+      } else {
+        setError(data.message || '加载文档信息失败');
       }
     } catch (error) {
       console.error('Failed to load document:', error);
+      setError(error instanceof Error ? error.message : '加载文档信息失败');
     }
   };
 
   const loadInterpretations = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch(`/api/bid/documents/interpretations?documentId=${documentId}`);
       const data = await response.json();
       if (data.success) {
         setInterpretations(data.data);
+      } else {
+        setError(data.message || '加载解读列表失败');
       }
     } catch (error) {
       console.error('Failed to load interpretations:', error);
+      setError(error instanceof Error ? error.message : '加载解读列表失败');
     } finally {
       setLoading(false);
     }
@@ -146,9 +155,7 @@ export default function BidInterpretationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">文档解读</h1>
-          <p className="text-gray-500 mt-1">
-            {document ? `文档：${document.name}` : '加载中...'}
-          </p>
+          <p className="text-gray-500 mt-1">{document ? `文档：${document.name}` : '加载中...'}</p>
         </div>
         <Button>
           <Link className="mr-2 h-4 w-4" />
@@ -160,9 +167,7 @@ export default function BidInterpretationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              总解读数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">总解读数</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{interpretations.length}</div>
@@ -171,9 +176,7 @@ export default function BidInterpretationsPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              已完成
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">已完成</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -184,9 +187,7 @@ export default function BidInterpretationsPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              解析中
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">解析中</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -197,9 +198,7 @@ export default function BidInterpretationsPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              解析失败
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">解析失败</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -239,18 +238,11 @@ export default function BidInterpretationsPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                </div>
+                <ListStateBlock state="loading" />
+              ) : error ? (
+                <ListStateBlock state="error" error={error} onRetry={loadInterpretations} />
               ) : interpretations.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FileSearch className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>暂无关联的解读</p>
-                  <Button className="mt-4" onClick={() => router.push('/interpretations/upload')}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    创建解读
-                  </Button>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无关联的解读" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -278,9 +270,7 @@ export default function BidInterpretationsPage() {
                             <span>{getStatusLabel(interpretation.status)}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {new Date(interpretation.createdAt).toLocaleString()}
-                        </TableCell>
+                        <TableCell>{new Date(interpretation.createdAt).toLocaleString()}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
@@ -303,14 +293,10 @@ export default function BidInterpretationsPage() {
           <Card>
             <CardHeader>
               <CardTitle>解读详情</CardTitle>
-              <CardDescription>
-                选择一个解读查看详细信息
-              </CardDescription>
+              <CardDescription>选择一个解读查看详细信息</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                请从解读列表中选择一个解读
-              </div>
+              <div className="text-center py-8 text-gray-500">请从解读列表中选择一个解读</div>
             </CardContent>
           </Card>
         </TabsContent>

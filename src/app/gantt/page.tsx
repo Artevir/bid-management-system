@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Select,
   SelectContent,
@@ -12,11 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   ArrowLeft,
   Calendar as _Calendar,
@@ -55,19 +52,19 @@ interface Project {
 
 // 颜色配置
 const statusColors: Record<string, string> = {
-  'not_started': 'bg-gray-400',
-  'in_progress': 'bg-blue-500',
-  'completed': 'bg-green-500',
-  'delayed': 'bg-red-500',
-  'on_hold': 'bg-yellow-500',
+  not_started: 'bg-gray-400',
+  in_progress: 'bg-blue-500',
+  completed: 'bg-green-500',
+  delayed: 'bg-red-500',
+  on_hold: 'bg-yellow-500',
 };
 
 const statusNames: Record<string, string> = {
-  'not_started': '未开始',
-  'in_progress': '进行中',
-  'completed': '已完成',
-  'delayed': '已延期',
-  'on_hold': '暂停',
+  not_started: '未开始',
+  in_progress: '进行中',
+  completed: '已完成',
+  delayed: '已延期',
+  on_hold: '暂停',
 };
 
 // 时间刻度类型
@@ -75,6 +72,7 @@ type TimeScale = 'day' | 'week' | 'month';
 
 export default function GanttChartPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [tasks, setTasks] = useState<GanttTask[]>([]);
@@ -128,6 +126,7 @@ export default function GanttChartPage() {
 
   const fetchGanttData = async () => {
     setLoading(true);
+    setError('');
     try {
       // 获取项目阶段和里程碑
       const [phasesRes, milestonesRes] = await Promise.all([
@@ -311,7 +310,10 @@ export default function GanttChartPage() {
     const taskEnd = new Date(task.endDate);
 
     const leftDays = Math.ceil((taskStart.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
-    const taskDays = Math.max(1, Math.ceil((taskEnd.getTime() - taskStart.getTime()) / (24 * 60 * 60 * 1000)));
+    const taskDays = Math.max(
+      1,
+      Math.ceil((taskEnd.getTime() - taskStart.getTime()) / (24 * 60 * 60 * 1000))
+    );
 
     const left = Math.max(0, (leftDays / totalDays) * 100);
     const width = Math.min(100 - left, (taskDays / totalDays) * 100);
@@ -374,9 +376,7 @@ export default function GanttChartPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">甘特图进度</h1>
-            <p className="text-gray-500 text-sm">
-              可视化项目进度与里程碑
-            </p>
+            <p className="text-gray-500 text-sm">可视化项目进度与里程碑</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -407,11 +407,7 @@ export default function GanttChartPage() {
           <Button variant="outline" size="sm" onClick={handleMoveRight}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsPlaying(!isPlaying)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
         </div>
@@ -454,7 +450,10 @@ export default function GanttChartPage() {
           <span>已延期</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-3 bg-yellow-500" style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }} />
+          <div
+            className="w-4 h-3 bg-yellow-500"
+            style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
+          />
           <span>里程碑</span>
         </div>
       </div>
@@ -462,21 +461,18 @@ export default function GanttChartPage() {
       {/* 甘特图主体 */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">加载中...</div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={fetchProjects} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : tasks.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <BarChart3 className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>暂无数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无数据" />
           ) : (
             <div className="overflow-x-auto" ref={ganttRef}>
               <div className="min-w-[1200px]">
                 {/* 时间轴头部 */}
                 <div className="flex border-b bg-gray-50 sticky top-0 z-10">
-                  <div className="w-64 flex-shrink-0 p-2 border-r font-medium">
-                    任务名称
-                  </div>
+                  <div className="w-64 flex-shrink-0 p-2 border-r font-medium">任务名称</div>
                   <div className="flex-1 relative">
                     {/* 日期刻度 */}
                     <div className="flex h-8">
@@ -517,7 +513,10 @@ export default function GanttChartPage() {
                           {/* 任务名称 */}
                           <div className="w-64 flex-shrink-0 p-2 border-r flex items-center gap-2">
                             {task.isMilestone ? (
-                              <div className="w-3 h-3 bg-yellow-500" style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }} />
+                              <div
+                                className="w-3 h-3 bg-yellow-500"
+                                style={{ clipPath: 'polygon(50% 0%, 100% 100%, 0% 100%)' }}
+                              />
                             ) : (
                               <div className={cn('w-3 h-3 rounded', statusColors[task.status])} />
                             )}
@@ -531,10 +530,7 @@ export default function GanttChartPage() {
                               {timeScales.map((scale, i) => (
                                 <div
                                   key={i}
-                                  className={cn(
-                                    'flex-1 border-r',
-                                    scale.isWeekend && 'bg-gray-50'
-                                  )}
+                                  className={cn('flex-1 border-r', scale.isWeekend && 'bg-gray-50')}
                                 />
                               ))}
                             </div>
@@ -543,9 +539,7 @@ export default function GanttChartPage() {
                             <div
                               className={cn(
                                 'absolute top-2 h-8 rounded',
-                                task.isMilestone
-                                  ? 'bg-yellow-500'
-                                  : statusColors[task.status]
+                                task.isMilestone ? 'bg-yellow-500' : statusColors[task.status]
                               )}
                               style={{
                                 left: position.left,
@@ -578,9 +572,7 @@ export default function GanttChartPage() {
                             <div>状态: {statusNames[task.status] || task.status}</div>
                             <div>开始: {new Date(task.startDate).toLocaleDateString()}</div>
                             <div>结束: {new Date(task.endDate).toLocaleDateString()}</div>
-                            {!task.isMilestone && (
-                              <div>进度: {task.progress}%</div>
-                            )}
+                            {!task.isMilestone && <div>进度: {task.progress}%</div>}
                             {task.assignee && <div>负责人: {task.assignee}</div>}
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -618,17 +610,13 @@ export default function GanttChartPage() {
                 <div className="flex items-center gap-3">
                   <div className={cn('w-3 h-3 rounded', statusColors[task.status])} />
                   <span className="font-medium">{task.name}</span>
-                  {task.isMilestone && (
-                    <Badge variant="outline">里程碑</Badge>
-                  )}
+                  {task.isMilestone && <Badge variant="outline">里程碑</Badge>}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span>{new Date(task.startDate).toLocaleDateString()}</span>
                   <span>-</span>
                   <span>{new Date(task.endDate).toLocaleDateString()}</span>
-                  <Badge className={statusColors[task.status]}>
-                    {statusNames[task.status]}
-                  </Badge>
+                  <Badge className={statusColors[task.status]}>{statusNames[task.status]}</Badge>
                 </div>
               </div>
             ))}

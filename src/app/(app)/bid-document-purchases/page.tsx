@@ -6,8 +6,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -52,7 +58,10 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { BidDocumentPurchaseForm, type BidDocumentPurchaseFormData } from '@/components/bid-document-purchases/purchase-form';
+import {
+  BidDocumentPurchaseForm,
+  type BidDocumentPurchaseFormData,
+} from '@/components/bid-document-purchases/purchase-form';
 import { extractErrorMessage } from '@/lib/error-message';
 
 // 购买安排类型
@@ -116,6 +125,7 @@ export default function BidDocumentPurchasesPage() {
   const [purchases, setPurchases] = useState<BidDocumentPurchase[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -128,13 +138,14 @@ export default function BidDocumentPurchasesPage() {
   const fetchPurchases = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       if (searchKeyword) params.append('keyword', searchKeyword);
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
-      
+
       const response = await fetch(`/api/bid-document-purchases?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setPurchases(result.data);
         setStats(result.stats);
@@ -171,8 +182,8 @@ export default function BidDocumentPurchasesPage() {
 
   // 查看所需材料
   const handleViewMaterials = (purchase: BidDocumentPurchase) => {
-    const materials = purchase.requiredMaterials 
-      ? JSON.parse(purchase.requiredMaterials) 
+    const materials = purchase.requiredMaterials
+      ? JSON.parse(purchase.requiredMaterials)
       : DEFAULT_MATERIALS;
     setSelectedMaterials(materials);
     setShowMaterialsDialog(true);
@@ -181,13 +192,13 @@ export default function BidDocumentPurchasesPage() {
   // 删除
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除此购买安排吗？')) return;
-    
+
     try {
       const response = await fetch(`/api/bid-document-purchases?id=${id}`, {
         method: 'DELETE',
       });
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('删除成功');
         fetchPurchases();
@@ -208,7 +219,7 @@ export default function BidDocumentPurchasesPage() {
         body: JSON.stringify({ id, status }),
       });
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('状态更新成功');
         fetchPurchases();
@@ -228,7 +239,7 @@ export default function BidDocumentPurchasesPage() {
         method: 'POST',
       });
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('已推送到任务中心');
         fetchPurchases();
@@ -248,14 +259,14 @@ export default function BidDocumentPurchasesPage() {
       const url = '/api/bid-document-purchases';
       const method = editingPurchase ? 'PUT' : 'POST';
       const body = editingPurchase ? { ...data, id: editingPurchase.id } : data;
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success(editingPurchase ? '更新成功' : '创建成功');
         setShowFormDialog(false);
@@ -373,14 +384,12 @@ export default function BidDocumentPurchasesPage() {
       {/* 数据列表 */}
       <Card>
         <CardContent className="pt-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={fetchPurchases} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : purchases.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              暂无数据
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -395,10 +404,14 @@ export default function BidDocumentPurchasesPage() {
               </TableHeader>
               <TableBody>
                 {purchases.map((purchase) => {
-                  const statusConfig = STATUS_CONFIG[purchase.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
+                  const statusConfig =
+                    STATUS_CONFIG[purchase.status as keyof typeof STATUS_CONFIG] ||
+                    STATUS_CONFIG.pending;
                   const StatusIcon = statusConfig.icon;
-                  const priorityConfig = PRIORITY_CONFIG[purchase.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
-                  
+                  const priorityConfig =
+                    PRIORITY_CONFIG[purchase.priority as keyof typeof PRIORITY_CONFIG] ||
+                    PRIORITY_CONFIG.medium;
+
                   return (
                     <TableRow key={purchase.id}>
                       <TableCell>
@@ -479,7 +492,10 @@ export default function BidDocumentPurchasesPage() {
                             {statusConfig.label}
                           </Badge>
                           {purchase.pushedToTask && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 text-xs"
+                            >
                               <Send className="mr-1 h-3 w-3" />
                               已推送任务
                             </Badge>
@@ -496,29 +512,27 @@ export default function BidDocumentPurchasesPage() {
                           >
                             <AlertTriangle className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(purchase)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(purchase)}>
                             编辑
                           </Button>
                           {/* 推送任务中心按钮 */}
-                          {!purchase.pushedToTask && purchase.status === 'pending' && purchase.assigneeId && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-blue-600"
-                              onClick={() => handlePushToTask(purchase.id)}
-                              disabled={pushingId === purchase.id}
-                            >
-                              {pushingId === purchase.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
+                          {!purchase.pushedToTask &&
+                            purchase.status === 'pending' &&
+                            purchase.assigneeId && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600"
+                                onClick={() => handlePushToTask(purchase.id)}
+                                disabled={pushingId === purchase.id}
+                              >
+                                {pushingId === purchase.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                           {/* 跳转到任务 */}
                           {purchase.pushedToTask && purchase.taskId && (
                             <Button
@@ -574,12 +588,8 @@ export default function BidDocumentPurchasesPage() {
       <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingPurchase ? '编辑购买安排' : '新建购买安排'}
-            </DialogTitle>
-            <DialogDescription>
-              填写购买招标文件的相关安排信息
-            </DialogDescription>
+            <DialogTitle>{editingPurchase ? '编辑购买安排' : '新建购买安排'}</DialogTitle>
+            <DialogDescription>填写购买招标文件的相关安排信息</DialogDescription>
           </DialogHeader>
           <BidDocumentPurchaseForm
             initialData={editingPurchase}
@@ -597,9 +607,7 @@ export default function BidDocumentPurchasesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>购买招标文件所需材料</DialogTitle>
-            <DialogDescription>
-              前往对接单位购买招标文件时需携带以下材料
-            </DialogDescription>
+            <DialogDescription>前往对接单位购买招标文件时需携带以下材料</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -609,7 +617,7 @@ export default function BidDocumentPurchasesPage() {
               </h4>
               <ul className="space-y-1 pl-6">
                 {selectedMaterials
-                  .filter(m => m.category === 'company')
+                  .filter((m) => m.category === 'company')
                   .map((material, idx) => (
                     <li key={idx} className="text-sm flex items-center gap-2">
                       {material.required ? (
@@ -632,7 +640,7 @@ export default function BidDocumentPurchasesPage() {
               </h4>
               <ul className="space-y-1 pl-6">
                 {selectedMaterials
-                  .filter(m => m.category === 'personal')
+                  .filter((m) => m.category === 'personal')
                   .map((material, idx) => (
                     <li key={idx} className="text-sm flex items-center gap-2">
                       {material.required ? (
@@ -655,7 +663,7 @@ export default function BidDocumentPurchasesPage() {
               </h4>
               <ul className="space-y-1 pl-6">
                 {selectedMaterials
-                  .filter(m => m.category === 'other')
+                  .filter((m) => m.category === 'other')
                   .map((material, idx) => (
                     <li key={idx} className="text-sm flex items-center gap-2">
                       <span className="text-gray-300">○</span>
@@ -671,9 +679,7 @@ export default function BidDocumentPurchasesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowMaterialsDialog(false)}>
-              关闭
-            </Button>
+            <Button onClick={() => setShowMaterialsDialog(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -49,7 +50,12 @@ import {
 import Link from 'next/link';
 
 // 类型定义
-type PlatformType = 'provincial_official' | 'provincial_cloud' | 'state_owned' | 'city_center' | 'agent_company';
+type PlatformType =
+  | 'provincial_official'
+  | 'provincial_cloud'
+  | 'state_owned'
+  | 'city_center'
+  | 'agent_company';
 type PlatformStatus = 'active' | 'inactive' | 'maintenance';
 
 interface Platform {
@@ -97,14 +103,15 @@ export default function BiddingPlatformsPage() {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [typeStats, setTypeStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  
+
   // 详情弹窗
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
-  
+
   // 初始化弹窗
   const [initDialogOpen, setInitDialogOpen] = useState(false);
   const [initializing, setInitializing] = useState(false);
@@ -154,14 +161,14 @@ export default function BiddingPlatformsPage() {
   }
 
   // 筛选数据
-  const filteredPlatforms = platforms.filter(p => {
+  const filteredPlatforms = platforms.filter((p) => {
     if (filterType !== 'all' && p.type !== filterType) return false;
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
       return (
         p.name.toLowerCase().includes(keyword) ||
-        (p.shortName?.toLowerCase().includes(keyword)) ||
+        p.shortName?.toLowerCase().includes(keyword) ||
         p.address.toLowerCase().includes(keyword)
       );
     }
@@ -179,7 +186,9 @@ export default function BiddingPlatformsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">政采对接单位</h1>
-          <p className="text-muted-foreground">广西政府采购平台、公共资源交易中心及招标代理公司管理</p>
+          <p className="text-muted-foreground">
+            广西政府采购平台、公共资源交易中心及招标代理公司管理
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setInitDialogOpen(true)}>
@@ -202,8 +211,11 @@ export default function BiddingPlatformsPage() {
       {/* 统计卡片 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {Object.entries(TYPE_CONFIG).map(([type, config]) => (
-          <Card key={type} className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setFilterType(filterType === type ? 'all' : type)}>
+          <Card
+            key={type}
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setFilterType(filterType === type ? 'all' : type)}
+          >
             <CardContent className="pt-4">
               <div className="text-2xl font-bold">{typeStats[type] || 0}</div>
               <div className="text-sm text-muted-foreground">{config.label}</div>
@@ -234,7 +246,9 @@ export default function BiddingPlatformsPage() {
               <SelectContent>
                 <SelectItem value="all">全部类型</SelectItem>
                 {Object.entries(TYPE_CONFIG).map(([type, config]) => (
-                  <SelectItem key={type} value={type}>{config.label}</SelectItem>
+                  <SelectItem key={type} value={type}>
+                    {config.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -245,7 +259,9 @@ export default function BiddingPlatformsPage() {
               <SelectContent>
                 <SelectItem value="all">全部状态</SelectItem>
                 {Object.entries(STATUS_CONFIG).map(([status, config]) => (
-                  <SelectItem key={status} value={status}>{config.label}</SelectItem>
+                  <SelectItem key={status} value={status}>
+                    {config.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -266,15 +282,12 @@ export default function BiddingPlatformsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : filteredPlatforms.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              暂无数据，请点击"初始化数据"导入广西政府采购单位
-            </div>
+            <ListStateBlock
+              state="empty"
+              emptyText="暂无数据，请点击初始化数据导入广西政府采购单位"
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -353,10 +366,11 @@ export default function BiddingPlatformsPage() {
           <DialogHeader>
             <DialogTitle>{selectedPlatform?.name}</DialogTitle>
             <DialogDescription>
-              {selectedPlatform?.shortName} · {TYPE_CONFIG[selectedPlatform?.type || 'city_center']?.label}
+              {selectedPlatform?.shortName} ·{' '}
+              {TYPE_CONFIG[selectedPlatform?.type || 'city_center']?.label}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedPlatform && (
             <div className="space-y-4">
               {/* 基本信息 */}
@@ -380,11 +394,17 @@ export default function BiddingPlatformsPage() {
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     {selectedPlatform.website ? (
-                      <a href={selectedPlatform.website} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline flex items-center gap-1">
+                      <a
+                        href={selectedPlatform.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1"
+                      >
                         访问官网 <ExternalLink className="h-3 w-3" />
                       </a>
-                    ) : '-'}
+                    ) : (
+                      '-'
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -408,7 +428,9 @@ export default function BiddingPlatformsPage() {
                       精度: {selectedPlatform.coordinatePrecision}
                     </div>
                     <div className="text-xs bg-blue-50 text-blue-700 p-2 rounded">
-                      💡 调用百度地图API时需使用 <code className="bg-blue-100 px-1 rounded">lng, lat</code> 顺序（先经度后纬度）
+                      💡 调用百度地图API时需使用{' '}
+                      <code className="bg-blue-100 px-1 rounded">lng, lat</code>{' '}
+                      顺序（先经度后纬度）
                     </div>
                   </div>
                 </div>
@@ -418,19 +440,37 @@ export default function BiddingPlatformsPage() {
               <div className="space-y-2">
                 <Label className="text-muted-foreground">功能支持</Label>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant={selectedPlatform.supportOnlineBid ? 'default' : 'outline'}
-                    className={selectedPlatform.supportOnlineBid ? 'bg-green-600' : ''}>
-                    {selectedPlatform.supportOnlineBid ? <CheckCircle className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+                  <Badge
+                    variant={selectedPlatform.supportOnlineBid ? 'default' : 'outline'}
+                    className={selectedPlatform.supportOnlineBid ? 'bg-green-600' : ''}
+                  >
+                    {selectedPlatform.supportOnlineBid ? (
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                    ) : (
+                      <XCircle className="mr-1 h-3 w-3" />
+                    )}
                     在线投标
                   </Badge>
-                  <Badge variant={selectedPlatform.supportCaLogin ? 'default' : 'outline'}
-                    className={selectedPlatform.supportCaLogin ? 'bg-green-600' : ''}>
-                    {selectedPlatform.supportCaLogin ? <CheckCircle className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+                  <Badge
+                    variant={selectedPlatform.supportCaLogin ? 'default' : 'outline'}
+                    className={selectedPlatform.supportCaLogin ? 'bg-green-600' : ''}
+                  >
+                    {selectedPlatform.supportCaLogin ? (
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                    ) : (
+                      <XCircle className="mr-1 h-3 w-3" />
+                    )}
                     CA登录
                   </Badge>
-                  <Badge variant={selectedPlatform.supportLiveStream ? 'default' : 'outline'}
-                    className={selectedPlatform.supportLiveStream ? 'bg-green-600' : ''}>
-                    {selectedPlatform.supportLiveStream ? <CheckCircle className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+                  <Badge
+                    variant={selectedPlatform.supportLiveStream ? 'default' : 'outline'}
+                    className={selectedPlatform.supportLiveStream ? 'bg-green-600' : ''}
+                  >
+                    {selectedPlatform.supportLiveStream ? (
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                    ) : (
+                      <XCircle className="mr-1 h-3 w-3" />
+                    )}
                     开标直播
                   </Badge>
                 </div>
@@ -442,7 +482,9 @@ export default function BiddingPlatformsPage() {
                   <Label className="text-muted-foreground">特色功能</Label>
                   <div className="flex flex-wrap gap-2">
                     {JSON.parse(selectedPlatform.features).map((feature: string, idx: number) => (
-                      <Badge key={idx} variant="secondary">{feature}</Badge>
+                      <Badge key={idx} variant="secondary">
+                        {feature}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -460,7 +502,9 @@ export default function BiddingPlatformsPage() {
               {selectedPlatform.verificationSource && (
                 <div className="space-y-1">
                   <Label className="text-muted-foreground">验证来源</Label>
-                  <p className="text-xs text-muted-foreground">{selectedPlatform.verificationSource}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedPlatform.verificationSource}
+                  </p>
                 </div>
               )}
 
@@ -509,9 +553,7 @@ export default function BiddingPlatformsPage() {
                 <li>• 地市交易中心：14 家</li>
                 <li>• 招标代理公司：10 家</li>
               </ul>
-              <div className="text-xs text-blue-600">
-                已有数据将跳过，不会重复导入
-              </div>
+              <div className="text-xs text-blue-600">已有数据将跳过，不会重复导入</div>
             </div>
           </div>
           <DialogFooter>

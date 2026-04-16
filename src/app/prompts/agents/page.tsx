@@ -3,7 +3,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription, CardFooter } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription as _CardDescription,
+  CardFooter,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -57,12 +65,15 @@ import {
 } from 'lucide-react';
 
 // AI角色类型映射
-const AGENT_ROLE_CONFIG: Record<string, { 
-  label: string; 
-  icon: React.ElementType; 
-  color: string;
-  description: string;
-}> = {
+const AGENT_ROLE_CONFIG: Record<
+  string,
+  {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    description: string;
+  }
+> = {
   sales_director: {
     label: '销售总监',
     icon: DollarSign,
@@ -154,9 +165,10 @@ export default function AIAgentsPage() {
   const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  
+
   // 对话相关
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -178,6 +190,7 @@ export default function AIAgentsPage() {
 
   const fetchAgents = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       params.set('isAgent', 'true');
@@ -187,12 +200,13 @@ export default function AIAgentsPage() {
 
       const res = await fetch(`/api/prompts/templates?${params.toString()}`);
       const data = await res.json();
-      
+
       if (data.items) {
         setAgents(data.items.filter((t: Agent) => t.isAgent));
       }
     } catch (error) {
       console.error('Failed to fetch agents:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -202,16 +216,18 @@ export default function AIAgentsPage() {
     setSelectedAgent(agent);
     setMessages([]);
     setInputMessage('');
-    
+
     // 添加欢迎语
     if (agent.agentGreeting) {
-      setMessages([{
-        role: 'assistant',
-        content: agent.agentGreeting,
-        timestamp: new Date(),
-      }]);
+      setMessages([
+        {
+          role: 'assistant',
+          content: agent.agentGreeting,
+          timestamp: new Date(),
+        },
+      ]);
     }
-    
+
     setChatDialogOpen(true);
   };
 
@@ -224,7 +240,7 @@ export default function AIAgentsPage() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputMessage('');
     setGenerating(true);
     setStreamingContent('');
@@ -239,7 +255,9 @@ export default function AIAgentsPage() {
           templateId: selectedAgent.id,
           parameters: {
             user_message: userMessage.content,
-            conversation_history: messages.map(m => `${m.role === 'user' ? '用户' : 'AI'}: ${m.content}`).join('\n'),
+            conversation_history: messages
+              .map((m) => `${m.role === 'user' ? '用户' : 'AI'}: ${m.content}`)
+              .join('\n'),
           },
           stream: true,
         }),
@@ -267,11 +285,14 @@ export default function AIAgentsPage() {
                   setStreamingContent(fullContent);
                 } else if (data.type === 'done') {
                   // 添加AI回复到消息列表
-                  setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: fullContent,
-                    timestamp: new Date(),
-                  }]);
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      role: 'assistant',
+                      content: fullContent,
+                      timestamp: new Date(),
+                    },
+                  ]);
                   setStreamingContent('');
                 }
               } catch {
@@ -308,12 +329,12 @@ export default function AIAgentsPage() {
 
   const handleDeleteAgent = async (agent: Agent) => {
     if (!confirm(`确定要删除AI员工"${agent.name}"吗？`)) return;
-    
+
     try {
       const res = await fetch(`/api/prompts/templates/${agent.id}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         fetchAgents();
       }
@@ -375,33 +396,18 @@ export default function AIAgentsPage() {
       </Card>
 
       {/* Agents Grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="pt-6">
-                <Skeleton className="h-24 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={fetchAgents} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : agents.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="mx-auto h-12 w-12 mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground mb-4">暂无AI员工</p>
-            <Button variant="outline" onClick={handleCreateAgent}>
-              <Plus className="mr-2 h-4 w-4" />
-              创建第一个AI员工
-            </Button>
-          </CardContent>
-        </Card>
+        <ListStateBlock state="empty" emptyText="暂无AI员工" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {agents.map((agent) => {
             const roleConfig = getRoleConfig(agent.agentRole);
             const RoleIcon = roleConfig.icon;
-            
+
             return (
               <Card key={agent.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
@@ -436,7 +442,7 @@ export default function AIAgentsPage() {
                           <Edit className="mr-2 h-4 w-4" />
                           编辑
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDeleteAgent(agent)}
                           className="text-red-600"
                         >
@@ -453,19 +459,18 @@ export default function AIAgentsPage() {
                   </p>
                   {agent.agentSkills && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {JSON.parse(agent.agentSkills).slice(0, 3).map((skill: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
+                      {JSON.parse(agent.agentSkills)
+                        .slice(0, 3)
+                        .map((skill: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
                     </div>
                   )}
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleChat(agent)}
-                  >
+                  <Button className="w-full" onClick={() => handleChat(agent)}>
                     <MessageSquare className="mr-2 h-4 w-4" />
                     开始对话
                   </Button>
@@ -481,29 +486,30 @@ export default function AIAgentsPage() {
         <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              {selectedAgent && (() => {
-                const roleConfig = getRoleConfig(selectedAgent.agentRole);
-                const RoleIcon = roleConfig.icon;
-                return (
-                  <>
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedAgent.agentAvatar} />
-                      <AvatarFallback className={`${roleConfig.color} text-white`}>
-                        <RoleIcon className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <DialogTitle>{selectedAgent.name}</DialogTitle>
-                      <DialogDescription>
-                        {roleConfig.label} · {selectedAgent.agentDescription || 'AI助手'}
-                      </DialogDescription>
-                    </div>
-                  </>
-                );
-              })()}
+              {selectedAgent &&
+                (() => {
+                  const roleConfig = getRoleConfig(selectedAgent.agentRole);
+                  const RoleIcon = roleConfig.icon;
+                  return (
+                    <>
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={selectedAgent.agentAvatar} />
+                        <AvatarFallback className={`${roleConfig.color} text-white`}>
+                          <RoleIcon className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <DialogTitle>{selectedAgent.name}</DialogTitle>
+                        <DialogDescription>
+                          {roleConfig.label} · {selectedAgent.agentDescription || 'AI助手'}
+                        </DialogDescription>
+                      </div>
+                    </>
+                  );
+                })()}
             </div>
           </DialogHeader>
-          
+
           {/* Messages */}
           <ScrollArea className="flex-1 -mx-6 px-6">
             <div className="space-y-4 pb-4">
@@ -514,9 +520,7 @@ export default function AIAgentsPage() {
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                      msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                     }`}
                   >
                     <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
@@ -526,7 +530,7 @@ export default function AIAgentsPage() {
                   </div>
                 </div>
               ))}
-              
+
               {/* Streaming content */}
               {streamingContent && (
                 <div className="flex justify-start">
@@ -538,11 +542,11 @@ export default function AIAgentsPage() {
                   </div>
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
-          
+
           {/* Input */}
           <div className="border-t pt-4">
             <div className="flex gap-2">

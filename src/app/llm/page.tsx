@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -23,7 +24,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tabs as _Tabs,
+  TabsContent as _TabsContent,
+  TabsList as _TabsList,
+  TabsTrigger as _TabsTrigger,
+} from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import {
   Plus,
@@ -93,6 +99,7 @@ export default function LLMConfigsPage() {
   const [configs, setConfigs] = useState<LLMConfig[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [providerFilter, setProviderFilter] = useState('all');
 
@@ -134,6 +141,7 @@ export default function LLMConfigsPage() {
 
   const loadConfigs = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (providerFilter !== 'all') {
@@ -230,9 +238,7 @@ export default function LLMConfigsPage() {
     }
 
     try {
-      const url = editingConfig
-        ? `/api/llm/configs/${editingConfig.id}`
-        : '/api/llm/configs';
+      const url = editingConfig ? `/api/llm/configs/${editingConfig.id}` : '/api/llm/configs';
       const method = editingConfig ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -350,20 +356,12 @@ export default function LLMConfigsPage() {
       </Card>
 
       {/* 配置列表 */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">加载中...</div>
-        </div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={loadModels} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : configs.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-500">
-            <Cpu className="h-12 w-12 mx-auto mb-4" />
-            <p>暂无配置</p>
-            <Button variant="outline" className="mt-4" onClick={handleCreate}>
-              创建第一个配置
-            </Button>
-          </CardContent>
-        </Card>
+        <ListStateBlock state="empty" emptyText="暂无配置" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {configs.map((config) => (
@@ -380,23 +378,16 @@ export default function LLMConfigsPage() {
                         </Badge>
                       )}
                     </div>
-                    <CardDescription className="text-sm mt-1">
-                      {config.modelId}
-                    </CardDescription>
+                    <CardDescription className="text-sm mt-1">{config.modelId}</CardDescription>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={providerConfig[config.provider]?.color || ''}
-                  >
+                  <Badge variant="outline" className={providerConfig[config.provider]?.color || ''}>
                     {providerConfig[config.provider]?.label || config.provider}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm text-gray-600">
-                  {config.description && (
-                    <p className="line-clamp-2">{config.description}</p>
-                  )}
+                  {config.description && <p className="line-clamp-2">{config.description}</p>}
                   <div className="flex items-center gap-4">
                     <span>Temperature: {config.defaultTemperature}</span>
                     <span>Max Tokens: {config.maxTokens}</span>
@@ -446,11 +437,7 @@ export default function LLMConfigsPage() {
                         <Star className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(config)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(config)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
@@ -473,12 +460,8 @@ export default function LLMConfigsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingConfig ? '编辑配置' : '新建配置'}
-            </DialogTitle>
-            <DialogDescription>
-              配置大语言模型参数，支持多种提供商
-            </DialogDescription>
+            <DialogTitle>{editingConfig ? '编辑配置' : '新建配置'}</DialogTitle>
+            <DialogDescription>配置大语言模型参数，支持多种提供商</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -487,9 +470,7 @@ export default function LLMConfigsPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="如：豆包Pro"
                 />
               </div>
@@ -498,9 +479,7 @@ export default function LLMConfigsPage() {
                 <Input
                   id="code"
                   value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="选填"
                 />
               </div>
@@ -511,9 +490,7 @@ export default function LLMConfigsPage() {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="配置用途说明"
                 rows={2}
               />
@@ -546,9 +523,7 @@ export default function LLMConfigsPage() {
                 <Label htmlFor="modelId">模型 *</Label>
                 <Select
                   value={formData.modelId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, modelId: value })
-                  }
+                  onValueChange={(value) => setFormData({ ...formData, modelId: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择模型" />
@@ -559,7 +534,9 @@ export default function LLMConfigsPage() {
                         <div className="flex flex-col">
                           <span>{model.name}</span>
                           {model.description && (
-                            <span className="text-xs text-muted-foreground">{model.description}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {model.description}
+                            </span>
                           )}
                         </div>
                       </SelectItem>
@@ -590,9 +567,7 @@ export default function LLMConfigsPage() {
                   id="apiKey"
                   type="password"
                   value={formData.apiKey}
-                  onChange={(e) =>
-                    setFormData({ ...formData, apiKey: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                   placeholder="必填（用于服务端调用），保存后仅显示掩码"
                 />
               </div>
@@ -601,9 +576,7 @@ export default function LLMConfigsPage() {
                 <Input
                   id="apiEndpoint"
                   value={formData.apiEndpoint}
-                  onChange={(e) =>
-                    setFormData({ ...formData, apiEndpoint: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, apiEndpoint: e.target.value })}
                   placeholder="如：https://api.openai.com 或自建网关地址"
                 />
               </div>

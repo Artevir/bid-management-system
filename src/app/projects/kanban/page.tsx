@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -84,6 +84,7 @@ const columnOrder = ['draft', 'active', 'bidding', 'submitted', 'awarded', 'comp
 export default function ProjectKanbanPage() {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [draggedProject, setDraggedProject] = useState<Project | null>(null);
   const [dragSourceColumn, setDragSourceColumn] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -250,15 +251,7 @@ export default function ProjectKanbanPage() {
 
       {/* 看板 */}
       {loading ? (
-        <div className="grid grid-cols-6 gap-4">
-          {columnOrder.map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ))}
-        </div>
+        <ListStateBlock state="loading" />
       ) : (
         <div className="grid grid-cols-6 gap-4 overflow-x-auto pb-4">
           {columns.map((column) => (
@@ -282,7 +275,7 @@ export default function ProjectKanbanPage() {
               {/* 项目卡片 */}
               <div className="flex-1 space-y-3 min-h-[200px] bg-muted/30 rounded-lg p-2">
                 {column.projects.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">暂无项目</div>
+                  <ListStateBlock state="empty" emptyText="暂无项目" />
                 ) : (
                   column.projects.map((project) => {
                     const daysRemaining = getDaysRemaining(project.submissionDeadline);

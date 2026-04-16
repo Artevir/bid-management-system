@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Table,
   TableBody,
@@ -67,6 +68,7 @@ export default function TenderCrawlPage() {
   const [tenders, setTenders] = useState<TenderInfo[]>([]);
   const [sources, setSources] = useState<CrawlSource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [crawling, setCrawling] = useState(false);
   const [selectedTender, setSelectedTender] = useState<TenderInfo | null>(null);
@@ -95,7 +97,7 @@ export default function TenderCrawlPage() {
 
   async function handleSearch() {
     if (!searchQuery.trim()) return;
-    
+
     setCrawling(true);
     try {
       const res = await fetch('/api/tender-crawl/tenders', {
@@ -105,7 +107,7 @@ export default function TenderCrawlPage() {
       });
       const data = await res.json();
       if (data.data) {
-        setTenders(prev => [...data.data, ...prev]);
+        setTenders((prev) => [...data.data, ...prev]);
       }
     } catch (error) {
       console.error('Search failed:', error);
@@ -115,7 +117,10 @@ export default function TenderCrawlPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+    const statusMap: Record<
+      string,
+      { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+    > = {
       new: { label: '新抓取', variant: 'default' },
       read: { label: '已读', variant: 'secondary' },
       followed: { label: '已跟进', variant: 'outline' },
@@ -184,7 +189,9 @@ export default function TenderCrawlPage() {
             <div className="flex items-center gap-3">
               <Zap className="h-8 w-8 text-yellow-500" />
               <div>
-                <p className="text-2xl font-bold">{tenders.filter(t => t.status === 'new').length}</p>
+                <p className="text-2xl font-bold">
+                  {tenders.filter((t) => t.status === 'new').length}
+                </p>
                 <p className="text-sm text-muted-foreground">新招标</p>
               </div>
             </div>
@@ -202,17 +209,9 @@ export default function TenderCrawlPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : tenders.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无招标信息</p>
-              <p className="text-sm mt-2">使用上方搜索框搜索招标信息</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无招标信息" />
           ) : (
             <Table>
               <TableHeader>
@@ -232,9 +231,7 @@ export default function TenderCrawlPage() {
                       <div className="max-w-md">
                         <p className="font-medium truncate">{tender.title}</p>
                         {tender.summary && (
-                          <p className="text-sm text-muted-foreground truncate">
-                            {tender.summary}
-                          </p>
+                          <p className="text-sm text-muted-foreground truncate">{tender.summary}</p>
                         )}
                       </div>
                     </TableCell>
@@ -258,11 +255,7 @@ export default function TenderCrawlPage() {
                     <TableCell>{getStatusBadge(tender.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedTender(tender)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedTender(tender)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         {tender.sourceUrl && (

@@ -8,7 +8,14 @@
 import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -75,6 +82,7 @@ export default function BidApprovalPage() {
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [approvalFlows, setApprovalFlows] = useState<ApprovalFlow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [reviewDialog, setReviewDialog] = useState<{
     open: boolean;
@@ -110,6 +118,7 @@ export default function BidApprovalPage() {
   const loadApprovalFlows = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       params.append('documentId', documentId);
       if (statusFilter !== 'all') {
@@ -195,9 +204,7 @@ export default function BidApprovalPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">审批流程</h1>
-          <p className="text-gray-500 mt-1">
-            {document ? `文档：${document.name}` : '加载中...'}
-          </p>
+          <p className="text-gray-500 mt-1">{document ? `文档：${document.name}` : '加载中...'}</p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -209,9 +216,7 @@ export default function BidApprovalPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              总审批节点
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">总审批节点</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvalFlows.length}</div>
@@ -220,9 +225,7 @@ export default function BidApprovalPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              待审批
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">待审批</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -233,9 +236,7 @@ export default function BidApprovalPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              已通过
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">已通过</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -246,9 +247,7 @@ export default function BidApprovalPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              已拒绝
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">已拒绝</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -306,19 +305,12 @@ export default function BidApprovalPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                </div>
+              {error ? (
+                <ListStateBlock state="error" error={error} onRetry={loadDocumentDetail} />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : approvalFlows.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>暂无审批流程</p>
-                  <Button className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" />
-                    创建审批流程
-                  </Button>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无审批流程" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -351,9 +343,7 @@ export default function BidApprovalPage() {
                             <span>{getStatusLabel(flow.status)}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {new Date(flow.assignedAt).toLocaleString()}
-                        </TableCell>
+                        <TableCell>{new Date(flow.assignedAt).toLocaleString()}</TableCell>
                         <TableCell>
                           {flow.dueDate ? new Date(flow.dueDate).toLocaleString() : '-'}
                         </TableCell>
@@ -366,7 +356,9 @@ export default function BidApprovalPage() {
                               <MessageSquare className="h-4 w-4 text-gray-400" />
                               <span className="text-sm">{flow.comment}</span>
                             </div>
-                          ) : '-'}
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           {flow.status === 'pending' && (
@@ -388,14 +380,17 @@ export default function BidApprovalPage() {
                               <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle>审批文档</DialogTitle>
-                                  <DialogDescription>
-                                    请对该文档进行审批
-                                  </DialogDescription>
+                                  <DialogDescription>请对该文档进行审批</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                   <div>
                                     <label className="text-sm font-medium">审批结果</label>
-                                    <Select value={reviewResult} onValueChange={(v) => setReviewResult(v as 'approved' | 'rejected')}>
+                                    <Select
+                                      value={reviewResult}
+                                      onValueChange={(v) =>
+                                        setReviewResult(v as 'approved' | 'rejected')
+                                      }
+                                    >
                                       <SelectTrigger>
                                         <SelectValue />
                                       </SelectTrigger>
@@ -418,7 +413,9 @@ export default function BidApprovalPage() {
                                 <DialogFooter>
                                   <Button
                                     variant="outline"
-                                    onClick={() => setReviewDialog({ open: false, flowId: null, level: null })}
+                                    onClick={() =>
+                                      setReviewDialog({ open: false, flowId: null, level: null })
+                                    }
                                   >
                                     取消
                                   </Button>
@@ -447,12 +444,17 @@ export default function BidApprovalPage() {
                 {approvalFlows.map((flow, index) => (
                   <div key={flow.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        flow.status === 'approved' ? 'bg-green-100 text-green-600' :
-                        flow.status === 'rejected' ? 'bg-red-100 text-red-600' :
-                        flow.status === 'pending' ? 'bg-blue-100 text-blue-600' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
+                      <div
+                        className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                          flow.status === 'approved'
+                            ? 'bg-green-100 text-green-600'
+                            : flow.status === 'rejected'
+                              ? 'bg-red-100 text-red-600'
+                              : flow.status === 'pending'
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
                         {getStatusIcon(flow.status)}
                       </div>
                       {index < approvalFlows.length - 1 && (
@@ -463,16 +465,17 @@ export default function BidApprovalPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">{getLevelLabel(flow.level)}</p>
-                          <p className="text-sm text-gray-500">
-                            审批人: {flow.assigneeName}
-                          </p>
+                          <p className="text-sm text-gray-500">审批人: {flow.assigneeName}</p>
                         </div>
                         <Badge
                           variant={
-                            flow.status === 'approved' ? 'default' :
-                            flow.status === 'rejected' ? 'destructive' :
-                            flow.status === 'pending' ? 'secondary' :
-                            'outline'
+                            flow.status === 'approved'
+                              ? 'default'
+                              : flow.status === 'rejected'
+                                ? 'destructive'
+                                : flow.status === 'pending'
+                                  ? 'secondary'
+                                  : 'outline'
                           }
                         >
                           {getStatusLabel(flow.status)}
@@ -484,9 +487,7 @@ export default function BidApprovalPage() {
                         </p>
                       )}
                       {flow.comment && (
-                        <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                          {flow.comment}
-                        </div>
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-sm">{flow.comment}</div>
                       )}
                     </div>
                   </div>

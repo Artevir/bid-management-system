@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -52,7 +58,7 @@ import {
   AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
-import { TableSkeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { formatDate } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/error-message';
 
@@ -144,27 +150,27 @@ export default function PerformanceBondsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 筛选条件
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  
+
   // 新增/编辑对话框
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // 详情对话框
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedBond, setSelectedBond] = useState<PerformanceBond | null>(null);
-  
+
   // 推送任务中
   const [pushingTaskId, setPushingTaskId] = useState<number | null>(null);
-  
+
   // 下拉选项
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
+
   // 表单数据
   const [formData, setFormData] = useState({
     projectId: '',
@@ -198,16 +204,16 @@ export default function PerformanceBondsPage() {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       if (keyword) params.append('keyword', keyword);
-      
+
       const response = await fetch(`/api/performance-bonds?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setBonds(result.data);
       } else {
         setError(extractErrorMessage(result, '加载数据失败'));
       }
-      
+
       // 加载统计
       const statsResponse = await fetch('/api/performance-bonds?stats=true');
       const statsResult = await statsResponse.json();
@@ -328,7 +334,7 @@ export default function PerformanceBondsPage() {
 
   // 从用户选择填充姓名（业务经办人）
   const handleHandlerSelect = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       setFormData({
         ...formData,
@@ -340,7 +346,7 @@ export default function PerformanceBondsPage() {
 
   // 从用户选择填充姓名（财务经办人）
   const handleFinanceHandlerSelect = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       setFormData({
         ...formData,
@@ -462,7 +468,7 @@ export default function PerformanceBondsPage() {
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
-    const statusConfig = BOND_STATUS.find(s => s.value === status);
+    const statusConfig = BOND_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -479,7 +485,7 @@ export default function PerformanceBondsPage() {
 
   // 获取缴纳方式显示
   const getPaymentMethodLabel = (method: string) => {
-    const methodConfig = PAYMENT_METHODS.find(m => m.value === method);
+    const methodConfig = PAYMENT_METHODS.find((m) => m.value === method);
     return methodConfig?.label || method;
   };
 
@@ -506,7 +512,8 @@ export default function PerformanceBondsPage() {
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          <strong>风险提示：</strong>不缴纳履约保证金可能导致取消中标资格、不退投标保证金，请务必按时缴纳！
+          <strong>风险提示：</strong>
+          不缴纳履约保证金可能导致取消中标资格、不退投标保证金，请务必按时缴纳！
         </AlertDescription>
       </Alert>
 
@@ -611,12 +618,9 @@ export default function PerformanceBondsPage() {
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : bonds.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无履约保证金数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无履约保证金数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -653,7 +657,9 @@ export default function PerformanceBondsPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDate(bond.paymentDeadline)}
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       <div>
@@ -667,25 +673,19 @@ export default function PerformanceBondsPage() {
                       <div>
                         <div>{bond.financeHandlerName || '-'}</div>
                         {bond.financeHandlerPhone && (
-                          <div className="text-sm text-muted-foreground">{bond.financeHandlerPhone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {bond.financeHandlerPhone}
+                          </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(bond.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(bond)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleView(bond)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(bond)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(bond)}>
                           <FileText className="h-4 w-4" />
                         </Button>
                         {bond.status !== 'refunded' && bond.status !== 'cancelled' && (
@@ -752,11 +752,7 @@ export default function PerformanceBondsPage() {
                             <CheckCircle className="h-4 w-4 text-gray-600" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(bond.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(bond.id)}>
                           <Ban className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -774,9 +770,7 @@ export default function PerformanceBondsPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? '编辑履约保证金' : '新增履约保证金'}</DialogTitle>
-            <DialogDescription>
-              填写履约保证金信息，金额不超过中标合同金额10%
-            </DialogDescription>
+            <DialogDescription>填写履约保证金信息，金额不超过中标合同金额10%</DialogDescription>
           </DialogHeader>
 
           {error && (
@@ -795,10 +789,10 @@ export default function PerformanceBondsPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>关联项目</Label>
-                  <Select 
-                    value={formData.projectId} 
+                  <Select
+                    value={formData.projectId}
                     onValueChange={(value) => {
-                      const project = projects.find(p => p.id === parseInt(value));
+                      const project = projects.find((p) => p.id === parseInt(value));
                       setFormData({
                         ...formData,
                         projectId: value,
@@ -856,7 +850,7 @@ export default function PerformanceBondsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.isRequired}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, isRequired: checked as boolean })
                       }
                     />
@@ -885,7 +879,9 @@ export default function PerformanceBondsPage() {
                     <Input
                       type="date"
                       value={formData.paymentDeadline}
-                      onChange={(e) => setFormData({ ...formData, paymentDeadline: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, paymentDeadline: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -912,7 +908,9 @@ export default function PerformanceBondsPage() {
                     <Label>要求来源（招标文件条款）</Label>
                     <Input
                       value={formData.requirementSource}
-                      onChange={(e) => setFormData({ ...formData, requirementSource: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, requirementSource: e.target.value })
+                      }
                       placeholder="例如：招标文件第X章第X条"
                     />
                   </div>
@@ -964,10 +962,7 @@ export default function PerformanceBondsPage() {
                   <Label className="text-muted-foreground">业务经办人</Label>
                   <div className="grid grid-cols-3 gap-4 mt-2">
                     <div className="space-y-2">
-                      <Select
-                        value={formData.handlerId}
-                        onValueChange={handleHandlerSelect}
-                      >
+                      <Select value={formData.handlerId} onValueChange={handleHandlerSelect}>
                         <SelectTrigger>
                           <SelectValue placeholder="选择经办人" />
                         </SelectTrigger>
@@ -996,7 +991,7 @@ export default function PerformanceBondsPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* 财务经办人 */}
                 <div className="border-t pt-4">
                   <Label className="text-muted-foreground">财务经办人</Label>
@@ -1021,14 +1016,18 @@ export default function PerformanceBondsPage() {
                     <div className="space-y-2">
                       <Input
                         value={formData.financeHandlerName}
-                        onChange={(e) => setFormData({ ...formData, financeHandlerName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, financeHandlerName: e.target.value })
+                        }
                         placeholder="姓名"
                       />
                     </div>
                     <div className="space-y-2">
                       <Input
                         value={formData.financeHandlerPhone}
-                        onChange={(e) => setFormData({ ...formData, financeHandlerPhone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, financeHandlerPhone: e.target.value })
+                        }
                         placeholder="联系电话"
                       />
                     </div>
@@ -1083,7 +1082,7 @@ export default function PerformanceBondsPage() {
           <DialogHeader>
             <DialogTitle>履约保证金详情</DialogTitle>
           </DialogHeader>
-          
+
           {selectedBond && (
             <div className="space-y-4">
               {/* 基本信息 */}
@@ -1112,11 +1111,19 @@ export default function PerformanceBondsPage() {
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <div>
                     <span className="text-sm">缴纳截止日期：</span>
-                    <span>{selectedBond.paymentDeadline ? formatDate(selectedBond.paymentDeadline) : '-'}</span>
+                    <span>
+                      {selectedBond.paymentDeadline
+                        ? formatDate(selectedBond.paymentDeadline)
+                        : '-'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-sm">缴纳方式：</span>
-                    <span>{selectedBond.paymentMethod ? getPaymentMethodLabel(selectedBond.paymentMethod) : '-'}</span>
+                    <span>
+                      {selectedBond.paymentMethod
+                        ? getPaymentMethodLabel(selectedBond.paymentMethod)
+                        : '-'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1152,7 +1159,9 @@ export default function PerformanceBondsPage() {
                     <p className="text-sm font-medium">财务经办人</p>
                     <p className="text-sm">{selectedBond.financeHandlerName || '-'}</p>
                     {selectedBond.financeHandlerPhone && (
-                      <p className="text-sm text-muted-foreground">{selectedBond.financeHandlerPhone}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedBond.financeHandlerPhone}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -1183,12 +1192,14 @@ export default function PerformanceBondsPage() {
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
               关闭
             </Button>
-            <Button onClick={() => {
-              setDetailOpen(false);
-              if (selectedBond) {
-                handleEdit(selectedBond);
-              }
-            }}>
+            <Button
+              onClick={() => {
+                setDetailOpen(false);
+                if (selectedBond) {
+                  handleEdit(selectedBond);
+                }
+              }}
+            >
               编辑
             </Button>
           </DialogFooter>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent as _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -58,7 +59,10 @@ import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/error-message';
 
 // 资源类型配置
-const RESOURCE_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+const RESOURCE_TYPE_CONFIG: Record<
+  string,
+  { label: string; icon: React.ElementType; color: string }
+> = {
   document: { label: '标书文档', icon: FileText, color: 'bg-blue-500' },
   chapter: { label: '章节内容', icon: FileText, color: 'bg-green-500' },
   file: { label: '文件', icon: File, color: 'bg-orange-500' },
@@ -92,18 +96,22 @@ interface RecycleBinStats {
 function RecycleBinContent() {
   const _router = useRouter();
   const _searchParams = useSearchParams();
-  
+
   // 状态
   const [items, setItems] = useState<RecycleBinItem[]>([]);
   const [stats, setStats] = useState<RecycleBinStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // 对话框状态
-  const [restoreDialog, setRestoreDialog] = useState<{ open: boolean; item: RecycleBinItem | null }>({
+  const [restoreDialog, setRestoreDialog] = useState<{
+    open: boolean;
+    item: RecycleBinItem | null;
+  }>({
     open: false,
     item: null,
   });
@@ -224,7 +232,11 @@ function RecycleBinContent() {
       return <Badge variant="destructive">即将删除</Badge>;
     }
     if (days <= 7) {
-      return <Badge variant="outline" className="border-orange-500 text-orange-600">即将过期</Badge>;
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-600">
+          即将过期
+        </Badge>
+      );
     }
     return <Badge variant="secondary">{days}天后删除</Badge>;
   };
@@ -238,9 +250,7 @@ function RecycleBinContent() {
             <Trash2 className="h-8 w-8" />
             回收站
           </h1>
-          <p className="text-muted-foreground mt-1">
-            已删除的资源将在30天后自动永久删除
-          </p>
+          <p className="text-muted-foreground mt-1">已删除的资源将在30天后自动永久删除</p>
         </div>
       </div>
 
@@ -257,7 +267,7 @@ function RecycleBinContent() {
               <div className="text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
-          
+
           {Object.entries(stats.byType).map(([type, count]) => {
             const config = RESOURCE_TYPE_CONFIG[type];
             if (!config || count === 0) return null;
@@ -309,7 +319,13 @@ function RecycleBinContent() {
                   className="pl-8 w-64"
                 />
               </div>
-              <Tabs value={selectedType} onValueChange={(v) => { setSelectedType(v); setPage(1); }}>
+              <Tabs
+                value={selectedType}
+                onValueChange={(v) => {
+                  setSelectedType(v);
+                  setPage(1);
+                }}
+              >
                 <TabsList>
                   <TabsTrigger value="all">全部</TabsTrigger>
                   <TabsTrigger value="document">文档</TabsTrigger>
@@ -322,9 +338,7 @@ function RecycleBinContent() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListStateBlock state="loading" />
           ) : items.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Trash2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -362,9 +376,7 @@ function RecycleBinContent() {
                       <TableCell>
                         {format(new Date(item.deletedAt), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
                       </TableCell>
-                      <TableCell>
-                        {getExpiryBadge(item.daysUntilExpiry)}
-                      </TableCell>
+                      <TableCell>{getExpiryBadge(item.daysUntilExpiry)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -373,9 +385,7 @@ function RecycleBinContent() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => setDetailDialog({ open: true, item })}
-                            >
+                            <DropdownMenuItem onClick={() => setDetailDialog({ open: true, item })}>
                               <FileText className="h-4 w-4 mr-2" />
                               查看详情
                             </DropdownMenuItem>
@@ -431,13 +441,15 @@ function RecycleBinContent() {
       </Card>
 
       {/* 恢复确认对话框 */}
-      <AlertDialog open={restoreDialog.open} onOpenChange={(open) => setRestoreDialog({ open, item: open ? restoreDialog.item : null })}>
+      <AlertDialog
+        open={restoreDialog.open}
+        onOpenChange={(open) => setRestoreDialog({ open, item: open ? restoreDialog.item : null })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确认恢复</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要恢复 "{restoreDialog.item?.resourceName}" 吗？
-              恢复后资源将回到原来的位置。
+              确定要恢复 "{restoreDialog.item?.resourceName}" 吗？ 恢复后资源将回到原来的位置。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -455,7 +467,10 @@ function RecycleBinContent() {
       </AlertDialog>
 
       {/* 永久删除确认对话框 */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, item: open ? deleteDialog.item : null })}>
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, item: open ? deleteDialog.item : null })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">确认永久删除</AlertDialogTitle>
@@ -480,7 +495,10 @@ function RecycleBinContent() {
       </AlertDialog>
 
       {/* 详情对话框 */}
-      <Dialog open={detailDialog.open} onOpenChange={(open) => setDetailDialog({ open, item: open ? detailDialog.item : null })}>
+      <Dialog
+        open={detailDialog.open}
+        onOpenChange={(open) => setDetailDialog({ open, item: open ? detailDialog.item : null })}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>资源详情</DialogTitle>
@@ -507,13 +525,17 @@ function RecycleBinContent() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">删除时间</label>
                   <p className="mt-1">
-                    {format(new Date(detailDialog.item.deletedAt), 'yyyy-MM-dd HH:mm:ss', { locale: zhCN })}
+                    {format(new Date(detailDialog.item.deletedAt), 'yyyy-MM-dd HH:mm:ss', {
+                      locale: zhCN,
+                    })}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">过期时间</label>
                   <p className="mt-1">
-                    {format(new Date(detailDialog.item.expiresAt), 'yyyy-MM-dd HH:mm:ss', { locale: zhCN })}
+                    {format(new Date(detailDialog.item.expiresAt), 'yyyy-MM-dd HH:mm:ss', {
+                      locale: zhCN,
+                    })}
                   </p>
                 </div>
                 <div>
@@ -524,7 +546,9 @@ function RecycleBinContent() {
               {detailDialog.item.deleteReason && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">删除原因</label>
-                  <p className="mt-1 text-sm bg-muted p-2 rounded">{detailDialog.item.deleteReason}</p>
+                  <p className="mt-1 text-sm bg-muted p-2 rounded">
+                    {detailDialog.item.deleteReason}
+                  </p>
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-4">
@@ -566,11 +590,13 @@ function RecycleBinContent() {
 
 export default function RecycleBinPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">加载中...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-gray-500">加载中...</div>
+        </div>
+      }
+    >
       <RecycleBinContent />
     </Suspense>
   );

@@ -40,6 +40,15 @@ pnpm exec husky install
 pnpm exec husky add .husky/pre-commit
 ```
 
+当前仓库已配置以下 Hook：
+
+- `pre-commit`
+  - `npx lint-staged`
+  - `pnpm run docs:v5-list-states-guard:check`
+- `pre-push`
+  - `pnpm run type-check`
+  - `pnpm run docs:v5-list-states-guard:check`
+
 ### lint-staged
 
 只对 Git 暂存区（staged）的文件运行检查，提高提交速度。
@@ -117,8 +126,50 @@ pnpm add -D \
 
 1. 对所有暂存的 JS/TS/JSX/TSX 文件运行 ESLint
 2. 对所有暂存的文件运行 Prettier 格式化
+3. 运行 `docs:v5-list-states-guard:check`，阻断手写列表三态 JSX（统一使用 `ListStateBlock` / `TableListStateRow`）
 
 如果检查失败，提交将被阻止，需要修复问题后再提交。
+
+当你运行 `git push` 时，会自动执行：
+
+1. `pnpm run type-check`
+2. `pnpm run docs:v5-list-states-guard:check`
+
+如果检查失败，推送将被阻止。
+
+## 🚦 门禁策略（统一口径）
+
+为保证列表页三态一致性，项目采用“三层门禁”：
+
+1. **本地 pre-commit（快速拦截）**
+   - 针对暂存文件执行 `lint-staged`
+   - 执行 `docs:v5-list-states-guard:check`
+2. **本地 pre-push（轻量兜底）**
+   - 执行 `type-check`
+   - 再次执行 `docs:v5-list-states-guard:check`
+3. **CI（最终兜底）**
+   - 在 `.github/workflows/ci-cd.yml` 的 lint job 中执行 `docs:v5-list-states-guard:check`
+
+### list-states 规则说明
+
+- 允许：
+  - `ListStateBlock`
+  - `TableListStateRow`
+- 不允许新增：
+  - 列表页中手写 `loading/error/empty` 三态 JSX（例如 `loading ? (...) : ...length === 0 ? (...)`）
+- 当前基线文件：
+  - `scripts/list-states-guard-baseline.txt`
+  - 已收敛为 `0`，即进入“全量零容忍”。
+
+### 维护命令
+
+```bash
+# 检查列表页三态门禁（本地/CI共用）
+pnpm run docs:v5-list-states-guard:check
+
+# 仅在规则升级或历史治理批次需要时更新基线
+pnpm run docs:v5-list-states-guard:update
+```
 
 ## 🔧 常见问题
 

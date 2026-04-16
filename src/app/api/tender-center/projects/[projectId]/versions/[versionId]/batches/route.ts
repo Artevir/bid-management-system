@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { desc, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
-import { parseResourceId } from '@/lib/api/validators';
-import {
-  resolveInterpretationByProjectAndVersion,
-  toBatchId,
-} from '@/app/api/tender-center/_utils';
-import { toTenderBatchStatus } from '@/lib/interpretation/status-machine';
+import { db } from '@/db';
+import { documentParseBatches } from '@/db/schema';
+import { toHubDocumentParseBatchId } from '@/app/api/tender-center/_utils';
+import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
+import type { TenderBatchStatus } from '@/lib/interpretation/status-machine';
+
+function mapHubBatchStatus(status: string): TenderBatchStatus {
+  switch (status) {
+    case 'running':
+    case 'partial':
+      return 'running';
+    case 'succeeded':
+      return 'succeeded';
+    case 'failed':
+    case 'cancelled':
+      return 'failed';
+    case 'queued':
+    default:
+      return 'pending';
+  }
+}
 
 // 040: GET /api/tender-center/projects/{projectId}/versions/{versionId}/batches
 export async function GET(
@@ -13,33 +29,39 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   const { projectId, versionId } = await params;
-  const pid = parseResourceId(projectId, '项目');
 
   return withAuth(request, async (_req, userId) => {
-    const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
-    if (!interpretation) {
+    const { project, version } = await resolveHubProjectAndVersion({
+      projectId,
+      versionId,
+      userId,
+    });
+    if (!version) {
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
     }
-    if (interpretation.uploaderId !== userId) {
-      return NextResponse.json({ error: '无权访问该版本' }, { status: 403 });
-    }
 
-    const batch = {
-      batchId: toBatchId(interpretation.id),
-      interpretationId: interpretation.id,
-      status: toTenderBatchStatus(interpretation.status),
-      progress: interpretation.parseProgress ?? 0,
-      startedAt: interpretation.updatedAt,
-      completedAt: interpretation.status === 'completed' ? interpretation.updatedAt : null,
-    };
+    const rows = await db.query.documentParseBatches.findMany({
+      where: eq(documentParseBatches.tenderProjectVersionId, version.id),
+      orderBy: [desc(documentParseBatches.createdAt)],
+    });
+
+    const data = rows.map((row) => ({
+      batchId: toHubDocumentParseBatchId(row.id),
+      interpretationId: null as number | null,
+      documentParseBatchId: row.id,
+      status: mapHubBatchStatus(row.batchStatus),
+      progress: row.batchStatus === 'succeeded' ? 100 : row.batchStatus === 'running' ? 50 : 0,
+      startedAt: row.parseStartedAt,
+      completedAt: row.parseFinishedAt,
+    }));
 
     return NextResponse.json({
       success: true,
-      data: [batch],
+      data,
       meta: {
-        projectId: pid,
-        versionId,
-        total: 1,
+        projectId: project.id,
+        versionId: version.id,
+        total: data.length,
       },
     });
   });

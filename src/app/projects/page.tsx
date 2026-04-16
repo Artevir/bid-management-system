@@ -45,7 +45,7 @@ import {
   Building2 as _Building2,
   MapPin as _MapPin,
 } from 'lucide-react';
-import { TableSkeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { NoProjectState } from '@/components/ui/empty-state';
 import { extractErrorMessage } from '@/lib/error-message';
 import {
@@ -106,7 +106,9 @@ export default function ProjectsPage() {
   const [filterIndustry, setFilterIndustry] = useState<string>('all');
   const [filterRegion, setFilterRegion] = useState<string>('all');
   const [filterTag, setFilterTag] = useState<string>('all');
-  const [availableTags, setAvailableTags] = useState<Array<{ id: number; name: string; color: string }>>([]);
+  const [availableTags, setAvailableTags] = useState<
+    Array<{ id: number; name: string; color: string }>
+  >([]);
 
   // 创建对话框
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -302,9 +304,7 @@ export default function ProjectsPage() {
     };
     const color = PROJECT_STATUS_COLORS[status];
     return (
-      <Badge className={colorMap[color] || colorMap.gray}>
-        {PROJECT_STATUS_LABELS[status]}
-      </Badge>
+      <Badge className={colorMap[color] || colorMap.gray}>{PROJECT_STATUS_LABELS[status]}</Badge>
     );
   };
 
@@ -558,9 +558,7 @@ export default function ProjectsPage() {
                     <Label htmlFor="departmentId">所属部门 *</Label>
                     <Select
                       value={formData.departmentId}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, departmentId: value })
-                      }
+                      onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="请选择所属部门" />
@@ -684,8 +682,8 @@ export default function ProjectsPage() {
                 {availableTags.map((tag) => (
                   <SelectItem key={tag.id} value={String(tag.id)}>
                     <div className="flex items-center gap-2">
-                      <span 
-                        className="w-3 h-3 rounded-full" 
+                      <span
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: tag.color }}
                       />
                       {tag.name}
@@ -703,20 +701,18 @@ export default function ProjectsPage() {
       <Card>
         <CardHeader>
           <CardTitle>项目列表</CardTitle>
-          <CardDescription>
-            共 {total} 个项目
-          </CardDescription>
+          <CardDescription>共 {total} 个项目</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{String(error)}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : projects.length === 0 ? (
             <NoProjectState onCreate={() => setDialogOpen(true)} />
           ) : (
@@ -746,8 +742,8 @@ export default function ProjectsPage() {
                         {project.tags && project.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {project.tags.map((tag) => (
-                              <Badge 
-                                key={tag.id} 
+                              <Badge
+                                key={tag.id}
                                 variant="outline"
                                 className="text-xs"
                                 style={{ borderColor: tag.color, color: tag.color }}
@@ -770,7 +766,9 @@ export default function ProjectsPage() {
                     <TableCell>
                       <div>
                         <div>{project.ownerName}</div>
-                        <div className="text-xs text-muted-foreground">{project.departmentName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {project.departmentName}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

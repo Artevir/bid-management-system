@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,10 +76,38 @@ interface User {
 }
 
 const DEFAULT_LEVELS: ApprovalLevel[] = [
-  { level: 'first', name: '一级审核', assigneeType: 'role', assigneeId: null, required: true, dueDays: 2 },
-  { level: 'second', name: '二级审核', assigneeType: 'role', assigneeId: null, required: true, dueDays: 2 },
-  { level: 'third', name: '三级审核', assigneeType: 'role', assigneeId: null, required: false, dueDays: 3 },
-  { level: 'final', name: '终审', assigneeType: 'user', assigneeId: null, required: true, dueDays: 1 },
+  {
+    level: 'first',
+    name: '一级审核',
+    assigneeType: 'role',
+    assigneeId: null,
+    required: true,
+    dueDays: 2,
+  },
+  {
+    level: 'second',
+    name: '二级审核',
+    assigneeType: 'role',
+    assigneeId: null,
+    required: true,
+    dueDays: 2,
+  },
+  {
+    level: 'third',
+    name: '三级审核',
+    assigneeType: 'role',
+    assigneeId: null,
+    required: false,
+    dueDays: 3,
+  },
+  {
+    level: 'final',
+    name: '终审',
+    assigneeType: 'user',
+    assigneeId: null,
+    required: true,
+    dueDays: 1,
+  },
 ];
 
 export default function ApprovalConfigPage() {
@@ -87,6 +116,7 @@ export default function ApprovalConfigPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<ApprovalFlow | null>(null);
@@ -102,6 +132,7 @@ export default function ApprovalConfigPage() {
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
     try {
       const [flowsRes, projectsRes, rolesRes, usersRes] = await Promise.all([
         fetch('/api/bid/approvals/flows'),
@@ -124,6 +155,7 @@ export default function ApprovalConfigPage() {
       if (usersData.success) setUsers(usersData.users || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -151,7 +183,7 @@ export default function ApprovalConfigPage() {
 
   const handleDelete = async (flowId: number) => {
     if (!confirm('确定要删除这个审核流程吗？')) return;
-    
+
     try {
       const res = await fetch(`/api/bid/approvals/flows?id=${flowId}`, { method: 'DELETE' });
       const data = await res.json();
@@ -160,6 +192,7 @@ export default function ApprovalConfigPage() {
       }
     } catch (error) {
       console.error('Failed to delete flow:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -171,10 +204,10 @@ export default function ApprovalConfigPage() {
 
     setSaving(true);
     try {
-      const url = selectedFlow 
+      const url = selectedFlow
         ? `/api/bid/approvals/flows?id=${selectedFlow.id}`
         : '/api/bid/approvals/flows';
-      
+
       const method = selectedFlow ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -194,6 +227,7 @@ export default function ApprovalConfigPage() {
       }
     } catch (error) {
       console.error('Failed to save flow:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setSaving(false);
     }
@@ -204,6 +238,10 @@ export default function ApprovalConfigPage() {
     (newLevels[index] as any)[field] = value;
     setFormData({ ...formData, levels: newLevels });
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -245,7 +283,7 @@ export default function ApprovalConfigPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">已启用</p>
-                <p className="text-2xl font-bold">{flows.filter(f => f.isActive).length}</p>
+                <p className="text-2xl font-bold">{flows.filter((f) => f.isActive).length}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -256,7 +294,7 @@ export default function ApprovalConfigPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">未启用</p>
-                <p className="text-2xl font-bold">{flows.filter(f => !f.isActive).length}</p>
+                <p className="text-2xl font-bold">{flows.filter((f) => !f.isActive).length}</p>
               </div>
               <Users className="w-8 h-8 text-gray-500" />
             </div>
@@ -272,13 +310,7 @@ export default function ApprovalConfigPage() {
         </CardHeader>
         <CardContent>
           {flows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>暂无审核流程配置</p>
-              <Button variant="outline" className="mt-4" onClick={handleAddNew}>
-                创建第一个审核流程
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无审核流程配置" />
           ) : (
             <Table>
               <TableHeader>
@@ -296,11 +328,13 @@ export default function ApprovalConfigPage() {
                     <TableCell className="font-medium">{flow.projectName}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 flex-wrap">
-                        {flow.levels.filter(l => l.required).map((level, idx) => (
-                          <Badge key={level.level} variant="outline" className="text-xs">
-                            {level.name}
-                          </Badge>
-                        ))}
+                        {flow.levels
+                          .filter((l) => l.required)
+                          .map((level, idx) => (
+                            <Badge key={level.level} variant="outline" className="text-xs">
+                              {level.name}
+                            </Badge>
+                          ))}
                         <ArrowRight className="w-3 h-3 text-muted-foreground mx-1" />
                         <span className="text-xs text-muted-foreground">
                           共{flow.levels.length}级
@@ -343,8 +377,8 @@ export default function ApprovalConfigPage() {
           <div className="space-y-4 py-4">
             <div>
               <Label>选择项目</Label>
-              <Select 
-                value={formData.projectId} 
+              <Select
+                value={formData.projectId}
                 onValueChange={(v) => setFormData({ ...formData, projectId: v })}
                 disabled={!!selectedFlow}
               >
@@ -353,7 +387,9 @@ export default function ApprovalConfigPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -395,12 +431,15 @@ export default function ApprovalConfigPage() {
                       <SelectContent>
                         {level.assigneeType === 'role'
                           ? roles.map((r) => (
-                              <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
+                              <SelectItem key={r.id} value={r.id.toString()}>
+                                {r.name}
+                              </SelectItem>
                             ))
                           : users.map((u) => (
-                              <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
-                            ))
-                        }
+                              <SelectItem key={u.id} value={u.id.toString()}>
+                                {u.name}
+                              </SelectItem>
+                            ))}
                       </SelectContent>
                     </Select>
                     <div className="flex items-center gap-2">
@@ -416,7 +455,9 @@ export default function ApprovalConfigPage() {
                         type="number"
                         className="w-16"
                         value={level.dueDays}
-                        onChange={(e) => updateLevel(index, 'dueDays', parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          updateLevel(index, 'dueDays', parseInt(e.target.value) || 1)
+                        }
                       />
                     </div>
                   </div>
@@ -425,9 +466,15 @@ export default function ApprovalConfigPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              取消
+            </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
               保存
             </Button>
           </DialogFooter>

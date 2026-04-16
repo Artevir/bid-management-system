@@ -8,8 +8,15 @@
 import { useState, useEffect, useCallback as _useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge as _Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -77,6 +84,7 @@ export default function BidSealPage() {
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [sealApplications, setSealApplications] = useState<SealApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createDialog, setCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -109,6 +117,7 @@ export default function BidSealPage() {
   const loadSealApplications = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       params.append('documentId', documentId);
       if (statusFilter !== 'all') {
@@ -139,7 +148,9 @@ export default function BidSealPage() {
           projectId: document.projectId,
           ...formData,
           plannedDate: formData.plannedDate || undefined,
-          partnerCompanyId: formData.partnerCompanyId ? parseInt(formData.partnerCompanyId) : undefined,
+          partnerCompanyId: formData.partnerCompanyId
+            ? parseInt(formData.partnerCompanyId)
+            : undefined,
         }),
       });
 
@@ -197,9 +208,7 @@ export default function BidSealPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">签章管理</h1>
-          <p className="text-gray-500 mt-1">
-            {document ? `文档：${document.name}` : '加载中...'}
-          </p>
+          <p className="text-gray-500 mt-1">{document ? `文档：${document.name}` : '加载中...'}</p>
         </div>
         <Dialog open={createDialog} onOpenChange={setCreateDialog}>
           <DialogTrigger asChild>
@@ -211,14 +220,15 @@ export default function BidSealPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>创建签章申请</DialogTitle>
-              <DialogDescription>
-                为当前文档创建签章申请
-              </DialogDescription>
+              <DialogDescription>为当前文档创建签章申请</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
                 <label className="text-sm font-medium">盖章方式</label>
-                <Select value={formData.sealMethod} onValueChange={(v) => setFormData({ ...formData, sealMethod: v })}>
+                <Select
+                  value={formData.sealMethod}
+                  onValueChange={(v) => setFormData({ ...formData, sealMethod: v })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -234,7 +244,9 @@ export default function BidSealPage() {
                 <Input
                   type="number"
                   value={formData.sealCount}
-                  onChange={(e) => setFormData({ ...formData, sealCount: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sealCount: parseInt(e.target.value) })
+                  }
                   min={1}
                 />
               </div>
@@ -249,7 +261,10 @@ export default function BidSealPage() {
               {formData.sealMethod === 'partner_company' && (
                 <div>
                   <label className="text-sm font-medium">选择友司</label>
-                  <Select value={formData.partnerCompanyId} onValueChange={(v) => setFormData({ ...formData, partnerCompanyId: v })}>
+                  <Select
+                    value={formData.partnerCompanyId}
+                    onValueChange={(v) => setFormData({ ...formData, partnerCompanyId: v })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="选择友司" />
                     </SelectTrigger>
@@ -283,9 +298,7 @@ export default function BidSealPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              总申请数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">总申请数</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{sealApplications.length}</div>
@@ -294,9 +307,7 @@ export default function BidSealPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              待处理
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">待处理</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -307,9 +318,7 @@ export default function BidSealPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              进行中
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">进行中</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -320,9 +329,7 @@ export default function BidSealPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              已完成
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">已完成</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -363,19 +370,12 @@ export default function BidSealPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                </div>
+              {error ? (
+                <ListStateBlock state="error" error={error} onRetry={loadDocumentDetail} />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : sealApplications.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <PenTool className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>暂无签章申请</p>
-                  <Button className="mt-4" onClick={() => setCreateDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    创建签章申请
-                  </Button>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无签章申请" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -413,7 +413,9 @@ export default function BidSealPage() {
                               <Calendar className="h-4 w-4 text-gray-400" />
                               {new Date(application.plannedDate).toLocaleDateString()}
                             </div>
-                          ) : '-'}
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>
                           {application.actualDate ? (
@@ -421,7 +423,9 @@ export default function BidSealPage() {
                               <Calendar className="h-4 w-4 text-gray-400" />
                               {new Date(application.actualDate).toLocaleDateString()}
                             </div>
-                          ) : '-'}
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -454,9 +458,7 @@ export default function BidSealPage() {
               <CardTitle>盖章历史</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                暂无盖章历史记录
-              </div>
+              <div className="text-center py-8 text-gray-500">暂无盖章历史记录</div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -3,9 +3,16 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription as _CardDescription,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +39,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator as _Separator } from '@/components/ui/separator';
-import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tabs as _Tabs,
+  TabsContent as _TabsContent,
+  TabsList as _TabsList,
+  TabsTrigger as _TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,7 +153,13 @@ interface ArchiveFile {
 
 export default function ArchivesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
       <ArchivesContent />
     </Suspense>
   );
@@ -155,6 +173,7 @@ function ArchivesContent() {
   const [tree, setTree] = useState<ArchiveItem[]>([]);
   const [selectedArchive, setSelectedArchive] = useState<ArchiveDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [expandedCompanies, setExpandedCompanies] = useState<Set<number>>(new Set());
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
@@ -262,13 +281,28 @@ function ArchivesContent() {
   const getBidResultBadge = (result: string) => {
     switch (result) {
       case 'awarded':
-        return <Badge className="bg-green-500/10 text-green-600 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />中标</Badge>;
+        return (
+          <Badge className="bg-green-500/10 text-green-600 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            中标
+          </Badge>
+        );
       case 'lost':
-        return <Badge className="bg-red-500/10 text-red-600 border-red-200"><XCircle className="h-3 w-3 mr-1" />未中标</Badge>;
+        return (
+          <Badge className="bg-red-500/10 text-red-600 border-red-200">
+            <XCircle className="h-3 w-3 mr-1" />
+            未中标
+          </Badge>
+        );
       case 'withdrawn':
         return <Badge className="bg-gray-500/10 text-gray-600 border-gray-200">撤回</Badge>;
       default:
-        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-200"><Clock className="h-3 w-3 mr-1" />待定</Badge>;
+        return (
+          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-200">
+            <Clock className="h-3 w-3 mr-1" />
+            待定
+          </Badge>
+        );
     }
   };
 
@@ -310,9 +344,7 @@ function ArchivesContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">标书归档</h1>
-            <p className="text-sm text-muted-foreground">
-              按公司-项目层级管理已完结的投标项目
-            </p>
+            <p className="text-sm text-muted-foreground">按公司-项目层级管理已完结的投标项目</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={fetchArchiveTree}>
@@ -344,17 +376,9 @@ function ArchivesContent() {
           <ScrollArea className="flex-1">
             <div className="p-2">
               {loading ? (
-                <div className="space-y-2 p-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : tree.length === 0 ? (
-                <div className="text-center text-muted-foreground py-12">
-                  <Archive className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无归档数据</p>
-                  <p className="text-sm mt-1">项目投标完结后将自动归档</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无归档数据" />
               ) : (
                 tree.map((company) => (
                   <div key={company.id} className="mb-1">
@@ -393,9 +417,7 @@ function ArchivesContent() {
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               )}
                               <FolderOpen className="h-4 w-4 text-orange-500" />
-                              <span className="flex-1 truncate text-sm">
-                                {project.name}
-                              </span>
+                              <span className="flex-1 truncate text-sm">{project.name}</span>
                               <Badge variant="outline" className="text-xs">
                                 {project.archiveCount}
                               </Badge>
@@ -417,7 +439,7 @@ function ArchivesContent() {
                                   >
                                     <Archive className="h-4 w-4 text-muted-foreground" />
                                     <span className="flex-1 truncate">
-                                      {archive.archiveDate 
+                                      {archive.archiveDate
                                         ? new Date(archive.archiveDate).toLocaleDateString()
                                         : '归档'}
                                     </span>
@@ -449,7 +471,9 @@ function ArchivesContent() {
                       <h2 className="text-lg font-semibold">{selectedArchive.projectName}</h2>
                       {getBidResultBadge(selectedArchive.bidResult)}
                       {selectedArchive.archiveType === 'auto' && (
-                        <Badge variant="outline" className="text-xs">自动归档</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          自动归档
+                        </Badge>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -458,14 +482,18 @@ function ArchivesContent() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {
-                      setEditForm({
-                        bidResult: selectedArchive.bidResult,
-                        summary: selectedArchive.summary || '',
-                        notes: selectedArchive.notes || '',
-                      });
-                      setEditDialogOpen(true);
-                    }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditForm({
+                          bidResult: selectedArchive.bidResult,
+                          summary: selectedArchive.summary || '',
+                          notes: selectedArchive.notes || '',
+                        });
+                        setEditDialogOpen(true);
+                      }}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       编辑
                     </Button>
@@ -514,7 +542,9 @@ function ArchivesContent() {
                         </div>
                         <div>
                           <span className="text-muted-foreground">归档方式：</span>
-                          <span>{selectedArchive.archiveType === 'auto' ? '自动归档' : '手动归档'}</span>
+                          <span>
+                            {selectedArchive.archiveType === 'auto' ? '自动归档' : '手动归档'}
+                          </span>
                         </div>
                       </div>
                       {selectedArchive.summary && (
@@ -578,9 +608,7 @@ function ArchivesContent() {
                     </CardHeader>
                     <CardContent>
                       {selectedArchive.documents.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          暂无归档文档
-                        </p>
+                        <ListStateBlock state="empty" emptyText="暂无归档文档" />
                       ) : (
                         <div className="space-y-2">
                           {selectedArchive.documents.map((doc) => (
@@ -593,7 +621,8 @@ function ArchivesContent() {
                                 <div>
                                   <p className="text-sm font-medium">{doc.documentName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    V{doc.documentVersion} | {doc.chapterCount}章 | {doc.wordCount}字
+                                    V{doc.documentVersion} | {doc.chapterCount}章 | {doc.wordCount}
+                                    字
                                   </p>
                                 </div>
                               </div>
@@ -625,9 +654,7 @@ function ArchivesContent() {
                     </CardHeader>
                     <CardContent>
                       {selectedArchive.files.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          暂无归档附件
-                        </p>
+                        <ListStateBlock state="empty" emptyText="暂无归档附件" />
                       ) : (
                         <div className="space-y-2">
                           {selectedArchive.files.map((file) => (

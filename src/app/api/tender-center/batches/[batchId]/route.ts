@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { resolveInterpretationByBatchId } from '@/app/api/tender-center/_utils';
-import { toTenderBatchStatus } from '@/lib/interpretation/status-machine';
+import { resolveHubDocumentParseBatchContext } from '@/app/api/tender-center/_utils';
+import type { TenderBatchStatus } from '@/lib/interpretation/status-machine';
+
+function mapHubBatchStatus(status: string): TenderBatchStatus {
+  switch (status) {
+    case 'running':
+    case 'partial':
+      return 'running';
+    case 'succeeded':
+      return 'succeeded';
+    case 'failed':
+    case 'cancelled':
+      return 'failed';
+    case 'queued':
+    default:
+      return 'pending';
+  }
+}
 
 // 040: GET /api/tender-center/batches/{batchId}
 export async function GET(
@@ -10,23 +26,31 @@ export async function GET(
 ) {
   const { batchId } = await params;
   return withAuth(request, async (_req, userId) => {
-    const interpretation = await resolveInterpretationByBatchId(batchId);
-    if (!interpretation) {
-      return NextResponse.json({ error: '批次不存在' }, { status: 404 });
+    const hub = await resolveHubDocumentParseBatchContext(batchId);
+    if (!hub) {
+      return NextResponse.json({ error: '批次不存在（仅支持 hub-batch-*）' }, { status: 404 });
     }
-    if (interpretation.uploaderId !== userId) {
+    if (hub.project.createdBy && hub.project.createdBy !== userId) {
       return NextResponse.json({ error: '无权访问该批次' }, { status: 403 });
     }
+
     return NextResponse.json({
       success: true,
       data: {
         batchId,
-        interpretationId: interpretation.id,
-        status: toTenderBatchStatus(interpretation.status),
-        progress: interpretation.parseProgress ?? 0,
-        parseError: interpretation.parseError,
-        createdAt: interpretation.createdAt,
-        updatedAt: interpretation.updatedAt,
+        interpretationId: null,
+        documentParseBatchId: hub.batch.id,
+        tenderProjectVersionId: hub.version.id,
+        status: mapHubBatchStatus(hub.batch.batchStatus),
+        progress:
+          hub.batch.batchStatus === 'succeeded'
+            ? 100
+            : hub.batch.batchStatus === 'running'
+              ? 50
+              : 0,
+        parseError: null,
+        createdAt: hub.batch.createdAt,
+        updatedAt: hub.batch.updatedAt,
       },
     });
   });

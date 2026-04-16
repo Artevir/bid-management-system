@@ -12,12 +12,14 @@ import { db } from '@/db';
 import { bidDocuments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { success, AppError, handleError } from '@/lib/api/error-handler';
+import { parseResourceId } from '@/lib/api/validators';
+import { checkResourcePermission } from '@/lib/auth/resource-permission';
 
 // ============================================
 // GET - 获取文档关联的解读列表
 // ============================================
 
-async function getDocumentInterpretations(request: NextRequest, _userId: number) {
+async function getDocumentInterpretations(request: NextRequest, userId: number) {
   try {
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
@@ -25,12 +27,17 @@ async function getDocumentInterpretations(request: NextRequest, _userId: number)
     if (!documentId) {
       throw AppError.badRequest('缺少文档ID');
     }
+    const documentIdNum = parseResourceId(documentId, '文档');
+    const permission = await checkResourcePermission(userId, 'document', documentIdNum, 'read');
+    if (!permission.allowed) {
+      throw AppError.forbidden('无权访问该文档');
+    }
 
     // 获取文档信息
     const doc = await db
       .select({ projectId: bidDocuments.projectId })
       .from(bidDocuments)
-      .where(eq(bidDocuments.id, parseInt(documentId)))
+      .where(eq(bidDocuments.id, documentIdNum))
       .limit(1);
 
     if (doc.length === 0) {
@@ -54,7 +61,7 @@ async function getDocumentInterpretations(request: NextRequest, _userId: number)
 // POST - 为文档关联解读
 // ============================================
 
-async function linkInterpretation(request: NextRequest, _userId: number) {
+async function linkInterpretation(request: NextRequest, userId: number) {
   try {
     const body = await request.json();
     const { documentId, interpretationId } = body;
@@ -62,15 +69,23 @@ async function linkInterpretation(request: NextRequest, _userId: number) {
     if (!documentId || !interpretationId) {
       throw AppError.badRequest('缺少必填字段：documentId, interpretationId');
     }
+    const documentIdNum = parseResourceId(String(documentId), '文档');
+    const interpretationIdNum = parseResourceId(String(interpretationId), '解读');
+
+    const permission = await checkResourcePermission(userId, 'document', documentIdNum, 'edit');
+    if (!permission.allowed) {
+      throw AppError.forbidden('无权修改该文档');
+    }
 
     // 更新文档关联的解读ID（需要在文档表中添加 interpretationId 字段）
     // 这里使用 generationHistory 作为临时关联
     await db
       .update(bidDocuments)
       .set({
+        interpretationId: interpretationIdNum,
         updatedAt: new Date(),
       })
-      .where(eq(bidDocuments.id, parseInt(documentId)));
+      .where(eq(bidDocuments.id, documentIdNum));
 
     return success({ message: '解读关联成功' });
   } catch (err) {

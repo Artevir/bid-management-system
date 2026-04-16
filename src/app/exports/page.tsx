@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -67,6 +68,7 @@ export default function ExportCenterPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [exportHistory, setExportHistory] = useState<ExportRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState('');
   const [selectedFormat, setSelectedFormat] = useState('docx');
@@ -79,6 +81,7 @@ export default function ExportCenterPage() {
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
     try {
       const docsRes = await fetch('/api/bid/documents?pageSize=100');
       const docsData = await docsRes.json();
@@ -105,6 +108,7 @@ export default function ExportCenterPage() {
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -125,7 +129,7 @@ export default function ExportCenterPage() {
 
       if (res.ok) {
         const blob = await res.blob();
-        const doc = documents.find(d => d.id === parseInt(selectedDocumentId));
+        const doc = documents.find((d) => d.id === parseInt(selectedDocumentId));
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -140,14 +144,19 @@ export default function ExportCenterPage() {
       }
     } catch (error) {
       console.error('Failed to export:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setExporting(false);
     }
   };
 
-  const filteredHistory = exportHistory.filter(record =>
+  const filteredHistory = exportHistory.filter((record) =>
     record.documentName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -190,7 +199,11 @@ export default function ExportCenterPage() {
               <div>
                 <p className="text-sm text-muted-foreground">今日导出</p>
                 <p className="text-2xl font-bold">
-                  {exportHistory.filter(r => new Date(r.exportedAt).toDateString() === new Date().toDateString()).length}
+                  {
+                    exportHistory.filter(
+                      (r) => new Date(r.exportedAt).toDateString() === new Date().toDateString()
+                    ).length
+                  }
                 </p>
               </div>
               <Clock className="w-8 h-8 text-yellow-500" />
@@ -214,7 +227,7 @@ export default function ExportCenterPage() {
               <div>
                 <p className="text-sm text-muted-foreground">成功导出</p>
                 <p className="text-2xl font-bold">
-                  {exportHistory.filter(r => r.status === 'completed').length}
+                  {exportHistory.filter((r) => r.status === 'completed').length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
@@ -243,10 +256,7 @@ export default function ExportCenterPage() {
           </div>
 
           {filteredHistory.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>暂无导出记录</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无导出记录" />
           ) : (
             <div className="space-y-2">
               {filteredHistory.map((record) => {
@@ -331,9 +341,15 @@ export default function ExportCenterPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+              取消
+            </Button>
             <Button onClick={handleExport} disabled={!selectedDocumentId || exporting}>
-              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              {exporting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
               导出
             </Button>
           </DialogFooter>

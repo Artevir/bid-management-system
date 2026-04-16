@@ -3,13 +3,26 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+  CardDescription as _CardDescription,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -94,7 +107,13 @@ interface PromptTemplate {
 
 export default function PromptTemplatesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      }
+    >
       <PromptTemplatesContent />
     </Suspense>
   );
@@ -103,25 +122,26 @@ export default function PromptTemplatesPage() {
 function PromptTemplatesContent() {
   const _router = useRouter();
   const _searchParams = useSearchParams();
-  
+
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<PromptCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [_total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
-  
+
   // Filters
   const [keyword, setKeyword] = useState('');
   const [categoryId, setCategoryId] = useState<string>('all');
   const [status, setStatus] = useState<string>('all');
-  
+
   // Dialogs
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -168,6 +188,7 @@ function PromptTemplatesContent() {
 
   const fetchTemplates = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (keyword) params.set('keyword', keyword);
@@ -178,7 +199,7 @@ function PromptTemplatesContent() {
 
       const res = await fetch(`/api/prompts/templates?${params.toString()}`);
       const data = await res.json();
-      
+
       if (data.items) {
         setTemplates(data.items);
         setTotal(data.total || data.items.length);
@@ -261,7 +282,7 @@ function PromptTemplatesContent() {
           maxTokens: template.maxTokens,
         }),
       });
-      
+
       if (res.ok) {
         fetchTemplates();
       }
@@ -274,12 +295,12 @@ function PromptTemplatesContent() {
     if (!confirm(`确定要删除模板"${template.name}"吗？此操作不可恢复。`)) {
       return;
     }
-    
+
     try {
       const res = await fetch(`/api/prompts/templates/${template.id}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         fetchTemplates();
       }
@@ -304,7 +325,7 @@ function PromptTemplatesContent() {
       const url = selectedTemplate
         ? `/api/prompts/templates/${selectedTemplate.id}`
         : '/api/prompts/templates';
-      
+
       const body = {
         ...formData,
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
@@ -330,7 +351,10 @@ function PromptTemplatesContent() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
+    const variants: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }
+    > = {
       draft: { variant: 'secondary', label: '草稿' },
       published: { variant: 'default', label: '已发布' },
       archived: { variant: 'outline', label: '已归档' },
@@ -411,20 +435,12 @@ function PromptTemplatesContent() {
       {/* Templates Table */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={fetchCategories} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : templates.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>暂无模板数据</p>
-              <Button variant="link" onClick={handleCreate}>
-                创建第一个模板
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无模板数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -454,13 +470,9 @@ function PromptTemplatesContent() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {template.code}
-                      </code>
+                      <code className="text-xs bg-muted px-2 py-1 rounded">{template.code}</code>
                     </TableCell>
-                    <TableCell>
-                      {template.category?.name || '-'}
-                    </TableCell>
+                    <TableCell>{template.category?.name || '-'}</TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <div>{getModelProviderLabel(template.modelProvider)}</div>
@@ -475,15 +487,15 @@ function PromptTemplatesContent() {
                           <Braces className="mr-1 h-3 w-3" />
                           {template.parameters.length} 个参数
                         </Badge>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(template.status)}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">v{template.version}</Badge>
                     </TableCell>
-                    <TableCell>
-                      {new Date(template.updatedAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(template.updatedAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -512,7 +524,7 @@ function PromptTemplatesContent() {
                           {!template.isSystem && (
                             <>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDelete(template)}
                                 className="text-red-600"
                               >
@@ -536,14 +548,12 @@ function PromptTemplatesContent() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {selectedTemplate ? '编辑模板' : '新建模板'}
-            </DialogTitle>
+            <DialogTitle>{selectedTemplate ? '编辑模板' : '新建模板'}</DialogTitle>
             <DialogDescription>
               配置提示词模板，支持参数占位符 {'{{param_name}}'} 语法
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label>模板名称 *</Label>
@@ -564,8 +574,8 @@ function PromptTemplatesContent() {
             </div>
             <div className="space-y-2">
               <Label>分类</Label>
-              <Select 
-                value={formData.categoryId} 
+              <Select
+                value={formData.categoryId}
                 onValueChange={(v) => setFormData({ ...formData, categoryId: v })}
               >
                 <SelectTrigger>
@@ -582,8 +592,8 @@ function PromptTemplatesContent() {
             </div>
             <div className="space-y-2">
               <Label>模型提供商</Label>
-              <Select 
-                value={formData.modelProvider} 
+              <Select
+                value={formData.modelProvider}
                 onValueChange={(v) => setFormData({ ...formData, modelProvider: v })}
               >
                 <SelectTrigger>
@@ -615,7 +625,7 @@ function PromptTemplatesContent() {
               <TabsTrigger value="agent">AI角色配置</TabsTrigger>
               <TabsTrigger value="settings">模型设置</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="content" className="mt-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -632,7 +642,7 @@ function PromptTemplatesContent() {
                 />
               </div>
             </TabsContent>
-            
+
             <TabsContent value="system" className="mt-4">
               <div className="space-y-2">
                 <Label>系统提示词</Label>
@@ -644,7 +654,7 @@ function PromptTemplatesContent() {
                 />
               </div>
             </TabsContent>
-            
+
             <TabsContent value="agent" className="mt-4">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -655,15 +665,17 @@ function PromptTemplatesContent() {
                     onChange={(e) => setFormData({ ...formData, isAgent: e.target.checked })}
                     className="h-4 w-4"
                   />
-                  <Label htmlFor="isAgent" className="cursor-pointer">启用为AI角色</Label>
+                  <Label htmlFor="isAgent" className="cursor-pointer">
+                    启用为AI角色
+                  </Label>
                 </div>
-                
+
                 {formData.isAgent && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>角色类型</Label>
-                      <Select 
-                        value={formData.agentRole} 
+                      <Select
+                        value={formData.agentRole}
                         onValueChange={(v) => setFormData({ ...formData, agentRole: v })}
                       >
                         <SelectTrigger>
@@ -695,7 +707,9 @@ function PromptTemplatesContent() {
                       <Label>问候语</Label>
                       <Input
                         value={formData.agentGreeting}
-                        onChange={(e) => setFormData({ ...formData, agentGreeting: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, agentGreeting: e.target.value })
+                        }
                         placeholder="如：您好，我是您的销售总监助手..."
                       />
                     </div>
@@ -703,7 +717,9 @@ function PromptTemplatesContent() {
                       <Label>角色描述</Label>
                       <Textarea
                         value={formData.agentDescription}
-                        onChange={(e) => setFormData({ ...formData, agentDescription: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, agentDescription: e.target.value })
+                        }
                         placeholder="描述这个AI角色的职责和能力..."
                         className="min-h-[80px]"
                       />
@@ -720,7 +736,7 @@ function PromptTemplatesContent() {
                 )}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="settings" className="mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -747,7 +763,9 @@ function PromptTemplatesContent() {
                   <Input
                     type="number"
                     value={formData.maxTokens}
-                    onChange={(e) => setFormData({ ...formData, maxTokens: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxTokens: parseInt(e.target.value) })
+                    }
                   />
                 </div>
               </div>
@@ -770,23 +788,24 @@ function PromptTemplatesContent() {
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>模板预览</DialogTitle>
-            <DialogDescription>
-              {selectedTemplate?.name}
-            </DialogDescription>
+            <DialogDescription>{selectedTemplate?.name}</DialogDescription>
           </DialogHeader>
-          
+
           {selectedTemplate && (
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">基本信息</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>代码: <code className="bg-muted px-2 py-1 rounded">{selectedTemplate.code}</code></div>
+                  <div>
+                    代码:{' '}
+                    <code className="bg-muted px-2 py-1 rounded">{selectedTemplate.code}</code>
+                  </div>
                   <div>状态: {getStatusBadge(selectedTemplate.status)}</div>
                   <div>版本: v{selectedTemplate.version}</div>
                   <div>模型: {getModelProviderLabel(selectedTemplate.modelProvider)}</div>
                 </div>
               </div>
-              
+
               {selectedTemplate.systemPrompt && (
                 <div>
                   <h4 className="font-medium mb-2">系统提示词</h4>
@@ -795,23 +814,30 @@ function PromptTemplatesContent() {
                   </pre>
                 </div>
               )}
-              
+
               <div>
                 <h4 className="font-medium mb-2">提示词内容</h4>
                 <pre className="bg-muted p-4 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
                   {selectedTemplate.content}
                 </pre>
               </div>
-              
+
               {selectedTemplate.parameters && selectedTemplate.parameters.length > 0 && (
                 <div>
                   <h4 className="font-medium mb-2">参数列表</h4>
                   <div className="space-y-2">
                     {selectedTemplate.parameters.map((param) => (
-                      <div key={param.id} className="flex items-center gap-2 text-sm bg-muted p-2 rounded">
+                      <div
+                        key={param.id}
+                        className="flex items-center gap-2 text-sm bg-muted p-2 rounded"
+                      >
                         <code>{`{{${param.code}}}}`}</code>
                         <span className="text-muted-foreground">- {param.name}</span>
-                        {param.required && <Badge variant="destructive" className="text-xs">必填</Badge>}
+                        {param.required && (
+                          <Badge variant="destructive" className="text-xs">
+                            必填
+                          </Badge>
+                        )}
                         {param.defaultValue && (
                           <span className="text-muted-foreground">默认: {param.defaultValue}</span>
                         )}
@@ -822,15 +848,17 @@ function PromptTemplatesContent() {
               )}
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
               关闭
             </Button>
-            <Button onClick={() => {
-              setPreviewDialogOpen(false);
-              if (selectedTemplate) handleGenerate(selectedTemplate);
-            }}>
+            <Button
+              onClick={() => {
+                setPreviewDialogOpen(false);
+                if (selectedTemplate) handleGenerate(selectedTemplate);
+              }}
+            >
               <Play className="mr-2 h-4 w-4" />
               生成方案
             </Button>
@@ -843,13 +871,11 @@ function PromptTemplatesContent() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>方案生成</DialogTitle>
-            <DialogDescription>
-              {selectedTemplate?.name}
-            </DialogDescription>
+            <DialogDescription>{selectedTemplate?.name}</DialogDescription>
           </DialogHeader>
-          
-          <GenerateDialogContent 
-            template={selectedTemplate} 
+
+          <GenerateDialogContent
+            template={selectedTemplate}
             onClose={() => setGenerateDialogOpen(false)}
           />
         </DialogContent>
@@ -859,11 +885,11 @@ function PromptTemplatesContent() {
 }
 
 // Generate Dialog Content Component
-function GenerateDialogContent({ 
-  template, 
-  onClose 
-}: { 
-  template: PromptTemplate | null; 
+function GenerateDialogContent({
+  template,
+  onClose,
+}: {
+  template: PromptTemplate | null;
   onClose: () => void;
 }) {
   const [parameters, setParameters] = useState<Record<string, string>>({});
@@ -883,7 +909,7 @@ function GenerateDialogContent({
 
   const handleGenerate = async () => {
     if (!template) return;
-    
+
     setGenerating(true);
     setGeneratedContent('');
     setStreaming(true);

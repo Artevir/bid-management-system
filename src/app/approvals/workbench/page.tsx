@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -56,6 +57,7 @@ export default function ApprovalWorkbenchPage() {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [historyApprovals, setHistoryApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewComment, setReviewComment] = useState('');
@@ -82,6 +84,7 @@ export default function ApprovalWorkbenchPage() {
 
   const fetchApprovals = async () => {
     setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/bid/approvals');
       const data = await res.json();
@@ -93,6 +96,7 @@ export default function ApprovalWorkbenchPage() {
       setHistoryApprovals([]);
     } catch (error) {
       console.error('Failed to fetch approvals:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -120,6 +124,7 @@ export default function ApprovalWorkbenchPage() {
       }
     } catch (error) {
       console.error('Failed to approve:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setProcessing(false);
     }
@@ -147,6 +152,7 @@ export default function ApprovalWorkbenchPage() {
       }
     } catch (error) {
       console.error('Failed to reject:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setProcessing(false);
     }
@@ -156,6 +162,10 @@ export default function ApprovalWorkbenchPage() {
     setSelectedApproval(approval);
     setReviewDialogOpen(true);
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -198,7 +208,11 @@ export default function ApprovalWorkbenchPage() {
               <div>
                 <p className="text-sm text-muted-foreground">今日待办</p>
                 <p className="text-2xl font-bold">
-                  {pendingApprovals.filter(a => new Date(a.submittedAt).toDateString() === new Date().toDateString()).length}
+                  {
+                    pendingApprovals.filter(
+                      (a) => new Date(a.submittedAt).toDateString() === new Date().toDateString()
+                    ).length
+                  }
                 </p>
               </div>
               <AlertCircle className="w-8 h-8 text-blue-500" />
@@ -211,7 +225,7 @@ export default function ApprovalWorkbenchPage() {
               <div>
                 <p className="text-sm text-muted-foreground">已通过</p>
                 <p className="text-2xl font-bold">
-                  {historyApprovals.filter(a => a.status === 'approved').length}
+                  {historyApprovals.filter((a) => a.status === 'approved').length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
@@ -224,7 +238,7 @@ export default function ApprovalWorkbenchPage() {
               <div>
                 <p className="text-sm text-muted-foreground">已驳回</p>
                 <p className="text-2xl font-bold">
-                  {historyApprovals.filter(a => a.status === 'rejected').length}
+                  {historyApprovals.filter((a) => a.status === 'rejected').length}
                 </p>
               </div>
               <XCircle className="w-8 h-8 text-red-500" />
@@ -236,22 +250,13 @@ export default function ApprovalWorkbenchPage() {
       {/* Tabs */}
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending">
-            待审核 ({pendingApprovals.length})
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            审核历史
-          </TabsTrigger>
+          <TabsTrigger value="pending">待审核 ({pendingApprovals.length})</TabsTrigger>
+          <TabsTrigger value="history">审核历史</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending">
           {pendingApprovals.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
-                <p className="text-muted-foreground">暂无待审核任务</p>
-              </CardContent>
-            </Card>
+            <ListStateBlock state="empty" emptyText="暂无待审核任务" />
           ) : (
             <div className="space-y-3">
               {pendingApprovals.map((approval) => (
@@ -274,7 +279,8 @@ export default function ApprovalWorkbenchPage() {
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             提交时间: {new Date(approval.submittedAt).toLocaleString()}
-                            {approval.deadline && ` · 截止: ${new Date(approval.deadline).toLocaleString()}`}
+                            {approval.deadline &&
+                              ` · 截止: ${new Date(approval.deadline).toLocaleString()}`}
                           </p>
                         </div>
                       </div>
@@ -287,10 +293,7 @@ export default function ApprovalWorkbenchPage() {
                           <Eye className="w-4 h-4 mr-1" />
                           查看
                         </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => openReviewDialog(approval)}
-                        >
+                        <Button size="sm" onClick={() => openReviewDialog(approval)}>
                           审核
                           <ChevronRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -305,12 +308,7 @@ export default function ApprovalWorkbenchPage() {
 
         <TabsContent value="history">
           {historyApprovals.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Clock className="w-12 h-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">暂无审核历史</p>
-              </CardContent>
-            </Card>
+            <ListStateBlock state="empty" emptyText="暂无审核历史" />
           ) : (
             <Card>
               <CardContent className="py-4">
@@ -356,14 +354,23 @@ export default function ApprovalWorkbenchPage() {
           <DialogHeader>
             <DialogTitle>审核文档</DialogTitle>
             <DialogDescription>
-              {selectedApproval?.documentName} - {APPROVAL_LEVEL_LABELS[selectedApproval?.level || '']?.label}
+              {selectedApproval?.documentName} -{' '}
+              {APPROVAL_LEVEL_LABELS[selectedApproval?.level || '']?.label}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm"><strong>项目:</strong> {selectedApproval?.projectName}</p>
-              <p className="text-sm"><strong>提交人:</strong> {selectedApproval?.submittedBy}</p>
-              <p className="text-sm"><strong>提交时间:</strong> {selectedApproval?.submittedAt && new Date(selectedApproval.submittedAt).toLocaleString()}</p>
+              <p className="text-sm">
+                <strong>项目:</strong> {selectedApproval?.projectName}
+              </p>
+              <p className="text-sm">
+                <strong>提交人:</strong> {selectedApproval?.submittedBy}
+              </p>
+              <p className="text-sm">
+                <strong>提交时间:</strong>{' '}
+                {selectedApproval?.submittedAt &&
+                  new Date(selectedApproval.submittedAt).toLocaleString()}
+              </p>
             </div>
             <div>
               <Label>审核意见</Label>
@@ -376,11 +383,19 @@ export default function ApprovalWorkbenchPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="destructive" onClick={handleReject} disabled={processing}>
-              {processing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <XCircle className="w-4 h-4 mr-1" />}
+              {processing ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <XCircle className="w-4 h-4 mr-1" />
+              )}
               驳回
             </Button>
             <Button onClick={handleApprove} disabled={processing}>
-              {processing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+              {processing ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-1" />
+              )}
               通过
             </Button>
           </DialogFooter>

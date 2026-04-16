@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -66,7 +73,12 @@ const SEAL_STATUS = [
 // 盖章方式
 const SEAL_METHODS = [
   { value: 'our_company', label: '本公司盖章', icon: '🏢', description: '我们带公章去对方公司' },
-  { value: 'partner_company', label: '对方来盖章', icon: '🤝', description: '对方带公章来我们公司' },
+  {
+    value: 'partner_company',
+    label: '对方来盖章',
+    icon: '🤝',
+    description: '对方带公章来我们公司',
+  },
 ];
 
 // 优先级
@@ -147,29 +159,29 @@ export default function BidSealApplicationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 筛选条件
   const [statusFilter, setStatusFilter] = useState('');
   const [sealMethodFilter, setSealMethodFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  
+
   // 新增/编辑对话框
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // 详情对话框
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<SealApplication | null>(null);
-  
+
   // 推送任务中
   const [pushingTaskId, setPushingTaskId] = useState<number | null>(null);
-  
+
   // 下拉选项
   const [users, setUsers] = useState<User[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  
+
   // 表单数据
   const [formData, setFormData] = useState({
     projectId: '',
@@ -206,10 +218,10 @@ export default function BidSealApplicationsPage() {
       if (statusFilter) params.append('status', statusFilter);
       if (sealMethodFilter) params.append('sealMethod', sealMethodFilter);
       if (keyword) params.append('keyword', keyword);
-      
+
       const response = await fetch(`/api/bid-seal-applications?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setApplications(result.data);
         setStats(result.stats);
@@ -252,7 +264,9 @@ export default function BidSealApplicationsPage() {
   // 加载公司联系人
   const loadContacts = async (companyId: number) => {
     try {
-      const response = await fetch(`/api/bid-seal-applications?companyId=${companyId}&contacts=true`);
+      const response = await fetch(
+        `/api/bid-seal-applications?companyId=${companyId}&contacts=true`
+      );
       const result = await response.json();
       if (result.success) {
         setContacts(result.contacts);
@@ -265,12 +279,14 @@ export default function BidSealApplicationsPage() {
   // 加载公司地址
   const _loadCompanyAddress = async (companyId: number) => {
     try {
-      const response = await fetch(`/api/bid-seal-applications?companyId=${companyId}&address=true`);
+      const response = await fetch(
+        `/api/bid-seal-applications?companyId=${companyId}&address=true`
+      );
       const result = await response.json();
       if (result.success && result.address) {
         // 优先使用办公地址，其次使用注册地址
         const address = result.address.officeAddress || result.address.registerAddress || '';
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           partnerCompanyAddress: address,
         }));
@@ -288,8 +304,8 @@ export default function BidSealApplicationsPage() {
 
   // 处理公司选择变更
   const handleCompanyChange = (companyId: string) => {
-    const company = companies.find(c => c.id === parseInt(companyId));
-    setFormData(prev => ({
+    const company = companies.find((c) => c.id === parseInt(companyId));
+    setFormData((prev) => ({
       ...prev,
       partnerCompanyId: companyId,
       partnerCompanyName: company?.name || '',
@@ -299,7 +315,7 @@ export default function BidSealApplicationsPage() {
       partnerContactPhone: '',
     }));
     setContacts([]);
-    
+
     if (companyId) {
       loadContacts(parseInt(companyId));
     }
@@ -307,8 +323,8 @@ export default function BidSealApplicationsPage() {
 
   // 处理联系人选择变更
   const handleContactChange = (contactId: string) => {
-    const contact = contacts.find(c => c.id === parseInt(contactId));
-    setFormData(prev => ({
+    const contact = contacts.find((c) => c.id === parseInt(contactId));
+    setFormData((prev) => ({
       ...prev,
       partnerContactId: contactId,
       partnerContactName: contact?.name || '',
@@ -318,8 +334,8 @@ export default function BidSealApplicationsPage() {
 
   // 处理指派人选择变更
   const handleAssigneeChange = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
-    setFormData(prev => ({
+    const user = users.find((u) => u.id === parseInt(userId));
+    setFormData((prev) => ({
       ...prev,
       assigneeId: userId,
       assigneeName: user?.name || '',
@@ -364,7 +380,7 @@ export default function BidSealApplicationsPage() {
     });
     setError('');
     setDialogOpen(true);
-    
+
     // 加载联系人列表
     if (application.partnerCompanyId) {
       loadContacts(application.partnerCompanyId);
@@ -512,7 +528,7 @@ export default function BidSealApplicationsPage() {
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
-    const statusConfig = SEAL_STATUS.find(s => s.value === status);
+    const statusConfig = SEAL_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -528,13 +544,13 @@ export default function BidSealApplicationsPage() {
 
   // 获取盖章方式显示
   const getSealMethodLabel = (method: string) => {
-    const methodConfig = SEAL_METHODS.find(m => m.value === method);
+    const methodConfig = SEAL_METHODS.find((m) => m.value === method);
     return methodConfig?.label || method;
   };
 
   // 获取优先级样式
   const getPriorityBadge = (priority: string) => {
-    const priorityConfig = PRIORITIES.find(p => p.value === priority);
+    const priorityConfig = PRIORITIES.find((p) => p.value === priority);
     const colorMap: Record<string, string> = {
       red: 'bg-red-100 text-red-800',
       yellow: 'bg-yellow-100 text-yellow-800',
@@ -665,12 +681,9 @@ export default function BidSealApplicationsPage() {
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={8} />
+            <ListStateBlock state="loading" />
           ) : applications.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Stamp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无盖章安排数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无盖章安排数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -692,14 +705,14 @@ export default function BidSealApplicationsPage() {
                       <div>
                         <div className="font-medium">{application.projectName}</div>
                         {application.projectCode && (
-                          <div className="text-sm text-muted-foreground">{application.projectCode}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {application.projectCode}
+                          </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {getSealMethodLabel(application.sealMethod)}
-                      </Badge>
+                      <Badge variant="outline">{getSealMethodLabel(application.sealMethod)}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -718,56 +731,49 @@ export default function BidSealApplicationsPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDate(application.sealDeadline)}
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
-                    <TableCell>
-                      {application.assigneeName || '-'}
-                    </TableCell>
+                    <TableCell>{application.assigneeName || '-'}</TableCell>
                     <TableCell>{getStatusBadge(application.status)}</TableCell>
                     <TableCell>{getPriorityBadge(application.priority)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(application)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleView(application)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(application)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(application)}>
                           <FileText className="h-4 w-4" />
                         </Button>
-                        {application.status !== 'completed' && application.status !== 'cancelled' && (
-                          <>
-                            {!application.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handlePushTask(application.id)}
-                                disabled={pushingTaskId === application.id}
-                              >
-                                {pushingTaskId === application.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            {application.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => router.push(`/tasks/${application.taskId}`)}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
+                        {application.status !== 'completed' &&
+                          application.status !== 'cancelled' && (
+                            <>
+                              {!application.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePushTask(application.id)}
+                                  disabled={pushingTaskId === application.id}
+                                >
+                                  {pushingTaskId === application.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                              {application.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/tasks/${application.taskId}`)}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          )}
                         {application.status === 'pending' && (
                           <Button
                             variant="ghost"
@@ -916,10 +922,7 @@ export default function BidSealApplicationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="partnerCompanyId">友司公司</Label>
-                  <Select
-                    value={formData.partnerCompanyId}
-                    onValueChange={handleCompanyChange}
-                  >
+                  <Select value={formData.partnerCompanyId} onValueChange={handleCompanyChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择友司公司" />
                     </SelectTrigger>
@@ -963,10 +966,14 @@ export default function BidSealApplicationsPage() {
                   <Input
                     id="partnerCompanyAddress"
                     value={formData.partnerCompanyAddress}
-                    onChange={(e) => setFormData({ ...formData, partnerCompanyAddress: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, partnerCompanyAddress: e.target.value })
+                    }
                     placeholder="选择友司公司后自动填充，也可手动修改"
                   />
-                  <p className="text-xs text-muted-foreground">地址从公司管理中自动获取，优先使用办公地址</p>
+                  <p className="text-xs text-muted-foreground">
+                    地址从公司管理中自动获取，优先使用办公地址
+                  </p>
                 </div>
               )}
             </div>
@@ -982,7 +989,9 @@ export default function BidSealApplicationsPage() {
                     type="number"
                     min={1}
                     value={formData.sealCount}
-                    onChange={(e) => setFormData({ ...formData, sealCount: parseInt(e.target.value) || 1 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sealCount: parseInt(e.target.value) || 1 })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -1009,7 +1018,9 @@ export default function BidSealApplicationsPage() {
                 <Textarea
                   id="specialRequirements"
                   value={formData.specialRequirements}
-                  onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, specialRequirements: e.target.value })
+                  }
                   placeholder="请输入特殊要求"
                   rows={2}
                 />
@@ -1022,10 +1033,7 @@ export default function BidSealApplicationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="assigneeId">负责人</Label>
-                  <Select
-                    value={formData.assigneeId}
-                    onValueChange={handleAssigneeChange}
-                  >
+                  <Select value={formData.assigneeId} onValueChange={handleAssigneeChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择负责人" />
                     </SelectTrigger>
@@ -1088,7 +1096,7 @@ export default function BidSealApplicationsPage() {
           <DialogHeader>
             <DialogTitle>盖章安排详情</DialogTitle>
           </DialogHeader>
-          
+
           {selectedApplication && (
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1102,7 +1110,9 @@ export default function BidSealApplicationsPage() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">盖章方式</Label>
-                  <div className="font-medium">{getSealMethodLabel(selectedApplication.sealMethod)}</div>
+                  <div className="font-medium">
+                    {getSealMethodLabel(selectedApplication.sealMethod)}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">状态</Label>
@@ -1129,7 +1139,9 @@ export default function BidSealApplicationsPage() {
                       <MapPin className="h-4 w-4" />
                       友司地址（盖章地点）
                     </Label>
-                    <div className="font-medium">{selectedApplication.partnerCompanyAddress || '-'}</div>
+                    <div className="font-medium">
+                      {selectedApplication.partnerCompanyAddress || '-'}
+                    </div>
                   </div>
                 )}
                 <div>
@@ -1143,7 +1155,9 @@ export default function BidSealApplicationsPage() {
                 <div>
                   <Label className="text-muted-foreground">截止日期</Label>
                   <div className="font-medium">
-                    {selectedApplication.sealDeadline ? formatDate(selectedApplication.sealDeadline) : '-'}
+                    {selectedApplication.sealDeadline
+                      ? formatDate(selectedApplication.sealDeadline)
+                      : '-'}
                   </div>
                 </div>
                 <div>
@@ -1161,7 +1175,7 @@ export default function BidSealApplicationsPage() {
                   </div>
                 )}
               </div>
-              
+
               {selectedApplication.taskId && (
                 <div className="pt-4 border-t">
                   <Button

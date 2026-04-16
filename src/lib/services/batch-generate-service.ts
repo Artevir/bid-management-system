@@ -4,7 +4,11 @@
  */
 
 import { db as _db } from '@/db';
-import { bidDocuments as _bidDocuments, bidDocumentInterpretations as _bidDocumentInterpretations, documentGenerationHistories as _documentGenerationHistories } from '@/db/schema';
+import {
+  bidDocuments as _bidDocuments,
+  bidDocumentInterpretations as _bidDocumentInterpretations,
+  documentGenerationHistories as _documentGenerationHistories,
+} from '@/db/schema';
 import { eq as _eq, inArray as _inArray } from 'drizzle-orm';
 import { oneClickGenerateService, type OneClickGenerateParams } from './one-click-generate-service';
 import { generationProgressService as _generationProgressService } from './generation-progress-service';
@@ -30,6 +34,7 @@ export interface BatchGenerateParams {
 
 export interface BatchGenerateResult {
   batchId: string;
+  createdBy: number;
   totalItems: number;
   completedItems: number;
   failedItems: number;
@@ -72,6 +77,7 @@ export const batchGenerateService = {
     // 初始化批量结果
     const result: BatchGenerateResult = {
       batchId,
+      createdBy: userId,
       totalItems: items.length,
       completedItems: 0,
       failedItems: 0,
@@ -89,7 +95,14 @@ export const batchGenerateService = {
 
     // 执行批量生成
     if (parallel) {
-      await this.executeParallel(items, generateOptions, result, userId, maxParallel || 3, customHeaders);
+      await this.executeParallel(
+        items,
+        generateOptions,
+        result,
+        userId,
+        maxParallel || 3,
+        customHeaders
+      );
     } else {
       await this.executeSequential(items, generateOptions, result, userId, customHeaders);
     }

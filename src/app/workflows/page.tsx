@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -67,6 +68,7 @@ interface WorkflowListResponse {
 export default function WorkflowListPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [workflows, setWorkflows] = useState<WorkflowListResponse>({
     data: [],
     total: 0,
@@ -93,6 +95,7 @@ export default function WorkflowListPage() {
   const fetchWorkflows = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       if (searchParams.keyword) params.append('keyword', searchParams.keyword);
       if (searchParams.category) params.append('category', searchParams.category);
@@ -102,11 +105,12 @@ export default function WorkflowListPage() {
 
       const response = await fetch(`/api/workflows?${params.toString()}`);
       if (!response.ok) throw new Error('获取列表失败');
-      
+
       const data = await response.json();
       setWorkflows(data);
     } catch (error) {
       console.error('获取工作流列表失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('获取工作流列表失败');
     } finally {
       setLoading(false);
@@ -147,7 +151,7 @@ export default function WorkflowListPage() {
         category: '',
         businessType: '',
       });
-      
+
       // 跳转到设计器页面
       router.push(`/workflows/${result.id}/design`);
     } catch (error: any) {
@@ -255,16 +259,14 @@ export default function WorkflowListPage() {
           <Input
             placeholder="搜索工作流名称或编码..."
             value={searchParams.keyword}
-            onChange={(e) =>
-              setSearchParams({ ...searchParams, keyword: e.target.value })
-            }
+            onChange={(e) => setSearchParams({ ...searchParams, keyword: e.target.value })}
             onKeyDown={(e) => e.key === 'Enter' && fetchWorkflows()}
           />
         </div>
         <Select
-          value={searchParams.category || "all"}
+          value={searchParams.category || 'all'}
           onValueChange={(value) =>
-            setSearchParams({ ...searchParams, category: value === "all" ? "" : value })
+            setSearchParams({ ...searchParams, category: value === 'all' ? '' : value })
           }
         >
           <SelectTrigger className="w-40">
@@ -278,9 +280,9 @@ export default function WorkflowListPage() {
           </SelectContent>
         </Select>
         <Select
-          value={searchParams.status || "all"}
+          value={searchParams.status || 'all'}
           onValueChange={(value) =>
-            setSearchParams({ ...searchParams, status: value === "all" ? "" : value })
+            setSearchParams({ ...searchParams, status: value === 'all' ? '' : value })
           }
         >
           <SelectTrigger className="w-32">
@@ -316,18 +318,12 @@ export default function WorkflowListPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  加载中...
-                </TableCell>
-              </TableRow>
+            {error ? (
+              <ListStateBlock state="error" error={error} onRetry={fetchWorkflows} />
+            ) : loading ? (
+              <ListStateBlock state="loading" />
             ) : workflows.data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  暂无数据
-                </TableCell>
-              </TableRow>
+              <ListStateBlock state="empty" emptyText="暂无数据" />
             ) : (
               workflows.data.map((workflow) => (
                 <TableRow key={workflow.id}>
@@ -335,25 +331,19 @@ export default function WorkflowListPage() {
                     <div>
                       <div className="font-medium">{workflow.name}</div>
                       {workflow.description && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {workflow.description}
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">{workflow.description}</div>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {workflow.code}
-                    </code>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">{workflow.code}</code>
                   </TableCell>
                   <TableCell>{getCategoryLabel(workflow.category)}</TableCell>
                   <TableCell>v{workflow.version}</TableCell>
                   <TableCell>{workflow.instanceCount}</TableCell>
                   <TableCell>{getStatusBadge(workflow.status)}</TableCell>
                   <TableCell>{workflow.creatorName || '-'}</TableCell>
-                  <TableCell>
-                    {new Date(workflow.createdAt).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell>{new Date(workflow.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link href={`/workflows/${workflow.id}/design`}>
@@ -389,9 +379,7 @@ export default function WorkflowListPage() {
       {/* 分页 */}
       {workflows.totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-500">
-            共 {workflows.total} 条记录
-          </div>
+          <div className="text-sm text-gray-500">共 {workflows.total} 条记录</div>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -425,9 +413,7 @@ export default function WorkflowListPage() {
               <Input
                 id="name"
                 value={createForm.name}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, name: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 placeholder="请输入工作流名称"
               />
             </div>
@@ -436,9 +422,7 @@ export default function WorkflowListPage() {
               <Input
                 id="code"
                 value={createForm.code}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, code: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
                 placeholder="唯一标识，如：doc-approval"
               />
             </div>
@@ -446,9 +430,7 @@ export default function WorkflowListPage() {
               <Label htmlFor="category">流程分类</Label>
               <Select
                 value={createForm.category}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, category: value })
-                }
+                onValueChange={(value) => setCreateForm({ ...createForm, category: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="请选择分类" />
@@ -464,9 +446,7 @@ export default function WorkflowListPage() {
               <Label htmlFor="businessType">业务类型</Label>
               <Select
                 value={createForm.businessType}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, businessType: value })
-                }
+                onValueChange={(value) => setCreateForm({ ...createForm, businessType: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="请选择业务类型" />
@@ -482,19 +462,14 @@ export default function WorkflowListPage() {
               <Textarea
                 id="description"
                 value={createForm.description}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, description: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 placeholder="请输入工作流描述"
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCreateDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               取消
             </Button>
             <Button onClick={handleCreate} disabled={submitting}>

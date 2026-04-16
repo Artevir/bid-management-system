@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -70,6 +71,7 @@ export default function TemplatesPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [categories, setCategories] = useState<string[]>([]);
@@ -187,9 +189,7 @@ export default function TemplatesPage() {
   };
 
   // 热门模板（按使用次数排序）
-  const hotTemplates = [...templates]
-    .sort((a, b) => b.useCount - a.useCount)
-    .slice(0, 6);
+  const hotTemplates = [...templates].sort((a, b) => b.useCount - a.useCount).slice(0, 6);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -267,13 +267,13 @@ export default function TemplatesPage() {
                         <CardTitle className="text-base group-hover:text-primary transition-colors">
                           {template.name}
                         </CardTitle>
-                        <CardDescription className="text-xs">
-                          {template.code}
-                        </CardDescription>
+                        <CardDescription className="text-xs">{template.code}</CardDescription>
                       </div>
                     </div>
                     {template.isSystem && (
-                      <Badge variant="secondary" className="text-xs">系统</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        系统
+                      </Badge>
                     )}
                   </div>
                 </CardHeader>
@@ -284,7 +284,10 @@ export default function TemplatesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {template.category && (
-                        <Badge variant="outline" className={cn('text-xs', categoryColors[template.category])}>
+                        <Badge
+                          variant="outline"
+                          className={cn('text-xs', categoryColors[template.category])}
+                        >
                           {categoryLabels[template.category] || template.category}
                         </Badge>
                       )}
@@ -320,29 +323,15 @@ export default function TemplatesPage() {
         <div className="flex items-center gap-2">
           <FolderOpen className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold">全部模板</h2>
-          <Badge variant="secondary" className="ml-2">{templates.length}</Badge>
+          <Badge variant="secondary" className="ml-2">
+            {templates.length}
+          </Badge>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-16 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ListStateBlock state="loading" />
         ) : templates.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <LayoutTemplate className="h-16 w-16 mx-auto mb-4 opacity-30" />
-            <p className="text-lg">暂无模板</p>
-            <p className="text-sm mt-1">点击"新建模板"创建您的第一个模板</p>
-          </div>
+          <ListStateBlock state="empty" emptyText="暂无模板" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4">
             {templates.map((template) => (
@@ -357,7 +346,9 @@ export default function TemplatesPage() {
                       <CardTitle className="text-sm">{template.name}</CardTitle>
                     </div>
                     {template.isSystem && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5">系统</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1.5">
+                        系统
+                      </Badge>
                     )}
                   </div>
                 </CardHeader>
@@ -368,7 +359,10 @@ export default function TemplatesPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1">
                       {template.category && (
-                        <Badge variant="outline" className={cn('text-[10px]', categoryColors[template.category])}>
+                        <Badge
+                          variant="outline"
+                          className={cn('text-[10px]', categoryColors[template.category])}
+                        >
                           {categoryLabels[template.category] || template.category}
                         </Badge>
                       )}
@@ -422,9 +416,7 @@ export default function TemplatesPage() {
                 <Label>模板名称 *</Label>
                 <Input
                   value={createForm.name}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, name: e.target.value })
-                  }
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   placeholder="请输入模板名称"
                 />
               </div>
@@ -432,9 +424,7 @@ export default function TemplatesPage() {
                 <Label>模板编码 *</Label>
                 <Input
                   value={createForm.code}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, code: e.target.value })
-                  }
+                  onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
                   placeholder="如：TECH-001"
                 />
               </div>
@@ -444,9 +434,7 @@ export default function TemplatesPage() {
                 <Label>分类</Label>
                 <Select
                   value={createForm.category}
-                  onValueChange={(value) =>
-                    setCreateForm({ ...createForm, category: value })
-                  }
+                  onValueChange={(value) => setCreateForm({ ...createForm, category: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="选择分类" />
@@ -462,9 +450,7 @@ export default function TemplatesPage() {
                 <Label>行业</Label>
                 <Input
                   value={createForm.industry}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, industry: e.target.value })
-                  }
+                  onChange={(e) => setCreateForm({ ...createForm, industry: e.target.value })}
                   placeholder="如：IT、建筑"
                 />
               </div>
@@ -473,9 +459,7 @@ export default function TemplatesPage() {
               <Label>描述</Label>
               <Textarea
                 value={createForm.description}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, description: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 placeholder="模板描述（可选）"
                 rows={2}
               />
@@ -484,9 +468,7 @@ export default function TemplatesPage() {
               <Label>章节结构（JSON格式）</Label>
               <Textarea
                 value={createForm.content}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, content: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
                 placeholder={`{
   "chapters": [
     {
@@ -500,19 +482,14 @@ export default function TemplatesPage() {
                 rows={8}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
-                章节结构为JSON格式，包含chapters数组
-              </p>
+              <p className="text-xs text-muted-foreground">章节结构为JSON格式，包含chapters数组</p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               取消
             </Button>
-            <Button
-              onClick={handleCreateTemplate}
-              disabled={!createForm.name || !createForm.code}
-            >
+            <Button onClick={handleCreateTemplate} disabled={!createForm.name || !createForm.code}>
               创建
             </Button>
           </DialogFooter>
@@ -526,25 +503,19 @@ export default function TemplatesPage() {
             <DialogTitle>{selectedTemplate?.name}</DialogTitle>
             <DialogDescription>
               <div className="flex items-center gap-4 mt-2">
-                <code className="text-xs bg-muted px-2 py-1 rounded">
-                  {selectedTemplate?.code}
-                </code>
+                <code className="text-xs bg-muted px-2 py-1 rounded">{selectedTemplate?.code}</code>
                 {selectedTemplate?.category && (
                   <Badge variant="outline">
                     {categoryLabels[selectedTemplate.category] || selectedTemplate.category}
                   </Badge>
                 )}
-                {selectedTemplate?.isSystem && (
-                  <Badge variant="secondary">系统模板</Badge>
-                )}
+                {selectedTemplate?.isSystem && <Badge variant="secondary">系统模板</Badge>}
               </div>
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             {selectedTemplate?.description && (
-              <p className="text-sm text-muted-foreground mb-4">
-                {selectedTemplate.description}
-              </p>
+              <p className="text-sm text-muted-foreground mb-4">{selectedTemplate.description}</p>
             )}
             {selectedTemplate?.content?.chapters && (
               <div className="space-y-2">
@@ -558,10 +529,7 @@ export default function TemplatesPage() {
             )}
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setViewDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
               关闭
             </Button>
             <Button

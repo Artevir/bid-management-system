@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -124,27 +131,27 @@ export default function BidNotificationCollectionsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 筛选条件
   const [statusFilter, setStatusFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  
+
   // 新增/编辑对话框
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // 详情对话框
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<NotificationCollection | null>(null);
-  
+
   // 推送任务中
   const [pushingTaskId, setPushingTaskId] = useState<number | null>(null);
-  
+
   // 下拉选项
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
+
   // 表单数据
   const [formData, setFormData] = useState({
     projectId: '',
@@ -178,16 +185,16 @@ export default function BidNotificationCollectionsPage() {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       if (keyword) params.append('keyword', keyword);
-      
+
       const response = await fetch(`/api/bid-notification-collections?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setCollections(result.data);
       } else {
         setError(extractErrorMessage(result, '加载数据失败'));
       }
-      
+
       // 加载统计
       const statsResponse = await fetch('/api/bid-notification-collections?stats=true');
       const statsResult = await statsResponse.json();
@@ -248,8 +255,12 @@ export default function BidNotificationCollectionsPage() {
       projectName: collection.projectName,
       projectCode: collection.projectCode || '',
       bidWinDate: collection.bidWinDate ? collection.bidWinDate.split('T')[0] : '',
-      publicityEndDate: collection.publicityEndDate ? collection.publicityEndDate.split('T')[0] : '',
-      notificationDeadline: collection.notificationDeadline ? collection.notificationDeadline.split('T')[0] : '',
+      publicityEndDate: collection.publicityEndDate
+        ? collection.publicityEndDate.split('T')[0]
+        : '',
+      notificationDeadline: collection.notificationDeadline
+        ? collection.notificationDeadline.split('T')[0]
+        : '',
       collectionLocation: collection.collectionLocation || '',
       collectionLocationDetail: collection.collectionLocationDetail || '',
       contactPerson: collection.contactPerson || '',
@@ -308,7 +319,7 @@ export default function BidNotificationCollectionsPage() {
 
   // 从用户选择填充姓名
   const handleCollectorSelect = (userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       setFormData({
         ...formData,
@@ -325,7 +336,7 @@ export default function BidNotificationCollectionsPage() {
       setError('请填写项目名称');
       return;
     }
-    
+
     if (!formData.collectorName) {
       setError('请选择领取人');
       return;
@@ -430,7 +441,7 @@ export default function BidNotificationCollectionsPage() {
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
-    const statusConfig = COLLECTION_STATUS.find(s => s.value === status);
+    const statusConfig = COLLECTION_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -553,12 +564,9 @@ export default function BidNotificationCollectionsPage() {
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : collections.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无领取安排数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无领取安排数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -579,12 +587,17 @@ export default function BidNotificationCollectionsPage() {
                       <div>
                         <div className="font-medium">{collection.projectName}</div>
                         {collection.projectCode && (
-                          <div className="text-sm text-muted-foreground">{collection.projectCode}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {collection.projectCode}
+                          </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm max-w-[200px] truncate" title={collection.collectionLocation || ''}>
+                      <div
+                        className="text-sm max-w-[200px] truncate"
+                        title={collection.collectionLocation || ''}
+                      >
                         {collection.collectionLocation || '-'}
                       </div>
                     </TableCell>
@@ -592,7 +605,9 @@ export default function BidNotificationCollectionsPage() {
                       <div>
                         <div>{collection.collectorName || '-'}</div>
                         {collection.collectorPhone && (
-                          <div className="text-sm text-muted-foreground">{collection.collectorPhone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {collection.collectorPhone}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -602,7 +617,9 @@ export default function BidNotificationCollectionsPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDate(collection.notificationDeadline)}
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       {checkDocumentsComplete(collection) ? (
@@ -614,18 +631,10 @@ export default function BidNotificationCollectionsPage() {
                     <TableCell>{getStatusBadge(collection.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(collection)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleView(collection)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(collection)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(collection)}>
                           <FileText className="h-4 w-4" />
                         </Button>
                         {collection.status !== 'completed' && collection.status !== 'cancelled' && (
@@ -695,9 +704,7 @@ export default function BidNotificationCollectionsPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? '编辑领取安排' : '新增领取安排'}</DialogTitle>
-            <DialogDescription>
-              填写领取中标通知书安排信息
-            </DialogDescription>
+            <DialogDescription>填写领取中标通知书安排信息</DialogDescription>
           </DialogHeader>
 
           {error && (
@@ -716,10 +723,10 @@ export default function BidNotificationCollectionsPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>关联项目</Label>
-                  <Select 
-                    value={formData.projectId} 
+                  <Select
+                    value={formData.projectId}
                     onValueChange={(value) => {
-                      const project = projects.find(p => p.id === parseInt(value));
+                      const project = projects.find((p) => p.id === parseInt(value));
                       setFormData({
                         ...formData,
                         projectId: value,
@@ -777,7 +784,9 @@ export default function BidNotificationCollectionsPage() {
                   <Input
                     type="date"
                     value={formData.notificationDeadline}
-                    onChange={(e) => setFormData({ ...formData, notificationDeadline: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notificationDeadline: e.target.value })
+                    }
                   />
                 </div>
               </CardContent>
@@ -794,7 +803,9 @@ export default function BidNotificationCollectionsPage() {
                     <Label>领取地点</Label>
                     <Input
                       value={formData.collectionLocation}
-                      onChange={(e) => setFormData({ ...formData, collectionLocation: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, collectionLocation: e.target.value })
+                      }
                       placeholder="输入领取地点"
                     />
                   </div>
@@ -811,7 +822,9 @@ export default function BidNotificationCollectionsPage() {
                   <Label>详细地址</Label>
                   <Textarea
                     value={formData.collectionLocationDetail}
-                    onChange={(e) => setFormData({ ...formData, collectionLocationDetail: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, collectionLocationDetail: e.target.value })
+                    }
                     placeholder="输入详细地址"
                     rows={2}
                   />
@@ -837,10 +850,7 @@ export default function BidNotificationCollectionsPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>选择领取人 *</Label>
-                  <Select
-                    value={formData.collectorId}
-                    onValueChange={handleCollectorSelect}
-                  >
+                  <Select value={formData.collectorId} onValueChange={handleCollectorSelect}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择领取人" />
                     </SelectTrigger>
@@ -882,7 +892,7 @@ export default function BidNotificationCollectionsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.needIdCard}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, needIdCard: checked as boolean })
                       }
                     />
@@ -891,7 +901,7 @@ export default function BidNotificationCollectionsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.needBusinessLicense}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, needBusinessLicense: checked as boolean })
                       }
                     />
@@ -900,7 +910,7 @@ export default function BidNotificationCollectionsPage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={formData.needSeal}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setFormData({ ...formData, needSeal: checked as boolean })
                       }
                     />
@@ -915,7 +925,7 @@ export default function BidNotificationCollectionsPage() {
                       <div className="flex items-center gap-2">
                         <Checkbox
                           checked={formData.idCardPrepared}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setFormData({ ...formData, idCardPrepared: checked as boolean })
                           }
                         />
@@ -926,8 +936,11 @@ export default function BidNotificationCollectionsPage() {
                       <div className="flex items-center gap-2">
                         <Checkbox
                           checked={formData.businessLicensePrepared}
-                          onCheckedChange={(checked) => 
-                            setFormData({ ...formData, businessLicensePrepared: checked as boolean })
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              businessLicensePrepared: checked as boolean,
+                            })
                           }
                         />
                         <Label className="font-normal text-sm">营业执照已准备</Label>
@@ -978,7 +991,7 @@ export default function BidNotificationCollectionsPage() {
           <DialogHeader>
             <DialogTitle>领取安排详情</DialogTitle>
           </DialogHeader>
-          
+
           {selectedCollection && (
             <div className="space-y-4">
               {/* 基本信息 */}
@@ -994,13 +1007,17 @@ export default function BidNotificationCollectionsPage() {
                 <div>
                   <Label className="text-muted-foreground">中标日期</Label>
                   <p className="font-medium">
-                    {selectedCollection.bidWinDate ? formatDate(selectedCollection.bidWinDate) : '-'}
+                    {selectedCollection.bidWinDate
+                      ? formatDate(selectedCollection.bidWinDate)
+                      : '-'}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">领取截止日期</Label>
                   <p className="font-medium">
-                    {selectedCollection.notificationDeadline ? formatDate(selectedCollection.notificationDeadline) : '-'}
+                    {selectedCollection.notificationDeadline
+                      ? formatDate(selectedCollection.notificationDeadline)
+                      : '-'}
                   </p>
                 </div>
               </div>
@@ -1010,7 +1027,9 @@ export default function BidNotificationCollectionsPage() {
                 <Label className="text-muted-foreground">领取地点</Label>
                 <p className="mt-1">{selectedCollection.collectionLocation || '-'}</p>
                 {selectedCollection.collectionLocationDetail && (
-                  <p className="text-sm text-muted-foreground">{selectedCollection.collectionLocationDetail}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCollection.collectionLocationDetail}
+                  </p>
                 )}
                 {selectedCollection.contactPerson && (
                   <p className="text-sm mt-2">
@@ -1035,14 +1054,16 @@ export default function BidNotificationCollectionsPage() {
                 <div className="mt-2 space-y-2">
                   {selectedCollection.needIdCard && (
                     <div className="flex items-center gap-2">
-                      <Badge variant={selectedCollection.idCardPrepared ? "default" : "outline"}>
+                      <Badge variant={selectedCollection.idCardPrepared ? 'default' : 'outline'}>
                         {selectedCollection.idCardPrepared ? '✓' : '○'} 身份证
                       </Badge>
                     </div>
                   )}
                   {selectedCollection.needBusinessLicense && (
                     <div className="flex items-center gap-2">
-                      <Badge variant={selectedCollection.businessLicensePrepared ? "default" : "outline"}>
+                      <Badge
+                        variant={selectedCollection.businessLicensePrepared ? 'default' : 'outline'}
+                      >
                         {selectedCollection.businessLicensePrepared ? '✓' : '○'} 营业执照副本
                       </Badge>
                       {selectedCollection.needSeal && (
@@ -1072,12 +1093,14 @@ export default function BidNotificationCollectionsPage() {
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
               关闭
             </Button>
-            <Button onClick={() => {
-              setDetailOpen(false);
-              if (selectedCollection) {
-                handleEdit(selectedCollection);
-              }
-            }}>
+            <Button
+              onClick={() => {
+                setDetailOpen(false);
+                if (selectedCollection) {
+                  handleEdit(selectedCollection);
+                }
+              }}
+            >
               编辑
             </Button>
           </DialogFooter>

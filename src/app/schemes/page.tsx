@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -92,6 +93,7 @@ export default function SchemesPage() {
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,6 +143,7 @@ export default function SchemesPage() {
 
   const loadSchemes = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (selectedCategory) params.append('categoryId', selectedCategory.toString());
@@ -327,9 +330,7 @@ export default function SchemesPage() {
             全部方案
           </Button>
         </div>
-        <div className="flex-1 overflow-auto py-2">
-          {renderCategoryTree(categories)}
-        </div>
+        <div className="flex-1 overflow-auto py-2">{renderCategoryTree(categories)}</div>
       </div>
 
       {/* 右侧内容区 */}
@@ -390,18 +391,12 @@ export default function SchemesPage() {
 
         {/* 方案列表 */}
         <div className="flex-1 overflow-auto p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500">加载中...</div>
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={loadCategories} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : schemes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <FileText className="h-12 w-12 mb-4" />
-              <p>暂无方案</p>
-              <Button variant="outline" className="mt-4" onClick={() => setCreateDialogOpen(true)}>
-                创建第一个方案
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无方案" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {schemes.map((scheme) => (
@@ -574,7 +569,10 @@ export default function SchemesPage() {
               <Select
                 value={schemeForm.categoryId?.toString() || 'none'}
                 onValueChange={(value) =>
-                  setSchemeForm({ ...schemeForm, categoryId: value === 'none' ? null : parseInt(value) })
+                  setSchemeForm({
+                    ...schemeForm,
+                    categoryId: value === 'none' ? null : parseInt(value),
+                  })
                 }
               >
                 <SelectTrigger>

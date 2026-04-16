@@ -92,7 +92,14 @@ export const oneClickGenerateService = {
     userId: number,
     customHeaders?: Record<string, string>
   ): Promise<GenerationResult> {
-    const { projectId, documentName, interpretationId, companyIds, partnerApplicationIds, generateOptions } = params;
+    const {
+      projectId,
+      documentName,
+      interpretationId,
+      companyIds,
+      partnerApplicationIds,
+      generateOptions,
+    } = params;
 
     // 1. 获取招标文件解读数据
     const interpretation = await this.getInterpretationData(interpretationId);
@@ -275,10 +282,7 @@ export const oneClickGenerateService = {
    * 获取公司数据
    */
   async getCompaniesData(companyIds: number[]) {
-    const companyList = await db
-      .select()
-      .from(companies)
-      .where(inArray(companies.id, companyIds));
+    const companyList = await db.select().from(companies).where(inArray(companies.id, companyIds));
 
     // 获取每个公司的资质文件
     const companiesWithFiles = await Promise.all(
@@ -461,7 +465,11 @@ export const oneClickGenerateService = {
     partnerMaterials: any[],
     style: string,
     customHeaders?: Record<string, string>
-  ): Promise<{ content: string; source: GeneratedChapter['source']; placeholders: PlaceholderItem[] }> {
+  ): Promise<{
+    content: string;
+    source: GeneratedChapter['source'];
+    placeholders: PlaceholderItem[];
+  }> {
     const placeholders: PlaceholderItem[] = [];
 
     // 收集资质要求
@@ -569,9 +577,9 @@ ${partnerQualContent || '暂无'}
     const llm = customHeaders ? createCozeAdapterWithHeaders(customHeaders) : getLLM();
 
     const technicalSpecs = interpretation.technicalSpecs || [];
-    const scoringItems = interpretation.scoringItems?.filter(
-      (item: any) => item.scoringCategory === 'technical'
-    ) || [];
+    const scoringItems =
+      interpretation.scoringItems?.filter((item: any) => item.scoringCategory === 'technical') ||
+      [];
 
     const systemPrompt = `你是一个专业的技术方案编写专家。请根据招标技术要求和评分标准，编写技术方案章节。
 
@@ -726,7 +734,9 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
   /**
    * 推断章节类型
    */
-  inferChapterType(title: string): 'cover' | 'toc' | 'business' | 'technical' | 'qualification' | 'price' | 'appendix' | null {
+  inferChapterType(
+    title: string
+  ): 'cover' | 'toc' | 'business' | 'technical' | 'qualification' | 'price' | 'appendix' | null {
     const titleLower = title.toLowerCase();
 
     if (titleLower.includes('资质') || titleLower.includes('资格')) {
@@ -782,6 +792,9 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
     const { bidDocumentReviews } = await import('@/db/schema');
 
     const conditions = [eq(bidDocumentReviews.status, 'pending')];
+    if (_projectId) {
+      conditions.push(eq(bidDocuments.projectId, _projectId));
+    }
 
     const reviews = await db
       .select({
@@ -815,11 +828,7 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
     const { bidDocumentReviews } = await import('@/db/schema');
 
     // 获取审核人信息
-    const [reviewer] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, reviewerId))
-      .limit(1);
+    const [reviewer] = await db.select().from(users).where(eq(users.id, reviewerId)).limit(1);
 
     // 更新审核记录
     await db
@@ -863,11 +872,7 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
    */
   async getAvailableDataSources(projectId: number) {
     // 获取项目关联的公司
-    const _project = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
+    const _project = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
 
     // 获取友司支持申请
     const partnerApps = await db
@@ -881,10 +886,7 @@ ${chapterData.contentRequirement || '按照招标文件要求编写'}
       );
 
     // 获取所有公司
-    const allCompanies = await db
-      .select()
-      .from(companies)
-      .where(eq(companies.isActive, true));
+    const allCompanies = await db.select().from(companies).where(eq(companies.isActive, true));
 
     return {
       companies: allCompanies,

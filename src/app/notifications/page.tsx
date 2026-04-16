@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -99,6 +105,7 @@ const priorityColors: Record<string, string> = {
 
 export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [filter, setFilter] = useState({
     type: '',
@@ -123,10 +130,11 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = new URLSearchParams();
       params.append('page', notifications.page.toString());
       params.append('pageSize', notifications.pageSize.toString());
-      
+
       if (activeTab === 'unread') {
         params.append('isRead', 'false');
       }
@@ -139,11 +147,12 @@ export default function NotificationsPage() {
 
       const response = await fetch(`/api/notifications?${params.toString()}`);
       if (!response.ok) throw new Error('获取失败');
-      
+
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
       console.error('获取通知列表失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('获取通知列表失败');
     } finally {
       setLoading(false);
@@ -155,7 +164,7 @@ export default function NotificationsPage() {
     try {
       const response = await fetch('/api/notifications?action=stats');
       if (!response.ok) throw new Error('获取失败');
-      
+
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -277,9 +286,7 @@ export default function NotificationsPage() {
 
   // 切换选择
   const toggleSelect = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   // 全选当前页
@@ -319,9 +326,7 @@ export default function NotificationsPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">消息中心</h1>
-            <p className="text-gray-500 text-sm">
-              管理系统通知、工作流提醒等消息
-            </p>
+            <p className="text-gray-500 text-sm">管理系统通知、工作流提醒等消息</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -372,7 +377,10 @@ export default function NotificationsPage() {
 
       {/* 筛选栏 */}
       <div className="flex items-center gap-4 mb-4">
-        <Select value={filter.type || "all"} onValueChange={(v) => setFilter({ ...filter, type: v === "all" ? "" : v })}>
+        <Select
+          value={filter.type || 'all'}
+          onValueChange={(v) => setFilter({ ...filter, type: v === 'all' ? '' : v })}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="消息类型" />
           </SelectTrigger>
@@ -386,7 +394,10 @@ export default function NotificationsPage() {
             <SelectItem value="system">系统</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filter.priority || "all"} onValueChange={(v) => setFilter({ ...filter, priority: v === "all" ? "" : v })}>
+        <Select
+          value={filter.priority || 'all'}
+          onValueChange={(v) => setFilter({ ...filter, priority: v === 'all' ? '' : v })}
+        >
           <SelectTrigger className="w-32">
             <SelectValue placeholder="优先级" />
           </SelectTrigger>
@@ -406,14 +417,14 @@ export default function NotificationsPage() {
           <TabsTrigger value="all">
             全部消息
             {stats.total > 0 && (
-              <Badge className="ml-2" variant="secondary">{stats.total}</Badge>
+              <Badge className="ml-2" variant="secondary">
+                {stats.total}
+              </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="unread">
             未读消息
-            {stats.unread > 0 && (
-              <Badge className="ml-2 bg-red-500">{stats.unread}</Badge>
-            )}
+            {stats.unread > 0 && <Badge className="ml-2 bg-red-500">{stats.unread}</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -435,13 +446,12 @@ export default function NotificationsPage() {
           {/* 消息列表 */}
           <Card>
             <CardContent className="p-0">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500">加载中...</div>
+              {error ? (
+                <ListStateBlock state="error" error={error} onRetry={fetchNotifications} />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : notifications.data.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <BellOff className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                  <p>暂无消息</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无消息" />
               ) : (
                 <div className="divide-y">
                   {/* 全选 */}
@@ -456,7 +466,7 @@ export default function NotificationsPage() {
                   {/* 消息项 */}
                   {notifications.data.map((notification) => {
                     const TypeIcon = typeIcons[notification.type] || Bell;
-                    
+
                     return (
                       <div
                         key={notification.id}
@@ -469,25 +479,26 @@ export default function NotificationsPage() {
                           checked={selectedIds.includes(notification.id)}
                           onCheckedChange={() => toggleSelect(notification.id)}
                         />
-                        
-                        <div className={cn(
-                          'p-2 rounded-lg',
-                          notification.type === 'system' && 'bg-purple-100',
-                          notification.type === 'workflow' && 'bg-blue-100',
-                          notification.type === 'approval' && 'bg-green-100',
-                          notification.type === 'milestone' && 'bg-orange-100',
-                          notification.type === 'document' && 'bg-cyan-100',
-                          notification.type === 'project' && 'bg-indigo-100',
-                        )}>
+
+                        <div
+                          className={cn(
+                            'p-2 rounded-lg',
+                            notification.type === 'system' && 'bg-purple-100',
+                            notification.type === 'workflow' && 'bg-blue-100',
+                            notification.type === 'approval' && 'bg-green-100',
+                            notification.type === 'milestone' && 'bg-orange-100',
+                            notification.type === 'document' && 'bg-cyan-100',
+                            notification.type === 'project' && 'bg-indigo-100'
+                          )}
+                        >
                           <TypeIcon className="h-4 w-4" />
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={cn(
-                              'font-medium',
-                              !notification.isRead && 'text-blue-600'
-                            )}>
+                            <span
+                              className={cn('font-medium', !notification.isRead && 'text-blue-600')}
+                            >
                               {notification.title}
                             </span>
                             {!notification.isRead && (
@@ -548,15 +559,15 @@ export default function NotificationsPage() {
           {/* 分页 */}
           {notifications.totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-gray-500">
-                共 {notifications.total} 条消息
-              </div>
+              <div className="text-sm text-gray-500">共 {notifications.total} 条消息</div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={notifications.page === 1}
-                  onClick={() => setNotifications({ ...notifications, page: notifications.page - 1 })}
+                  onClick={() =>
+                    setNotifications({ ...notifications, page: notifications.page - 1 })
+                  }
                 >
                   上一页
                 </Button>
@@ -564,7 +575,9 @@ export default function NotificationsPage() {
                   variant="outline"
                   size="sm"
                   disabled={notifications.page === notifications.totalPages}
-                  onClick={() => setNotifications({ ...notifications, page: notifications.page + 1 })}
+                  onClick={() =>
+                    setNotifications({ ...notifications, page: notifications.page + 1 })
+                  }
                 >
                   下一页
                 </Button>

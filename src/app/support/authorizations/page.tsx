@@ -8,8 +8,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -137,14 +144,16 @@ export default function AuthorizationApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [applicationToDelete, setApplicationToDelete] = useState<AuthorizationApplication | null>(null);
+  const [applicationToDelete, setApplicationToDelete] = useState<AuthorizationApplication | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   // 加载授权申请列表
   const fetchApplications = useCallback(async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const params = new URLSearchParams();
       params.append('page', String(page));
@@ -153,7 +162,7 @@ export default function AuthorizationApplicationsPage() {
       if (statusFilter !== 'all') params.append('status', statusFilter);
 
       const response = await fetch(`/api/support/authorizations?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('获取授权申请列表失败');
       }
@@ -195,7 +204,7 @@ export default function AuthorizationApplicationsPage() {
   // 处理删除
   const handleDelete = async () => {
     if (!applicationToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/support/authorizations/${applicationToDelete.id}`, {
@@ -222,7 +231,7 @@ export default function AuthorizationApplicationsPage() {
   // 全选/取消全选
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(applications.map(a => a.id));
+      setSelectedIds(applications.map((a) => a.id));
     } else {
       setSelectedIds([]);
     }
@@ -231,9 +240,9 @@ export default function AuthorizationApplicationsPage() {
   // 单个选择
   const handleSelect = (id: number, checked: boolean) => {
     if (checked) {
-      setSelectedIds(prev => [...prev, id]);
+      setSelectedIds((prev) => [...prev, id]);
     } else {
-      setSelectedIds(prev => prev.filter(i => i !== id));
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
     }
   };
 
@@ -246,11 +255,7 @@ export default function AuthorizationApplicationsPage() {
   // 获取状态徽章
   const getStatusBadge = (status: string) => {
     const colorClass = STATUS_COLORS[status] || STATUS_COLORS.draft;
-    return (
-      <Badge className={colorClass}>
-        {STATUS_LABELS[status] || status}
-      </Badge>
-    );
+    return <Badge className={colorClass}>{STATUS_LABELS[status] || status}</Badge>;
   };
 
   return (
@@ -259,7 +264,9 @@ export default function AuthorizationApplicationsPage() {
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Link href="/support" className="hover:text-foreground">厂家支持</Link>
+            <Link href="/support" className="hover:text-foreground">
+              厂家支持
+            </Link>
             <span>/</span>
             <span className="text-foreground">授权申请</span>
           </div>
@@ -354,15 +361,12 @@ export default function AuthorizationApplicationsPage() {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListStateBlock state="loading" />
           ) : error ? (
             <div className="text-center py-12 text-destructive">{error}</div>
           ) : applications.length === 0 ? (
-            <div className="text-center py-12">
-              <FileCheck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">暂无授权申请数据</p>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无授权申请数据" />
               <Button onClick={() => router.push('/support/authorizations/create')}>
                 <Plus className="mr-2 h-4 w-4" />
                 创建第一个申请
@@ -374,7 +378,9 @@ export default function AuthorizationApplicationsPage() {
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedIds.length === applications.length && applications.length > 0}
+                      checked={
+                        selectedIds.length === applications.length && applications.length > 0
+                      }
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
@@ -411,7 +417,9 @@ export default function AuthorizationApplicationsPage() {
                       <div>
                         <p className="font-medium">{application.handlerName}</p>
                         {application.handlerPhone && (
-                          <p className="text-xs text-muted-foreground">{application.handlerPhone}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {application.handlerPhone}
+                          </p>
                         )}
                       </div>
                     </TableCell>
@@ -440,7 +448,9 @@ export default function AuthorizationApplicationsPage() {
                             查看详情
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => router.push(`/support/authorizations/${application.id}/edit`)}
+                            onClick={() =>
+                              router.push(`/support/authorizations/${application.id}/edit`)
+                            }
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             编辑
@@ -471,7 +481,7 @@ export default function AuthorizationApplicationsPage() {
                 variant="outline"
                 size="sm"
                 disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
+                onClick={() => setPage((p) => p - 1)}
               >
                 上一页
               </Button>
@@ -482,7 +492,7 @@ export default function AuthorizationApplicationsPage() {
                 variant="outline"
                 size="sm"
                 disabled={page * pageSize >= total}
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
               >
                 下一页
               </Button>
@@ -497,7 +507,8 @@ export default function AuthorizationApplicationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除授权申请 <span className="font-medium">"{applicationToDelete?.applicationNo}"</span> 吗？
+              确定要删除授权申请{' '}
+              <span className="font-medium">"{applicationToDelete?.applicationNo}"</span> 吗？
               相关的厂家、资质材料、配套材料等数据也会被删除，此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>

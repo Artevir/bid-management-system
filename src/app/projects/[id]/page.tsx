@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -40,11 +41,7 @@ import {
   FileCheck,
   FileStack,
 } from 'lucide-react';
-import {
-  PROJECT_STATUS_LABELS,
-  PROJECT_STATUS_COLORS,
-  ProjectStatus,
-} from '@/types/project';
+import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, ProjectStatus } from '@/types/project';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -178,9 +175,7 @@ export default function ProjectDetailPage() {
     };
     const color = PROJECT_STATUS_COLORS[status];
     return (
-      <Badge className={colorMap[color] || colorMap.gray}>
-        {PROJECT_STATUS_LABELS[status]}
-      </Badge>
+      <Badge className={colorMap[color] || colorMap.gray}>{PROJECT_STATUS_LABELS[status]}</Badge>
     );
   };
 
@@ -246,9 +241,7 @@ export default function ProjectDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {getStatusBadge(project.status)}
-        </div>
+        <div className="flex items-center gap-2">{getStatusBadge(project.status)}</div>
       </div>
 
       {/* 项目概览 */}
@@ -280,9 +273,7 @@ export default function ProjectDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatDate(project.submissionDeadline)}</div>
-            <p className="text-xs text-muted-foreground">
-              开标: {formatDate(project.openBidDate)}
-            </p>
+            <p className="text-xs text-muted-foreground">开标: {formatDate(project.openBidDate)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -366,127 +357,151 @@ export default function ProjectDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {Object.entries(project.interpretation.basicInfo as Record<string, any>).map(([key, value]) => (
-                      <div key={key}>
-                        <p className="text-sm text-muted-foreground">{key}</p>
-                        <p className="font-medium">{String(value || '-')}</p>
-                      </div>
-                    ))}
+                    {Object.entries(project.interpretation.basicInfo as Record<string, any>).map(
+                      ([key, value]) => (
+                        <div key={key}>
+                          <p className="text-sm text-muted-foreground">{key}</p>
+                          <p className="font-medium">{String(value || '-')}</p>
+                        </div>
+                      )
+                    )}
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {/* 技术规格 */}
-            {project.interpretation.technicalSpecs && project.interpretation.technicalSpecs.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">技术规格要求</CardTitle>
-                  <CardDescription>共 {project.interpretation.technicalSpecs.length} 项</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>序号</TableHead>
-                        <TableHead>名称</TableHead>
-                        <TableHead>规格要求</TableHead>
-                        <TableHead>单位</TableHead>
-                        <TableHead>数量</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {project.interpretation.technicalSpecs.slice(0, 10).map((spec: any, index: number) => (
-                        <TableRow key={spec.id || index}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{spec.name || '-'}</TableCell>
-                          <TableCell>{spec.specification || '-'}</TableCell>
-                          <TableCell>{spec.unit || '-'}</TableCell>
-                          <TableCell>{spec.quantity || '-'}</TableCell>
+            {project.interpretation.technicalSpecs &&
+              project.interpretation.technicalSpecs.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">技术规格要求</CardTitle>
+                    <CardDescription>
+                      共 {project.interpretation.technicalSpecs.length} 项
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>序号</TableHead>
+                          <TableHead>名称</TableHead>
+                          <TableHead>规格要求</TableHead>
+                          <TableHead>单位</TableHead>
+                          <TableHead>数量</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {project.interpretation.technicalSpecs.length > 10 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      仅显示前 10 项，共 {project.interpretation.technicalSpecs.length} 项
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                      </TableHeader>
+                      <TableBody>
+                        {project.interpretation.technicalSpecs
+                          .slice(0, 10)
+                          .map((spec: any, index: number) => (
+                            <TableRow key={spec.id || index}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{spec.name || '-'}</TableCell>
+                              <TableCell>{spec.specification || '-'}</TableCell>
+                              <TableCell>{spec.unit || '-'}</TableCell>
+                              <TableCell>{spec.quantity || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                    {project.interpretation.technicalSpecs.length > 10 && (
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                        仅显示前 10 项，共 {project.interpretation.technicalSpecs.length} 项
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
             {/* 评分细则 */}
-            {project.interpretation.scoringItems && project.interpretation.scoringItems.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">评分细则</CardTitle>
-                  <CardDescription>共 {project.interpretation.scoringItems.length} 项</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>序号</TableHead>
-                        <TableHead>评分项</TableHead>
-                        <TableHead>分值</TableHead>
-                        <TableHead>评分标准</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {project.interpretation.scoringItems.slice(0, 10).map((item: any, index: number) => (
-                        <TableRow key={item.id || index}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{item.name || '-'}</TableCell>
-                          <TableCell>{item.score || '-'}</TableCell>
-                          <TableCell className="max-w-xs truncate">{item.criteria || '-'}</TableCell>
+            {project.interpretation.scoringItems &&
+              project.interpretation.scoringItems.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">评分细则</CardTitle>
+                    <CardDescription>
+                      共 {project.interpretation.scoringItems.length} 项
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>序号</TableHead>
+                          <TableHead>评分项</TableHead>
+                          <TableHead>分值</TableHead>
+                          <TableHead>评分标准</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {project.interpretation.scoringItems.length > 10 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      仅显示前 10 项，共 {project.interpretation.scoringItems.length} 项
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                      </TableHeader>
+                      <TableBody>
+                        {project.interpretation.scoringItems
+                          .slice(0, 10)
+                          .map((item: any, index: number) => (
+                            <TableRow key={item.id || index}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{item.name || '-'}</TableCell>
+                              <TableCell>{item.score || '-'}</TableCell>
+                              <TableCell className="max-w-xs truncate">
+                                {item.criteria || '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                    {project.interpretation.scoringItems.length > 10 && (
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                        仅显示前 10 项，共 {project.interpretation.scoringItems.length} 项
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
             {/* 文档框架 */}
-            {project.interpretation.documentFramework && project.interpretation.documentFramework.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">投标文件框架</CardTitle>
-                  <CardDescription>共 {project.interpretation.documentFramework.length} 项</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {project.interpretation.documentFramework.slice(0, 15).map((item: any, index: number) => (
-                      <div key={item.id || index} className="flex items-center gap-2 py-2 border-b last:border-0">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
-                          {item.sortOrder || index + 1}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name || '-'}</p>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                          )}
-                        </div>
-                        {item.isRequired && (
-                          <Badge variant="outline" className="text-xs">必填</Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {project.interpretation.documentFramework.length > 15 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      仅显示前 15 项，共 {project.interpretation.documentFramework.length} 项
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {project.interpretation.documentFramework &&
+              project.interpretation.documentFramework.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">投标文件框架</CardTitle>
+                    <CardDescription>
+                      共 {project.interpretation.documentFramework.length} 项
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {project.interpretation.documentFramework
+                        .slice(0, 15)
+                        .map((item: any, index: number) => (
+                          <div
+                            key={item.id || index}
+                            className="flex items-center gap-2 py-2 border-b last:border-0"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
+                              {item.sortOrder || index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{item.name || '-'}</p>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground">{item.description}</p>
+                              )}
+                            </div>
+                            {item.isRequired && (
+                              <Badge variant="outline" className="text-xs">
+                                必填
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                    {project.interpretation.documentFramework.length > 15 && (
+                      <p className="text-sm text-muted-foreground text-center py-2">
+                        仅显示前 15 项，共 {project.interpretation.documentFramework.length} 项
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
             {/* 核对清单 */}
             {project.interpretation.checklist && project.interpretation.checklist.length > 0 && (
@@ -497,20 +512,27 @@ export default function ProjectDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {project.interpretation.checklist.slice(0, 15).map((item: any, index: number) => (
-                      <div key={item.id || index} className="flex items-start gap-2 py-2 border-b last:border-0">
-                        <CheckCircle className="w-4 h-4 mt-1 text-green-500" />
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name || '-'}</p>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                    {project.interpretation.checklist
+                      .slice(0, 15)
+                      .map((item: any, index: number) => (
+                        <div
+                          key={item.id || index}
+                          className="flex items-start gap-2 py-2 border-b last:border-0"
+                        >
+                          <CheckCircle className="w-4 h-4 mt-1 text-green-500" />
+                          <div className="flex-1">
+                            <p className="font-medium">{item.name || '-'}</p>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
+                          {item.isRequired && (
+                            <Badge variant="outline" className="text-xs">
+                              必需
+                            </Badge>
                           )}
                         </div>
-                        {item.isRequired && (
-                          <Badge variant="outline" className="text-xs">必需</Badge>
-                        )}
-                      </div>
-                    ))}
+                      ))}
                   </div>
                   {project.interpretation.checklist.length > 15 && (
                     <p className="text-sm text-muted-foreground text-center py-2">
@@ -587,8 +609,8 @@ export default function ProjectDetailPage() {
                     <p className="text-sm text-muted-foreground mb-2">项目标签</p>
                     <div className="flex flex-wrap gap-2">
                       {project.tags.map((tag) => (
-                        <Badge 
-                          key={tag.id} 
+                        <Badge
+                          key={tag.id}
                           variant="outline"
                           className="flex items-center gap-1"
                           style={{ borderColor: tag.color, color: tag.color }}
@@ -618,16 +640,11 @@ export default function ProjectDetailPage() {
             </CardHeader>
             <CardContent>
               {project.phases.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无阶段信息
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无阶段信息" />
               ) : (
                 <div className="space-y-4">
                   {project.phases.map((phase, _index) => (
-                    <div
-                      key={phase.id}
-                      className="flex items-start gap-4 p-4 border rounded-lg"
-                    >
+                    <div key={phase.id} className="flex items-start gap-4 p-4 border rounded-lg">
                       <div className="mt-1">{getPhaseStatusIcon(phase.status)}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -636,23 +653,17 @@ export default function ProjectDetailPage() {
                             {phase.status === 'completed'
                               ? '已完成'
                               : phase.status === 'in_progress'
-                              ? '进行中'
-                              : '待开始'}
+                                ? '进行中'
+                                : '待开始'}
                           </Badge>
                         </div>
                         {phase.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {phase.description}
-                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">{phase.description}</p>
                         )}
                         <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                          {phase.startDate && (
-                            <span>开始: {formatDate(phase.startDate)}</span>
-                          )}
+                          {phase.startDate && <span>开始: {formatDate(phase.startDate)}</span>}
                           {phase.endDate && <span>结束: {formatDate(phase.endDate)}</span>}
-                          {phase.completedAt && (
-                            <span>完成: {formatDate(phase.completedAt)}</span>
-                          )}
+                          {phase.completedAt && <span>完成: {formatDate(phase.completedAt)}</span>}
                         </div>
                       </div>
                     </div>
@@ -672,9 +683,7 @@ export default function ProjectDetailPage() {
             </CardHeader>
             <CardContent>
               {project.milestones.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无关键节点
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无关键节点" />
               ) : (
                 <div className="space-y-4">
                   {project.milestones.map((milestone) => (
@@ -691,16 +700,16 @@ export default function ProjectDetailPage() {
                               milestone.status === 'completed'
                                 ? 'default'
                                 : milestone.status === 'overdue'
-                                ? 'destructive'
-                                : 'secondary'
+                                  ? 'destructive'
+                                  : 'secondary'
                             }
                             className="text-xs"
                           >
                             {milestone.status === 'completed'
                               ? '已完成'
                               : milestone.status === 'overdue'
-                              ? '已逾期'
-                              : '待完成'}
+                                ? '已逾期'
+                                : '待完成'}
                           </Badge>
                         </div>
                         {milestone.description && (
@@ -753,9 +762,7 @@ export default function ProjectDetailPage() {
               <CardDescription>项目相关文件管理</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                文件管理功能开发中...
-              </div>
+              <div className="text-center py-8 text-muted-foreground">文件管理功能开发中...</div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -768,9 +775,7 @@ export default function ProjectDetailPage() {
               <CardDescription>项目团队成员管理</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                成员管理功能开发中...
-              </div>
+              <div className="text-center py-8 text-muted-foreground">成员管理功能开发中...</div>
             </CardContent>
           </Card>
         </TabsContent>

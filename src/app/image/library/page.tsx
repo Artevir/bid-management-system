@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -12,12 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Search,
   Download,
@@ -68,6 +69,7 @@ const IMAGE_TYPE_OPTIONS = [
 export default function ImageLibraryPage() {
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -77,6 +79,7 @@ export default function ImageLibraryPage() {
   // 加载图片列表
   const loadImages = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (typeFilter !== 'all') params.append('imageType', typeFilter);
@@ -88,6 +91,7 @@ export default function ImageLibraryPage() {
       setImages(data.images || []);
     } catch (error) {
       console.error('加载失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -131,9 +135,7 @@ export default function ImageLibraryPage() {
       {/* 页面标题 */}
       <div>
         <h1 className="text-2xl font-bold">图片库</h1>
-        <p className="text-muted-foreground mt-1">
-          管理生成的图片，支持搜索、下载、删除等操作
-        </p>
+        <p className="text-muted-foreground mt-1">管理生成的图片，支持搜索、下载、删除等操作</p>
       </div>
 
       {/* 筛选栏 */}
@@ -156,7 +158,9 @@ export default function ImageLibraryPage() {
               </SelectTrigger>
               <SelectContent>
                 {IMAGE_TYPE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -177,16 +181,12 @@ export default function ImageLibraryPage() {
       </Card>
 
       {/* 图片列表 */}
-      {loading ? (
-        <div className="text-center py-12 text-muted-foreground">加载中...</div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={loadImages} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : images.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <FolderOpen className="h-12 w-12 mx-auto mb-4" />
-            <p>暂无图片</p>
-            <p className="text-sm mt-1">去"图片生成"创建第一张图片吧</p>
-          </CardContent>
-        </Card>
+        <ListStateBlock state="empty" emptyText="暂无图片" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {images.map((image) => {
@@ -230,15 +230,30 @@ export default function ImageLibraryPage() {
                     <span>{image.downloadCount}</span>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleViewDetail(image)}>
-                      <Eye className="h-3 w-3 mr-1" />查看
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleViewDetail(image)}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      查看
                     </Button>
                     {image.fileUrl && (
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(image.fileUrl!, image.name)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(image.fileUrl!, image.name)}
+                      >
                         <Download className="h-3 w-3" />
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" className="text-red-600" onClick={() => handleDelete(image.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600"
+                      onClick={() => handleDelete(image.id)}
+                    >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -259,7 +274,11 @@ export default function ImageLibraryPage() {
             <div className="space-y-4">
               <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                 {selectedImage.fileUrl && (
-                  <img src={selectedImage.fileUrl} alt={selectedImage.name} className="w-full h-full object-contain" />
+                  <img
+                    src={selectedImage.fileUrl}
+                    alt={selectedImage.name}
+                    className="w-full h-full object-contain"
+                  />
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -288,8 +307,11 @@ export default function ImageLibraryPage() {
               )}
               <div className="flex gap-2">
                 {selectedImage.fileUrl && (
-                  <Button onClick={() => handleDownload(selectedImage.fileUrl!, selectedImage.name)}>
-                    <Download className="h-4 w-4 mr-2" />下载图片
+                  <Button
+                    onClick={() => handleDownload(selectedImage.fileUrl!, selectedImage.name)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    下载图片
                   </Button>
                 )}
               </div>

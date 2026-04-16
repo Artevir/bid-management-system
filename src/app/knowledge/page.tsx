@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -83,6 +84,7 @@ export default function KnowledgePage() {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [categories, setCategories] = useState<KnowledgeCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -123,7 +125,7 @@ export default function KnowledgePage() {
     }
   }
 
-async function fetchCategories() {
+  async function fetchCategories() {
     try {
       const response = await fetch('/api/knowledge/categories');
       const data = await response.json();
@@ -159,9 +161,7 @@ async function fetchCategories() {
     }
 
     try {
-      const response = await fetch(
-        `/api/knowledge/search?q=${encodeURIComponent(searchQuery)}`
-      );
+      const response = await fetch(`/api/knowledge/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       setEntries(data.results || []);
     } catch (error) {
@@ -176,7 +176,10 @@ async function fetchCategories() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...createForm,
-          tags: createForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+          tags: createForm.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
         }),
       });
 
@@ -215,7 +218,7 @@ async function fetchCategories() {
   });
 
   return (
-      <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
       {/* 统计卡片 */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -338,16 +341,9 @@ async function fetchCategories() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : filteredEntries.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无知识条目</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无知识条目" />
           ) : (
             <Table>
               <TableHeader>
@@ -384,9 +380,7 @@ async function fetchCategories() {
                       </div>
                     </TableCell>
                     <TableCell>v{entry.version}</TableCell>
-                    <TableCell>
-                      {new Date(entry.updatedAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(entry.updatedAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -446,9 +440,7 @@ async function fetchCategories() {
               <Label>标题</Label>
               <Input
                 value={createForm.title}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, title: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
                 placeholder="请输入标题"
               />
             </div>
@@ -456,9 +448,7 @@ async function fetchCategories() {
               <Label>分类</Label>
               <Select
                 value={createForm.categoryId}
-                onValueChange={(value) =>
-                  setCreateForm({ ...createForm, categoryId: value })
-                }
+                onValueChange={(value) => setCreateForm({ ...createForm, categoryId: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择分类" />
@@ -476,9 +466,7 @@ async function fetchCategories() {
               <Label>内容</Label>
               <Textarea
                 value={createForm.content}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, content: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
                 placeholder="请输入知识内容"
                 rows={8}
               />
@@ -487,9 +475,7 @@ async function fetchCategories() {
               <Label>标签</Label>
               <Input
                 value={createForm.tags}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, tags: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, tags: e.target.value })}
                 placeholder="用逗号分隔多个标签"
               />
             </div>
@@ -497,9 +483,7 @@ async function fetchCategories() {
               <Label>来源</Label>
               <Input
                 value={createForm.source}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, source: e.target.value })
-                }
+                onChange={(e) => setCreateForm({ ...createForm, source: e.target.value })}
                 placeholder="知识来源（可选）"
               />
             </div>
@@ -508,10 +492,7 @@ async function fetchCategories() {
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               取消
             </Button>
-            <Button
-              onClick={handleCreateEntry}
-              disabled={!createForm.title || !createForm.content}
-            >
+            <Button onClick={handleCreateEntry} disabled={!createForm.title || !createForm.content}>
               创建
             </Button>
           </DialogFooter>

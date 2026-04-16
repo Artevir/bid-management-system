@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import _Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -21,12 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   PenTool,
   FileSignature,
@@ -81,6 +77,7 @@ export default function ESignPage() {
   const [seals, setSeals] = useState<Seal[]>([]);
   const [tasks, setTasks] = useState<SignTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedTask, setSelectedTask] = useState<SignTask | null>(null);
 
   useEffect(() => {
@@ -89,6 +86,7 @@ export default function ESignPage() {
 
   async function fetchData() {
     setLoading(true);
+    setError('');
     try {
       const [configsRes, sealsRes, tasksRes] = await Promise.all([
         fetch('/api/e-sign/configs'),
@@ -103,13 +101,21 @@ export default function ESignPage() {
       setTasks(tasksData.data || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   }
 
   const getTaskStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
+    const statusMap: Record<
+      string,
+      {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+        icon: React.ElementType;
+      }
+    > = {
       draft: { label: '草稿', variant: 'outline', icon: FileSignature },
       pending: { label: '待签署', variant: 'default', icon: Clock },
       signing: { label: '签署中', variant: 'secondary', icon: PenTool },
@@ -175,7 +181,7 @@ export default function ESignPage() {
             <div className="flex items-center gap-3">
               <Stamp className="h-8 w-8 text-purple-500" />
               <div>
-                <p className="text-2xl font-bold">{seals.filter(s => s.isActive).length}</p>
+                <p className="text-2xl font-bold">{seals.filter((s) => s.isActive).length}</p>
                 <p className="text-sm text-muted-foreground">电子印章</p>
               </div>
             </div>
@@ -186,7 +192,9 @@ export default function ESignPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-8 w-8 text-orange-500" />
               <div>
-                <p className="text-2xl font-bold">{tasks.filter(t => t.status === 'pending' || t.status === 'signing').length}</p>
+                <p className="text-2xl font-bold">
+                  {tasks.filter((t) => t.status === 'pending' || t.status === 'signing').length}
+                </p>
                 <p className="text-sm text-muted-foreground">待处理任务</p>
               </div>
             </div>
@@ -197,7 +205,9 @@ export default function ESignPage() {
             <div className="flex items-center gap-3">
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-2xl font-bold">{tasks.filter(t => t.status === 'completed').length}</p>
+                <p className="text-2xl font-bold">
+                  {tasks.filter((t) => t.status === 'completed').length}
+                </p>
                 <p className="text-sm text-muted-foreground">已完成签署</p>
               </div>
             </div>
@@ -228,18 +238,16 @@ export default function ESignPage() {
               <CardTitle>签署任务</CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+              {error ? (
+                <ListStateBlock
+                  state="error"
+                  error={error}
+                  onRetry={() => window.location.reload()}
+                />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : tasks.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileSignature className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无签署任务</p>
-                  <p className="text-sm mt-2">点击"发起签署"开始新的签署流程</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无签署任务" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -264,15 +272,9 @@ export default function ESignPage() {
                           </div>
                         </TableCell>
                         <TableCell>{getTaskStatusBadge(task.status)}</TableCell>
+                        <TableCell>{new Date(task.createdAt).toLocaleString()}</TableCell>
                         <TableCell>
-                          {new Date(task.createdAt).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedTask(task)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedTask(task)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -296,24 +298,20 @@ export default function ESignPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="grid grid-cols-4 gap-4">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-32" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : seals.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Stamp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无电子印章</p>
-                  <p className="text-sm mt-2">点击"上传印章"添加电子印章</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无电子印章" />
               ) : (
                 <div className="grid grid-cols-4 gap-4">
                   {seals.map((seal) => (
                     <Card key={seal.id} className="overflow-hidden">
                       <div className="aspect-square bg-gray-100 flex items-center justify-center">
                         {seal.imageUrl ? (
-                          <img src={seal.imageUrl} alt={seal.name} className="max-w-full max-h-full" />
+                          <img
+                            src={seal.imageUrl}
+                            alt={seal.name}
+                            className="max-w-full max-h-full"
+                          />
                         ) : (
                           <Stamp className="h-12 w-12 text-gray-400" />
                         )}
@@ -341,17 +339,9 @@ export default function ESignPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : configs.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无签署配置</p>
-                  <p className="text-sm mt-2">请添加电子签章服务商配置</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无签署配置" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -400,7 +390,10 @@ export default function ESignPage() {
                 <p className="text-sm text-muted-foreground mb-2">签署人列表</p>
                 <div className="space-y-2">
                   {selectedTask.signers.map((signer, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <Users className="h-4 w-4" />

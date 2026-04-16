@@ -4,25 +4,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { 
-  FileText, 
-  Search, 
-  CheckCircle, 
-  XCircle,
-  AlertCircle,
-  Play,
-  RefreshCw
-} from 'lucide-react';
+import { FileText, Search, CheckCircle, XCircle, AlertCircle, Play, RefreshCw } from 'lucide-react';
 
 interface MatrixDocument {
   id: number;
@@ -39,11 +32,13 @@ export default function SmartReviewMatrixPage() {
   const router = useRouter();
   const [documents, setDocuments] = useState<MatrixDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [generating, setGenerating] = useState<number | null>(null);
 
   const fetchDocuments = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams({
         page: '1',
@@ -51,15 +46,16 @@ export default function SmartReviewMatrixPage() {
         keyword,
         status: 'parsed',
       });
-      
+
       const res = await fetch(`/api/smart-review?${params}`);
       const data = await res.json();
-      
+
       if (data.documents) {
         setDocuments(data.documents);
       }
     } catch (error) {
       console.error('Fetch documents error:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -80,7 +76,7 @@ export default function SmartReviewMatrixPage() {
         method: 'POST',
       });
       const data = await res.json();
-      
+
       if (data.matrix) {
         router.push(`/smart-review/${docId}/matrix`);
       }
@@ -105,7 +101,7 @@ export default function SmartReviewMatrixPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {documents.filter(d => d.status === 'parsed').length}
+              {documents.filter((d) => d.status === 'parsed').length}
             </div>
           </CardContent>
         </Card>
@@ -167,18 +163,12 @@ export default function SmartReviewMatrixPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    加载中...
-                  </TableCell>
-                </TableRow>
+              {error ? (
+                <ListStateBlock state="error" error={error} onRetry={fetchDocuments} />
+              ) : loading ? (
+                <ListStateBlock state="loading" />
               ) : documents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    暂无已解析的文档
-                  </TableCell>
-                </TableRow>
+                <ListStateBlock state="empty" emptyText="暂无已解析的文档" />
               ) : (
                 documents.map((doc) => (
                   <TableRow key={doc.id}>
@@ -191,25 +181,21 @@ export default function SmartReviewMatrixPage() {
                     <TableCell>{doc.projectName || '-'}</TableCell>
                     <TableCell>{doc.projectCode || '-'}</TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        已解析
-                      </Badge>
+                      <Badge className="bg-green-100 text-green-800">已解析</Badge>
                     </TableCell>
                     <TableCell>{doc.specCount}</TableCell>
                     <TableCell>{doc.scoringCount}</TableCell>
+                    <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => router.push(`/smart-review/${doc.id}`)}
                       >
                         查看
                       </Button>
-                      <Button 
-                        variant="default" 
+                      <Button
+                        variant="default"
                         size="sm"
                         className="ml-2"
                         onClick={() => handleGenerateMatrix(doc.id)}

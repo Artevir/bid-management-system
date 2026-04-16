@@ -4,8 +4,14 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card as _Card,
+  CardContent as _CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -96,6 +102,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [content, setContent] = useState('');
 
@@ -130,6 +137,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('加载方案失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -146,6 +154,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('加载章节失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -200,6 +209,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('保存失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setSaving(false);
     }
@@ -226,6 +236,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('创建章节失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -245,6 +256,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('删除章节失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -285,6 +297,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       setAiForm({ mode: 'default', prompt: '', chapterId: null });
     } catch (error) {
       console.error('AI生成失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('生成失败，请重试');
     } finally {
       setAiGenerating(false);
@@ -304,6 +317,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
       }
     } catch (error) {
       console.error('更新状态失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -374,6 +388,10 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
     });
   };
 
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -384,9 +402,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
 
   if (!scheme) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        方案不存在
-      </div>
+      <div className="flex items-center justify-center h-screen text-gray-500">方案不存在</div>
     );
   }
 
@@ -459,16 +475,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
           </div>
           <div className="flex-1 overflow-auto py-2">
             {chapters.length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-8">
-                暂无章节
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setChapterDialogOpen(true)}
-                >
-                  添加章节
-                </Button>
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无章节" />
             ) : (
               renderChapterTree(chapters)
             )}
@@ -484,9 +491,7 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
                   {selectedChapter.serialNumber && `${selectedChapter.serialNumber} `}
                   {selectedChapter.title}
                 </h2>
-                <div className="text-sm text-gray-500 mt-1">
-                  字数：{content.length}
-                </div>
+                <div className="text-sm text-gray-500 mt-1">字数：{content.length}</div>
               </div>
               <div className="flex-1 p-4">
                 <Tabs defaultValue="edit" className="h-full flex flex-col">
@@ -567,7 +572,10 @@ export default function SchemeEditPage({ params }: { params: Promise<{ id: strin
               <Select
                 value={chapterForm.parentId?.toString() || 'none'}
                 onValueChange={(value) =>
-                  setChapterForm({ ...chapterForm, parentId: value === 'none' ? null : parseInt(value) })
+                  setChapterForm({
+                    ...chapterForm,
+                    parentId: value === 'none' ? null : parseInt(value),
+                  })
                 }
               >
                 <SelectTrigger>

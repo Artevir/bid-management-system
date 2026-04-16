@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -113,6 +114,7 @@ const dateRangeOptions = [
 
 export default function LLMUsagePage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [configs, setConfigs] = useState<Config[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<string>('all');
   const [dateRange, setDateRange] = useState('7');
@@ -140,11 +142,13 @@ export default function LLMUsagePage() {
       }
     } catch (error) {
       console.error('加载配置失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
   const loadStats = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       params.append('days', dateRange);
@@ -173,6 +177,7 @@ export default function LLMUsagePage() {
       setRecentCalls(recentData.calls || []);
     } catch (error) {
       console.error('加载统计数据失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -214,9 +219,7 @@ export default function LLMUsagePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">模型用量统计</h1>
-          <p className="text-muted-foreground mt-1">
-            查看LLM模型调用统计、Token使用量、费用分析
-          </p>
+          <p className="text-muted-foreground mt-1">查看LLM模型调用统计、Token使用量、费用分析</p>
         </div>
         <div className="flex gap-2">
           <Link href="/llm">
@@ -278,9 +281,7 @@ export default function LLMUsagePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              总调用次数
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">总调用次数</CardTitle>
             <Activity className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
@@ -291,18 +292,14 @@ export default function LLMUsagePage() {
               <span className="text-green-600">
                 成功: {formatNumber(overview?.successCalls || 0)}
               </span>
-              <span className="text-red-600">
-                失败: {formatNumber(overview?.failedCalls || 0)}
-              </span>
+              <span className="text-red-600">失败: {formatNumber(overview?.failedCalls || 0)}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Token使用量
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Token使用量</CardTitle>
             <Zap className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
@@ -318,9 +315,7 @@ export default function LLMUsagePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              成功率
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">成功率</CardTitle>
             <CheckCircle className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
@@ -338,9 +333,7 @@ export default function LLMUsagePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              平均延迟
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">平均延迟</CardTitle>
             <Clock className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
@@ -377,14 +370,16 @@ export default function LLMUsagePage() {
             <CardDescription>最近{dateRange}天的调用统计</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                加载中...
-              </div>
+            {error ? (
+              <ListStateBlock
+                state="error"
+                error={error}
+                onRetry={() => window.location.reload()}
+              />
+            ) : loading ? (
+              <ListStateBlock state="loading" />
             ) : dailyStats.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                暂无数据
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无数据" />
             ) : (
               <div className="space-y-2">
                 {dailyStats.slice(-7).map((day) => {
@@ -398,9 +393,7 @@ export default function LLMUsagePage() {
                           className="h-full bg-blue-500 flex items-center justify-end px-2"
                           style={{ width: `${Math.max(width, 5)}%` }}
                         >
-                          <span className="text-xs text-white font-medium">
-                            {day.calls}
-                          </span>
+                          <span className="text-xs text-white font-medium">{day.calls}</span>
                         </div>
                       </div>
                       <div className="w-24 text-xs text-gray-500 text-right">
@@ -422,13 +415,9 @@ export default function LLMUsagePage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                加载中...
-              </div>
+              <ListStateBlock state="loading" />
             ) : modelStats.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                暂无数据
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无数据" />
             ) : (
               <div className="space-y-3">
                 {modelStats.slice(0, 5).map((model, index) => (
@@ -441,9 +430,7 @@ export default function LLMUsagePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
-                          {model.modelId}
-                        </span>
+                        <span className="font-medium text-sm truncate">{model.modelId}</span>
                         <Badge
                           variant="outline"
                           className={providerConfig[model.provider]?.color || ''}
@@ -453,9 +440,7 @@ export default function LLMUsagePage() {
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                         <span>{formatNumber(model.calls)} 次调用</span>
-                        <span>
-                          {formatNumber(model.inputTokens + model.outputTokens)} tokens
-                        </span>
+                        <span>{formatNumber(model.inputTokens + model.outputTokens)} tokens</span>
                         <span>延迟 {formatLatency(model.avgLatency)}</span>
                       </div>
                     </div>
@@ -484,13 +469,9 @@ export default function LLMUsagePage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center h-48 text-gray-400">
-              加载中...
-            </div>
+            <ListStateBlock state="loading" />
           ) : recentCalls.length === 0 ? (
-            <div className="flex items-center justify-center h-48 text-gray-400">
-              暂无调用记录
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无调用记录" />
           ) : (
             <Table>
               <TableHeader>
@@ -510,9 +491,7 @@ export default function LLMUsagePage() {
                       {new Date(call.createdAt).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {call.configName || (
-                        <span className="text-gray-400">未知配置</span>
-                      )}
+                      {call.configName || <span className="text-gray-400">未知配置</span>}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -526,13 +505,9 @@ export default function LLMUsagePage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      <span className="text-gray-500">
-                        {call.inputTokens || 0}
-                      </span>
+                      <span className="text-gray-500">{call.inputTokens || 0}</span>
                       {' / '}
-                      <span className="text-blue-600">
-                        {call.outputTokens || 0}
-                      </span>
+                      <span className="text-blue-600">{call.outputTokens || 0}</span>
                     </TableCell>
                     <TableCell className="text-sm">
                       {call.latency ? formatLatency(call.latency) : '-'}

@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
@@ -113,10 +120,10 @@ export default function MobileApprovalPage() {
       if (filter !== 'all') {
         params.set('status', filter);
       }
-      
+
       const res = await fetch(`/api/workflow/tasks?${params}`);
       if (!res.ok) throw new Error('获取任务失败');
-      
+
       const data = await res.json();
       setTasks(data.tasks || []);
     } catch (err) {
@@ -161,8 +168,7 @@ export default function MobileApprovalPage() {
       }
 
       toast.success(
-        actionType === 'approve' ? '审批通过' :
-        actionType === 'reject' ? '已驳回' : '已转办'
+        actionType === 'approve' ? '审批通过' : actionType === 'reject' ? '已驳回' : '已转办'
       );
 
       setActionDialogOpen(false);
@@ -220,9 +226,9 @@ export default function MobileApprovalPage() {
 
   // 统计
   const stats = {
-    pending: tasks.filter(t => t.status === 'pending').length,
-    approved: tasks.filter(t => t.status === 'approved').length,
-    rejected: tasks.filter(t => t.status === 'rejected').length,
+    pending: tasks.filter((t) => t.status === 'pending').length,
+    approved: tasks.filter((t) => t.status === 'approved').length,
+    rejected: tasks.filter((t) => t.status === 'rejected').length,
   };
 
   return (
@@ -276,14 +282,14 @@ export default function MobileApprovalPage() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <ListStateBlock state="loading" />
         ) : tasks.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{filter === 'pending' ? '暂无待处理任务' : '暂无任务记录'}</p>
+            <CardContent className="py-12">
+              <ListStateBlock
+                state="empty"
+                emptyText={filter === 'pending' ? '暂无待处理任务' : '暂无任务记录'}
+              />
             </CardContent>
           </Card>
         ) : (
@@ -312,7 +318,9 @@ export default function MobileApprovalPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>{task.submitterName} · {task.submitterDept}</span>
+                    <span>
+                      {task.submitterName} · {task.submitterDept}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
@@ -388,8 +396,11 @@ export default function MobileApprovalPage() {
                     <div>
                       <div className="text-muted-foreground">优先级</div>
                       <div className={`font-medium ${getPriorityColor(selectedTask.priority)}`}>
-                        {selectedTask.priority === 'urgent' ? '紧急' :
-                         selectedTask.priority === 'high' ? '高' : '普通'}
+                        {selectedTask.priority === 'urgent'
+                          ? '紧急'
+                          : selectedTask.priority === 'high'
+                            ? '高'
+                            : '普通'}
                       </div>
                     </div>
                   </div>
@@ -477,10 +488,7 @@ export default function MobileApprovalPage() {
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   驳回
                 </Button>
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => openActionDialog('approve')}
-                >
+                <Button className="w-full sm:w-auto" onClick={() => openActionDialog('approve')}>
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   通过
                 </Button>
@@ -500,8 +508,11 @@ export default function MobileApprovalPage() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'approve' ? '确认通过' :
-               actionType === 'reject' ? '确认驳回' : '转办给他人'}
+              {actionType === 'approve'
+                ? '确认通过'
+                : actionType === 'reject'
+                  ? '确认驳回'
+                  : '转办给他人'}
             </DialogTitle>
             <DialogDescription>
               {actionType === 'approve' && '确认通过此审批？'}

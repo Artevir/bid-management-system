@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge as _Badge } from '@/components/ui/badge';
@@ -94,19 +95,24 @@ export default function WorkflowDesignerPage() {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [workflow, setWorkflow] = useState<WorkflowDefinition | null>(null);
   const [nodes, setNodes] = useState<WorkflowNode[]>([]);
   const [transitions, setTransitions] = useState<WorkflowTransition[]>([]);
-  
+
   // 交互状态
   const [mode, setMode] = useState<'select' | 'add' | 'connect'>('select');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
-  const [dragging, setDragging] = useState<{ nodeId: string; startX: number; startY: number } | null>(null);
+  const [dragging, setDragging] = useState<{
+    nodeId: string;
+    startX: number;
+    startY: number;
+  } | null>(null);
   const [addNodeType, setAddNodeType] = useState<string>('approval');
-  
+
   // 对话框状态
   const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<WorkflowNode | null>(null);
@@ -122,12 +128,13 @@ export default function WorkflowDesignerPage() {
     const fetchWorkflow = async () => {
       try {
         setLoading(true);
+        setError('');
         const response = await fetch(`/api/workflows/${workflowId}`);
         if (!response.ok) throw new Error('获取工作流失败');
-        
+
         const data = await response.json();
         setWorkflow(data);
-        
+
         // 转换节点数据
         const loadedNodes: WorkflowNode[] = (data.nodes || []).map((n: any) => ({
           id: n.id.toString(),
@@ -141,7 +148,7 @@ export default function WorkflowDesignerPage() {
           timeoutHours: n.timeoutHours,
           config: n.config,
         }));
-        
+
         // 转换连线数据
         const loadedTransitions: WorkflowTransition[] = (data.transitions || []).map((t: any) => ({
           id: t.id.toString(),
@@ -149,11 +156,12 @@ export default function WorkflowDesignerPage() {
           targetNodeId: t.targetNodeId.toString(),
           condition: t.condition,
         }));
-        
+
         setNodes(loadedNodes);
         setTransitions(loadedTransitions);
       } catch (error) {
         console.error('加载工作流失败:', error);
+        setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
         toast.error('加载工作流失败');
       } finally {
         setLoading(false);
@@ -169,7 +177,7 @@ export default function WorkflowDesignerPage() {
 
     try {
       setSaving(true);
-      
+
       // 准备节点数据
       const nodesData = nodes.map((node) => ({
         nodeKey: node.nodeKey,
@@ -204,6 +212,7 @@ export default function WorkflowDesignerPage() {
       toast.success('保存成功');
     } catch (error) {
       console.error('保存失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('保存失败');
     } finally {
       setSaving(false);
@@ -240,36 +249,38 @@ export default function WorkflowDesignerPage() {
       router.push('/workflows');
     } catch (error) {
       console.error('发布失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('发布失败');
     }
   };
 
   // 添加节点
-  const handleAddNode = useCallback((x: number, y: number) => {
-    const nodeType = NODE_TYPES.find((t) => t.type === addNodeType);
-    if (!nodeType) return;
+  const handleAddNode = useCallback(
+    (x: number, y: number) => {
+      const nodeType = NODE_TYPES.find((t) => t.type === addNodeType);
+      if (!nodeType) return;
 
-    const newNode: WorkflowNode = {
-      id: `node_${Date.now()}`,
-      nodeKey: `node_${nodes.length + 1}`,
-      name: nodeType.name,
-      type: nodeType.type as any,
-      x,
-      y,
-    };
+      const newNode: WorkflowNode = {
+        id: `node_${Date.now()}`,
+        nodeKey: `node_${nodes.length + 1}`,
+        name: nodeType.name,
+        type: nodeType.type as any,
+        x,
+        y,
+      };
 
-    setNodes([...nodes, newNode]);
-    setSelectedNode(newNode.id);
-    setMode('select');
-  }, [nodes, addNodeType]);
+      setNodes([...nodes, newNode]);
+      setSelectedNode(newNode.id);
+      setMode('select');
+    },
+    [nodes, addNodeType]
+  );
 
   // 删除节点
   const handleDeleteNode = (nodeId: string) => {
     setNodes(nodes.filter((n) => n.id !== nodeId));
     setTransitions(
-      transitions.filter(
-        (t) => t.sourceNodeId !== nodeId && t.targetNodeId !== nodeId
-      )
+      transitions.filter((t) => t.sourceNodeId !== nodeId && t.targetNodeId !== nodeId)
     );
     setSelectedNode(null);
   };
@@ -369,7 +380,7 @@ export default function WorkflowDesignerPage() {
   const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
     if (mode !== 'select') return;
     e.stopPropagation();
-    
+
     const node = nodes.find((n) => n.id === nodeId);
     if (!node) return;
 
@@ -476,9 +487,7 @@ export default function WorkflowDesignerPage() {
           onDoubleClick={(e) => handleNodeDoubleClick(e, node)}
           onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
         >
-          <div
-            className={`${color} text-white rounded-lg shadow-lg p-2 min-w-[120px] text-center`}
-          >
+          <div className={`${color} text-white rounded-lg shadow-lg p-2 min-w-[120px] text-center`}>
             <div className="flex items-center justify-center gap-2">
               <Icon className="h-4 w-4" />
               <span className="text-sm font-medium">{node.name}</span>
@@ -500,12 +509,12 @@ export default function WorkflowDesignerPage() {
     });
   };
 
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        加载中...
-      </div>
-    );
+    return <div className="flex items-center justify-center h-screen">加载中...</div>;
   }
 
   return (
@@ -543,7 +552,7 @@ export default function WorkflowDesignerPage() {
         {/* 左侧工具面板 */}
         <div className="w-64 border-r bg-gray-50 p-4">
           <h2 className="font-medium mb-4">工具</h2>
-          
+
           {/* 模式选择 */}
           <div className="space-y-2 mb-6">
             <Button
@@ -568,7 +577,7 @@ export default function WorkflowDesignerPage() {
           </div>
 
           <h2 className="font-medium mb-4">节点</h2>
-          
+
           {/* 节点类型选择 */}
           <div className="space-y-2">
             {NODE_TYPES.map((type) => {
@@ -609,8 +618,7 @@ export default function WorkflowDesignerPage() {
           ref={canvasRef}
           className="flex-1 relative overflow-auto bg-white"
           style={{
-            backgroundImage:
-              'radial-gradient(circle, #e5e7eb 1px, transparent 1px)',
+            backgroundImage: 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)',
             backgroundSize: '20px 20px',
           }}
           onClick={handleCanvasClick}
@@ -632,15 +640,10 @@ export default function WorkflowDesignerPage() {
                 refY="3.5"
                 orient="auto"
               >
-                <polygon
-                  points="0 0, 10 3.5, 0 7"
-                  fill="#94a3b8"
-                />
+                <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
               </marker>
             </defs>
-            <g className="pointer-events-auto">
-              {renderTransitions()}
-            </g>
+            <g className="pointer-events-auto">{renderTransitions()}</g>
           </svg>
 
           {/* 节点层 */}
@@ -667,9 +670,7 @@ export default function WorkflowDesignerPage() {
               <Input
                 id="nodeName"
                 value={nodeForm.name}
-                onChange={(e) =>
-                  setNodeForm({ ...nodeForm, name: e.target.value })
-                }
+                onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })}
               />
             </div>
             {editingNode?.type === 'approval' && (
@@ -678,9 +679,7 @@ export default function WorkflowDesignerPage() {
                   <Label htmlFor="assigneeType">审批人类型</Label>
                   <Select
                     value={nodeForm.assigneeType}
-                    onValueChange={(value) =>
-                      setNodeForm({ ...nodeForm, assigneeType: value })
-                    }
+                    onValueChange={(value) => setNodeForm({ ...nodeForm, assigneeType: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -699,9 +698,7 @@ export default function WorkflowDesignerPage() {
                     <Input
                       id="assigneeValue"
                       value={nodeForm.assigneeValue}
-                      onChange={(e) =>
-                        setNodeForm({ ...nodeForm, assigneeValue: e.target.value })
-                      }
+                      onChange={(e) => setNodeForm({ ...nodeForm, assigneeValue: e.target.value })}
                       placeholder="输入用户ID"
                     />
                   </div>
@@ -724,10 +721,7 @@ export default function WorkflowDesignerPage() {
             )}
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setNodeDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setNodeDialogOpen(false)}>
               取消
             </Button>
             <Button onClick={handleSaveNode}>保存</Button>

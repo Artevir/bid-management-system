@@ -9,7 +9,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/batches/[batchId]',
     request: {
       path: z.object({
-        batchId: z.string(),
+        batchId: z.string().regex(/^hub-batch-\d+$/, 'batchId must be hub-batch-{id}'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -20,7 +20,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/batches/[batchId]/ai-tasks',
     request: {
       path: z.object({
-        batchId: z.string(),
+        batchId: z.string().regex(/^hub-batch-\d+$/, 'batchId must be hub-batch-{id}'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -31,7 +31,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/batches/[batchId]/confidence',
     request: {
       path: z.object({
-        batchId: z.string(),
+        batchId: z.string().regex(/^hub-batch-\d+$/, 'batchId must be hub-batch-{id}'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -42,7 +42,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/batches/[batchId]/rule-hits',
     request: {
       path: z.object({
-        batchId: z.string(),
+        batchId: z.string().regex(/^hub-batch-\d+$/, 'batchId must be hub-batch-{id}'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -56,6 +56,8 @@ export const tenderCenterDtoContracts = {
       query: z.object({
         pageNo: z.number().optional(),
         pageSize: z.number().optional(),
+        targetObjectId: z.string().optional(),
+        targetObjectType: z.string().optional(),
       }),
       body: z.object({}),
     },
@@ -65,7 +67,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/clarifications/[clarificationId]/confirm',
     request: {
       path: z.object({
-        clarificationId: z.string(),
+        clarificationId: z.string().regex(/^\d+$/, 'clarificationId must be numeric id'),
       }),
       query: z.object({}),
       body: z.object({
@@ -104,7 +106,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/framework/[nodeId]',
     request: {
       path: z.object({
-        nodeId: z.string(),
+        nodeId: z.string().regex(/^\d+$/, 'nodeId must be numeric id'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -590,7 +592,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/reviews/[reviewTaskId]/submit',
     request: {
       path: z.object({
-        reviewTaskId: z.string(),
+        reviewTaskId: z.string().regex(/^review-hub-\d+$/, 'reviewTaskId must be review-hub-{id}'),
       }),
       query: z.object({}),
       body: z.object({
@@ -641,7 +643,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/source-segments/[segmentId]',
     request: {
       path: z.object({
-        segmentId: z.string(),
+        segmentId: z.string().regex(/^\d+$/, 'segmentId must be numeric id'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -652,7 +654,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/templates/[templateId]',
     request: {
       path: z.object({
-        templateId: z.string(),
+        templateId: z.string().regex(/^\d+$/, 'templateId must be numeric id'),
       }),
       query: z.object({}),
       body: z.object({}),
@@ -663,7 +665,7 @@ export const tenderCenterDtoContracts = {
     path: '/api/tender-center/templates/[templateId]/variables',
     request: {
       path: z.object({
-        templateId: z.string(),
+        templateId: z.string().regex(/^\d+$/, 'templateId must be numeric id'),
       }),
       query: z.object({}),
       body: z.object({}),

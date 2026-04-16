@@ -6,12 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +15,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Select as _Select,
   SelectContent as _SelectContent,
@@ -79,6 +75,7 @@ interface TaskListResponse {
 export default function TaskCenterPage() {
   const [activeTab, setActiveTab] = useState('todo');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [tasks, setTasks] = useState<TaskListResponse>({
     data: [],
     total: 0,
@@ -118,6 +115,7 @@ export default function TaskCenterPage() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
+      setError('');
       const type = activeTab === 'done' ? 'done' : 'todo';
       const params = new URLSearchParams();
       params.append('type', type);
@@ -131,6 +129,7 @@ export default function TaskCenterPage() {
       setTasks(data);
     } catch (error) {
       console.error('获取任务列表失败:', error);
+      setError(error instanceof Error ? error.message : '获取任务列表失败');
       toast.error('获取任务列表失败');
     } finally {
       setLoading(false);
@@ -284,9 +283,7 @@ export default function TaskCenterPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">超时任务</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {stats.overdueCount}
-                </p>
+                <p className="text-2xl font-bold text-red-600">{stats.overdueCount}</p>
               </div>
             </div>
           </CardContent>
@@ -311,9 +308,7 @@ export default function TaskCenterPage() {
         <TabsList className="mb-4">
           <TabsTrigger value="todo">
             待办任务
-            {stats.todoCount > 0 && (
-              <Badge className="ml-2 bg-blue-500">{stats.todoCount}</Badge>
-            )}
+            {stats.todoCount > 0 && <Badge className="ml-2 bg-blue-500">{stats.todoCount}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="done">已办任务</TabsTrigger>
           <TabsTrigger value="my">我发起的</TabsTrigger>
@@ -322,11 +317,11 @@ export default function TaskCenterPage() {
         <TabsContent value="todo">
           <div className="space-y-3">
             {loading ? (
-              <div className="text-center py-8">加载中...</div>
+              <ListStateBlock state="loading" loadingText="加载中..." />
+            ) : error ? (
+              <ListStateBlock state="error" error={error} onRetry={fetchTasks} />
             ) : tasks.data.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                暂无待办任务
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无待办任务" />
             ) : (
               tasks.data.map((task) => (
                 <Card
@@ -340,15 +335,11 @@ export default function TaskCenterPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           {getPriorityBadge(task.priority)}
-                          {isOverdue(task.dueTime) && (
-                            <Badge className="bg-red-500">超时</Badge>
-                          )}
+                          {isOverdue(task.dueTime) && <Badge className="bg-red-500">超时</Badge>}
                           {getStatusBadge(task.status)}
                         </div>
                         <h3 className="font-medium mb-1">{task.title}</h3>
-                        <p className="text-sm text-gray-500 mb-2">
-                          节点: {task.nodeName}
-                        </p>
+                        <p className="text-sm text-gray-500 mb-2">节点: {task.nodeName}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <FileText className="h-3 w-3" />
@@ -384,10 +375,7 @@ export default function TaskCenterPage() {
                           <XCircle className="h-4 w-4 mr-1" />
                           驳回
                         </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => openProcessDialog(task, 'approve')}
-                        >
+                        <Button size="sm" onClick={() => openProcessDialog(task, 'approve')}>
                           <CheckCircle className="h-4 w-4 mr-1" />
                           通过
                         </Button>
@@ -403,11 +391,11 @@ export default function TaskCenterPage() {
         <TabsContent value="done">
           <div className="space-y-3">
             {loading ? (
-              <div className="text-center py-8">加载中...</div>
+              <ListStateBlock state="loading" loadingText="加载中..." />
+            ) : error ? (
+              <ListStateBlock state="error" error={error} onRetry={fetchTasks} />
             ) : tasks.data.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                暂无已办任务
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无已办任务" />
             ) : (
               tasks.data.map((task) => (
                 <Card key={task.id}>
@@ -418,20 +406,14 @@ export default function TaskCenterPage() {
                           {getStatusBadge(task.status)}
                           {task.result && (
                             <Badge
-                              className={
-                                task.result === 'approved'
-                                  ? 'bg-green-500'
-                                  : 'bg-red-500'
-                              }
+                              className={task.result === 'approved' ? 'bg-green-500' : 'bg-red-500'}
                             >
                               {task.result === 'approved' ? '通过' : '驳回'}
                             </Badge>
                           )}
                         </div>
                         <h3 className="font-medium mb-1">{task.title}</h3>
-                        <p className="text-sm text-gray-500 mb-2">
-                          节点: {task.nodeName}
-                        </p>
+                        <p className="text-sm text-gray-500 mb-2">节点: {task.nodeName}</p>
                         {task.comment && (
                           <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                             审批意见: {task.comment}
@@ -440,9 +422,7 @@ export default function TaskCenterPage() {
                         <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
                           <span>
                             处理时间:{' '}
-                            {task.completedAt
-                              ? new Date(task.completedAt).toLocaleString()
-                              : '-'}
+                            {task.completedAt ? new Date(task.completedAt).toLocaleString() : '-'}
                           </span>
                         </div>
                       </div>
@@ -455,18 +435,14 @@ export default function TaskCenterPage() {
         </TabsContent>
 
         <TabsContent value="my">
-          <div className="text-center py-8 text-gray-500">
-            功能开发中，敬请期待...
-          </div>
+          <div className="text-center py-8 text-gray-500">功能开发中，敬请期待...</div>
         </TabsContent>
       </Tabs>
 
       {/* 分页 */}
       {tasks.totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-500">
-            共 {tasks.total} 条记录
-          </div>
+          <div className="text-sm text-gray-500">共 {tasks.total} 条记录</div>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -522,20 +498,13 @@ export default function TaskCenterPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setProcessDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setProcessDialogOpen(false)}>
               取消
             </Button>
             <Button
               onClick={handleProcessTask}
               disabled={processing}
-              className={
-                actionType === 'reject'
-                  ? 'bg-red-500 hover:bg-red-600'
-                  : ''
-              }
+              className={actionType === 'reject' ? 'bg-red-500 hover:bg-red-600' : ''}
             >
               {processing ? '处理中...' : '确定'}
             </Button>

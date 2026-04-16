@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,26 +22,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/error-message';
 
 // 默认材料模板
 const DEFAULT_MATERIALS = [
   { category: 'basic', materialName: '营业执照副本', isProvided: false, submitType: 'electronic' },
-  { category: 'basic', materialName: '组织机构代码证', isProvided: false, submitType: 'electronic' },
+  {
+    category: 'basic',
+    materialName: '组织机构代码证',
+    isProvided: false,
+    submitType: 'electronic',
+  },
   { category: 'basic', materialName: '税务登记证', isProvided: false, submitType: 'electronic' },
-  { category: 'qualification', materialName: '资质证书', isProvided: false, submitType: 'electronic' },
-  { category: 'qualification', materialName: '安全生产许可证', isProvided: false, submitType: 'electronic' },
-  { category: 'performance', materialName: '类似项目业绩证明', isProvided: false, submitType: 'electronic' },
-  { category: 'personnel', materialName: '法定代表人身份证复印件', isProvided: false, submitType: 'electronic' },
-  { category: 'personnel', materialName: '投标代理人身份证复印件', isProvided: false, submitType: 'electronic' },
+  {
+    category: 'qualification',
+    materialName: '资质证书',
+    isProvided: false,
+    submitType: 'electronic',
+  },
+  {
+    category: 'qualification',
+    materialName: '安全生产许可证',
+    isProvided: false,
+    submitType: 'electronic',
+  },
+  {
+    category: 'performance',
+    materialName: '类似项目业绩证明',
+    isProvided: false,
+    submitType: 'electronic',
+  },
+  {
+    category: 'personnel',
+    materialName: '法定代表人身份证复印件',
+    isProvided: false,
+    submitType: 'electronic',
+  },
+  {
+    category: 'personnel',
+    materialName: '投标代理人身份证复印件',
+    isProvided: false,
+    submitType: 'electronic',
+  },
   { category: 'personnel', materialName: '授权委托书', isProvided: false, submitType: 'paper' },
 ];
 
@@ -48,7 +73,12 @@ const DEFAULT_MATERIALS = [
 const DEFAULT_FEES = [
   { feeType: 'base', feeName: '基础支持费用', defaultAmount: '5000', actualAmount: '5000' },
   { feeType: 'agent', feeName: '投标代理费用', defaultAmount: '3000', actualAmount: '3000' },
-  { feeType: 'accommodation', feeName: '差旅住宿费用', defaultAmount: '按实际发生', actualAmount: '0' },
+  {
+    feeType: 'accommodation',
+    feeName: '差旅住宿费用',
+    defaultAmount: '按实际发生',
+    actualAmount: '0',
+  },
   { feeType: 'other', feeName: '其他费用', defaultAmount: '按实际发生', actualAmount: '0' },
 ];
 
@@ -74,120 +104,135 @@ export default function CreatePartnerApplicationPage() {
     submissionDeadline: '',
     biddingRequirements: '',
     interpretationFileId: '',
-    
+
     // 经办人信息
     handlerName: '',
     handlerPhone: '',
     materialDeadline: '',
     smsReminderEnabled: false,
-    
+
     // 友司基础信息
     partnerCompanyName: '',
     partnerContactPerson: '',
     partnerContactPhone: '',
-    
+
     // 法定代表人信息
     legalRepName: '',
     legalRepIdCardProvided: false,
     legalRepIdCardType: 'electronic',
-    
+
     // 投标代理人信息
     bidAgentName: '',
     bidAgentIdCardProvided: false,
     bidAgentIdCardType: 'electronic',
     bidAgentPhone: '',
     bidAgentWechat: '',
-    
+
     // 友司对接人信息
     partnerLiaisonName: '',
     partnerLiaisonPhone: '',
     partnerLiaisonWechat: '',
-    
+
     // 材料接收信息
     materialReceiverName: '',
     materialReceiverPhone: '',
     electronicReceiveAddress: '',
     paperReceiveAddress: '',
-    
+
     // 补充说明
     notes: '',
   });
 
   // 材料清单
-  const [materials, setMaterials] = useState(DEFAULT_MATERIALS.map(m => ({ ...m, id: Date.now() + Math.random() })));
+  const [materials, setMaterials] = useState(
+    DEFAULT_MATERIALS.map((m) => ({ ...m, id: Date.now() + Math.random() }))
+  );
 
   // 费用明细
-  const [fees, setFees] = useState(DEFAULT_FEES.map(f => ({ ...f, id: Date.now() + Math.random() })));
+  const [fees, setFees] = useState(
+    DEFAULT_FEES.map((f) => ({ ...f, id: Date.now() + Math.random() }))
+  );
 
   // 待办事项
-  const [todos, setTodos] = useState<{ id: number; title: string; assigneeName: string; deadline: string; type: string }[]>([]);
+  const [todos, setTodos] = useState<
+    { id: number; title: string; assigneeName: string; deadline: string; type: string }[]
+  >([]);
 
   // 更新表单字段
   const updateField = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // 添加材料
   const addMaterial = () => {
-    setMaterials(prev => [...prev, {
-      id: Date.now(),
-      category: 'other',
-      materialName: '',
-      isProvided: false,
-      submitType: 'electronic',
-    }]);
+    setMaterials((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        category: 'other',
+        materialName: '',
+        isProvided: false,
+        submitType: 'electronic',
+      },
+    ]);
   };
 
   // 更新材料
   const updateMaterial = (id: number, field: string, value: any) => {
-    setMaterials(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
+    setMaterials((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
   };
 
   // 删除材料
   const removeMaterial = (id: number) => {
-    setMaterials(prev => prev.filter(m => m.id !== id));
+    setMaterials((prev) => prev.filter((m) => m.id !== id));
   };
 
   // 添加费用
   const addFee = () => {
-    setFees(prev => [...prev, {
-      id: Date.now(),
-      feeType: 'other',
-      feeName: '',
-      defaultAmount: '',
-      actualAmount: '0',
-    }]);
+    setFees((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        feeType: 'other',
+        feeName: '',
+        defaultAmount: '',
+        actualAmount: '0',
+      },
+    ]);
   };
 
   // 更新费用
   const updateFee = (id: number, field: string, value: any) => {
-    setFees(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f));
+    setFees((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
   };
 
   // 删除费用
   const removeFee = (id: number) => {
-    setFees(prev => prev.filter(f => f.id !== id));
+    setFees((prev) => prev.filter((f) => f.id !== id));
   };
 
   // 添加待办
   const addTodo = () => {
-    setTodos(prev => [...prev, {
-      id: Date.now(),
-      title: '',
-      assigneeName: '',
-      deadline: '',
-      type: 'confirm',
-    }]);
+    setTodos((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        title: '',
+        assigneeName: '',
+        deadline: '',
+        type: 'confirm',
+      },
+    ]);
   };
 
   // 更新待办
   const updateTodo = (id: number, field: string, value: any) => {
-    setTodos(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)));
   };
 
   // 删除待办
   const removeTodo = (id: number) => {
-    setTodos(prev => prev.filter(t => t.id !== id));
+    setTodos((prev) => prev.filter((t) => t.id !== id));
   };
 
   // 提交表单
@@ -242,9 +287,13 @@ export default function CreatePartnerApplicationPage() {
         </Button>
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Link href="/support" className="hover:text-foreground">投标支持</Link>
+            <Link href="/support" className="hover:text-foreground">
+              投标支持
+            </Link>
             <span>/</span>
-            <Link href="/support/partner-applications" className="hover:text-foreground">友司支持</Link>
+            <Link href="/support/partner-applications" className="hover:text-foreground">
+              友司支持
+            </Link>
             <span>/</span>
             <span className="text-foreground">新建申请</span>
           </div>
@@ -319,7 +368,9 @@ export default function CreatePartnerApplicationPage() {
         {/* 经办人信息 */}
         <Card>
           <CardHeader>
-            <CardTitle>经办人信息 <span className="text-destructive">*</span></CardTitle>
+            <CardTitle>
+              经办人信息 <span className="text-destructive">*</span>
+            </CardTitle>
             <CardDescription>负责本申请的经办人信息</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -355,7 +406,9 @@ export default function CreatePartnerApplicationPage() {
         {/* 友司基础信息 */}
         <Card>
           <CardHeader>
-            <CardTitle>友司基础信息 <span className="text-destructive">*</span></CardTitle>
+            <CardTitle>
+              友司基础信息 <span className="text-destructive">*</span>
+            </CardTitle>
             <CardDescription>需要支持的友司基本信息</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -618,7 +671,9 @@ export default function CreatePartnerApplicationPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(MATERIAL_CATEGORY_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -628,7 +683,9 @@ export default function CreatePartnerApplicationPage() {
                       <Input
                         className="h-9"
                         value={material.materialName}
-                        onChange={(e) => updateMaterial(material.id, 'materialName', e.target.value)}
+                        onChange={(e) =>
+                          updateMaterial(material.id, 'materialName', e.target.value)
+                        }
                         placeholder="请输入材料名称"
                       />
                     </div>
@@ -739,9 +796,11 @@ export default function CreatePartnerApplicationPage() {
               ))}
               <div className="flex justify-end pt-2 border-t">
                 <div className="text-sm">
-                  费用合计：<span className="font-bold text-lg">
+                  费用合计：
+                  <span className="font-bold text-lg">
                     {fees.reduce((sum, f) => sum + (parseFloat(f.actualAmount) || 0), 0).toFixed(2)}
-                  </span> 元
+                  </span>{' '}
+                  元
                 </div>
               </div>
             </div>
@@ -764,9 +823,7 @@ export default function CreatePartnerApplicationPage() {
           </CardHeader>
           <CardContent>
             {todos.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                暂无待办事项，点击"添加待办"创建
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无待办事项，点击添加待办创建" />
             ) : (
               <div className="space-y-3">
                 {todos.map((todo) => (

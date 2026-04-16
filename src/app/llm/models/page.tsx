@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -114,6 +120,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 export default function ModelManagementPage() {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [providerFilter, setProviderFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -147,6 +154,7 @@ export default function ModelManagementPage() {
   // 加载模型列表
   const loadModels = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (providerFilter !== 'all') params.append('provider', providerFilter);
@@ -162,6 +170,7 @@ export default function ModelManagementPage() {
       }
     } catch (error) {
       console.error('加载模型失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -408,16 +417,12 @@ export default function ModelManagementPage() {
       {/* 模型列表 */}
       <Card>
         <CardContent className="pt-6">
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">加载中...</div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={loadModels} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : filteredModels.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Cpu className="h-12 w-12 mx-auto mb-4" />
-              <p>暂无模型数据</p>
-              <Button variant="outline" className="mt-4" onClick={handleInitModels}>
-                初始化默认模型
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无模型数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -434,7 +439,10 @@ export default function ModelManagementPage() {
               </TableHeader>
               <TableBody>
                 {filteredModels.map((model) => {
-                  const typeConfig = modelTypeConfig[model.modelType] || { label: model.modelType, icon: Cpu };
+                  const typeConfig = modelTypeConfig[model.modelType] || {
+                    label: model.modelType,
+                    icon: Cpu,
+                  };
                   const TypeIcon = typeConfig.icon;
                   const statusConf = statusConfig[model.status] || statusConfig.active;
 
@@ -473,11 +481,7 @@ export default function ModelManagementPage() {
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(model)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(model)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -503,9 +507,7 @@ export default function ModelManagementPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingModel ? '编辑模型' : '添加模型'}</DialogTitle>
-            <DialogDescription>
-              配置LLM模型参数，支持多种提供商和模型类型
-            </DialogDescription>
+            <DialogDescription>配置LLM模型参数，支持多种提供商和模型类型</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {/* 基本信息 */}
@@ -658,9 +660,7 @@ export default function ModelManagementPage() {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.isFeatured}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isFeatured: checked })
-                  }
+                  onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: checked })}
                 />
                 <Label>推荐模型</Label>
               </div>

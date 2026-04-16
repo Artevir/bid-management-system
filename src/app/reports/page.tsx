@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Tabs as _Tabs,
+  TabsContent as _TabsContent,
+  TabsList as _TabsList,
+  TabsTrigger as _TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -122,6 +128,7 @@ interface ReportData {
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [dateRange, setDateRange] = useState('last30days');
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
@@ -129,13 +136,15 @@ export default function ReportsPage() {
   const fetchReportData = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch(`/api/reports?action=comprehensive&dateRange=${dateRange}`);
       if (!response.ok) throw new Error('获取报表失败');
-      
+
       const data = await response.json();
       setReportData(data);
     } catch (error) {
       console.error('获取报表数据失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('获取报表数据失败');
     } finally {
       setLoading(false);
@@ -151,7 +160,7 @@ export default function ReportsPage() {
     try {
       const response = await fetch(`/api/reports/export?dateRange=${dateRange}`);
       if (!response.ok) throw new Error('导出失败');
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -159,7 +168,7 @@ export default function ReportsPage() {
       a.download = `投标统计报表_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('导出成功');
     } catch (error) {
       console.error('导出失败:', error);
@@ -176,20 +185,24 @@ export default function ReportsPage() {
   };
 
   // 进度饼图数据
-  const _progressPieData = reportData ? [
-    { name: '未开始', value: reportData.projectProgress.notStarted, color: '#94a3b8' },
-    { name: '进行中', value: reportData.projectProgress.inProgress, color: '#3b82f6' },
-    { name: '已完成', value: reportData.projectProgress.completed, color: '#22c55e' },
-    { name: '已过期', value: reportData.projectProgress.overdue, color: '#ef4444' },
-  ].filter(d => d.value > 0) : [];
+  const _progressPieData = reportData
+    ? [
+        { name: '未开始', value: reportData.projectProgress.notStarted, color: '#94a3b8' },
+        { name: '进行中', value: reportData.projectProgress.inProgress, color: '#3b82f6' },
+        { name: '已完成', value: reportData.projectProgress.completed, color: '#22c55e' },
+        { name: '已过期', value: reportData.projectProgress.overdue, color: '#ef4444' },
+      ].filter((d) => d.value > 0)
+    : [];
 
   // 文档状态饼图数据
-  const _docPieData = reportData ? [
-    { name: '草稿', value: reportData.documentStats.draft, color: '#94a3b8' },
-    { name: '审核中', value: reportData.documentStats.inReview, color: '#f59e0b' },
-    { name: '已通过', value: reportData.documentStats.approved, color: '#22c55e' },
-    { name: '已拒绝', value: reportData.documentStats.rejected, color: '#ef4444' },
-  ].filter(d => d.value > 0) : [];
+  const _docPieData = reportData
+    ? [
+        { name: '草稿', value: reportData.documentStats.draft, color: '#94a3b8' },
+        { name: '审核中', value: reportData.documentStats.inReview, color: '#f59e0b' },
+        { name: '已通过', value: reportData.documentStats.approved, color: '#22c55e' },
+        { name: '已拒绝', value: reportData.documentStats.rejected, color: '#ef4444' },
+      ].filter((d) => d.value > 0)
+    : [];
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -225,14 +238,12 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-gray-500">加载中...</div>
-        </div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={fetchReportData} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : !reportData ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-gray-500">暂无数据</div>
-        </div>
+        <ListStateBlock state="empty" emptyText="暂无数据" />
       ) : (
         <div className="space-y-6">
           {/* 核心指标卡片 */}
@@ -256,7 +267,7 @@ export default function ReportsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -278,7 +289,7 @@ export default function ReportsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -300,7 +311,7 @@ export default function ReportsPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -473,11 +484,14 @@ export default function ReportsPage() {
                       <span>人力成本</span>
                       <span>{formatAmount(reportData.costStatistics.laborCost)}</span>
                     </div>
-                    <Progress 
-                      value={reportData.costStatistics.totalCost > 0 
-                        ? (reportData.costStatistics.laborCost / reportData.costStatistics.totalCost) * 100 
-                        : 0
-                      } 
+                    <Progress
+                      value={
+                        reportData.costStatistics.totalCost > 0
+                          ? (reportData.costStatistics.laborCost /
+                              reportData.costStatistics.totalCost) *
+                            100
+                          : 0
+                      }
                     />
                   </div>
                   <div>
@@ -485,11 +499,14 @@ export default function ReportsPage() {
                       <span>材料成本</span>
                       <span>{formatAmount(reportData.costStatistics.materialCost)}</span>
                     </div>
-                    <Progress 
-                      value={reportData.costStatistics.totalCost > 0 
-                        ? (reportData.costStatistics.materialCost / reportData.costStatistics.totalCost) * 100 
-                        : 0
-                      } 
+                    <Progress
+                      value={
+                        reportData.costStatistics.totalCost > 0
+                          ? (reportData.costStatistics.materialCost /
+                              reportData.costStatistics.totalCost) *
+                            100
+                          : 0
+                      }
                     />
                   </div>
                   <div>
@@ -497,11 +514,14 @@ export default function ReportsPage() {
                       <span>差旅成本</span>
                       <span>{formatAmount(reportData.costStatistics.travelCost)}</span>
                     </div>
-                    <Progress 
-                      value={reportData.costStatistics.totalCost > 0 
-                        ? (reportData.costStatistics.travelCost / reportData.costStatistics.totalCost) * 100 
-                        : 0
-                      } 
+                    <Progress
+                      value={
+                        reportData.costStatistics.totalCost > 0
+                          ? (reportData.costStatistics.travelCost /
+                              reportData.costStatistics.totalCost) *
+                            100
+                          : 0
+                      }
                     />
                   </div>
                   <div>
@@ -509,11 +529,14 @@ export default function ReportsPage() {
                       <span>其他成本</span>
                       <span>{formatAmount(reportData.costStatistics.otherCost)}</span>
                     </div>
-                    <Progress 
-                      value={reportData.costStatistics.totalCost > 0 
-                        ? (reportData.costStatistics.otherCost / reportData.costStatistics.totalCost) * 100 
-                        : 0
-                      } 
+                    <Progress
+                      value={
+                        reportData.costStatistics.totalCost > 0
+                          ? (reportData.costStatistics.otherCost /
+                              reportData.costStatistics.totalCost) *
+                            100
+                          : 0
+                      }
                     />
                   </div>
                 </div>
@@ -529,15 +552,21 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500">平均投标周期</p>
-                    <p className="text-xl font-bold">{reportData.efficiencyMetrics.avgBidCycle}天</p>
+                    <p className="text-xl font-bold">
+                      {reportData.efficiencyMetrics.avgBidCycle}天
+                    </p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500">平均响应时间</p>
-                    <p className="text-xl font-bold">{reportData.efficiencyMetrics.avgResponseTime}小时</p>
+                    <p className="text-xl font-bold">
+                      {reportData.efficiencyMetrics.avgResponseTime}小时
+                    </p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500">文档准备时间</p>
-                    <p className="text-xl font-bold">{reportData.efficiencyMetrics.avgDocumentPrepTime}小时</p>
+                    <p className="text-xl font-bold">
+                      {reportData.efficiencyMetrics.avgDocumentPrepTime}小时
+                    </p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500">按时完成率</p>

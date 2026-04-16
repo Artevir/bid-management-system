@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { parseResourceId } from '@/lib/api/validators';
 import { db } from '@/db';
-import { bidInterpretationLogs, bidDocumentInterpretations } from '@/db/schema';
-import {
-  resolveInterpretationByProjectAndVersion,
-  toBatchId,
-  toReviewTaskId,
-} from '@/app/api/tender-center/_utils';
-import { eq } from 'drizzle-orm';
+import { reviewTasks } from '@/db/schema';
+import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
+import { toHubReviewTaskId } from '@/app/api/tender-center/_utils';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
-  lookupIdempotentResponse,
-  recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  lookupHubIdempotentResponse,
+  recordHubIdempotentResponse,
+} from '@/app/api/tender-center/_hub-idempotency';
 import {
   buildTenderTraceContext,
   getOrCreateTraceId,
@@ -22,6 +20,14 @@ import {
 } from '@/app/api/tender-center/_trace';
 
 const IDEM_OPERATION_TYPE = 'idem_review_create';
+
+const HUB_REVIEW_REASONS = [
+  'accuracy',
+  'compliance',
+  'conflict_resolution',
+  'template_binding',
+  'other',
+] as const;
 
 // 040: POST /api/tender-center/reviews
 export async function POST(request: NextRequest) {
@@ -34,19 +40,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '缺少 versionId' }, { status: 400 });
       }
 
-      const interpretation = await resolveInterpretationByProjectAndVersion(projectId, versionId);
-      if (!interpretation) {
+      const { version } = await resolveHubProjectAndVersion({
+        projectId: String(projectId),
+        versionId,
+        userId,
+      });
+      if (!version) {
         return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
       }
+
       const traceId = getOrCreateTraceId(req.headers);
-      const batchId = toBatchId(interpretation.id);
+      const batchId = `review-batch-${version.id}`;
 
       const idempotencyKey = extractIdempotencyKey(req.headers);
       const requestDigest = idempotencyKey
         ? buildIdempotencyDigest({
             projectId,
-            versionId,
-            interpretationId: interpretation.id,
+            versionId: version.id,
             assignedReviewerId: body.assignedReviewerId ? Number(body.assignedReviewerId) : null,
             note: String(body.note || ''),
             action: 'create_review',
@@ -54,13 +64,17 @@ export async function POST(request: NextRequest) {
         : null;
 
       if (idempotencyKey && requestDigest) {
-        const lookup = await lookupIdempotentResponse<{
+        const lookup = await lookupHubIdempotentResponse<{
           success: boolean;
-          data: { reviewTaskId: string; interpretationId: number };
+          data: {
+            reviewTaskId: string;
+            interpretationId: number | null;
+            tenderProjectVersionId: number;
+          };
           message: string;
         }>({
-          interpretationId: interpretation.id,
-          operationType: IDEM_OPERATION_TYPE,
+          tenderProjectVersionId: version.id,
+          idemOp: IDEM_OPERATION_TYPE,
           idempotencyKey,
           requestDigest,
         });
@@ -81,54 +95,57 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const reviewTaskId = toReviewTaskId(interpretation.id);
-      await db
-        .update(bidDocumentInterpretations)
-        .set({
-          reviewStatus: 'pending',
-          assignedReviewerId: body.assignedReviewerId ? Number(body.assignedReviewerId) : null,
-          updatedAt: new Date(),
-        })
-        .where(eq(bidDocumentInterpretations.id, interpretation.id));
+      const reasonRaw = String(body.reviewReason || 'other');
+      const reviewReason = (HUB_REVIEW_REASONS as readonly string[]).includes(reasonRaw)
+        ? (reasonRaw as (typeof HUB_REVIEW_REASONS)[number])
+        : 'other';
 
-      await db.insert(bidInterpretationLogs).values({
-        interpretationId: interpretation.id,
-        operationType: 'review_created',
-        operationContent: JSON.stringify({
-          reviewTaskId,
-          projectId,
-          versionId,
-          note: body.note || '',
-        }),
-        operatorId: userId,
-        operatorName: 'system',
-      });
+      const [inserted] = await db
+        .insert(reviewTasks)
+        .values({
+          tenderProjectVersionId: version.id,
+          targetObjectType: 'tender_project_version',
+          targetObjectId: version.id,
+          reviewReason,
+          assignedTo: body.assignedReviewerId ? Number(body.assignedReviewerId) : null,
+          reviewStatus: 'pending',
+        })
+        .returning({ id: reviewTasks.id });
+
+      const reviewTaskId = toHubReviewTaskId(inserted.id);
 
       await logTenderTraceEvent({
-        interpretationId: interpretation.id,
+        interpretationId: null,
         userId,
         trace: buildTenderTraceContext({
-          interpretationId: interpretation.id,
+          interpretationId: null,
           traceId,
           taskId: reviewTaskId,
           event: 'review_created',
+          batchId,
         }),
         detail: {
           projectId,
-          versionId,
+          versionId: version.id,
         },
       });
 
       const responsePayload = {
         success: true,
-        data: { reviewTaskId, interpretationId: interpretation.id, traceId, batchId },
+        data: {
+          reviewTaskId,
+          interpretationId: null as number | null,
+          tenderProjectVersionId: version.id,
+          traceId,
+          batchId,
+        },
         message: '复核任务已创建',
       };
 
       if (idempotencyKey && requestDigest) {
-        await recordIdempotentResponse({
-          interpretationId: interpretation.id,
-          operationType: IDEM_OPERATION_TYPE,
+        await recordHubIdempotentResponse({
+          tenderProjectVersionId: version.id,
+          idemOp: IDEM_OPERATION_TYPE,
           idempotencyKey,
           requestDigest,
           response: responsePayload,

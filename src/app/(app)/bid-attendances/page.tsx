@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription as _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription as _CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -160,28 +167,28 @@ export default function BidAttendancesPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // 筛选条件
   const [statusFilter, setStatusFilter] = useState('');
   const [travelModeFilter, setTravelModeFilter] = useState('');
   const [keyword, setKeyword] = useState('');
-  
+
   // 新增/编辑对话框
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // 详情对话框
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<BidAttendance | null>(null);
-  
+
   // 推送任务中
   const [pushingTaskId, setPushingTaskId] = useState<number | null>(null);
-  
+
   // 下拉选项
   const [users, setUsers] = useState<User[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
+
   // 表单数据
   const [formData, setFormData] = useState({
     projectId: '',
@@ -200,19 +207,21 @@ export default function BidAttendancesPage() {
     specialInstructions: '',
     status: 'pending',
   });
-  
+
   // 投标人员列表
-  const [attendees, setAttendees] = useState<{
-    userId: string;
-    name: string;
-    phone: string;
-    identity: string;
-    idCardProvided: boolean;
-    authorizationLetter: boolean;
-    separateTravelMode: string;
-    separateMeetingPoint: string;
-    remarks: string;
-  }[]>([]);
+  const [attendees, setAttendees] = useState<
+    {
+      userId: string;
+      name: string;
+      phone: string;
+      identity: string;
+      idCardProvided: boolean;
+      authorizationLetter: boolean;
+      separateTravelMode: string;
+      separateMeetingPoint: string;
+      remarks: string;
+    }[]
+  >([]);
 
   // 加载数据
   const loadData = async () => {
@@ -222,16 +231,16 @@ export default function BidAttendancesPage() {
       if (statusFilter) params.append('status', statusFilter);
       if (travelModeFilter) params.append('travelMode', travelModeFilter);
       if (keyword) params.append('keyword', keyword);
-      
+
       const response = await fetch(`/api/bid-attendances?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setApplications(result.data);
       } else {
         setError(extractErrorMessage(result, '加载数据失败'));
       }
-      
+
       // 加载统计
       const statsResponse = await fetch('/api/bid-attendances?stats=true');
       const statsResult = await statsResponse.json();
@@ -297,31 +306,37 @@ export default function BidAttendancesPage() {
       bidLocationDetail: application.bidLocationDetail || '',
       travelMode: application.travelMode,
       meetingPoint: application.meetingPoint || '',
-      meetingTime: application.meetingTime ? application.meetingTime.split('T')[0] + 'T' + application.meetingTime.split('T')[1]?.slice(0, 5) : '',
+      meetingTime: application.meetingTime
+        ? application.meetingTime.split('T')[0] +
+          'T' +
+          application.meetingTime.split('T')[1]?.slice(0, 5)
+        : '',
       transportMode: application.transportMode || '',
       transportRemarks: application.transportRemarks || '',
       documentsNeeded: application.documentsNeeded ? JSON.parse(application.documentsNeeded) : [],
       specialInstructions: application.specialInstructions || '',
       status: application.status,
     });
-    
+
     // 设置人员列表
     if (application.attendees && application.attendees.length > 0) {
-      setAttendees(application.attendees.map(a => ({
-        userId: a.userId?.toString() || '',
-        name: a.name,
-        phone: a.phone || '',
-        identity: a.identity,
-        idCardProvided: a.idCardProvided,
-        authorizationLetter: a.authorizationLetter,
-        separateTravelMode: a.separateTravelMode || '',
-        separateMeetingPoint: a.separateMeetingPoint || '',
-        remarks: a.remarks || '',
-      })));
+      setAttendees(
+        application.attendees.map((a) => ({
+          userId: a.userId?.toString() || '',
+          name: a.name,
+          phone: a.phone || '',
+          identity: a.identity,
+          idCardProvided: a.idCardProvided,
+          authorizationLetter: a.authorizationLetter,
+          separateTravelMode: a.separateTravelMode || '',
+          separateMeetingPoint: a.separateMeetingPoint || '',
+          remarks: a.remarks || '',
+        }))
+      );
     } else {
       setAttendees([]);
     }
-    
+
     setError('');
     setDialogOpen(true);
   };
@@ -357,17 +372,20 @@ export default function BidAttendancesPage() {
 
   // 添加人员
   const addAttendee = () => {
-    setAttendees([...attendees, {
-      userId: '',
-      name: '',
-      phone: '',
-      identity: 'agent',
-      idCardProvided: false,
-      authorizationLetter: false,
-      separateTravelMode: '',
-      separateMeetingPoint: '',
-      remarks: '',
-    }]);
+    setAttendees([
+      ...attendees,
+      {
+        userId: '',
+        name: '',
+        phone: '',
+        identity: 'agent',
+        idCardProvided: false,
+        authorizationLetter: false,
+        separateTravelMode: '',
+        separateMeetingPoint: '',
+        remarks: '',
+      },
+    ]);
   };
 
   // 删除人员
@@ -384,7 +402,7 @@ export default function BidAttendancesPage() {
 
   // 从用户选择填充姓名
   const handleUserSelect = (index: number, userId: string) => {
-    const user = users.find(u => u.id === parseInt(userId));
+    const user = users.find((u) => u.id === parseInt(userId));
     if (user) {
       const updated = [...attendees];
       updated[index].userId = userId;
@@ -400,13 +418,13 @@ export default function BidAttendancesPage() {
       setError('请填写项目名称');
       return;
     }
-    
+
     // 验证人员信息
     if (attendees.length === 0) {
       setError('请添加至少一名投标人员');
       return;
     }
-    
+
     for (const attendee of attendees) {
       if (!attendee.name) {
         setError('请填写所有人员的姓名');
@@ -421,7 +439,7 @@ export default function BidAttendancesPage() {
       const body = {
         id: editingId,
         ...formData,
-        attendees: attendees.map(a => ({
+        attendees: attendees.map((a) => ({
           userId: a.userId ? parseInt(a.userId) : null,
           name: a.name,
           phone: a.phone || null,
@@ -523,7 +541,7 @@ export default function BidAttendancesPage() {
 
   // 获取状态样式
   const getStatusBadge = (status: string) => {
-    const statusConfig = ATTENDANCE_STATUS.find(s => s.value === status);
+    const statusConfig = ATTENDANCE_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -540,13 +558,13 @@ export default function BidAttendancesPage() {
 
   // 获取出行方式显示
   const getTravelModeLabel = (mode: string) => {
-    const modeConfig = TRAVEL_MODES.find(m => m.value === mode);
+    const modeConfig = TRAVEL_MODES.find((m) => m.value === mode);
     return modeConfig?.label || mode;
   };
 
   // 获取身份显示
   const getIdentityLabel = (identity: string) => {
-    const identityConfig = BIDDER_IDENTITIES.find(i => i.value === identity);
+    const identityConfig = BIDDER_IDENTITIES.find((i) => i.value === identity);
     return identityConfig?.label || identity;
   };
 
@@ -676,12 +694,9 @@ export default function BidAttendancesPage() {
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : applications.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无去投标安排数据</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无去投标安排数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -702,7 +717,9 @@ export default function BidAttendancesPage() {
                       <div>
                         <div className="font-medium">{application.projectName}</div>
                         {application.projectCode && (
-                          <div className="text-sm text-muted-foreground">{application.projectCode}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {application.projectCode}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -712,17 +729,20 @@ export default function BidAttendancesPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {formatDate(application.bidDate)}
                         </div>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm max-w-[200px] truncate" title={application.bidLocation || ''}>
+                      <div
+                        className="text-sm max-w-[200px] truncate"
+                        title={application.bidLocation || ''}
+                      >
                         {application.bidLocation || '-'}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {getTravelModeLabel(application.travelMode)}
-                      </Badge>
+                      <Badge variant="outline">{getTravelModeLabel(application.travelMode)}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -733,47 +753,40 @@ export default function BidAttendancesPage() {
                     <TableCell>{getStatusBadge(application.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(application)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleView(application)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(application)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(application)}>
                           <FileText className="h-4 w-4" />
                         </Button>
-                        {application.status !== 'completed' && application.status !== 'cancelled' && (
-                          <>
-                            {!application.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handlePushTask(application.id)}
-                                disabled={pushingTaskId === application.id}
-                              >
-                                {pushingTaskId === application.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            {application.taskId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => router.push(`/tasks/${application.taskId}`)}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
+                        {application.status !== 'completed' &&
+                          application.status !== 'cancelled' && (
+                            <>
+                              {!application.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePushTask(application.id)}
+                                  disabled={pushingTaskId === application.id}
+                                >
+                                  {pushingTaskId === application.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                              {application.taskId && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/tasks/${application.taskId}`)}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </>
+                          )}
                         {application.status === 'pending' && (
                           <Button
                             variant="ghost"
@@ -823,9 +836,7 @@ export default function BidAttendancesPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? '编辑投标安排' : '新增投标安排'}</DialogTitle>
-            <DialogDescription>
-              填写投标安排信息，包括投标人员身份和出行方式
-            </DialogDescription>
+            <DialogDescription>填写投标安排信息，包括投标人员身份和出行方式</DialogDescription>
           </DialogHeader>
 
           {error && (
@@ -844,10 +855,10 @@ export default function BidAttendancesPage() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>关联项目</Label>
-                  <Select 
-                    value={formData.projectId} 
+                  <Select
+                    value={formData.projectId}
                     onValueChange={(value) => {
-                      const project = projects.find(p => p.id === parseInt(value));
+                      const project = projects.find((p) => p.id === parseInt(value));
                       setFormData({
                         ...formData,
                         projectId: value,
@@ -921,7 +932,9 @@ export default function BidAttendancesPage() {
                   <Label>详细地址</Label>
                   <Textarea
                     value={formData.bidLocationDetail}
-                    onChange={(e) => setFormData({ ...formData, bidLocationDetail: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bidLocationDetail: e.target.value })
+                    }
                     placeholder="输入详细地址"
                     rows={2}
                   />
@@ -975,7 +988,9 @@ export default function BidAttendancesPage() {
                       <Label>交通方式</Label>
                       <Select
                         value={formData.transportMode}
-                        onValueChange={(value) => setFormData({ ...formData, transportMode: value })}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, transportMode: value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="选择交通方式" />
@@ -993,7 +1008,9 @@ export default function BidAttendancesPage() {
                       <Label>交通备注</Label>
                       <Input
                         value={formData.transportRemarks}
-                        onChange={(e) => setFormData({ ...formData, transportRemarks: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, transportRemarks: e.target.value })
+                        }
                         placeholder="输入交通备注"
                       />
                     </div>
@@ -1023,15 +1040,11 @@ export default function BidAttendancesPage() {
                       <div key={index} className="border rounded-lg p-4 space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">人员 {index + 1}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeAttendee(index)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => removeAttendee(index)}>
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="grid grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label>选择用户</Label>
@@ -1088,7 +1101,10 @@ export default function BidAttendancesPage() {
                               </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                              {BIDDER_IDENTITIES.find(i => i.value === attendee.identity)?.description}
+                              {
+                                BIDDER_IDENTITIES.find((i) => i.value === attendee.identity)
+                                  ?.description
+                              }
                             </p>
                           </div>
                           <div className="space-y-2">
@@ -1097,7 +1113,7 @@ export default function BidAttendancesPage() {
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={attendee.idCardProvided}
-                                  onCheckedChange={(checked) => 
+                                  onCheckedChange={(checked) =>
                                     updateAttendee(index, 'idCardProvided', checked)
                                   }
                                 />
@@ -1107,7 +1123,7 @@ export default function BidAttendancesPage() {
                                 <div className="flex items-center gap-2">
                                   <Checkbox
                                     checked={attendee.authorizationLetter}
-                                    onCheckedChange={(checked) => 
+                                    onCheckedChange={(checked) =>
                                       updateAttendee(index, 'authorizationLetter', checked)
                                     }
                                   />
@@ -1125,7 +1141,7 @@ export default function BidAttendancesPage() {
                               <Label>出行方式</Label>
                               <Select
                                 value={attendee.separateTravelMode}
-                                onValueChange={(value) => 
+                                onValueChange={(value) =>
                                   updateAttendee(index, 'separateTravelMode', value)
                                 }
                               >
@@ -1168,7 +1184,9 @@ export default function BidAttendancesPage() {
                   <Label>特殊说明</Label>
                   <Textarea
                     value={formData.specialInstructions}
-                    onChange={(e) => setFormData({ ...formData, specialInstructions: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, specialInstructions: e.target.value })
+                    }
                     placeholder="输入特殊说明或注意事项"
                     rows={3}
                   />
@@ -1195,7 +1213,7 @@ export default function BidAttendancesPage() {
           <DialogHeader>
             <DialogTitle>投标安排详情</DialogTitle>
           </DialogHeader>
-          
+
           {selectedApplication && (
             <div className="space-y-4">
               {/* 基本信息 */}
@@ -1217,14 +1235,18 @@ export default function BidAttendancesPage() {
                 <div>
                   <Label className="text-muted-foreground">截标时间</Label>
                   <p className="font-medium">
-                    {selectedApplication.bidDeadline ? formatDate(selectedApplication.bidDeadline) : '-'}
+                    {selectedApplication.bidDeadline
+                      ? formatDate(selectedApplication.bidDeadline)
+                      : '-'}
                   </p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-muted-foreground">投标地点</Label>
                   <p className="font-medium">{selectedApplication.bidLocation || '-'}</p>
                   {selectedApplication.bidLocationDetail && (
-                    <p className="text-sm text-muted-foreground">{selectedApplication.bidLocationDetail}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedApplication.bidLocationDetail}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1245,7 +1267,11 @@ export default function BidAttendancesPage() {
                     </div>
                     <div>
                       <Label className="text-muted-foreground text-sm">集合时间</Label>
-                      <p>{selectedApplication.meetingTime ? formatDate(selectedApplication.meetingTime) : '-'}</p>
+                      <p>
+                        {selectedApplication.meetingTime
+                          ? formatDate(selectedApplication.meetingTime)
+                          : '-'}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1253,18 +1279,21 @@ export default function BidAttendancesPage() {
 
               {/* 投标人员 */}
               <div className="border-t pt-4">
-                <Label className="text-muted-foreground">投标人员 ({selectedApplication.attendees?.length || 0}人)</Label>
+                <Label className="text-muted-foreground">
+                  投标人员 ({selectedApplication.attendees?.length || 0}人)
+                </Label>
                 {selectedApplication.attendees && selectedApplication.attendees.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {selectedApplication.attendees.map((attendee, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      >
                         <div>
                           <span className="font-medium">{attendee.name}</span>
                           <span className="text-muted-foreground mx-2">|</span>
                           <Badge variant="outline">{getIdentityLabel(attendee.identity)}</Badge>
-                          {attendee.phone && (
-                            <span className="text-muted-foreground mx-2">|</span>
-                          )}
+                          {attendee.phone && <span className="text-muted-foreground mx-2">|</span>}
                           <span className="text-muted-foreground text-sm">{attendee.phone}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1285,7 +1314,9 @@ export default function BidAttendancesPage() {
               {selectedApplication.specialInstructions && (
                 <div className="border-t pt-4">
                   <Label className="text-muted-foreground">特殊说明</Label>
-                  <p className="mt-2 whitespace-pre-wrap">{selectedApplication.specialInstructions}</p>
+                  <p className="mt-2 whitespace-pre-wrap">
+                    {selectedApplication.specialInstructions}
+                  </p>
                 </div>
               )}
             </div>
@@ -1295,12 +1326,14 @@ export default function BidAttendancesPage() {
             <Button variant="outline" onClick={() => setDetailOpen(false)}>
               关闭
             </Button>
-            <Button onClick={() => {
-              setDetailOpen(false);
-              if (selectedApplication) {
-                handleEdit(selectedApplication);
-              }
-            }}>
+            <Button
+              onClick={() => {
+                setDetailOpen(false);
+                if (selectedApplication) {
+                  handleEdit(selectedApplication);
+                }
+              }}
+            >
               编辑
             </Button>
           </DialogFooter>

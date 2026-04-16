@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -138,17 +139,13 @@ export default function SampleApplicationDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const colorClass = STATUS_COLORS[status] || STATUS_COLORS.draft;
-    return (
-      <Badge className={colorClass}>
-        {STATUS_LABELS[status] || status}
-      </Badge>
-    );
+    return <Badge className={colorClass}>{STATUS_LABELS[status] || status}</Badge>;
   };
 
   // 提交申请
   const handleSubmit = async () => {
     if (!application) return;
-    
+
     if (application.configurations.length < 1) {
       alert('请至少添加1个样机配置');
       return;
@@ -213,9 +210,13 @@ export default function SampleApplicationDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Link href="/support" className="hover:text-foreground">厂家支持</Link>
+              <Link href="/support" className="hover:text-foreground">
+                厂家支持
+              </Link>
               <span>/</span>
-              <Link href="/support/sample-applications" className="hover:text-foreground">样机申请</Link>
+              <Link href="/support/sample-applications" className="hover:text-foreground">
+                样机申请
+              </Link>
               <span>/</span>
               <span className="text-foreground">{application.applicationNo}</span>
             </div>
@@ -226,7 +227,10 @@ export default function SampleApplicationDetailPage() {
         <div className="flex items-center gap-2">
           {getStatusBadge(application.status)}
           {canEdit && (
-            <Button variant="outline" onClick={() => router.push(`/support/sample-applications/${applicationId}/edit`)}>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/support/sample-applications/${applicationId}/edit`)}
+            >
               <Edit className="mr-2 h-4 w-4" />
               编辑
             </Button>
@@ -334,7 +338,11 @@ export default function SampleApplicationDetailPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">接收方式</p>
-                    <p>{application.receiveMethod ? RECEIVE_METHOD_LABELS[application.receiveMethod] : '-'}</p>
+                    <p>
+                      {application.receiveMethod
+                        ? RECEIVE_METHOD_LABELS[application.receiveMethod]
+                        : '-'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">接收人</p>
@@ -359,7 +367,13 @@ export default function SampleApplicationDetailPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">存放地点类型</p>
-                    <p>{application.storageLocationType === 'our_company' ? '我司指定地址' : application.storageLocationType === 'their_company' ? '对方指定地址' : '-'}</p>
+                    <p>
+                      {application.storageLocationType === 'our_company'
+                        ? '我司指定地址'
+                        : application.storageLocationType === 'their_company'
+                          ? '对方指定地址'
+                          : '-'}
+                    </p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-muted-foreground">存放地址</p>
@@ -382,7 +396,11 @@ export default function SampleApplicationDetailPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">归还方式</p>
-                    <p>{application.returnMethod ? RETURN_METHOD_LABELS[application.returnMethod] : '-'}</p>
+                    <p>
+                      {application.returnMethod
+                        ? RETURN_METHOD_LABELS[application.returnMethod]
+                        : '-'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">归还联系人</p>
@@ -421,9 +439,7 @@ export default function SampleApplicationDetailPage() {
             </CardHeader>
             <CardContent>
               {application.configurations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无样机配置
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无样机配置" />
               ) : (
                 <div className="space-y-4">
                   {application.configurations.map((config: any, index: number) => (
@@ -431,8 +447,14 @@ export default function SampleApplicationDetailPage() {
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                           <CardTitle className="text-base">样机 {index + 1}</CardTitle>
-                          <Badge variant={config.deviationType === 'none' ? 'default' : 'secondary'}>
-                            {config.deviationType === 'none' ? '无偏离' : config.deviationType === 'positive' ? '正偏离' : '负偏离'}
+                          <Badge
+                            variant={config.deviationType === 'none' ? 'default' : 'secondary'}
+                          >
+                            {config.deviationType === 'none'
+                              ? '无偏离'
+                              : config.deviationType === 'positive'
+                                ? '正偏离'
+                                : '负偏离'}
                           </Badge>
                         </div>
                       </CardHeader>
@@ -504,20 +526,22 @@ export default function SampleApplicationDetailPage() {
                   {application.display.displayRequirements && (
                     <div>
                       <p className="text-sm text-muted-foreground">展示要求</p>
-                      <p className="text-sm whitespace-pre-wrap">{application.display.displayRequirements}</p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {application.display.displayRequirements}
+                      </p>
                     </div>
                   )}
                   {application.display.displayResultNotes && (
                     <div>
                       <p className="text-sm text-muted-foreground">展示结果说明</p>
-                      <p className="text-sm whitespace-pre-wrap">{application.display.displayResultNotes}</p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {application.display.displayResultNotes}
+                      </p>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无现场展示信息
-                </div>
+                <div className="text-center py-8 text-muted-foreground">暂无现场展示信息</div>
               )}
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -239,11 +240,7 @@ function ChapterEditor({ chapters, onChange }: ChapterEditorProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label>章节结构</Label>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => addChapter(null, 1)}
-        >
+        <Button variant="outline" size="sm" onClick={() => addChapter(null, 1)}>
           <Plus className="h-3 w-3 mr-1" />
           添加一级章节
         </Button>
@@ -269,6 +266,7 @@ export default function CompanyFrameworkPage() {
   const _router = useRouter();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [frameworks, setFrameworks] = useState<Framework[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
@@ -302,6 +300,7 @@ export default function CompanyFrameworkPage() {
       }
     } catch (error) {
       console.error('Load companies error:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -317,10 +316,9 @@ export default function CompanyFrameworkPage() {
   const loadFrameworks = async () => {
     if (!selectedCompanyId) return;
     setLoading(true);
+    setError('');
     try {
-      const res = await fetch(
-        `/api/companies/${selectedCompanyId}/frameworks`
-      );
+      const res = await fetch(`/api/companies/${selectedCompanyId}/frameworks`);
       const data = await res.json();
       setFrameworks(data.frameworks || []);
     } catch (error) {
@@ -387,10 +385,9 @@ export default function CompanyFrameworkPage() {
     if (!confirm('确定要删除此框架吗？')) return;
 
     try {
-      const res = await fetch(
-        `/api/companies/${selectedCompanyId}/frameworks/${frameworkId}`,
-        { method: 'DELETE' }
-      );
+      const res = await fetch(`/api/companies/${selectedCompanyId}/frameworks/${frameworkId}`, {
+        method: 'DELETE',
+      });
 
       const data = await res.json();
       if (data.success) {
@@ -403,14 +400,11 @@ export default function CompanyFrameworkPage() {
 
   const handleSetDefault = async (frameworkId: number, isDefault: boolean) => {
     try {
-      const res = await fetch(
-        `/api/companies/${selectedCompanyId}/frameworks/${frameworkId}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isDefault }),
-        }
-      );
+      const res = await fetch(`/api/companies/${selectedCompanyId}/frameworks/${frameworkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isDefault }),
+      });
 
       const data = await res.json();
       if (data.success) {
@@ -427,11 +421,7 @@ export default function CompanyFrameworkPage() {
       技术方案: 'bg-green-100 text-green-800',
       商务文件: 'bg-orange-100 text-orange-800',
     };
-    return (
-      <Badge className={colors[type] || 'bg-gray-100 text-gray-800'}>
-        {type}
-      </Badge>
-    );
+    return <Badge className={colors[type] || 'bg-gray-100 text-gray-800'}>{type}</Badge>;
   };
 
   const countChapters = (chapters: FrameworkChapter[]): number => {
@@ -486,10 +476,10 @@ export default function CompanyFrameworkPage() {
       <Separator />
 
       {/* 框架列表 */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+      {error ? (
+        <ListStateBlock state="error" error={error} onRetry={loadCompanies} />
+      ) : loading ? (
+        <ListStateBlock state="loading" />
       ) : !selectedCompanyId ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -497,11 +487,7 @@ export default function CompanyFrameworkPage() {
           </CardContent>
         </Card>
       ) : frameworks.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            该公司暂无文档框架，点击"新建框架"创建
-          </CardContent>
-        </Card>
+        <ListStateBlock state="empty" emptyText="暂无文档框架，点击" />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {frameworks.map((framework) => (
@@ -575,12 +561,8 @@ export default function CompanyFrameworkPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>
-              {editingFramework ? '编辑文档框架' : '创建文档框架'}
-            </DialogTitle>
-            <DialogDescription>
-              创建公司标准文档框架，可在创建投标文件时选择合并
-            </DialogDescription>
+            <DialogTitle>{editingFramework ? '编辑文档框架' : '创建文档框架'}</DialogTitle>
+            <DialogDescription>创建公司标准文档框架，可在创建投标文件时选择合并</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-auto space-y-4">

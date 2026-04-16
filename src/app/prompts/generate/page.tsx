@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Sparkles,
@@ -66,20 +73,21 @@ export default function SchemeGeneratePage() {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [_history, _setHistory] = useState<GenerationHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [error, setError] = useState('');
+
   // Selection
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  
+
   // Parameters
   const [parameters, setParameters] = useState<Record<string, string>>({});
-  
+
   // Generation
   const [generating, setGenerating] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
   const [showPreview, _setShowPreview] = useState(true);
-  
+
   // Advanced settings
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [customSettings, setCustomSettings] = useState({
@@ -101,7 +109,7 @@ export default function SchemeGeneratePage() {
         defaults[param.code] = param.defaultValue || '';
       });
       setParameters(defaults);
-      
+
       // Reset custom settings to template defaults
       setCustomSettings({
         modelProvider: selectedTemplate.modelProvider || '',
@@ -114,19 +122,21 @@ export default function SchemeGeneratePage() {
 
   const fetchTemplates = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       params.set('status', 'published');
       if (selectedCategoryId) params.set('categoryId', selectedCategoryId);
-      
+
       const res = await fetch(`/api/prompts/templates?${params.toString()}`);
       const data = await res.json();
-      
+
       if (data.items) {
         setTemplates(data.items);
       }
     } catch (error) {
       console.error('Failed to fetch templates:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -146,7 +156,7 @@ export default function SchemeGeneratePage() {
 
   const handleGenerate = async () => {
     if (!selectedTemplate) return;
-    
+
     setGenerating(true);
     setGeneratedContent('');
     setStreaming(true);
@@ -281,14 +291,18 @@ export default function SchemeGeneratePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>模板</Label>
-                {loading ? (
-                  <Skeleton className="h-10 w-full" />
+                {error ? (
+                  <ListStateBlock state="error" error={error} onRetry={fetchTemplates} />
+                ) : loading ? (
+                  <ListStateBlock state="loading" />
+                ) : filteredTemplates.length === 0 ? (
+                  <ListStateBlock state="empty" emptyText="暂无模板" />
                 ) : (
-                  <Select 
-                    value={selectedTemplate?.id?.toString() || ''} 
+                  <Select
+                    value={selectedTemplate?.id?.toString() || ''}
                     onValueChange={(v) => {
                       const template = templates.find((t) => t.id === parseInt(v));
                       setSelectedTemplate(template || null);
@@ -315,7 +329,7 @@ export default function SchemeGeneratePage() {
                   </Select>
                 )}
               </div>
-              
+
               {selectedTemplate && (
                 <div className="text-sm text-muted-foreground">
                   <p>{selectedTemplate.description}</p>
@@ -333,9 +347,7 @@ export default function SchemeGeneratePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">参数配置</CardTitle>
-                <CardDescription>
-                  填写模板参数，系统将自动渲染生成提示词
-                </CardDescription>
+                <CardDescription>填写模板参数，系统将自动渲染生成提示词</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {selectedTemplate.parameters.map((param) => (
@@ -347,7 +359,9 @@ export default function SchemeGeneratePage() {
                     {param.type === 'textarea' ? (
                       <Textarea
                         value={parameters[param.code] || ''}
-                        onChange={(e) => setParameters({ ...parameters, [param.code]: e.target.value })}
+                        onChange={(e) =>
+                          setParameters({ ...parameters, [param.code]: e.target.value })
+                        }
                         placeholder={param.description}
                         className="min-h-[100px]"
                       />
@@ -355,13 +369,17 @@ export default function SchemeGeneratePage() {
                       <Input
                         type="number"
                         value={parameters[param.code] || ''}
-                        onChange={(e) => setParameters({ ...parameters, [param.code]: e.target.value })}
+                        onChange={(e) =>
+                          setParameters({ ...parameters, [param.code]: e.target.value })
+                        }
                         placeholder={param.description}
                       />
                     ) : (
                       <Input
                         value={parameters[param.code] || ''}
-                        onChange={(e) => setParameters({ ...parameters, [param.code]: e.target.value })}
+                        onChange={(e) =>
+                          setParameters({ ...parameters, [param.code]: e.target.value })
+                        }
                         placeholder={param.description}
                       />
                     )}
@@ -376,10 +394,7 @@ export default function SchemeGeneratePage() {
 
           {/* Advanced Settings */}
           <Card>
-            <CardHeader 
-              className="cursor-pointer" 
-              onClick={() => setAdvancedOpen(!advancedOpen)}
-            >
+            <CardHeader className="cursor-pointer" onClick={() => setAdvancedOpen(!advancedOpen)}>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">高级设置</CardTitle>
                 {advancedOpen ? (
@@ -394,9 +409,11 @@ export default function SchemeGeneratePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>模型提供商</Label>
-                    <Select 
-                      value={customSettings.modelProvider} 
-                      onValueChange={(v) => setCustomSettings({ ...customSettings, modelProvider: v })}
+                    <Select
+                      value={customSettings.modelProvider}
+                      onValueChange={(v) =>
+                        setCustomSettings({ ...customSettings, modelProvider: v })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="使用模板默认" />
@@ -415,7 +432,9 @@ export default function SchemeGeneratePage() {
                     <Label>模型名称</Label>
                     <Input
                       value={customSettings.modelName}
-                      onChange={(e) => setCustomSettings({ ...customSettings, modelName: e.target.value })}
+                      onChange={(e) =>
+                        setCustomSettings({ ...customSettings, modelName: e.target.value })
+                      }
                       placeholder="如：doubao-pro-32k"
                     />
                   </div>
@@ -429,7 +448,9 @@ export default function SchemeGeneratePage() {
                       min="0"
                       max="2"
                       value={customSettings.temperature}
-                      onChange={(e) => setCustomSettings({ ...customSettings, temperature: e.target.value })}
+                      onChange={(e) =>
+                        setCustomSettings({ ...customSettings, temperature: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -437,7 +458,9 @@ export default function SchemeGeneratePage() {
                     <Input
                       type="number"
                       value={customSettings.maxTokens}
-                      onChange={(e) => setCustomSettings({ ...customSettings, maxTokens: e.target.value })}
+                      onChange={(e) =>
+                        setCustomSettings({ ...customSettings, maxTokens: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -447,9 +470,9 @@ export default function SchemeGeneratePage() {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button 
-              className="flex-1" 
-              onClick={handleGenerate} 
+            <Button
+              className="flex-1"
+              onClick={handleGenerate}
               disabled={!selectedTemplate || generating}
             >
               {generating ? (
@@ -477,10 +500,7 @@ export default function SchemeGeneratePage() {
               <div>
                 <CardTitle className="text-lg">生成结果</CardTitle>
                 <CardDescription>
-                  {selectedTemplate 
-                    ? `基于模板"${selectedTemplate.name}"生成`
-                    : '请先选择模板'
-                  }
+                  {selectedTemplate ? `基于模板"${selectedTemplate.name}"生成` : '请先选择模板'}
                 </CardDescription>
               </div>
               {generatedContent && (
@@ -504,7 +524,7 @@ export default function SchemeGeneratePage() {
                     <TabsTrigger value="preview">提示词预览</TabsTrigger>
                   )}
                 </TabsList>
-                
+
                 <TabsContent value="result" className="mt-4">
                   {generating || generatedContent ? (
                     <div className="bg-muted p-4 rounded-lg min-h-[500px] whitespace-pre-wrap font-mono text-sm overflow-auto">
@@ -518,7 +538,7 @@ export default function SchemeGeneratePage() {
                     </div>
                   )}
                 </TabsContent>
-                
+
                 {showPreview && selectedTemplate && (
                   <TabsContent value="preview" className="mt-4">
                     <div className="space-y-4">

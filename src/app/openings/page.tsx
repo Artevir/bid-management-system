@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -48,7 +49,6 @@ import {
   XCircle,
   TrendingUp,
 } from 'lucide-react';
-import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { extractErrorMessage } from '@/lib/error-message';
 
@@ -232,7 +232,7 @@ export default function OpeningsPage() {
   };
 
   const handleProjectChange = (projectId: string) => {
-    const project = projects.find(p => p.id.toString() === projectId);
+    const project = projects.find((p) => p.id.toString() === projectId);
     setFormData({
       ...formData,
       projectId,
@@ -241,7 +241,7 @@ export default function OpeningsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = OPENING_STATUS.find(s => s.value === status);
+    const statusInfo = OPENING_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -257,19 +257,24 @@ export default function OpeningsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4 text-yellow-600" />;
-      case 'opened': return <CheckCircle className="h-4 w-4 text-blue-600" />;
-      case 'cancelled': return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'postponed': return <TrendingUp className="h-4 w-4 text-orange-600" />;
-      default: return null;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'opened':
+        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'postponed':
+        return <TrendingUp className="h-4 w-4 text-orange-600" />;
+      default:
+        return null;
     }
   };
 
   // 统计数据
   const stats = {
-    pending: openings.filter(o => o.status === 'pending').length,
-    opened: openings.filter(o => o.status === 'opened').length,
-    wins: openings.filter(o => o.winnerName && o.winnerPrice === o.ourBidPrice).length,
+    pending: openings.filter((o) => o.status === 'pending').length,
+    opened: openings.filter((o) => o.status === 'opened').length,
+    wins: openings.filter((o) => o.winnerName && o.winnerPrice === o.ourBidPrice).length,
     total: openings.length,
   };
 
@@ -306,10 +311,7 @@ export default function OpeningsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="project">关联项目 *</Label>
-                  <Select
-                    value={formData.projectId}
-                    onValueChange={handleProjectChange}
-                  >
+                  <Select value={formData.projectId} onValueChange={handleProjectChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择项目" />
                     </SelectTrigger>
@@ -496,17 +498,16 @@ export default function OpeningsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{String(error)}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={7} />
+            <ListStateBlock state="loading" />
           ) : openings.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无开标记录</p>
-              <Button variant="outline" className="mt-4" onClick={() => setDialogOpen(true)}>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无开标记录" />
+              <Button variant="outline" onClick={() => setDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 新建开标记录
               </Button>
@@ -531,9 +532,7 @@ export default function OpeningsPage() {
                       <div>
                         <div className="font-medium">{opening.projectName}</div>
                         {opening.tenderCode && (
-                          <div className="text-xs text-muted-foreground">
-                            {opening.tenderCode}
-                          </div>
+                          <div className="text-xs text-muted-foreground">{opening.tenderCode}</div>
                         )}
                       </div>
                     </TableCell>
@@ -550,9 +549,7 @@ export default function OpeningsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {opening.ourBidPrice
-                        ? formatCurrency(parseFloat(opening.ourBidPrice))
-                        : '-'}
+                      {opening.ourBidPrice ? formatCurrency(parseFloat(opening.ourBidPrice)) : '-'}
                     </TableCell>
                     <TableCell>
                       {opening.winnerName ? (
@@ -565,9 +562,7 @@ export default function OpeningsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {opening.winnerPrice
-                        ? formatCurrency(parseFloat(opening.winnerPrice))
-                        : '-'}
+                      {opening.winnerPrice ? formatCurrency(parseFloat(opening.winnerPrice)) : '-'}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -589,7 +584,8 @@ export default function OpeningsPage() {
           {total > pageSize && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
-                第 {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} 条，共 {total} 条
+                第 {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} 条，共 {total}{' '}
+                条
               </div>
               <div className="flex gap-2">
                 <Button

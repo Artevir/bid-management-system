@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -69,6 +70,7 @@ interface HealthData {
 export default function MonitoringPage() {
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
@@ -94,6 +96,7 @@ export default function MonitoringPage() {
       setHealthData(data);
     } catch (error) {
       console.error('Failed to fetch health data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -111,6 +114,7 @@ export default function MonitoringPage() {
       }
     } catch (error) {
       console.error('Failed to clear cache:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   }
 
@@ -146,6 +150,10 @@ export default function MonitoringPage() {
         return <Activity className="h-5 w-5" />;
     }
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -187,10 +195,7 @@ export default function MonitoringPage() {
       {healthData?.alerts && healthData.alerts.length > 0 && (
         <div className="space-y-2">
           {healthData.alerts.map((alert, index) => (
-            <Alert
-              key={index}
-              variant={alert.level === 'critical' ? 'destructive' : 'default'}
-            >
+            <Alert key={index} variant={alert.level === 'critical' ? 'destructive' : 'default'}>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle className="flex items-center gap-2">
                 {alert.component} - {alert.level === 'critical' ? '严重' : '警告'}
@@ -256,7 +261,9 @@ export default function MonitoringPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">响应时间</p>
-                <p className="text-xl font-bold">{healthData?.metrics.performance.responseTime}ms</p>
+                <p className="text-xl font-bold">
+                  {healthData?.metrics.performance.responseTime}ms
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   平均: {healthData?.metrics.performance.avgResponseTime}ms
                 </p>
@@ -277,30 +284,30 @@ export default function MonitoringPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {healthData?.checks && Object.entries(healthData.checks).map(([name, check]) => (
-                <div key={name} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    {name === 'database' && <Database className="h-5 w-5" />}
-                    {name === 'cache' && <HardDrive className="h-5 w-5" />}
-                    {name === 'memory' && <Cpu className="h-5 w-5" />}
-                    {name === 'filesystem' && <HardDrive className="h-5 w-5" />}
-                    <div>
-                      <p className="font-medium capitalize">{name}</p>
-                      {check.error && (
-                        <p className="text-xs text-destructive">{check.error}</p>
+              {healthData?.checks &&
+                Object.entries(healthData.checks).map(([name, check]) => (
+                  <div
+                    key={name}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex items-center gap-3">
+                      {name === 'database' && <Database className="h-5 w-5" />}
+                      {name === 'cache' && <HardDrive className="h-5 w-5" />}
+                      {name === 'memory' && <Cpu className="h-5 w-5" />}
+                      {name === 'filesystem' && <HardDrive className="h-5 w-5" />}
+                      <div>
+                        <p className="font-medium capitalize">{name}</p>
+                        {check.error && <p className="text-xs text-destructive">{check.error}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {check.latency !== undefined && (
+                        <span className="text-sm text-muted-foreground">{check.latency}ms</span>
                       )}
+                      {getStatusBadge(check.status)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {check.latency !== undefined && (
-                      <span className="text-sm text-muted-foreground">
-                        {check.latency}ms
-                      </span>
-                    )}
-                    {getStatusBadge(check.status)}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -331,20 +338,32 @@ export default function MonitoringPage() {
                 <div className="p-4 rounded-lg bg-muted">
                   <p className="text-sm text-muted-foreground">命中率</p>
                   <p className="text-2xl font-bold">
-                    {(healthData?.metrics.cache.hits ?? 0) + (healthData?.metrics.cache.misses ?? 0) > 0
-                      ? (((healthData?.metrics.cache.hits ?? 0) / ((healthData?.metrics.cache.hits ?? 0) + (healthData?.metrics.cache.misses ?? 0))) * 100).toFixed(1)
-                      : 0}%
+                    {(healthData?.metrics.cache.hits ?? 0) +
+                      (healthData?.metrics.cache.misses ?? 0) >
+                    0
+                      ? (
+                          ((healthData?.metrics.cache.hits ?? 0) /
+                            ((healthData?.metrics.cache.hits ?? 0) +
+                              (healthData?.metrics.cache.misses ?? 0))) *
+                          100
+                        ).toFixed(1)
+                      : 0}
+                    %
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">命中次数</span>
-                  <span className="font-medium text-green-600">{healthData?.metrics.cache.hits ?? 0}</span>
+                  <span className="font-medium text-green-600">
+                    {healthData?.metrics.cache.hits ?? 0}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">未命中次数</span>
-                  <span className="font-medium text-orange-600">{healthData?.metrics.cache.misses ?? 0}</span>
+                  <span className="font-medium text-orange-600">
+                    {healthData?.metrics.cache.misses ?? 0}
+                  </span>
                 </div>
               </div>
             </div>

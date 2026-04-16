@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,7 +35,7 @@ import { APPROVAL_STATUS_MAP as _APPROVAL_STATUS_MAP } from '@/lib/constants/bid
 
 export default function ApprovalPage() {
   const _router = useRouter();
-  
+
   // --- 服务端状态 (React Query) ---
   const { data: approvals = [], isLoading: loadingApprovals } = useApprovals();
   const executeApprovalMutation = useExecuteApproval();
@@ -75,9 +81,7 @@ export default function ApprovalPage() {
 
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="pending">
-            待审核 ({approvals.length})
-          </TabsTrigger>
+          <TabsTrigger value="pending">待审核 ({approvals.length})</TabsTrigger>
           <TabsTrigger value="history">审核历史</TabsTrigger>
         </TabsList>
 
@@ -90,9 +94,8 @@ export default function ApprovalPage() {
             </div>
           ) : approvals.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>暂无待审核文档</p>
+              <CardContent className="py-12">
+                <ListStateBlock state="empty" emptyText="暂无待审核文档" />
               </CardContent>
             </Card>
           ) : (
@@ -119,9 +122,7 @@ export default function ApprovalPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {getLevelLabel(approval.level)}
-                        </Badge>
+                        <Badge variant="outline">{getLevelLabel(approval.level)}</Badge>
                         <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       </div>
                     </div>
@@ -151,9 +152,7 @@ export default function ApprovalPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>审核文档</DialogTitle>
-            <DialogDescription>
-              查看文档详情并执行审核操作
-            </DialogDescription>
+            <DialogDescription>查看文档详情并执行审核操作</DialogDescription>
           </DialogHeader>
 
           {selectedApproval && (
@@ -205,9 +204,7 @@ export default function ApprovalPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{actionType === 'approve' ? '审批通过' : '审批驳回'}</DialogTitle>
-            <DialogDescription>
-              请输入您的审批意见（可选）。
-            </DialogDescription>
+            <DialogDescription>请输入您的审批意见（可选）。</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Textarea

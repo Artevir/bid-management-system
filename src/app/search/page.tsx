@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ListStateBlock } from '@/components/ui/list-states';
 
 // 类型定义
 interface SearchResult {
@@ -87,6 +88,7 @@ export default function SearchPage() {
   const [keyword, setKeyword] = useState('');
   const [searchType, setSearchType] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -123,6 +125,7 @@ export default function SearchPage() {
 
   const fetchHotSearches = async () => {
     try {
+      setError('');
       const response = await fetch('/api/search?action=hot');
       if (response.ok) {
         const data = await response.json();
@@ -130,12 +133,16 @@ export default function SearchPage() {
       }
     } catch (error) {
       console.error('获取热门搜索失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
   const fetchSuggestions = async () => {
     try {
-      const response = await fetch(`/api/search?action=suggestions&keyword=${encodeURIComponent(keyword)}`);
+      setError('');
+      const response = await fetch(
+        `/api/search?action=suggestions&keyword=${encodeURIComponent(keyword)}`
+      );
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data);
@@ -143,6 +150,7 @@ export default function SearchPage() {
       }
     } catch (error) {
       console.error('获取搜索建议失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -154,6 +162,7 @@ export default function SearchPage() {
     }
 
     setLoading(true);
+    setError('');
     setShowSuggestions(false);
     setHasSearched(true);
 
@@ -169,6 +178,7 @@ export default function SearchPage() {
       setResults(data);
     } catch (error) {
       console.error('搜索失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       toast.error('搜索失败');
     } finally {
       setLoading(false);
@@ -225,9 +235,7 @@ export default function SearchPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">全文检索</h1>
-          <p className="text-gray-500 text-sm">
-            搜索项目、文档、知识库等内容
-          </p>
+          <p className="text-gray-500 text-sm">搜索项目、文档、知识库等内容</p>
         </div>
       </div>
 
@@ -248,10 +256,7 @@ export default function SearchPage() {
                 className="pl-10 pr-10 h-12 text-lg"
               />
               {keyword && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
+                <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2">
                   <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                 </button>
               )}
@@ -340,45 +345,37 @@ export default function SearchPage() {
                 >
                   全部 ({Object.values(results.aggregations.byType).reduce((a, b) => a + b, 0)})
                 </Badge>
-                {Object.entries(results.aggregations.byType).map(([type, count]) => (
-                  count > 0 && (
-                    <Badge
-                      key={type}
-                      variant={searchType === type ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => setSearchType(type)}
-                    >
-                      {typeNames[type]} ({count})
-                    </Badge>
-                  )
-                ))}
+                {Object.entries(results.aggregations.byType).map(
+                  ([type, count]) =>
+                    count > 0 && (
+                      <Badge
+                        key={type}
+                        variant={searchType === type ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => setSearchType(type)}
+                      >
+                        {typeNames[type]} ({count})
+                      </Badge>
+                    )
+                )}
               </div>
             </div>
           )}
 
           {/* 结果列表 */}
-          {loading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-              <p className="text-gray-500 mt-2">搜索中...</p>
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={() => handleSearch()} />
+          ) : loading ? (
+            <ListStateBlock state="loading" loadingText="搜索中..." />
           ) : results?.data.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Search className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>未找到相关结果</p>
-              <p className="text-sm mt-1">请尝试其他关键词</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="未找到相关结果，请尝试其他关键词" />
           ) : (
             <div className="space-y-3">
               {results?.data.map((result, _index) => {
                 const TypeIcon = typeIcons[result.type] || File;
 
                 return (
-                  <Link
-                    key={`${result.type}-${result.id}`}
-                    href={result.url}
-                    className="block"
-                  >
+                  <Link key={`${result.type}-${result.id}`} href={result.url} className="block">
                     <Card className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">

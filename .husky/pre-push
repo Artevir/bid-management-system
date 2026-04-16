@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+pnpm run type-check
+pnpm run docs:v5-list-states-guard:check

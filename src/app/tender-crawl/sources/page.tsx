@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Label } from '@/components/ui/label';
 import {
   Table,
@@ -98,10 +99,11 @@ export default function CrawlSourcesPage() {
   const _router = useRouter();
   const [sources, setSources] = useState<CrawlSource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [importing, setImporting] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
-  
+
   // 导入选项
   const [importOptions, setImportOptions] = useState({
     force: false,
@@ -147,7 +149,7 @@ export default function CrawlSourcesPage() {
         body: JSON.stringify(importOptions),
       });
       const data = await res.json();
-      
+
       if (data.success) {
         alert(data.message);
         fetchSources();
@@ -171,7 +173,7 @@ export default function CrawlSourcesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !source.isActive }),
       });
-      
+
       if (res.ok) {
         fetchSources();
       }
@@ -184,12 +186,12 @@ export default function CrawlSourcesPage() {
     if (!confirm(`确定要删除抓取源"${source.name}"吗？`)) {
       return;
     }
-    
+
     try {
       const res = await fetch(`/api/tender-crawl/sources/${source.id}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         fetchSources();
       }
@@ -200,14 +202,33 @@ export default function CrawlSourcesPage() {
 
   const getStatusBadge = (status: string | null) => {
     if (!status) return <Badge variant="outline">未运行</Badge>;
-    
-    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
-      success: { label: '成功', variant: 'default', icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+
+    const statusMap: Record<
+      string,
+      {
+        label: string;
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+        icon: React.ReactNode;
+      }
+    > = {
+      success: {
+        label: '成功',
+        variant: 'default',
+        icon: <CheckCircle className="h-3 w-3 mr-1" />,
+      },
       failed: { label: '失败', variant: 'destructive', icon: <XCircle className="h-3 w-3 mr-1" /> },
-      running: { label: '运行中', variant: 'secondary', icon: <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> },
-      partial: { label: '部分成功', variant: 'outline', icon: <AlertCircle className="h-3 w-3 mr-1" /> },
+      running: {
+        label: '运行中',
+        variant: 'secondary',
+        icon: <RefreshCw className="h-3 w-3 mr-1 animate-spin" />,
+      },
+      partial: {
+        label: '部分成功',
+        variant: 'outline',
+        icon: <AlertCircle className="h-3 w-3 mr-1" />,
+      },
     };
-    
+
     const config = statusMap[status] || { label: status, variant: 'outline', icon: null };
     return (
       <Badge variant={config.variant} className="flex items-center">
@@ -251,7 +272,7 @@ export default function CrawlSourcesPage() {
                   将已收集的政府采购单位、交易中心、招标代理公司导入为信息源
                 </DialogDescription>
               </DialogHeader>
-              
+
               {platformStats && (
                 <div className="space-y-4">
                   {/* 统计信息 */}
@@ -262,30 +283,35 @@ export default function CrawlSourcesPage() {
                     </div>
                     <div className="bg-muted p-3 rounded-lg">
                       <p className="text-sm text-muted-foreground">可导入数量</p>
-                      <p className="text-2xl font-bold text-green-600">{platformStats.totalWithWebsite}</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {platformStats.totalWithWebsite}
+                      </p>
                       <p className="text-xs text-muted-foreground">有网站的单位</p>
                     </div>
                   </div>
-                  
+
                   {/* 按类型统计 */}
                   <div className="space-y-2">
                     <Label>选择要导入的类型</Label>
                     {Object.entries(platformStats.byType).map(([type, stats]) => (
-                      <div key={type} className="flex items-center justify-between p-2 border rounded">
+                      <div
+                        key={type}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div className="flex items-center gap-2">
                           <Checkbox
                             id={`type-${type}`}
                             checked={importOptions.platformTypes.includes(type)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setImportOptions(prev => ({
+                                setImportOptions((prev) => ({
                                   ...prev,
                                   platformTypes: [...prev.platformTypes, type],
                                 }));
                               } else {
-                                setImportOptions(prev => ({
+                                setImportOptions((prev) => ({
                                   ...prev,
-                                  platformTypes: prev.platformTypes.filter(t => t !== type),
+                                  platformTypes: prev.platformTypes.filter((t) => t !== type),
                                 }));
                               }
                             }}
@@ -300,19 +326,17 @@ export default function CrawlSourcesPage() {
                       </div>
                     ))}
                     {importOptions.platformTypes.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        不选择则导入全部可导入的单位
-                      </p>
+                      <p className="text-sm text-muted-foreground">不选择则导入全部可导入的单位</p>
                     )}
                   </div>
-                  
+
                   {/* 强制覆盖选项 */}
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="force"
                       checked={importOptions.force}
-                      onCheckedChange={(checked) => 
-                        setImportOptions(prev => ({ ...prev, force: !!checked }))
+                      onCheckedChange={(checked) =>
+                        setImportOptions((prev) => ({ ...prev, force: !!checked }))
                       }
                     />
                     <Label htmlFor="force" className="cursor-pointer">
@@ -321,7 +345,7 @@ export default function CrawlSourcesPage() {
                   </div>
                 </div>
               )}
-              
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
                   取消
@@ -367,7 +391,7 @@ export default function CrawlSourcesPage() {
             <div className="flex items-center gap-3">
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-2xl font-bold">{sources.filter(s => s.isActive).length}</p>
+                <p className="text-2xl font-bold">{sources.filter((s) => s.isActive).length}</p>
                 <p className="text-sm text-muted-foreground">已启用</p>
               </div>
             </div>
@@ -379,7 +403,7 @@ export default function CrawlSourcesPage() {
               <Clock className="h-8 w-8 text-orange-500" />
               <div>
                 <p className="text-2xl font-bold">
-                  {sources.filter(s => s.scheduleType !== 'manual').length}
+                  {sources.filter((s) => s.scheduleType !== 'manual').length}
                 </p>
                 <p className="text-sm text-muted-foreground">定时任务</p>
               </div>
@@ -411,17 +435,9 @@ export default function CrawlSourcesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : sources.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无抓取源</p>
-              <p className="text-sm mt-2">点击"从政采单位导入"快速添加默认信息源</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无抓取源" />
           ) : (
             <Table>
               <TableHeader>
@@ -452,9 +468,9 @@ export default function CrawlSourcesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <a 
-                        href={source.baseUrl} 
-                        target="_blank" 
+                      <a
+                        href={source.baseUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline truncate max-w-[200px] block"
                       >
@@ -476,11 +492,7 @@ export default function CrawlSourcesPage() {
                       <span className="text-muted-foreground text-sm"> 条</span>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleActive(source)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleToggleActive(source)}>
                         {source.isActive ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />
                         ) : (
@@ -496,11 +508,7 @@ export default function CrawlSourcesPage() {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDelete(source)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(source)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

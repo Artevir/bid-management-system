@@ -97,3 +97,10 @@ Desktop.ini
 .turbo
 
 .coze-logs
+
+# Local portable Pandoc (see scripts/install-pandoc-portable.ps1)
+/tools/pandoc/
+
+# Python
+__pycache__/
+*.py[cod]

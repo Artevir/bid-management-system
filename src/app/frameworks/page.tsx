@@ -3,9 +3,16 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+import {
+  Card as _Card,
+  CardContent as _CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+  CardDescription as _CardDescription,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +37,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs as _Tabs, TabsContent as _TabsContent, TabsList as _TabsList, TabsTrigger as _TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tabs as _Tabs,
+  TabsContent as _TabsContent,
+  TabsList as _TabsList,
+  TabsTrigger as _TabsTrigger,
+} from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -45,7 +57,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   Plus,
   Search,
@@ -128,7 +145,13 @@ interface Chapter {
 
 export default function DocFrameworksPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
       <DocFrameworksContent />
     </Suspense>
   );
@@ -137,19 +160,20 @@ export default function DocFrameworksPage() {
 function DocFrameworksContent() {
   const _router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // State
   const [frameworks, setFrameworks] = useState<DocFramework[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedFramework, setSelectedFramework] = useState<DocFramework | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [_activeTab, _setActiveTab] = useState(searchParams.get('tab') || 'list');
-  
+
   // Filter States
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<'all' | 'system' | 'company'>('all');
-  
+
   // Dialog States
   const [frameworkDialogOpen, setFrameworkDialogOpen] = useState(false);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
@@ -158,8 +182,12 @@ function DocFrameworksContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingFramework, setEditingFramework] = useState<DocFramework | null>(null);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
-  const [deletingItem, setDeletingItem] = useState<{ type: 'framework' | 'chapter'; id: number; name: string } | null>(null);
-  
+  const [deletingItem, setDeletingItem] = useState<{
+    type: 'framework' | 'chapter';
+    id: number;
+    name: string;
+  } | null>(null);
+
   // Form States
   const [frameworkForm, setFrameworkForm] = useState({
     name: '',
@@ -169,7 +197,7 @@ function DocFrameworksContent() {
     companyId: '',
     isDefault: false,
   });
-  
+
   const [chapterForm, setChapterForm] = useState({
     title: '',
     level: 1,
@@ -181,12 +209,12 @@ function DocFrameworksContent() {
     contentTemplate: '',
     parentId: '',
   });
-  
+
   // Parse States
   const [parseUrl, setParseUrl] = useState('');
   const [parsedChapters, setParsedChapters] = useState<Chapter[]>([]);
   const [parsing, setParsing] = useState(false);
-  
+
   // Config States
   const [configForm, setConfigForm] = useState({
     cover: { enabled: false, title: '', subtitle: '', company: '', date: '' },
@@ -217,6 +245,7 @@ function DocFrameworksContent() {
 
   const fetchFrameworks = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (searchKeyword) params.set('keyword', searchKeyword);
@@ -228,13 +257,14 @@ function DocFrameworksContent() {
       const response = await fetch(`/api/frameworks?${params.toString()}`);
       const data = await response.json();
       setFrameworks(data.items || []);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: data.total || 0,
         totalPages: data.totalPages || 0,
       }));
     } catch (error) {
       console.error('Failed to fetch frameworks:', error);
+      setError(error instanceof Error ? error.message : '加载框架列表失败');
     } finally {
       setLoading(false);
     }
@@ -270,10 +300,10 @@ function DocFrameworksContent() {
 
   const handleCreateFramework = () => {
     setEditingFramework(null);
-    setFrameworkForm({ 
-      name: '', 
-      code: '', 
-      description: '', 
+    setFrameworkForm({
+      name: '',
+      code: '',
+      description: '',
       category: 'general',
       companyId: selectedCompanyId !== 'all' ? selectedCompanyId : '',
       isDefault: false,
@@ -298,9 +328,7 @@ function DocFrameworksContent() {
     try {
       const url = '/api/frameworks';
       const method = editingFramework ? 'PUT' : 'POST';
-      const body = editingFramework
-        ? { id: editingFramework.id, ...frameworkForm }
-        : frameworkForm;
+      const body = editingFramework ? { id: editingFramework.id, ...frameworkForm } : frameworkForm;
 
       const response = await fetch(url, {
         method,
@@ -344,7 +372,7 @@ function DocFrameworksContent() {
 
   const handleSetDefault = async (frameworkId: number, isDefault: boolean) => {
     try {
-      const framework = frameworks.find(f => f.id === frameworkId);
+      const framework = frameworks.find((f) => f.id === frameworkId);
       if (!framework) return;
 
       const response = await fetch('/api/frameworks', {
@@ -459,7 +487,7 @@ function DocFrameworksContent() {
 
   const handleParseDocument = async () => {
     if (!parseUrl) return;
-    
+
     setParsing(true);
     try {
       const response = await fetch('/api/frameworks/parse', {
@@ -579,7 +607,7 @@ function DocFrameworksContent() {
                 className="pl-9"
               />
             </div>
-            
+
             {/* Scope Filter */}
             <div className="flex gap-1">
               <Button
@@ -628,14 +656,11 @@ function DocFrameworksContent() {
           <ScrollArea className="flex-1">
             <div className="p-2">
               {loading ? (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
+                <ListStateBlock state="loading" />
+              ) : error ? (
+                <ListStateBlock state="error" error={error} onRetry={fetchFrameworks} />
               ) : frameworks.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>暂无框架</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无框架" />
               ) : (
                 frameworks.map((framework) => (
                   <div
@@ -683,7 +708,9 @@ function DocFrameworksContent() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {!framework.isSystem && (
-                          <DropdownMenuItem onClick={() => handleSetDefault(framework.id, !framework.isDefault)}>
+                          <DropdownMenuItem
+                            onClick={() => handleSetDefault(framework.id, !framework.isDefault)}
+                          >
                             {framework.isDefault ? (
                               <>
                                 <StarOff className="h-4 w-4 mr-2" />
@@ -702,7 +729,11 @@ function DocFrameworksContent() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
-                              setDeletingItem({ type: 'framework', id: framework.id, name: framework.name });
+                              setDeletingItem({
+                                type: 'framework',
+                                id: framework.id,
+                                name: framework.name,
+                              });
                               setDeleteDialogOpen(true);
                             }}
                           >
@@ -762,11 +793,7 @@ function DocFrameworksContent() {
               <ScrollArea className="flex-1">
                 <div className="p-4">
                   {chapters.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>暂无章节</p>
-                      <p className="text-sm mt-1">点击"导入文档"或"添加章节"开始</p>
-                    </div>
+                    <ListStateBlock state="empty" emptyText="暂无章节" />
                   ) : (
                     <div className="space-y-1">
                       {chapters.map((chapter) => (
@@ -802,9 +829,7 @@ function DocFrameworksContent() {
       <Dialog open={frameworkDialogOpen} onOpenChange={setFrameworkDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {editingFramework ? '编辑框架' : '新建框架'}
-            </DialogTitle>
+            <DialogTitle>{editingFramework ? '编辑框架' : '新建框架'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -848,8 +873,10 @@ function DocFrameworksContent() {
             <div className="space-y-2">
               <Label>归属公司</Label>
               <Select
-                value={frameworkForm.companyId || "public"}
-                onValueChange={(value) => setFrameworkForm({ ...frameworkForm, companyId: value === "public" ? "" : value })}
+                value={frameworkForm.companyId || 'public'}
+                onValueChange={(value) =>
+                  setFrameworkForm({ ...frameworkForm, companyId: value === 'public' ? '' : value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="不选择则为公共框架" />
@@ -873,7 +900,9 @@ function DocFrameworksContent() {
                 <Switch
                   id="isDefault"
                   checked={frameworkForm.isDefault}
-                  onCheckedChange={(checked) => setFrameworkForm({ ...frameworkForm, isDefault: checked })}
+                  onCheckedChange={(checked) =>
+                    setFrameworkForm({ ...frameworkForm, isDefault: checked })
+                  }
                 />
                 <Label htmlFor="isDefault">设为公司默认框架</Label>
               </div>
@@ -883,7 +912,9 @@ function DocFrameworksContent() {
               <Label>描述</Label>
               <Textarea
                 value={frameworkForm.description}
-                onChange={(e) => setFrameworkForm({ ...frameworkForm, description: e.target.value })}
+                onChange={(e) =>
+                  setFrameworkForm({ ...frameworkForm, description: e.target.value })
+                }
                 placeholder="框架描述"
                 rows={3}
               />
@@ -894,9 +925,7 @@ function DocFrameworksContent() {
             <Button variant="outline" onClick={() => setFrameworkDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveFramework}>
-              {editingFramework ? '保存' : '创建'}
-            </Button>
+            <Button onClick={handleSaveFramework}>{editingFramework ? '保存' : '创建'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -905,9 +934,7 @@ function DocFrameworksContent() {
       <Dialog open={chapterDialogOpen} onOpenChange={setChapterDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {editingChapter ? '编辑章节' : '添加章节'}
-            </DialogTitle>
+            <DialogTitle>{editingChapter ? '编辑章节' : '添加章节'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -924,7 +951,9 @@ function DocFrameworksContent() {
               <Label className="text-right">层级</Label>
               <Select
                 value={chapterForm.level.toString()}
-                onValueChange={(value) => setChapterForm({ ...chapterForm, level: parseInt(value) })}
+                onValueChange={(value) =>
+                  setChapterForm({ ...chapterForm, level: parseInt(value) })
+                }
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
@@ -972,7 +1001,9 @@ function DocFrameworksContent() {
               <div className="col-span-3 flex items-center">
                 <Switch
                   checked={chapterForm.required}
-                  onCheckedChange={(checked) => setChapterForm({ ...chapterForm, required: checked })}
+                  onCheckedChange={(checked) =>
+                    setChapterForm({ ...chapterForm, required: checked })
+                  }
                 />
               </div>
             </div>
@@ -1002,7 +1033,9 @@ function DocFrameworksContent() {
               <Label className="text-right pt-2">内容模板</Label>
               <Textarea
                 value={chapterForm.contentTemplate}
-                onChange={(e) => setChapterForm({ ...chapterForm, contentTemplate: e.target.value })}
+                onChange={(e) =>
+                  setChapterForm({ ...chapterForm, contentTemplate: e.target.value })
+                }
                 placeholder="章节内容模板，支持变量替换"
                 className="col-span-3"
                 rows={4}
@@ -1014,9 +1047,7 @@ function DocFrameworksContent() {
             <Button variant="outline" onClick={() => setChapterDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveChapter}>
-              {editingChapter ? '保存' : '添加'}
-            </Button>
+            <Button onClick={handleSaveChapter}>{editingChapter ? '保存' : '添加'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1026,9 +1057,7 @@ function DocFrameworksContent() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>导入文档解析</DialogTitle>
-            <DialogDescription>
-              输入文档URL，系统将自动识别文档中的标题层级
-            </DialogDescription>
+            <DialogDescription>输入文档URL，系统将自动识别文档中的标题层级</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1072,11 +1101,14 @@ function DocFrameworksContent() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setParseDialogOpen(false);
-              setParsedChapters([]);
-              setParseUrl('');
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setParseDialogOpen(false);
+                setParsedChapters([]);
+                setParseUrl('');
+              }}
+            >
               关闭
             </Button>
           </DialogFooter>
@@ -1088,9 +1120,7 @@ function DocFrameworksContent() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>页面配置</DialogTitle>
-            <DialogDescription>
-              配置文档导出时的页面样式
-            </DialogDescription>
+            <DialogDescription>配置文档导出时的页面样式</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -1107,10 +1137,10 @@ function DocFrameworksContent() {
                   <div className="flex items-center space-x-2">
                     <Switch
                       checked={configForm.cover.enabled}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setConfigForm({
                           ...configForm,
-                          cover: { ...configForm.cover, enabled: checked }
+                          cover: { ...configForm.cover, enabled: checked },
                         })
                       }
                     />
@@ -1122,10 +1152,10 @@ function DocFrameworksContent() {
                         <Label>标题</Label>
                         <Input
                           value={configForm.cover.title}
-                          onChange={(e) => 
+                          onChange={(e) =>
                             setConfigForm({
                               ...configForm,
-                              cover: { ...configForm.cover, title: e.target.value }
+                              cover: { ...configForm.cover, title: e.target.value },
                             })
                           }
                           placeholder="封面标题"
@@ -1135,10 +1165,10 @@ function DocFrameworksContent() {
                         <Label>副标题</Label>
                         <Input
                           value={configForm.cover.subtitle}
-                          onChange={(e) => 
+                          onChange={(e) =>
                             setConfigForm({
                               ...configForm,
-                              cover: { ...configForm.cover, subtitle: e.target.value }
+                              cover: { ...configForm.cover, subtitle: e.target.value },
                             })
                           }
                           placeholder="封面副标题"
@@ -1164,10 +1194,10 @@ function DocFrameworksContent() {
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={configForm.header.enabled}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           setConfigForm({
                             ...configForm,
-                            header: { ...configForm.header, enabled: checked }
+                            header: { ...configForm.header, enabled: checked },
                           })
                         }
                       />
@@ -1179,10 +1209,10 @@ function DocFrameworksContent() {
                           <Label>左侧</Label>
                           <Input
                             value={configForm.header.left}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               setConfigForm({
                                 ...configForm,
-                                header: { ...configForm.header, left: e.target.value }
+                                header: { ...configForm.header, left: e.target.value },
                               })
                             }
                           />
@@ -1191,10 +1221,10 @@ function DocFrameworksContent() {
                           <Label>中间</Label>
                           <Input
                             value={configForm.header.center}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               setConfigForm({
                                 ...configForm,
-                                header: { ...configForm.header, center: e.target.value }
+                                header: { ...configForm.header, center: e.target.value },
                               })
                             }
                           />
@@ -1203,10 +1233,10 @@ function DocFrameworksContent() {
                           <Label>右侧</Label>
                           <Input
                             value={configForm.header.right}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               setConfigForm({
                                 ...configForm,
-                                header: { ...configForm.header, right: e.target.value }
+                                header: { ...configForm.header, right: e.target.value },
                               })
                             }
                           />
@@ -1214,17 +1244,17 @@ function DocFrameworksContent() {
                       </div>
                     )}
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
                       <Switch
                         checked={configForm.footer.enabled}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           setConfigForm({
                             ...configForm,
-                            footer: { ...configForm.footer, enabled: checked }
+                            footer: { ...configForm.footer, enabled: checked },
                           })
                         }
                       />
@@ -1234,10 +1264,10 @@ function DocFrameworksContent() {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={configForm.footer.showPageNumber}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             setConfigForm({
                               ...configForm,
-                              footer: { ...configForm.footer, showPageNumber: checked as boolean }
+                              footer: { ...configForm.footer, showPageNumber: checked as boolean },
                             })
                           }
                         />
@@ -1262,10 +1292,10 @@ function DocFrameworksContent() {
                   <div className="flex items-center space-x-2">
                     <Switch
                       checked={configForm.toc.enabled}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setConfigForm({
                           ...configForm,
-                          toc: { ...configForm.toc, enabled: checked }
+                          toc: { ...configForm.toc, enabled: checked },
                         })
                       }
                     />
@@ -1276,10 +1306,10 @@ function DocFrameworksContent() {
                       <Label>目录层级</Label>
                       <Select
                         value={configForm.toc.maxLevel.toString()}
-                        onValueChange={(value) => 
+                        onValueChange={(value) =>
                           setConfigForm({
                             ...configForm,
-                            toc: { ...configForm.toc, maxLevel: parseInt(value) }
+                            toc: { ...configForm.toc, maxLevel: parseInt(value) },
                           })
                         }
                       >
@@ -1315,10 +1345,10 @@ function DocFrameworksContent() {
                       <Label>字号</Label>
                       <Select
                         value={configForm.body.fontSize}
-                        onValueChange={(value) => 
+                        onValueChange={(value) =>
                           setConfigForm({
                             ...configForm,
-                            body: { ...configForm.body, fontSize: value }
+                            body: { ...configForm.body, fontSize: value },
                           })
                         }
                       >
@@ -1337,10 +1367,10 @@ function DocFrameworksContent() {
                       <Label>行高</Label>
                       <Select
                         value={configForm.body.lineHeight}
-                        onValueChange={(value) => 
+                        onValueChange={(value) =>
                           setConfigForm({
                             ...configForm,
-                            body: { ...configForm.body, lineHeight: value }
+                            body: { ...configForm.body, lineHeight: value },
                           })
                         }
                       >
@@ -1360,10 +1390,10 @@ function DocFrameworksContent() {
                       <Label>字体</Label>
                       <Select
                         value={configForm.body.fontFamily}
-                        onValueChange={(value) => 
+                        onValueChange={(value) =>
                           setConfigForm({
                             ...configForm,
-                            body: { ...configForm.body, fontFamily: value }
+                            body: { ...configForm.body, fontFamily: value },
                           })
                         }
                       >
@@ -1388,9 +1418,7 @@ function DocFrameworksContent() {
             <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={() => setConfigDialogOpen(false)}>
-              保存配置
-            </Button>
+            <Button onClick={() => setConfigDialogOpen(false)}>保存配置</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1403,9 +1431,7 @@ function DocFrameworksContent() {
             <AlertDialogDescription>
               确定要删除「{deletingItem?.name}」吗？此操作不可撤销。
               {deletingItem?.type === 'framework' && (
-                <span className="block mt-2 text-destructive">
-                  删除框架将同时删除所有章节。
-                </span>
+                <span className="block mt-2 text-destructive">删除框架将同时删除所有章节。</span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1413,7 +1439,9 @@ function DocFrameworksContent() {
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground"
-              onClick={deletingItem?.type === 'framework' ? handleDeleteFramework : handleDeleteChapter}
+              onClick={
+                deletingItem?.type === 'framework' ? handleDeleteFramework : handleDeleteChapter
+              }
             >
               删除
             </AlertDialogAction>
@@ -1449,35 +1477,27 @@ function ChapterItem({ chapter, onEdit, onDelete, onAddChild, depth = 0 }: Chapt
         )}
       >
         <button
-          className={cn(
-            'p-0.5 rounded hover:bg-muted',
-            !hasChildren && 'invisible'
-          )}
+          className={cn('p-0.5 rounded hover:bg-muted', !hasChildren && 'invisible')}
           onClick={() => setExpanded(!expanded)}
         >
-          <ChevronRight
-            className={cn(
-              'h-4 w-4 transition-transform',
-              expanded && 'rotate-90'
-            )}
-          />
+          <ChevronRight className={cn('h-4 w-4 transition-transform', expanded && 'rotate-90')} />
         </button>
-        
-        <span className="text-muted-foreground text-sm w-8">
-          {chapter.chapterCode}
-        </span>
-        
+
+        <span className="text-muted-foreground text-sm w-8">{chapter.chapterCode}</span>
+
         <span className="flex-1 font-medium">{chapter.title}</span>
-        
+
         <div className="flex items-center gap-1 text-muted-foreground">
           {chapter.required && (
-            <Badge variant="outline" className="text-xs">必填</Badge>
+            <Badge variant="outline" className="text-xs">
+              必填
+            </Badge>
           )}
           <Badge variant="secondary" className="text-xs">
             {chapter.level}级
           </Badge>
         </div>
-        
+
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {chapter.level < 5 && (
             <Button
@@ -1489,12 +1509,7 @@ function ChapterItem({ chapter, onEdit, onDelete, onAddChild, depth = 0 }: Chapt
               <Plus className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={() => onEdit(chapter)}
-          >
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(chapter)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
@@ -1507,7 +1522,7 @@ function ChapterItem({ chapter, onEdit, onDelete, onAddChild, depth = 0 }: Chapt
           </Button>
         </div>
       </div>
-      
+
       {hasChildren && expanded && (
         <div className="border-l ml-6 pl-1">
           {chapter.children!.map((child) => (

@@ -63,6 +63,55 @@ def object_schema(fields: dict[str, dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def hub_schema_override(
+    method: str,
+    path: str,
+    section: str,
+    key: str,
+    default_schema: str,
+) -> str:
+    """
+    收敛到 hub-only 后，对关键参数做更严格的 schema 约束。
+    """
+    if section == "path":
+        if key == "batchId" and path.startswith("/api/tender-center/batches/"):
+            return "z.string().regex(/^hub-batch-\\d+$/, 'batchId must be hub-batch-{id}')"
+        if key == "reviewTaskId" and path == "/api/tender-center/reviews/[reviewTaskId]/submit":
+            return "z.string().regex(/^review-hub-\\d+$/, 'reviewTaskId must be review-hub-{id}')"
+        if key in {"nodeId", "templateId", "segmentId", "clarificationId"}:
+            return f"z.string().regex(/^\\d+$/, '{key} must be numeric id')"
+
+    if section == "query" and path == "/api/tender-center/change-logs":
+        if key in {"targetObjectType", "targetObjectId"}:
+            return "z.string().optional()"
+
+    return default_schema
+
+
+def object_schema_with_overrides(
+    method: str,
+    path: str,
+    section: str,
+    fields: dict[str, dict[str, Any]],
+) -> str:
+    lines = ["z.object({"]
+    all_fields: dict[str, dict[str, Any]] = dict(fields or {})
+    if section == "query" and path == "/api/tender-center/change-logs":
+        all_fields.setdefault("targetObjectType", {"type": "string", "required": False})
+        all_fields.setdefault("targetObjectId", {"type": "string", "required": False})
+
+    if not all_fields:
+        lines.append("  })")
+        return "\n".join(lines)
+
+    for key in sorted(all_fields.keys()):
+        schema = field_to_zod(all_fields[key])
+        schema = hub_schema_override(method, path, section, key, schema)
+        lines.append(f"    {key}: {schema},")
+    lines.append("  })")
+    return "\n".join(lines)
+
+
 def generate_source(snapshot: dict[str, Any]) -> str:
     contracts: list[dict[str, Any]] = snapshot.get("contracts", [])
     contracts = [
@@ -87,9 +136,9 @@ def generate_source(snapshot: dict[str, Any]) -> str:
         path = str(contract["path"])
         name = to_identifier(method, path)
         req = contract.get("request", {})
-        path_schema = object_schema(req.get("path", {}))
-        query_schema = object_schema(req.get("query", {}))
-        body_schema = object_schema(req.get("body", {}))
+        path_schema = object_schema_with_overrides(method, path, "path", req.get("path", {}))
+        query_schema = object_schema_with_overrides(method, path, "query", req.get("query", {}))
+        body_schema = object_schema_with_overrides(method, path, "body", req.get("body", {}))
         lines.extend(
             [
                 f"  {name}: {{",

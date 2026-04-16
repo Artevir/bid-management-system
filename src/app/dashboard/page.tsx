@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -89,6 +91,7 @@ export default function DashboardPage() {
   const [upcoming, setUpcoming] = useState<UpcomingMilestone[]>([]);
   const [milestoneStatus, setMilestoneStatus] = useState<MilestoneStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -96,6 +99,7 @@ export default function DashboardPage() {
 
   async function fetchDashboardData() {
     setLoading(true);
+    setError('');
     try {
       const [overviewRes, trendsRes, deptsRes, upcomingRes, milestonesRes] = await Promise.all([
         fetch('/api/dashboard?action=overview').catch(() => ({ json: () => ({ overview: null }) })),
@@ -105,13 +109,15 @@ export default function DashboardPage() {
         fetch('/api/dashboard?action=milestones').catch(() => ({ json: () => ({ status: null }) })),
       ]);
 
-      const [overviewData, trendsData, deptsData, upcomingData, milestonesData] = await Promise.all([
-        overviewRes.json(),
-        trendsRes.json(),
-        deptsRes.json(),
-        upcomingRes.json(),
-        milestonesRes.json(),
-      ]);
+      const [overviewData, trendsData, deptsData, upcomingData, milestonesData] = await Promise.all(
+        [
+          overviewRes.json(),
+          trendsRes.json(),
+          deptsRes.json(),
+          upcomingRes.json(),
+          milestonesRes.json(),
+        ]
+      );
 
       if (overviewData.overview) setOverview(overviewData.overview);
       if (trendsData.trend) setTrends(trendsData.trend);
@@ -120,18 +126,29 @@ export default function DashboardPage() {
       if (milestonesData.status) setMilestoneStatus(milestonesData.status);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   }
 
   // 饼图数据
-  const milestonePieData = milestoneStatus ? [
-    { name: '待处理', value: milestoneStatus.pending, color: '#FFBB28' },
-    { name: '进行中', value: milestoneStatus.inProgress, color: '#0088FE' },
-    { name: '已完成', value: milestoneStatus.completed, color: '#00C49F' },
-    { name: '已过期', value: milestoneStatus.overdue, color: '#FF8042' },
-  ].filter(d => d.value > 0) : [];
+  const milestonePieData = milestoneStatus
+    ? [
+        { name: '待处理', value: milestoneStatus.pending, color: '#FFBB28' },
+        { name: '进行中', value: milestoneStatus.inProgress, color: '#0088FE' },
+        { name: '已完成', value: milestoneStatus.completed, color: '#00C49F' },
+        { name: '已过期', value: milestoneStatus.overdue, color: '#FF8042' },
+      ].filter((d) => d.value > 0)
+    : [];
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6">
+        <ListStateBlock state="error" error={error} onRetry={fetchDashboardData} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -179,7 +196,9 @@ export default function DashboardPage() {
           icon={FileText}
           color="text-yellow-500"
           loading={loading}
-          alert={!!overview?.pendingInterpretationReviews && overview.pendingInterpretationReviews > 0}
+          alert={
+            !!overview?.pendingInterpretationReviews && overview.pendingInterpretationReviews > 0
+          }
         />
         <StatCard
           title="过期项目"
@@ -204,11 +223,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <ListStateBlock state="loading" />
             ) : trends.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                暂无趋势数据
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无趋势数据" />
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={trends}>
@@ -250,11 +267,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <ListStateBlock state="loading" />
             ) : milestonePieData.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                暂无里程碑数据
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无里程碑数据" />
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -293,15 +308,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
+              <ListStateBlock state="loading" />
             ) : departments.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                暂无部门数据
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无部门数据" />
             ) : (
               <div className="space-y-4">
                 {departments.slice(0, 5).map((dept) => (
@@ -337,16 +346,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
+              <ListStateBlock state="loading" />
             ) : upcoming.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>暂无即将到期的里程碑</p>
-              </div>
+              <ListStateBlock state="empty" emptyText="暂无即将到期的里程碑" />
             ) : (
               <div className="space-y-3">
                 {upcoming.map((item) => (
@@ -360,7 +362,13 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <Badge
-                        variant={item.daysRemaining <= 1 ? 'destructive' : item.daysRemaining <= 3 ? 'default' : 'secondary'}
+                        variant={
+                          item.daysRemaining <= 1
+                            ? 'destructive'
+                            : item.daysRemaining <= 3
+                              ? 'default'
+                              : 'secondary'
+                        }
                       >
                         {item.daysRemaining === 0 ? '今日' : `${item.daysRemaining}天后`}
                       </Badge>
@@ -392,17 +400,27 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <Skeleton className="h-[200px] w-full" />
+                <ListStateBlock state="loading" />
               ) : departments.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">暂无数据</div>
+                <ListStateBlock state="empty" emptyText="暂无数据" />
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={departments.slice(0, 5)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" domain={[0, 100]} />
-                    <YAxis dataKey="departmentName" type="category" width={80} tick={{ fontSize: 12 }} />
+                    <YAxis
+                      dataKey="departmentName"
+                      type="category"
+                      width={80}
+                      tick={{ fontSize: 12 }}
+                    />
                     <Tooltip />
-                    <Bar dataKey="avgProgress" name="平均进度" fill="#0088FE" radius={[0, 4, 4, 0]} />
+                    <Bar
+                      dataKey="avgProgress"
+                      name="平均进度"
+                      fill="#0088FE"
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -418,15 +436,21 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-4 gap-4">
                 <div className="text-center p-4 rounded-lg bg-blue-50">
-                  <p className="text-2xl font-bold text-blue-600">{overview?.totalDocuments ?? 0}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {overview?.totalDocuments ?? 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">文档总数</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-green-50">
-                  <p className="text-2xl font-bold text-green-600">{overview?.totalKnowledge ?? 0}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {overview?.totalKnowledge ?? 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">知识条目</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-orange-50">
-                  <p className="text-2xl font-bold text-orange-600">{overview?.pendingReviews ?? 0}</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {overview?.pendingReviews ?? 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">待审核</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-purple-50">
@@ -451,7 +475,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">审校通过率</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">85%</Badge>
+                  <Badge variant="outline" className="bg-green-50 text-green-700">
+                    85%
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">问题发现数</span>
@@ -656,7 +682,16 @@ interface StatCardProps {
   alert?: boolean;
 }
 
-function StatCard({ title, value, total, icon: Icon, color, loading, trend, alert }: StatCardProps) {
+function StatCard({
+  title,
+  value,
+  total,
+  icon: Icon,
+  color,
+  loading,
+  trend,
+  alert,
+}: StatCardProps) {
   if (loading) {
     return (
       <Card>
@@ -680,7 +715,9 @@ function StatCard({ title, value, total, icon: Icon, color, loading, trend, aler
               )}
             </div>
             {trend !== undefined && (
-              <div className={`flex items-center text-xs ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div
+                className={`flex items-center text-xs ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
                 {trend >= 0 ? (
                   <ArrowUpRight className="h-3 w-3 mr-1" />
                 ) : (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -376,9 +377,7 @@ export default function OpeningDetailPage() {
               <div>
                 <div className="text-sm text-muted-foreground">我方报价</div>
                 <div className="text-xl font-bold text-primary">
-                  {opening.ourBidPrice
-                    ? formatCurrency(parseFloat(opening.ourBidPrice))
-                    : '-'}
+                  {opening.ourBidPrice ? formatCurrency(parseFloat(opening.ourBidPrice)) : '-'}
                 </div>
               </div>
 
@@ -390,9 +389,7 @@ export default function OpeningDetailPage() {
                 <div>
                   <div className="text-sm text-muted-foreground">预算金额</div>
                   <div className="font-medium">
-                    {opening.budgetPrice
-                      ? formatCurrency(parseFloat(opening.budgetPrice))
-                      : '-'}
+                    {opening.budgetPrice ? formatCurrency(parseFloat(opening.budgetPrice)) : '-'}
                   </div>
                 </div>
               </div>
@@ -487,10 +484,9 @@ export default function OpeningDetailPage() {
             </CardHeader>
             <CardContent>
               {quotes.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无报价记录</p>
-                  <Button variant="outline" className="mt-4" onClick={() => setAddQuoteDialogOpen(true)}>
+                <div className="text-center py-12 space-y-4">
+                  <ListStateBlock state="empty" emptyText="暂无报价记录" />
+                  <Button variant="outline" onClick={() => setAddQuoteDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     添加报价
                   </Button>
@@ -559,20 +555,25 @@ export default function OpeningDetailPage() {
                     <div>
                       <div className="text-muted-foreground">最低报价</div>
                       <div className="font-bold text-green-600">
-                        {formatCurrency(Math.min(...quotes.map(q => parseFloat(q.bidPrice) || 0)))}
+                        {formatCurrency(
+                          Math.min(...quotes.map((q) => parseFloat(q.bidPrice) || 0))
+                        )}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">最高报价</div>
                       <div className="font-bold text-red-600">
-                        {formatCurrency(Math.max(...quotes.map(q => parseFloat(q.bidPrice) || 0)))}
+                        {formatCurrency(
+                          Math.max(...quotes.map((q) => parseFloat(q.bidPrice) || 0))
+                        )}
                       </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">平均报价</div>
                       <div className="font-bold">
                         {formatCurrency(
-                          quotes.reduce((sum, q) => sum + (parseFloat(q.bidPrice) || 0), 0) / quotes.length
+                          quotes.reduce((sum, q) => sum + (parseFloat(q.bidPrice) || 0), 0) /
+                            quotes.length
                         )}
                       </div>
                     </div>
@@ -596,7 +597,7 @@ export default function OpeningDetailPage() {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{String(error)}</AlertDescription>
+                <AlertDescription>{String(error)}</AlertDescription>
               </Alert>
             )}
 
@@ -615,7 +616,9 @@ export default function OpeningDetailPage() {
                 <Label htmlFor="bidderType">投标方类型</Label>
                 <Select
                   value={quoteFormData.bidderType}
-                  onValueChange={(value) => setQuoteFormData({ ...quoteFormData, bidderType: value })}
+                  onValueChange={(value) =>
+                    setQuoteFormData({ ...quoteFormData, bidderType: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -632,7 +635,9 @@ export default function OpeningDetailPage() {
                   <Label htmlFor="competitor">关联竞争对手</Label>
                   <Select
                     value={quoteFormData.competitorId}
-                    onValueChange={(value) => setQuoteFormData({ ...quoteFormData, competitorId: value })}
+                    onValueChange={(value) =>
+                      setQuoteFormData({ ...quoteFormData, competitorId: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="选择竞争对手" />

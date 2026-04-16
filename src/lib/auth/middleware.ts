@@ -5,17 +5,81 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, getAccessTokenFromCookie } from '@/lib/auth/jwt';
-import { hasPermission, hasAnyPermission as _hasAnyPermission, hasAllPermissions as _hasAllPermissions, canAccessApi as _canAccessApi, getUserRoles } from '@/lib/auth/permission';
+import {
+  hasPermission,
+  hasAnyPermission as _hasAnyPermission,
+  hasAllPermissions as _hasAllPermissions,
+  canAccessApi as _canAccessApi,
+  getUserRoles,
+} from '@/lib/auth/permission';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 import { handleError, AppError } from '@/lib/api/error-handler';
-import { userPermissionCache, userMenuCache, userRoleCache, invalidateUserCache as invalidateUserPermissionCache } from '@/lib/cache/service';
+import {
+  userPermissionCache,
+  userMenuCache,
+  userRoleCache,
+  invalidateUserCache as invalidateUserPermissionCache,
+} from '@/lib/cache/service';
 
 // 权限缓存（简单的内存缓存，避免频繁查询数据库）
 const permissionCache = new Map<number, { permissions: Set<string>; expireAt: number }>();
 const CACHE_TTL = 60 * 1000; // 60秒缓存
+
+function statusToErrorCode(status: number): string {
+  if (status === 400) return 'BAD_REQUEST';
+  if (status === 401) return 'UNAUTHORIZED';
+  if (status === 403) return 'FORBIDDEN';
+  if (status === 404) return 'NOT_FOUND';
+  if (status === 409) return 'CONFLICT';
+  if (status >= 500) return 'INTERNAL_ERROR';
+  return 'UNKNOWN_ERROR';
+}
+
+async function normalizeApiResponse(response: Response): Promise<Response> {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    return response;
+  }
+
+  try {
+    const payload = await response.clone().json();
+    if (!payload || typeof payload !== 'object') {
+      return response;
+    }
+
+    const p = payload as Record<string, unknown>;
+    const alreadyHasErrorCode = typeof p.errorCode === 'string';
+    const hasError =
+      typeof p.error === 'string' ||
+      (typeof p.error === 'object' && p.error !== null) ||
+      p.success === false;
+    if (!hasError || alreadyHasErrorCode) {
+      return response;
+    }
+
+    let computed = statusToErrorCode(response.status);
+    if (typeof p.error === 'object' && p.error && typeof (p.error as any).code === 'string') {
+      computed = (p.error as any).code;
+    }
+
+    const headers = new Headers(response.headers);
+    return NextResponse.json(
+      {
+        ...p,
+        errorCode: computed,
+      },
+      {
+        status: response.status,
+        headers,
+      }
+    );
+  } catch {
+    return response;
+  }
+}
 
 /**
  * 获取缓存的权限
@@ -48,27 +112,28 @@ export async function withAuth(
   params?: any
 ): Promise<Response> {
   let userId: number;
-  
+
   try {
     // 从Cookie获取访问令牌
     const accessToken = await getAccessTokenFromCookie();
-    
+
     if (!accessToken) {
       throw AppError.unauthorized('未登录');
     }
-    
+
     // 验证令牌
     const payload = await verifyAccessToken(accessToken);
     userId = payload.userId;
   } catch (error) {
-    return handleError(error, request.url);
+    return normalizeApiResponse(handleError(error, request.url));
   }
 
   try {
     // 调用实际的处理器，并透传 params
-    return await handler(request, userId, params);
+    const response = await handler(request, userId, params);
+    return normalizeApiResponse(response);
   } catch (error) {
-    return handleError(error, request.url);
+    return normalizeApiResponse(handleError(error, request.url));
   }
 }
 
@@ -86,7 +151,7 @@ export async function withOptionalAuth(
   try {
     // 从Cookie获取访问令牌
     const accessToken = await getAccessTokenFromCookie();
-    
+
     if (accessToken) {
       try {
         const payload = await verifyAccessToken(accessToken);
@@ -98,22 +163,20 @@ export async function withOptionalAuth(
   } catch (_error) {
     // 获取token过程出错也忽略，继续执行
   }
-    
+
   try {
     // 调用实际的处理器
-    return await handler(request, userId, params);
+    const response = await handler(request, userId, params);
+    return normalizeApiResponse(response);
   } catch (error) {
-    return handleError(error, request.url);
+    return normalizeApiResponse(handleError(error, request.url));
   }
 }
 
 /**
  * 检查用户权限
  */
-export async function checkPermission(
-  userId: number,
-  permission: string
-): Promise<boolean> {
+export async function checkPermission(userId: number, permission: string): Promise<boolean> {
   return hasPermission(userId, permission);
 }
 
@@ -126,29 +189,29 @@ export async function withPermission(
   handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
 ): Promise<Response> {
-  return withAuth(request, async (req, userId, p) => {
-    const hasAccess = await checkPermission(userId, permission);
-    
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: '权限不足', requiredPermission: permission },
-        { status: 403 }
-      );
-    }
-    
-    return await handler(req, userId, p);
-  }, params);
+  return withAuth(
+    request,
+    async (req, userId, p) => {
+      const hasAccess = await checkPermission(userId, permission);
+
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: '权限不足', requiredPermission: permission },
+          { status: 403 }
+        );
+      }
+
+      return await handler(req, userId, p);
+    },
+    params
+  );
 }
 
 // ============================================
 // 资源级权限中间件
 // ============================================
 
-import {
-  checkResourcePermission,
-  ResourceType,
-  PermissionAction,
-} from './resource-permission';
+import { checkResourcePermission, ResourceType, PermissionAction } from './resource-permission';
 
 /**
  * 资源权限中间件
@@ -162,24 +225,28 @@ export async function withResourcePermission(
   handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
 ): Promise<Response> {
-  return withAuth(request, async (req, userId, p) => {
-    const resourceId = await resourceIdGetter(req, p);
-    const result = await checkResourcePermission(userId, resourceType, resourceId, action);
-    
-    if (!result.allowed) {
-      return NextResponse.json(
-        { 
-          error: result.reason || '权限不足',
-          resourceType,
-          resourceId,
-          action,
-        },
-        { status: 403 }
-      );
-    }
-    
-    return await handler(req, userId, p);
-  }, params);
+  return withAuth(
+    request,
+    async (req, userId, p) => {
+      const resourceId = await resourceIdGetter(req, p);
+      const result = await checkResourcePermission(userId, resourceType, resourceId, action);
+
+      if (!result.allowed) {
+        return NextResponse.json(
+          {
+            error: result.reason || '权限不足',
+            resourceType,
+            resourceId,
+            action,
+          },
+          { status: 403 }
+        );
+      }
+
+      return await handler(req, userId, p);
+    },
+    params
+  );
 }
 
 /**
@@ -189,8 +256,11 @@ export async function withDocumentPermission(
   action: PermissionAction,
   documentIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>, params?: any) =>
-    withResourcePermission(request, 'document', documentIdGetter, action, handler, params);
+  return (
+    request: NextRequest,
+    handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
+    params?: any
+  ) => withResourcePermission(request, 'document', documentIdGetter, action, handler, params);
 }
 
 /**
@@ -200,11 +270,16 @@ export async function withChapterPermission(
   action: PermissionAction,
   chapterIdGetter: (request: NextRequest, params?: any) => number | Promise<number>
 ) {
-  return (request: NextRequest, handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>, params?: any) =>
-    withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
+  return (
+    request: NextRequest,
+    handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
+    params?: any
+  ) => withResourcePermission(request, 'chapter', chapterIdGetter, action, handler, params);
 }
 
-export async function requireAuth(_request: NextRequest): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
+export async function requireAuth(
+  _request: NextRequest
+): Promise<{ user?: { id: number; orgId: number }; error?: string }> {
   try {
     const accessToken = await getAccessTokenFromCookie();
     if (!accessToken) {
@@ -237,14 +312,18 @@ export async function withAdmin(
   handler: (request: NextRequest, userId: number, params?: any) => Promise<Response>,
   params?: any
 ): Promise<Response> {
-  return withAuth(request, async (req, userId, p) => {
-    const roles = await getUserRoles(userId);
-    const isAdmin = roles.some((r) => r.level === 0 || r.code === 'super_admin');
-    if (!isAdmin) {
-      return NextResponse.json({ error: '需要管理员权限' }, { status: 403 });
-    }
-    return handler(req, userId, p);
-  }, params);
+  return withAuth(
+    request,
+    async (req, userId, p) => {
+      const roles = await getUserRoles(userId);
+      const isAdmin = roles.some((r) => r.level === 0 || r.code === 'super_admin');
+      if (!isAdmin) {
+        return NextResponse.json({ error: '需要管理员权限' }, { status: 403 });
+      }
+      return handler(req, userId, p);
+    },
+    params
+  );
 }
 
 export function clearPermissionCache(userId?: number): void {

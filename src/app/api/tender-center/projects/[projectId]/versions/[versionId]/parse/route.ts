@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HeaderUtils } from 'coze-coding-dev-sdk';
+import { eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
-import { parseResourceId } from '@/lib/api/validators';
-import { executeInterpretation } from '@/lib/interpretation/service';
 import { db } from '@/db';
-import { bidInterpretationLogs } from '@/db/schema';
-import {
-  resolveInterpretationByProjectAndVersion,
-  toBatchId,
-} from '@/app/api/tender-center/_utils';
+import { documentParseBatches } from '@/db/schema';
+import { toHubDocumentParseBatchId } from '@/app/api/tender-center/_utils';
+import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
-  lookupIdempotentResponse,
-  recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  lookupHubIdempotentResponse,
+  recordHubIdempotentResponse,
+} from '@/app/api/tender-center/_hub-idempotency';
 import {
   buildTenderTraceContext,
   getOrCreateTraceId,
   logTenderTraceEvent,
 } from '@/app/api/tender-center/_trace';
+import { ingestTenderVersionDocuments } from '@/lib/tender-center/ingestion';
 
 const IDEM_OPERATION_TYPE = 'idem_parse';
 
@@ -29,45 +28,48 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   const { projectId, versionId } = await params;
-  const pid = parseResourceId(projectId, '项目');
 
   return withAuth(request, async (req, userId) => {
-    const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
-    if (!interpretation) {
+    const { project, version } = await resolveHubProjectAndVersion({
+      projectId,
+      versionId,
+      userId,
+    });
+    if (!version) {
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
     }
 
-    if (interpretation.uploaderId !== userId) {
-      return NextResponse.json({ error: '无权操作该版本' }, { status: 403 });
-    }
-
-    // 避免重复触发同一解析任务
-    if (interpretation.status === 'parsing') {
-      return NextResponse.json({ error: '正在解析中，请勿重复操作' }, { status: 400 });
-    }
-
     const traceId = getOrCreateTraceId(req.headers);
-    const batchId = toBatchId(interpretation.id);
-    const taskId = `parse-${interpretation.id}`;
-
     const idempotencyKey = extractIdempotencyKey(req.headers);
     const requestDigest = idempotencyKey
       ? buildIdempotencyDigest({
-          projectId: pid,
-          versionId,
-          interpretationId: interpretation.id,
+          projectId: project.id,
+          versionId: version.id,
           action: 'parse',
         })
       : null;
 
     if (idempotencyKey && requestDigest) {
-      const lookup = await lookupIdempotentResponse<{
+      const lookup = await lookupHubIdempotentResponse<{
         success: boolean;
-        data: { projectId: number; versionId: string; interpretationId: number };
+        data: {
+          projectId: number;
+          versionId: number;
+          documentParseBatchId: number;
+          batchId: string;
+          traceId: string;
+          taskId: string;
+          parsedDocuments: number;
+          failedDocuments: number;
+          pagesInserted: number;
+          segmentsInserted: number;
+          requirementsInserted: number;
+          risksInserted: number;
+        };
         message: string;
       }>({
-        interpretationId: interpretation.id,
-        operationType: IDEM_OPERATION_TYPE,
+        tenderProjectVersionId: version.id,
+        idemOp: IDEM_OPERATION_TYPE,
         idempotencyKey,
         requestDigest,
       });
@@ -78,62 +80,94 @@ export async function POST(
         );
       }
       if (lookup.status === 'hit') {
+        const batchId = lookup.response.data?.batchId ?? '';
         return NextResponse.json({
           ...lookup.response,
           idempotentReplay: true,
           traceId,
           batchId,
-          taskId,
+          taskId: lookup.response.data?.taskId ?? `parse-${version.id}`,
           message: '幂等命中，返回首次解析触发结果',
         });
       }
     }
 
-    const customHeaders = HeaderUtils.extractForwardHeaders(req.headers);
-    executeInterpretation(interpretation.id, customHeaders).catch((error) => {
-      console.error('tender-center parse failed:', error);
+    const [batch] = await db
+      .insert(documentParseBatches)
+      .values({
+        tenderProjectVersionId: version.id,
+        batchNo: `parse-${Date.now()}`,
+        triggerSource: 'manual',
+        batchStatus: 'running',
+        parseStartedAt: new Date(),
+        operatorId: userId,
+      })
+      .returning({ id: documentParseBatches.id });
+
+    const ingestResult = await ingestTenderVersionDocuments({
+      projectId: project.id,
+      versionId: version.id,
+      batchId: batch.id,
     });
 
-    await db.insert(bidInterpretationLogs).values({
-      interpretationId: interpretation.id,
-      operationType: 'parse_triggered',
-      operationContent: `由中枢接口触发解析: project=${pid}, version=${versionId}`,
-      operatorId: userId,
-      operatorName: 'system',
-    });
+    const finalBatchStatus: 'succeeded' | 'partial' | 'failed' =
+      ingestResult.failedDocuments === 0
+        ? 'succeeded'
+        : ingestResult.parsedDocuments > 0
+          ? 'partial'
+          : 'failed';
+    await db
+      .update(documentParseBatches)
+      .set({
+        batchStatus: finalBatchStatus,
+        parseFinishedAt: new Date(),
+      })
+      .where(eq(documentParseBatches.id, batch.id));
+
+    const batchId = toHubDocumentParseBatchId(batch.id);
+    const taskId = `parse-${batch.id}`;
 
     await logTenderTraceEvent({
-      interpretationId: interpretation.id,
+      interpretationId: null,
       userId,
       trace: buildTenderTraceContext({
-        interpretationId: interpretation.id,
+        interpretationId: null,
         traceId,
         taskId,
         event: 'parse_triggered',
+        batchId,
       }),
       detail: {
-        projectId: pid,
-        versionId,
+        projectId: project.id,
+        versionId: version.id,
+        documentParseBatchId: batch.id,
+        ...ingestResult,
       },
     });
 
     const responsePayload = {
       success: true,
       data: {
-        projectId: pid,
-        versionId,
-        interpretationId: interpretation.id,
-        traceId,
+        projectId: project.id,
+        versionId: version.id,
+        documentParseBatchId: batch.id,
         batchId,
+        traceId,
         taskId,
+        ...ingestResult,
       },
-      message: '解析任务已启动',
+      message:
+        ingestResult.parsedDocuments > 0
+          ? `解析完成：成功 ${ingestResult.parsedDocuments} 个文件，新增 ${ingestResult.pagesInserted} 页、${ingestResult.segmentsInserted} 条分段、${ingestResult.requirementsInserted} 条要求、${ingestResult.risksInserted} 条风险`
+          : ingestResult.failedDocuments > 0
+            ? `解析失败：${ingestResult.failedDocuments} 个文件处理失败，请检查 source_document.storage_key 与文件格式`
+            : '解析批次已记录（当前版本无可解析文件，或均已解析过）',
     };
 
     if (idempotencyKey && requestDigest) {
-      await recordIdempotentResponse({
-        interpretationId: interpretation.id,
-        operationType: IDEM_OPERATION_TYPE,
+      await recordHubIdempotentResponse({
+        tenderProjectVersionId: version.id,
+        idemOp: IDEM_OPERATION_TYPE,
         idempotencyKey,
         requestDigest,
         response: responsePayload,

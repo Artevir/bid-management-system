@@ -4,7 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as _CardDescription } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription as _CardDescription,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +23,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   Select,
   SelectContent,
@@ -91,7 +103,7 @@ interface InterpretationDetail {
   reviewerName: string | null;
   reviewedAt: string | null;
   reviewComment: string | null;
-reviewAccuracy: number | null;
+  reviewAccuracy: number | null;
   currentApprovalLevel: number | null;
   approvalLevelRequired: number | null;
   confidentialityLevel: string | null;
@@ -170,6 +182,7 @@ export default function InterpretationDetailPage() {
 
   const [data, setData] = useState<InterpretationDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -185,7 +198,7 @@ export default function InterpretationDetailPage() {
     const status = data?.reviewStatus;
     const currentLevel = data?.currentApprovalLevel || 1;
     const requiredLevel = data?.approvalLevelRequired || 1;
-    
+
     if (status === 'approved') return '已通过';
     if (status === 'rejected') return '已驳回';
     if (status === 'pending' && currentLevel > 1) {
@@ -223,6 +236,7 @@ export default function InterpretationDetailPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await fetch(`/api/interpretations/${id}`);
       const result = await response.json();
 
@@ -233,6 +247,7 @@ export default function InterpretationDetailPage() {
       }
     } catch (error) {
       console.error('获取数据失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -261,6 +276,7 @@ export default function InterpretationDetailPage() {
       }
     } catch (error) {
       console.error('启动解析失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     }
   };
 
@@ -273,7 +289,7 @@ export default function InterpretationDetailPage() {
       alert('请先关联项目');
       return;
     }
-    
+
     setSyncing(true);
     try {
       const response = await fetch('/api/project-sync', {
@@ -285,7 +301,7 @@ export default function InterpretationDetailPage() {
           interpretationId: data.id,
         }),
       });
-      
+
       const result = await response.json();
       if (result.success) {
         alert(result.message);
@@ -295,6 +311,7 @@ export default function InterpretationDetailPage() {
       }
     } catch (error) {
       console.error('同步失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('同步失败');
     } finally {
       setSyncing(false);
@@ -305,7 +322,7 @@ export default function InterpretationDetailPage() {
     if (!confirm('确定要从该解读创建新项目吗？\n\n将自动填充项目名称、编号、招标单位等信息。')) {
       return;
     }
-    
+
     setCreatingProject(true);
     try {
       const response = await fetch('/api/project-sync', {
@@ -317,7 +334,7 @@ export default function InterpretationDetailPage() {
           createNew: true,
         }),
       });
-      
+
       const result = await response.json();
       if (result.success) {
         alert('项目创建成功！');
@@ -331,6 +348,7 @@ export default function InterpretationDetailPage() {
       }
     } catch (error) {
       console.error('创建项目失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('创建项目失败');
     } finally {
       setCreatingProject(false);
@@ -349,20 +367,23 @@ export default function InterpretationDetailPage() {
           comment: reviewForm.comment,
         }),
       });
-      
+
       const result = await response.json();
-        if (result.success) {
-          alert(result.message);
-          setShowReviewDialog(false);
-          fetchData();
-        } else {
-          alert(result.message || '审核失败');
-        }
-        if (result.needNextLevel) {
-          alert(`已通过第${result.currentLevel}级审核，需要继续进行第${result.currentLevel + 1}级审核`);
-        }
+      if (result.success) {
+        alert(result.message);
+        setShowReviewDialog(false);
+        fetchData();
+      } else {
+        alert(result.message || '审核失败');
+      }
+      if (result.needNextLevel) {
+        alert(
+          `已通过第${result.currentLevel}级审核，需要继续进行第${result.currentLevel + 1}级审核`
+        );
+      }
     } catch (error) {
       console.error('审核失败:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('审核失败');
     } finally {
       setReviewing(false);
@@ -385,6 +406,10 @@ export default function InterpretationDetailPage() {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+
+  if (error) {
+    return <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />;
+  }
 
   if (loading) {
     return (
@@ -435,7 +460,9 @@ export default function InterpretationDetailPage() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Badge className={statusInfo.color}>
-              <StatusIcon className={`w-3 h-3 mr-1 ${data.status === 'parsing' ? 'animate-spin' : ''}`} />
+              <StatusIcon
+                className={`w-3 h-3 mr-1 ${data.status === 'parsing' ? 'animate-spin' : ''}`}
+              />
               {statusInfo.label}
             </Badge>
             {data.status === 'completed' && (
@@ -448,21 +475,34 @@ export default function InterpretationDetailPage() {
                   <Clock className="w-3 h-3 mr-1" />
                 )}
                 {getReviewStatusLabel()}
-                {data.currentApprovalLevel && data.approvalLevelRequired && data.reviewStatus === 'pending' && data.currentApprovalLevel < data.approvalLevelRequired && (
-                  <span className="ml-1 text-xs">({data.currentApprovalLevel}/{data.approvalLevelRequired})</span>
-                )}
+                {data.currentApprovalLevel &&
+                  data.approvalLevelRequired &&
+                  data.reviewStatus === 'pending' &&
+                  data.currentApprovalLevel < data.approvalLevelRequired && (
+                    <span className="ml-1 text-xs">
+                      ({data.currentApprovalLevel}/{data.approvalLevelRequired})
+                    </span>
+                  )}
               </Badge>
             )}
             {/* 密级 */}
             {data.confidentialityLevel && data.confidentialityLevel !== 'public' && (
-              <Badge className={
-                data.confidentialityLevel === 'secret' ? 'bg-red-100 text-red-800' :
-                data.confidentialityLevel === 'confidential' ? 'bg-orange-100 text-orange-800' :
-                'bg-blue-100 text-blue-800'
-              }>
-                {data.confidentialityLevel === 'secret' ? '绝密' :
-                 data.confidentialityLevel === 'confidential' ? '机密' :
-                 data.confidentialityLevel === 'internal' ? '内部' : '公开'}
+              <Badge
+                className={
+                  data.confidentialityLevel === 'secret'
+                    ? 'bg-red-100 text-red-800'
+                    : data.confidentialityLevel === 'confidential'
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-blue-100 text-blue-800'
+                }
+              >
+                {data.confidentialityLevel === 'secret'
+                  ? '绝密'
+                  : data.confidentialityLevel === 'confidential'
+                    ? '机密'
+                    : data.confidentialityLevel === 'internal'
+                      ? '内部'
+                      : '公开'}
               </Badge>
             )}
           </div>
@@ -480,10 +520,7 @@ export default function InterpretationDetailPage() {
           )}
           {data.status === 'completed' && (
             <>
-              <Button 
-                variant="outline"
-                onClick={() => setShowReviewDialog(true)}
-              >
+              <Button variant="outline" onClick={() => setShowReviewDialog(true)}>
                 <FileCheck className="w-4 h-4 mr-2" />
                 审核解读
               </Button>
@@ -519,48 +556,50 @@ export default function InterpretationDetailPage() {
                       导出 TXT
                     </Link>
                   </DropdownMenuItem>
-<DropdownMenuItem asChild>
-                      <Link href={`/api/interpretations/${id}/export?format=pdf`} target="_blank">
-                        <FileText className="w-4 h-4 mr-2" />
-                        导出 PDF
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/api/interpretations/${id}/export?format=pdf`} target="_blank">
+                      <FileText className="w-4 h-4 mr-2" />
+                      导出 PDF
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                {/* 密级设置 */}
-                <Select
-                  value={data.confidentialityLevel || 'public'}
-                  onValueChange={async (value) => {
-                    try {
-                      const res = await fetch(`/api/interpretations/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ confidentialityLevel: value }),
-                      });
-                      if (res.ok) fetchData();
-                    } catch (e) { console.error(e); }
-                  }}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <Shield className="w-4 h-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">公开</SelectItem>
-                    <SelectItem value="internal">内部</SelectItem>
-                    <SelectItem value="confidential">机密</SelectItem>
-                    <SelectItem value="secret">绝密</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* 密级设置 */}
+              <Select
+                value={data.confidentialityLevel || 'public'}
+                onValueChange={async (value) => {
+                  try {
+                    const res = await fetch(`/api/interpretations/${id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ confidentialityLevel: value }),
+                    });
+                    if (res.ok) fetchData();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <Shield className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">公开</SelectItem>
+                  <SelectItem value="internal">内部</SelectItem>
+                  <SelectItem value="confidential">机密</SelectItem>
+                  <SelectItem value="secret">绝密</SelectItem>
+                </SelectContent>
+              </Select>
 
-                {/* 分配审核人 */}
-                <Button variant="outline" onClick={() => setShowAssignDialog(true)}>
-                  <Lock className="w-4 h-4 mr-2" />
-                  分配审核
-                </Button>
-                
-                {/* 项目联动按钮 */}
+              {/* 分配审核人 */}
+              <Button variant="outline" onClick={() => setShowAssignDialog(true)}>
+                <Lock className="w-4 h-4 mr-2" />
+                分配审核
+              </Button>
+
+              {/* 项目联动按钮 */}
               {data.projectId ? (
                 <>
                   <Button variant="outline" onClick={handleSyncToProject} disabled={syncing}>
@@ -601,9 +640,7 @@ export default function InterpretationDetailPage() {
               <Link2 className="w-5 h-5 text-green-600" />
               <div>
                 <p className="font-medium text-green-900">已关联项目</p>
-                <p className="text-sm text-green-700">
-                  解读信息已关联到项目，可随时同步最新信息
-                </p>
+                <p className="text-sm text-green-700">解读信息已关联到项目，可随时同步最新信息</p>
               </div>
             </div>
             <Button variant="outline" size="sm" asChild>
@@ -623,9 +660,7 @@ export default function InterpretationDetailPage() {
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             <div>
               <p className="font-medium text-blue-900">正在解析招标文件...</p>
-              <p className="text-sm text-blue-700">
-                系统正在提取关键信息，预计需要 1-3 分钟
-              </p>
+              <p className="text-sm text-blue-700">系统正在提取关键信息，预计需要 1-3 分钟</p>
             </div>
           </CardContent>
         </Card>
@@ -642,7 +677,15 @@ export default function InterpretationDetailPage() {
 
       {/* 审核状态 */}
       {data.status === 'completed' && data.reviewStatus && (
-        <Card className={data.reviewStatus === 'approved' ? 'border-green-200 bg-green-50' : data.reviewStatus === 'rejected' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'}>
+        <Card
+          className={
+            data.reviewStatus === 'approved'
+              ? 'border-green-200 bg-green-50'
+              : data.reviewStatus === 'rejected'
+                ? 'border-red-200 bg-red-50'
+                : 'border-yellow-200 bg-yellow-50'
+          }
+        >
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
               {data.reviewStatus === 'approved' ? (
@@ -654,11 +697,17 @@ export default function InterpretationDetailPage() {
               )}
               <div>
                 <p className="font-medium text-green-900">
-                  审核状态：{data.reviewStatus === 'approved' ? '已通过' : data.reviewStatus === 'rejected' ? '已驳回' : '待审核'}
+                  审核状态：
+                  {data.reviewStatus === 'approved'
+                    ? '已通过'
+                    : data.reviewStatus === 'rejected'
+                      ? '已驳回'
+                      : '待审核'}
                 </p>
                 {data.reviewerName && (
                   <p className="text-sm text-muted-foreground">
-                    审核人：{data.reviewerName} · {data.reviewedAt ? formatDate(data.reviewedAt) : ''}
+                    审核人：{data.reviewerName} ·{' '}
+                    {data.reviewedAt ? formatDate(data.reviewedAt) : ''}
                   </p>
                 )}
                 {data.reviewAccuracy && (
@@ -720,7 +769,9 @@ export default function InterpretationDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">提取精度</p>
-              <p className="text-xl font-bold">{data.extractAccuracy ? `${data.extractAccuracy}%` : '-'}</p>
+              <p className="text-xl font-bold">
+                {data.extractAccuracy ? `${data.extractAccuracy}%` : '-'}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -750,7 +801,9 @@ export default function InterpretationDetailPage() {
                   <>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">项目名称</span>
-                      <span className="font-medium">{String(data.basicInfo.projectName || '-')}</span>
+                      <span className="font-medium">
+                        {String(data.basicInfo.projectName || '-')}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">项目编号</span>
@@ -824,7 +877,9 @@ export default function InterpretationDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">提交地点</span>
-                      <span>{(data.submissionRequirements.submissionLocation as string) || '-'}</span>
+                      <span>
+                        {(data.submissionRequirements.submissionLocation as string) || '-'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">联系人</span>
@@ -1060,11 +1115,15 @@ export default function InterpretationDetailPage() {
                         </TableCell>
                         <TableCell className="font-medium">{spec.specName}</TableCell>
                         <TableCell>{spec.specValue || '-'}</TableCell>
-                        <TableCell className="max-w-xs truncate">{spec.specRequirement || '-'}</TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {spec.specRequirement || '-'}
+                        </TableCell>
                         <TableCell>
                           {spec.isKeyParam ? (
                             <Badge className="bg-orange-100 text-orange-800">关键</Badge>
-                          ) : '-'}
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -1072,15 +1131,15 @@ export default function InterpretationDetailPage() {
                               spec.responseStatus === 'compliant'
                                 ? 'bg-green-100 text-green-800'
                                 : spec.responseStatus === 'non_compliant'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
                             }
                           >
                             {spec.responseStatus === 'compliant'
                               ? '符合'
                               : spec.responseStatus === 'non_compliant'
-                              ? '不符合'
-                              : '待响应'}
+                                ? '不符合'
+                                : '待响应'}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -1190,19 +1249,19 @@ export default function InterpretationDetailPage() {
                               item.checkStatus === 'compliant'
                                 ? 'bg-green-100 text-green-800'
                                 : item.checkStatus === 'non_compliant'
-                                ? 'bg-red-100 text-red-800'
-                                : item.checkStatus === 'partial'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
+                                  ? 'bg-red-100 text-red-800'
+                                  : item.checkStatus === 'partial'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
                             }
                           >
                             {item.checkStatus === 'compliant'
                               ? '符合'
                               : item.checkStatus === 'non_compliant'
-                              ? '不符合'
-                              : item.checkStatus === 'partial'
-                              ? '部分符合'
-                              : '待核对'}
+                                ? '不符合'
+                                : item.checkStatus === 'partial'
+                                  ? '部分符合'
+                                  : '待核对'}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -1288,7 +1347,9 @@ export default function InterpretationDetailPage() {
                   min="0"
                   max="100"
                   value={reviewForm.accuracy}
-                  onChange={(e) => setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })
+                  }
                   className="w-full"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -1311,9 +1372,7 @@ export default function InterpretationDetailPage() {
                 取消
               </Button>
               <Button onClick={handleReview} disabled={reviewing}>
-                {reviewing ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
+                {reviewing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 提交审核
               </Button>
             </div>
@@ -1326,40 +1385,40 @@ export default function InterpretationDetailPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background rounded-lg shadow-lg w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-4">分配审核人</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              指定专人审核此解读文档
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">指定专人审核此解读文档</p>
             <div className="space-y-4">
               <div>
                 <Label>当前分配审核人</Label>
-                <p className="text-sm mt-1">
-                  {data.assignedReviewerName || '未指定'}
-                </p>
+                <p className="text-sm mt-1">{data.assignedReviewerName || '未指定'}</p>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
                 取消
               </Button>
-              <Button onClick={async () => {
-                setAssigning(true);
-                try {
-                  const res = await fetch(`/api/interpretations/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ assignedReviewerId: null }),
-                  });
-                  if (res.ok) {
-                    alert('已清除审核人分配');
-                    fetchData();
-                    setShowAssignDialog(false);
+              <Button
+                onClick={async () => {
+                  setAssigning(true);
+                  try {
+                    const res = await fetch(`/api/interpretations/${id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ assignedReviewerId: null }),
+                    });
+                    if (res.ok) {
+                      alert('已清除审核人分配');
+                      fetchData();
+                      setShowAssignDialog(false);
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    setError(e instanceof Error ? e.message : '加载失败，请稍后重试');
+                  } finally {
+                    setAssigning(false);
                   }
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setAssigning(false);
-                }
-              }} disabled={assigning || !data.assignedReviewerId}>
+                }}
+                disabled={assigning || !data.assignedReviewerId}
+              >
                 清除分配
               </Button>
             </div>

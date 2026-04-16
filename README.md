@@ -123,31 +123,6 @@ pnpm test:e2e:report
 
 详细测试指南请参阅 [E2E测试指南](docs/e2e-testing-guide.md)。
 
-### 招标文件智能审阅中枢（TC3-W8）一键初始化（≤30min）
-
-<!-- TC3-W8-003:START -->
-
-```bash
-# 1) 安装依赖
-pnpm install
-
-# 2) 初始化数据库结构 + 种子 + 三类示例项目（完整/冲突/补跑）
-pnpm db:init
-
-# 3) 校验三类示例项目门禁（联调引用前置检查）
-pnpm run docs:v3-w8-sample-projects:check
-
-# 4) 联调引用（三类示例 projectCode）
-# - TC3-W8-002-COMPLETE-20260415
-# - TC3-W8-002-CONFLICT-20260415
-# - TC3-W8-002-REPLAY-20260415
-
-# 5) 可选：按关键字查询示例项目
-# GET /api/tender-center/projects?keyword=TC3-W8-002
-```
-
-<!-- TC3-W8-003:END -->
-
 ### 测试覆盖模块
 
 | 模块     | 测试用例数 | 覆盖范围                      |

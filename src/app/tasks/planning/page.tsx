@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -108,13 +109,13 @@ const PRIORITY_CONFIG = {
 
 // 类别图标映射
 const CATEGORY_ICONS: Record<string, any> = {
-  '授权申请': FileText,
-  '样机申请': Package,
-  '价格申请': DollarSign,
-  '友司支持': Building,
-  '文档编制': FileText,
-  '材料准备': FileText,
-  '审核提交': CheckCircle2,
+  授权申请: FileText,
+  样机申请: Package,
+  价格申请: DollarSign,
+  友司支持: Building,
+  文档编制: FileText,
+  材料准备: FileText,
+  审核提交: CheckCircle2,
 };
 
 // 申请类型映射
@@ -222,7 +223,9 @@ export default function TaskPlanningPage() {
         </Button>
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Link href="/tasks" className="hover:text-foreground">任务中心</Link>
+            <Link href="/tasks" className="hover:text-foreground">
+              任务中心
+            </Link>
             <span>/</span>
             <span className="text-foreground">智能任务规划</span>
           </div>
@@ -238,7 +241,9 @@ export default function TaskPlanningPage() {
             <FileSearch className="h-5 w-5" />
             选择招标文件解读
           </CardTitle>
-          <CardDescription>选择已完成解读的招标文件，系统将基于解读结果进行任务分解</CardDescription>
+          <CardDescription>
+            选择已完成解读的招标文件，系统将基于解读结果进行任务分解
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {loadingInterpretations ? (
@@ -246,13 +251,16 @@ export default function TaskPlanningPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : interpretations.length === 0 ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>暂无可用的文件解读</AlertTitle>
-              <AlertDescription>
-                请先在 <Link href="/interpretations" className="underline">文件解读</Link> 模块上传并解析招标文件
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-3">
+              <ListStateBlock state="empty" emptyText="暂无可用的文件解读" />
+              <p className="text-sm text-muted-foreground text-center">
+                请先在{' '}
+                <Link href="/interpretations" className="underline">
+                  文件解读
+                </Link>{' '}
+                模块上传并解析招标文件
+              </p>
+            </div>
           ) : (
             <>
               <div className="space-y-2">
@@ -278,34 +286,39 @@ export default function TaskPlanningPage() {
               </div>
 
               {/* 显示选中的解读信息 */}
-              {selectedId && (() => {
-                const selected = interpretations.find(i => String(i.id) === selectedId);
-                if (!selected) return null;
-                return (
-                  <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">项目名称：</span>
-                        <span className="font-medium">{selected.projectName || '-'}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">项目编号：</span>
-                        <span>{selected.projectCode || '-'}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">招标单位：</span>
-                        <span>{selected.tenderOrganization || '-'}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">投标截止：</span>
-                        <span className="text-red-600 font-medium">
-                          {selected.expireTime ? format(new Date(selected.expireTime), 'yyyy-MM-dd HH:mm', { locale: zhCN }) : '-'}
-                        </span>
+              {selectedId &&
+                (() => {
+                  const selected = interpretations.find((i) => String(i.id) === selectedId);
+                  if (!selected) return null;
+                  return (
+                    <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">项目名称：</span>
+                          <span className="font-medium">{selected.projectName || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">项目编号：</span>
+                          <span>{selected.projectCode || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">招标单位：</span>
+                          <span>{selected.tenderOrganization || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">投标截止：</span>
+                          <span className="text-red-600 font-medium">
+                            {selected.expireTime
+                              ? format(new Date(selected.expireTime), 'yyyy-MM-dd HH:mm', {
+                                  locale: zhCN,
+                                })
+                              : '-'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
               {/* 补充上下文 */}
               <div className="space-y-2">
@@ -322,7 +335,7 @@ export default function TaskPlanningPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{String(error)}</AlertDescription>
+                  <AlertDescription>{String(error)}</AlertDescription>
                 </Alert>
               )}
 
@@ -435,7 +448,9 @@ export default function TaskPlanningPage() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{task.name}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {task.description}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -455,9 +470,7 @@ export default function TaskPlanningPage() {
                       </TableCell>
                       <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                       <TableCell>{getCategoryBadge(task.category)}</TableCell>
-                      <TableCell className="text-sm">
-                        {task.deadline || '-'}
-                      </TableCell>
+                      <TableCell className="text-sm">{task.deadline || '-'}</TableCell>
                       <TableCell className="text-sm">
                         {task.estimatedHours ? `${task.estimatedHours}h` : '-'}
                       </TableCell>
@@ -466,7 +479,9 @@ export default function TaskPlanningPage() {
                           <Badge variant="secondary">
                             {APPLICATION_TYPE_LABELS[task.relatedApplication.type]}
                           </Badge>
-                        ) : '-'}
+                        ) : (
+                          '-'
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -527,9 +542,7 @@ export default function TaskPlanningPage() {
             <Button variant="outline" onClick={() => setPlanResult(null)}>
               重新规划
             </Button>
-            <Button onClick={() => router.push('/tasks')}>
-              查看任务列表
-            </Button>
+            <Button onClick={() => router.push('/tasks')}>查看任务列表</Button>
           </div>
         </div>
       )}

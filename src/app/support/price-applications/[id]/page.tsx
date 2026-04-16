@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -112,17 +113,13 @@ export default function PriceApplicationDetailPage() {
 
   const getStatusBadge = (status: string) => {
     const colorClass = STATUS_COLORS[status] || STATUS_COLORS.draft;
-    return (
-      <Badge className={colorClass}>
-        {STATUS_LABELS[status] || status}
-      </Badge>
-    );
+    return <Badge className={colorClass}>{STATUS_LABELS[status] || status}</Badge>;
   };
 
   // 提交申请
   const handleSubmit = async () => {
     if (!application) return;
-    
+
     if (application.items.length < 1) {
       alert('请至少添加1个价格明细');
       return;
@@ -187,9 +184,13 @@ export default function PriceApplicationDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Link href="/support" className="hover:text-foreground">厂家支持</Link>
+              <Link href="/support" className="hover:text-foreground">
+                厂家支持
+              </Link>
               <span>/</span>
-              <Link href="/support/price-applications" className="hover:text-foreground">价格申请</Link>
+              <Link href="/support/price-applications" className="hover:text-foreground">
+                价格申请
+              </Link>
               <span>/</span>
               <span className="text-foreground">{application.applicationNo}</span>
             </div>
@@ -200,7 +201,10 @@ export default function PriceApplicationDetailPage() {
         <div className="flex items-center gap-2">
           {getStatusBadge(application.status)}
           {canEdit && (
-            <Button variant="outline" onClick={() => router.push(`/support/price-applications/${applicationId}/edit`)}>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/support/price-applications/${applicationId}/edit`)}
+            >
               <Edit className="mr-2 h-4 w-4" />
               编辑
             </Button>
@@ -233,7 +237,9 @@ export default function PriceApplicationDetailPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold truncate">{application.tenderOrganization || '-'}</div>
+            <div className="text-lg font-bold truncate">
+              {application.tenderOrganization || '-'}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -272,9 +278,7 @@ export default function PriceApplicationDetailPage() {
             </CardHeader>
             <CardContent>
               {application.items.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无价格明细
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无价格明细" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -295,7 +299,9 @@ export default function PriceApplicationDetailPage() {
                         <TableCell>{item.productName}</TableCell>
                         <TableCell>{item.productSpec || '-'}</TableCell>
                         <TableCell>{item.unitPrice || '-'}</TableCell>
-                        <TableCell>{item.quantity ? `${item.quantity} ${item.unit || ''}` : '-'}</TableCell>
+                        <TableCell>
+                          {item.quantity ? `${item.quantity} ${item.unit || ''}` : '-'}
+                        </TableCell>
                         <TableCell>{item.totalPrice || '-'}</TableCell>
                         <TableCell className="text-muted-foreground">{item.notes || '-'}</TableCell>
                       </TableRow>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -126,6 +127,7 @@ export default function AIGovernancePage() {
   const [regressionTests, setRegressionTests] = useState<RegressionTest[]>([]);
   const [metrics, setMetrics] = useState<QualityMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('evaluations');
 
   // 弹窗状态
@@ -141,6 +143,7 @@ export default function AIGovernancePage() {
 
   async function fetchData() {
     setLoading(true);
+    setError('');
     try {
       const [evalsRes, testsRes, metricsRes] = await Promise.all([
         fetch('/api/ai-governance').catch(() => ({ json: () => ({ sets: [] }) })),
@@ -159,6 +162,7 @@ export default function AIGovernancePage() {
       setMetrics(metricsData.metrics || []);
     } catch (error) {
       console.error('Failed to fetch AI governance data:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -181,6 +185,7 @@ export default function AIGovernancePage() {
       }
     } catch (error) {
       console.error('Failed to create evaluation set:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('创建失败');
     } finally {
       setSubmitting(false);
@@ -202,6 +207,7 @@ export default function AIGovernancePage() {
       }
     } catch (error) {
       console.error('Failed to run regression test:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('启动失败');
     }
   }
@@ -218,6 +224,7 @@ export default function AIGovernancePage() {
       }
     } catch (error) {
       console.error('Failed to get test detail:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('获取详情失败');
     } finally {
       setDetailLoading(false);
@@ -235,12 +242,16 @@ export default function AIGovernancePage() {
       }
     } catch (error) {
       console.error('Failed to get case results:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
       alert('获取用例结果失败');
     }
   }
 
   const getStatusBadge = (status: string) => {
-    const configs: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
+    const configs: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }
+    > = {
       active: { variant: 'default', icon: CheckCircle },
       inactive: { variant: 'secondary', icon: Minus },
       running: { variant: 'default', icon: RefreshCw },
@@ -252,7 +263,17 @@ export default function AIGovernancePage() {
     return (
       <Badge variant={config.variant} className="gap-1">
         <Icon className={`h-3 w-3 ${status === 'running' ? 'animate-spin' : ''}`} />
-        {status === 'active' ? '启用' : status === 'inactive' ? '禁用' : status === 'running' ? '运行中' : status === 'completed' ? '已完成' : status === 'failed' ? '失败' : status}
+        {status === 'active'
+          ? '启用'
+          : status === 'inactive'
+            ? '禁用'
+            : status === 'running'
+              ? '运行中'
+              : status === 'completed'
+                ? '已完成'
+                : status === 'failed'
+                  ? '失败'
+                  : status}
       </Badge>
     );
   };
@@ -269,14 +290,10 @@ export default function AIGovernancePage() {
 
       {/* 质量指标概览 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {loading ? (
-          [...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-[80px] w-full" />
-              </CardContent>
-            </Card>
-          ))
+        {error ? (
+          <ListStateBlock state="error" error={error} onRetry={() => window.location.reload()} />
+        ) : loading ? (
+          <ListStateBlock state="loading" />
         ) : (
           metrics.slice(0, 4).map((metric) => (
             <Card key={metric.metricName}>
@@ -285,16 +302,19 @@ export default function AIGovernancePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">{metric.metricName}</p>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-2xl font-bold">
-                        {metric.currentValue.toFixed(1)}
-                      </span>
+                      <span className="text-2xl font-bold">{metric.currentValue.toFixed(1)}</span>
                       <span className="text-sm text-muted-foreground">{metric.unit}</span>
                     </div>
                   </div>
-                  <div className={`p-2 rounded-full ${
-                    metric.trend === 'up' ? 'bg-green-100' :
-                    metric.trend === 'down' ? 'bg-red-100' : 'bg-gray-100'
-                  }`}>
+                  <div
+                    className={`p-2 rounded-full ${
+                      metric.trend === 'up'
+                        ? 'bg-green-100'
+                        : metric.trend === 'down'
+                          ? 'bg-red-100'
+                          : 'bg-gray-100'
+                    }`}
+                  >
                     {metric.trend === 'up' && <TrendingUp className="h-5 w-5 text-green-600" />}
                     {metric.trend === 'down' && <TrendingDown className="h-5 w-5 text-red-600" />}
                     {metric.trend === 'stable' && <Minus className="h-5 w-5 text-gray-400" />}
@@ -352,11 +372,7 @@ export default function AIGovernancePage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -371,11 +387,7 @@ export default function AIGovernancePage() {
                   </TableHeader>
                   <TableBody>
                     {evaluationSets.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          暂无评测集
-                        </TableCell>
-                      </TableRow>
+                      <ListStateBlock state="empty" emptyText="暂无评测集" />
                     ) : (
                       evaluationSets.map((set) => (
                         <TableRow key={set.id}>
@@ -428,33 +440,33 @@ export default function AIGovernancePage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : regressionTests.length === 0 ? (
-                <div className="py-12 text-center">
-                  <TestTube className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">暂无回归测试记录</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    请先创建评测集并运行测试
-                  </p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无回归测试记录" />
               ) : (
                 <div className="space-y-4">
                   {regressionTests.map((test) => (
                     <Card key={test.id} className="p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${
-                            test.status === 'completed' ? 'bg-green-100' :
-                            test.status === 'running' ? 'bg-blue-100' :
-                            'bg-red-100'
-                          }`}>
-                            {test.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-600" />}
-                            {test.status === 'running' && <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />}
-                            {test.status === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
+                          <div
+                            className={`p-2 rounded-full ${
+                              test.status === 'completed'
+                                ? 'bg-green-100'
+                                : test.status === 'running'
+                                  ? 'bg-blue-100'
+                                  : 'bg-red-100'
+                            }`}
+                          >
+                            {test.status === 'completed' && (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            )}
+                            {test.status === 'running' && (
+                              <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />
+                            )}
+                            {test.status === 'failed' && (
+                              <XCircle className="h-5 w-5 text-red-600" />
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{test.setName}</p>
@@ -488,7 +500,9 @@ export default function AIGovernancePage() {
                       <div className="mt-4">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs text-muted-foreground">准确率</span>
-                          <span className="text-xs font-medium">{(test.accuracy * 100).toFixed(1)}%</span>
+                          <span className="text-xs font-medium">
+                            {(test.accuracy * 100).toFixed(1)}%
+                          </span>
                         </div>
                         <Progress value={test.accuracy * 100} className="h-2" />
                       </div>
@@ -498,16 +512,16 @@ export default function AIGovernancePage() {
                           耗时: {test.duration}ms
                         </span>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => viewTestDetail(test.id)}
                             disabled={detailLoading}
                           >
                             查看详情
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => viewCaseResults(test.id)}
                           >
@@ -532,11 +546,7 @@ export default function AIGovernancePage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : (
                 <div className="space-y-4">
                   {metrics.map((metric) => (
@@ -545,12 +555,21 @@ export default function AIGovernancePage() {
                       className="flex items-center justify-between p-4 rounded-lg border"
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-full ${
-                          metric.trend === 'up' ? 'bg-green-100' :
-                          metric.trend === 'down' ? 'bg-red-100' : 'bg-gray-100'
-                        }`}>
-                          {metric.trend === 'up' && <TrendingUp className="h-5 w-5 text-green-600" />}
-                          {metric.trend === 'down' && <TrendingDown className="h-5 w-5 text-red-600" />}
+                        <div
+                          className={`p-2 rounded-full ${
+                            metric.trend === 'up'
+                              ? 'bg-green-100'
+                              : metric.trend === 'down'
+                                ? 'bg-red-100'
+                                : 'bg-gray-100'
+                          }`}
+                        >
+                          {metric.trend === 'up' && (
+                            <TrendingUp className="h-5 w-5 text-green-600" />
+                          )}
+                          {metric.trend === 'down' && (
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                          )}
                           {metric.trend === 'stable' && <Minus className="h-5 w-5 text-gray-400" />}
                         </div>
                         <div>
@@ -561,9 +580,7 @@ export default function AIGovernancePage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold">
-                          {metric.currentValue.toFixed(1)}
-                        </p>
+                        <p className="text-2xl font-bold">{metric.currentValue.toFixed(1)}</p>
                         <p className="text-sm text-muted-foreground">{metric.unit}</p>
                       </div>
                     </div>
@@ -592,10 +609,7 @@ export default function AIGovernancePage() {
             <CardContent>
               {/* 搜索筛选 */}
               <div className="flex flex-wrap gap-4 mb-6">
-                <Input
-                  placeholder="搜索请求ID、用户..."
-                  className="w-[250px]"
-                />
+                <Input placeholder="搜索请求ID、用户..." className="w-[250px]" />
                 <Select defaultValue="all">
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="功能类型" />
@@ -706,12 +720,14 @@ export default function AIGovernancePage() {
 
               {/* 分页 */}
               <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-muted-foreground">
-                  显示 1-20 条，共 156 条记录
-                </p>
+                <p className="text-sm text-muted-foreground">显示 1-20 条，共 156 条记录</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled>上一页</Button>
-                  <Button variant="outline" size="sm">下一页</Button>
+                  <Button variant="outline" size="sm" disabled>
+                    上一页
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    下一页
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -730,10 +746,7 @@ export default function AIGovernancePage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="evalName">评测集名称</Label>
-              <Input
-                id="evalName"
-                placeholder="例如: 技术方案审校评测集"
-              />
+              <Input id="evalName" placeholder="例如: 技术方案审校评测集" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="documentType">文档类型</Label>
@@ -751,11 +764,7 @@ export default function AIGovernancePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">描述</Label>
-              <Textarea
-                id="description"
-                placeholder="评测集用途说明..."
-                rows={3}
-              />
+              <Textarea id="description" placeholder="评测集用途说明..." rows={3} />
             </div>
           </div>
 
@@ -809,7 +818,9 @@ export default function AIGovernancePage() {
                   <p className="text-xs text-muted-foreground">总用例</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-green-600">{testDetailDialog.passedCases}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {testDetailDialog.passedCases}
+                  </p>
                   <p className="text-xs text-muted-foreground">通过</p>
                 </div>
                 <div>
@@ -817,7 +828,9 @@ export default function AIGovernancePage() {
                   <p className="text-xs text-muted-foreground">失败</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{testDetailDialog.avgScore?.toFixed(1) || '-'}</p>
+                  <p className="text-2xl font-bold">
+                    {testDetailDialog.avgScore?.toFixed(1) || '-'}
+                  </p>
                   <p className="text-xs text-muted-foreground">平均分</p>
                 </div>
               </div>
@@ -837,11 +850,7 @@ export default function AIGovernancePage() {
                   </TableHeader>
                   <TableBody>
                     {testDetailDialog.caseResults.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
-                          暂无用例结果
-                        </TableCell>
-                      </TableRow>
+                      <ListStateBlock state="empty" emptyText="暂无用例结果" />
                     ) : (
                       testDetailDialog.caseResults.map((result) => (
                         <TableRow key={result.id}>
@@ -892,9 +901,7 @@ export default function AIGovernancePage() {
           {caseResultsDialog && (
             <div className="space-y-4 py-4">
               {caseResultsDialog.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无用例结果
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无用例结果" />
               ) : (
                 caseResultsDialog.map((result) => (
                   <Card key={result.id} className="p-4">

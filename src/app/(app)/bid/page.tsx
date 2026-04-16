@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Table,
   TableBody,
@@ -38,19 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FileText, Plus, MoreHorizontal, Eye, Edit, Trash2, Send } from 'lucide-react';
 import {
-  FileText,
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  Send,
-} from 'lucide-react';
-import { 
-  useDocuments, 
-  useSubmitApproval, 
-  useDeleteChapter as _useDeleteChapter 
+  useDocuments,
+  useSubmitApproval,
+  useDeleteChapter as _useDeleteChapter,
 } from '@/hooks/use-bid';
 import { useProjects } from '@/hooks/use-project';
 import { bidService } from '@/lib/api/bid-service';
@@ -70,7 +63,7 @@ export default function BidDocumentsPage() {
   // --- 服务端状态 (React Query) ---
   const { data: projects = [], isLoading: _loadingProjects } = useProjects();
   const { data: documents = [], isLoading: loadingDocs } = useDocuments(activeProjectId);
-  
+
   const submitApprovalMutation = useSubmitApproval();
 
   useEffect(() => {
@@ -92,7 +85,7 @@ export default function BidDocumentsPage() {
         name: createForm.name,
         userId: 0, // 后端会从 session 获取
       });
-      
+
       setCreateDialogOpen(false);
       toast.success('文档创建成功');
       router.push(`/bid/${res.documentId}/edit`);
@@ -155,15 +148,9 @@ export default function BidDocumentsPage() {
         </CardHeader>
         <CardContent>
           {loadingDocs ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : documents.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              暂无文档，点击上方按钮创建第一个标书文档
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无文档，点击上方按钮创建第一个标书文档" />
           ) : (
             <Table>
               <TableHeader>
@@ -189,9 +176,7 @@ export default function BidDocumentsPage() {
                     </TableCell>
                     <TableCell>v{doc.version}</TableCell>
                     <TableCell>{doc.creatorName || '-'}</TableCell>
-                    <TableCell>
-                      {new Date(doc.updatedAt).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(doc.updatedAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -200,23 +185,17 @@ export default function BidDocumentsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => router.push(`/bid/${doc.id}/edit`)}
-                          >
+                          <DropdownMenuItem onClick={() => router.push(`/bid/${doc.id}/edit`)}>
                             <Edit className="mr-2 h-4 w-4" />
                             编辑
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => router.push(`/bid/${doc.id}`)}
-                          >
+                          <DropdownMenuItem onClick={() => router.push(`/bid/${doc.id}`)}>
                             <Eye className="mr-2 h-4 w-4" />
                             查看
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {doc.status === 'draft' && (
-                            <DropdownMenuItem
-                              onClick={() => handleSubmitForApproval(doc.id)}
-                            >
+                            <DropdownMenuItem onClick={() => handleSubmitForApproval(doc.id)}>
                               <Send className="mr-2 h-4 w-4" />
                               提交审核
                             </DropdownMenuItem>
@@ -244,14 +223,12 @@ export default function BidDocumentsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>新建标书文档</DialogTitle>
-            <DialogDescription>
-              选择所属项目并输入文档名称来开始编写。
-            </DialogDescription>
+            <DialogDescription>选择所属项目并输入文档名称来开始编写。</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="project">所属项目</Label>
-              <Select 
+              <Select
                 onValueChange={(v) => setCreateForm({ ...createForm, projectId: v })}
                 value={createForm.projectId}
               >

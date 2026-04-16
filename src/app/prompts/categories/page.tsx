@@ -2,13 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
+import {
+  Card,
+  CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -62,14 +74,15 @@ export default function PromptCategoriesPage() {
   const [categories, setCategories] = useState<PromptCategory[]>([]);
   const [flatCategories, setFlatCategories] = useState<PromptCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
   const [type, setType] = useState<string>('all');
   const [_treeView, _setTreeView] = useState(true);
-  
+
   // Dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<PromptCategory | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -88,6 +101,7 @@ export default function PromptCategoriesPage() {
 
   const fetchCategories = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (keyword) params.set('keyword', keyword);
@@ -96,7 +110,7 @@ export default function PromptCategoriesPage() {
 
       const res = await fetch(`/api/prompts/categories?${params.toString()}`);
       const data = await res.json();
-      
+
       if (data.items) {
         setCategories(data.items);
         // Also flatten for parent selection
@@ -104,6 +118,7 @@ export default function PromptCategoriesPage() {
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+      setError(error instanceof Error ? error.message : '加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -151,12 +166,12 @@ export default function PromptCategoriesPage() {
     if (!confirm(`确定要删除分类"${category.name}"吗？`)) {
       return;
     }
-    
+
     try {
       const res = await fetch(`/api/prompts/categories/${category.id}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         fetchCategories();
       }
@@ -191,7 +206,10 @@ export default function PromptCategoriesPage() {
   };
 
   const getTypeBadge = (type: string) => {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'outline'; label: string }> = {
+    const variants: Record<
+      string,
+      { variant: 'default' | 'secondary' | 'outline'; label: string }
+    > = {
       general: { variant: 'secondary', label: '通用' },
       bid: { variant: 'default', label: '投标' },
       technical: { variant: 'outline', label: '技术' },
@@ -216,23 +234,17 @@ export default function PromptCategoriesPage() {
             </div>
           </TableCell>
           <TableCell>
-            <code className="text-xs bg-muted px-2 py-1 rounded">
-              {category.code}
-            </code>
+            <code className="text-xs bg-muted px-2 py-1 rounded">{category.code}</code>
           </TableCell>
           <TableCell>{getTypeBadge(category.type)}</TableCell>
-          <TableCell className="text-muted-foreground">
-            {category.description || '-'}
-          </TableCell>
+          <TableCell className="text-muted-foreground">{category.description || '-'}</TableCell>
           <TableCell className="text-center">{category.sortOrder}</TableCell>
           <TableCell>
             <Badge variant={category.isActive ? 'default' : 'secondary'}>
               {category.isActive ? '启用' : '禁用'}
             </Badge>
           </TableCell>
-          <TableCell>
-            {new Date(category.createdAt).toLocaleDateString()}
-          </TableCell>
+          <TableCell>{new Date(category.createdAt).toLocaleDateString()}</TableCell>
           <TableCell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -253,9 +265,9 @@ export default function PromptCategoriesPage() {
             </DropdownMenu>
           </TableCell>
         </TableRow>
-        {category.children && category.children.length > 0 && (
-          category.children.map((child) => renderCategoryRow(child, level + 1))
-        )}
+        {category.children &&
+          category.children.length > 0 &&
+          category.children.map((child) => renderCategoryRow(child, level + 1))}
       </>
     );
   };
@@ -304,20 +316,12 @@ export default function PromptCategoriesPage() {
       {/* Categories Table */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+          {error ? (
+            <ListStateBlock state="error" error={error} onRetry={fetchCategories} />
+          ) : loading ? (
+            <ListStateBlock state="loading" />
           ) : categories.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              <FolderTree className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>暂无分类数据</p>
-              <Button variant="link" onClick={handleCreate}>
-                创建第一个分类
-              </Button>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无分类数据" />
           ) : (
             <Table>
               <TableHeader>
@@ -332,9 +336,7 @@ export default function PromptCategoriesPage() {
                   <TableHead className="w-[80px]">操作</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {categories.map((category) => renderCategoryRow(category))}
-              </TableBody>
+              <TableBody>{categories.map((category) => renderCategoryRow(category))}</TableBody>
             </Table>
           )}
         </CardContent>
@@ -344,14 +346,10 @@ export default function PromptCategoriesPage() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {selectedCategory ? '编辑分类' : '新建分类'}
-            </DialogTitle>
-            <DialogDescription>
-              配置提示词分类信息
-            </DialogDescription>
+            <DialogTitle>{selectedCategory ? '编辑分类' : '新建分类'}</DialogTitle>
+            <DialogDescription>配置提示词分类信息</DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -371,12 +369,12 @@ export default function PromptCategoriesPage() {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>类型</Label>
-                <Select 
-                  value={formData.type} 
+                <Select
+                  value={formData.type}
                   onValueChange={(v) => setFormData({ ...formData, type: v })}
                 >
                   <SelectTrigger>
@@ -392,8 +390,8 @@ export default function PromptCategoriesPage() {
               </div>
               <div className="space-y-2">
                 <Label>父级分类</Label>
-                <Select 
-                  value={formData.parentId} 
+                <Select
+                  value={formData.parentId}
                   onValueChange={(v) => setFormData({ ...formData, parentId: v })}
                 >
                   <SelectTrigger>
@@ -412,7 +410,7 @@ export default function PromptCategoriesPage() {
                 </Select>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>描述</Label>
               <Textarea
@@ -421,7 +419,7 @@ export default function PromptCategoriesPage() {
                 placeholder="分类用途说明"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>图标</Label>
@@ -436,7 +434,9 @@ export default function PromptCategoriesPage() {
                 <Input
                   type="number"
                   value={formData.sortOrder}
-                  onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })
+                  }
                 />
               </div>
             </div>

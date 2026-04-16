@@ -7,8 +7,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -116,17 +123,18 @@ export default function CompaniesPage() {
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const params = new URLSearchParams();
       params.append('page', String(page));
       params.append('pageSize', String(pageSize));
       if (keyword) params.append('keyword', keyword);
       if (industryFilter !== 'all') params.append('industry', industryFilter);
-      if (statusFilter !== 'all') params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      if (statusFilter !== 'all')
+        params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
 
       const response = await fetch(`/api/companies?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('获取公司列表失败');
       }
@@ -168,7 +176,7 @@ export default function CompaniesPage() {
   // 处理删除
   const handleDelete = async () => {
     if (!companyToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/companies/${companyToDelete.id}`, {
@@ -195,7 +203,7 @@ export default function CompaniesPage() {
   // 全选/取消全选
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(companies.map(c => c.id));
+      setSelectedIds(companies.map((c) => c.id));
     } else {
       setSelectedIds([]);
     }
@@ -204,9 +212,9 @@ export default function CompaniesPage() {
   // 单个选择
   const handleSelect = (id: number, checked: boolean) => {
     if (checked) {
-      setSelectedIds(prev => [...prev, id]);
+      setSelectedIds((prev) => [...prev, id]);
     } else {
-      setSelectedIds(prev => prev.filter(i => i !== id));
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
     }
   };
 
@@ -315,15 +323,12 @@ export default function CompaniesPage() {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListStateBlock state="loading" />
           ) : error ? (
             <div className="text-center py-12 text-destructive">{error}</div>
           ) : companies.length === 0 ? (
-            <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">暂无公司数据</p>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无公司数据" />
               <Button onClick={() => router.push('/companies/create')}>
                 <Plus className="mr-2 h-4 w-4" />
                 添加第一个公司
@@ -372,12 +377,8 @@ export default function CompaniesPage() {
                         <p className="text-xs text-muted-foreground">{company.shortName}</p>
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {company.creditCode}
-                    </TableCell>
-                    <TableCell>
-                      {company.industry && INDUSTRY_LABELS[company.industry]}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm">{company.creditCode}</TableCell>
+                    <TableCell>{company.industry && INDUSTRY_LABELS[company.industry]}</TableCell>
                     <TableCell>{company.legalPersonName}</TableCell>
                     <TableCell>
                       <div>
@@ -443,7 +444,7 @@ export default function CompaniesPage() {
                 variant="outline"
                 size="sm"
                 disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
+                onClick={() => setPage((p) => p - 1)}
               >
                 上一页
               </Button>
@@ -454,7 +455,7 @@ export default function CompaniesPage() {
                 variant="outline"
                 size="sm"
                 disabled={page * pageSize >= total}
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
               >
                 下一页
               </Button>

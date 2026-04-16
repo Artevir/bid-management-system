@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { withAuth } from '@/lib/auth/middleware';
 import {
   getUnifiedApplications,
   getUnifiedApplicationStatistics,
@@ -12,39 +12,37 @@ import {
 
 // GET - 获取统一申请列表
 export async function GET(req: NextRequest) {
-  try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: '未授权访问' }, { status: 401 });
+  return withAuth(req, async (request, userId) => {
+    try {
+      const searchParams = request.nextUrl.searchParams;
+
+      if (searchParams.get('stats') === 'true') {
+        const stats = await getUnifiedApplicationStatistics({ handlerId: userId });
+        return NextResponse.json(stats);
+      }
+
+      const type =
+        (searchParams.get('type') as 'authorization' | 'sample' | 'price' | 'partner' | null) ||
+        undefined;
+      const status = searchParams.get('status') || undefined;
+      const keyword = searchParams.get('keyword') || undefined;
+      const page = parseInt(searchParams.get('page') || '1');
+      const pageSize = parseInt(searchParams.get('pageSize') || '20');
+
+      // 统一申请聚合接口默认只返回当前用户经办数据，避免跨模块数据横向暴露
+      const result = await getUnifiedApplications({
+        type,
+        status,
+        keyword,
+        handlerId: userId,
+        page,
+        pageSize,
+      });
+
+      return NextResponse.json(result);
+    } catch (error) {
+      console.error('获取统一申请列表失败:', error);
+      return NextResponse.json({ error: '获取统一申请列表失败' }, { status: 500 });
     }
-
-    const searchParams = req.nextUrl.searchParams;
-    
-    // 特殊路由：统计信息
-    if (searchParams.get('stats') === 'true') {
-      const stats = await getUnifiedApplicationStatistics();
-      return NextResponse.json(stats);
-    }
-
-    const type = searchParams.get('type') as 'authorization' | 'sample' | 'price' | 'partner' | null || undefined;
-    const status = searchParams.get('status') || undefined;
-    const keyword = searchParams.get('keyword') || undefined;
-    const handlerId = searchParams.get('handlerId') ? parseInt(searchParams.get('handlerId')!) : undefined;
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '20');
-
-    const result = await getUnifiedApplications({
-      type,
-      status,
-      keyword,
-      handlerId,
-      page,
-      pageSize,
-    });
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error('获取统一申请列表失败:', error);
-    return NextResponse.json({ error: '获取统一申请列表失败' }, { status: 500 });
-  }
+  });
 }

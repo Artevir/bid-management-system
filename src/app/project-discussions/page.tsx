@@ -5,6 +5,7 @@ import _Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -87,6 +88,7 @@ function ProjectDiscussionsContent() {
   const [currentDiscussion, setCurrentDiscussion] = useState<Discussion | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -167,7 +169,7 @@ function ProjectDiscussionsContent() {
       });
       const data = await res.json();
       if (data.data) {
-        setMessages(prev => [data.data, ...prev]);
+        setMessages((prev) => [data.data, ...prev]);
         setMessageInput('');
       }
     } catch (error) {
@@ -189,7 +191,7 @@ function ProjectDiscussionsContent() {
       await fetch(`/api/project-discussions/messages/${messageId}`, {
         method: 'DELETE',
       });
-      setMessages(prev => prev.filter(m => m.id !== messageId));
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
     } catch (error) {
       console.error('Failed to delete message:', error);
     }
@@ -204,8 +206,8 @@ function ProjectDiscussionsContent() {
           action: isPinned ? 'unpin' : 'pin',
         }),
       });
-      setMessages(prev =>
-        prev.map(m => (m.id === messageId ? { ...m, isPinned: !isPinned } : m))
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, isPinned: !isPinned } : m))
       );
     } catch (error) {
       console.error('Failed to toggle pin:', error);
@@ -252,8 +254,8 @@ function ProjectDiscussionsContent() {
     return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
   }
 
-  const pinnedMessages = messages.filter(m => m.isPinned && !m.isDeleted);
-  const regularMessages = messages.filter(m => !m.isPinned && !m.isDeleted);
+  const pinnedMessages = messages.filter((m) => m.isPinned && !m.isDeleted);
+  const regularMessages = messages.filter((m) => !m.isPinned && !m.isDeleted);
 
   return (
     <div className="flex h-[calc(100vh-2rem)] gap-4">
@@ -269,9 +271,7 @@ function ProjectDiscussionsContent() {
           <ScrollArea className="h-[calc(100vh-10rem)]">
             <div className="space-y-1 p-3 pt-0">
               {discussions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  暂无讨论区
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无讨论区" />
               ) : (
                 discussions.map((disc) => (
                   <button
@@ -287,7 +287,9 @@ function ProjectDiscussionsContent() {
                       <MessageSquare className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{disc.project?.name || disc.name}</p>
+                      <p className="font-medium text-sm truncate">
+                        {disc.project?.name || disc.name}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {disc.project?.code || ''}
                       </p>
@@ -334,7 +336,11 @@ function ProjectDiscussionsContent() {
                 <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => fetchDiscussion(parseInt(projectId || '0'))}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fetchDiscussion(parseInt(projectId || '0'))}
+                >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
@@ -520,7 +526,9 @@ function ProjectDiscussionsContent() {
               <label className="text-sm font-medium">消息提醒</label>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">开启新消息提醒</span>
-                <Button variant="outline" size="sm">已开启</Button>
+                <Button variant="outline" size="sm">
+                  已开启
+                </Button>
               </div>
             </div>
             <div className="pt-4 border-t">
@@ -544,11 +552,13 @@ function ProjectDiscussionsContent() {
 
 export default function ProjectDiscussionsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
       <ProjectDiscussionsContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -64,22 +65,50 @@ import { toast } from 'sonner';
 
 // 广西14个地市
 const GUANGXI_REGIONS = [
-  '南宁市', '柳州市', '桂林市', '梧州市', '北海市', '防城港市',
-  '钦州市', '贵港市', '玉林市', '百色市', '贺州市', '河池市',
-  '来宾市', '崇左市',
+  '南宁市',
+  '柳州市',
+  '桂林市',
+  '梧州市',
+  '北海市',
+  '防城港市',
+  '钦州市',
+  '贵港市',
+  '玉林市',
+  '百色市',
+  '贺州市',
+  '河池市',
+  '来宾市',
+  '崇左市',
 ];
 
 // 常见行业分类
 const INDUSTRIES = [
-  '工程建设', '政府采购', '交通运输', '水利水务', '能源电力',
-  '医疗卫生', '教育科研', '信息技术', '环保绿化', '市政设施',
-  '农业林业', '文化旅游', '金融服务', '其他',
+  '工程建设',
+  '政府采购',
+  '交通运输',
+  '水利水务',
+  '能源电力',
+  '医疗卫生',
+  '教育科研',
+  '信息技术',
+  '环保绿化',
+  '市政设施',
+  '农业林业',
+  '文化旅游',
+  '金融服务',
+  '其他',
 ];
 
 // 采购方式
 const PROCUREMENT_METHODS = [
-  '公开招标', '邀请招标', '竞争性谈判', '竞争性磋商',
-  '询价采购', '单一来源', '框架协议', '其他',
+  '公开招标',
+  '邀请招标',
+  '竞争性谈判',
+  '竞争性磋商',
+  '询价采购',
+  '单一来源',
+  '框架协议',
+  '其他',
 ];
 
 interface Subscription {
@@ -113,6 +142,7 @@ export default function TenderSubscriptionPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [alertSetting, setAlertSetting] = useState<AlertSetting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
   const [activeTab, setActiveTab] = useState('subscriptions');
@@ -193,7 +223,10 @@ export default function TenderSubscriptionPage() {
       return;
     }
 
-    const keywords = formData.keywords.split(/[,，]/).map(k => k.trim()).filter(Boolean);
+    const keywords = formData.keywords
+      .split(/[,，]/)
+      .map((k) => k.trim())
+      .filter(Boolean);
 
     if (keywords.length === 0) {
       toast.error('请至少输入一个关键词');
@@ -332,7 +365,7 @@ export default function TenderSubscriptionPage() {
               <CheckCircle2 className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">
-                  {subscriptions.filter(s => s.isActive).length}
+                  {subscriptions.filter((s) => s.isActive).length}
                 </p>
                 <p className="text-sm text-muted-foreground">已启用</p>
               </div>
@@ -357,9 +390,7 @@ export default function TenderSubscriptionPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-8 w-8 text-purple-500" />
               <div>
-                <p className="text-2xl font-bold">
-                  {alertSetting?.submissionDays ?? 3}天
-                </p>
+                <p className="text-2xl font-bold">{alertSetting?.submissionDays ?? 3}天</p>
                 <p className="text-sm text-muted-foreground">投标截止预警</p>
               </div>
             </div>
@@ -382,17 +413,9 @@ export default function TenderSubscriptionPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
+                <ListStateBlock state="loading" />
               ) : subscriptions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无订阅规则</p>
-                  <p className="text-sm mt-2">点击上方"新建订阅"创建您的第一条订阅规则</p>
-                </div>
+                <ListStateBlock state="empty" emptyText="暂无订阅规则" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -409,9 +432,7 @@ export default function TenderSubscriptionPage() {
                   <TableBody>
                     {subscriptions.map((subscription) => (
                       <TableRow key={subscription.id}>
-                        <TableCell className="font-medium">
-                          {subscription.name}
-                        </TableCell>
+                        <TableCell className="font-medium">{subscription.name}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {subscription.keywords.slice(0, 3).map((keyword, i) => (
@@ -512,7 +533,9 @@ export default function TenderSubscriptionPage() {
                       min={0}
                       max={30}
                       value={alertSetting?.registerDays ?? 1}
-                      onChange={(e) => saveAlertSetting('registerDays', parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        saveAlertSetting('registerDays', parseInt(e.target.value) || 1)
+                      }
                       className="w-24"
                     />
                     <span className="text-sm text-muted-foreground">天前提醒</span>
@@ -526,7 +549,9 @@ export default function TenderSubscriptionPage() {
                       min={0}
                       max={30}
                       value={alertSetting?.questionDays ?? 1}
-                      onChange={(e) => saveAlertSetting('questionDays', parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        saveAlertSetting('questionDays', parseInt(e.target.value) || 1)
+                      }
                       className="w-24"
                     />
                     <span className="text-sm text-muted-foreground">天前提醒</span>
@@ -540,7 +565,9 @@ export default function TenderSubscriptionPage() {
                       min={0}
                       max={30}
                       value={alertSetting?.submissionDays ?? 3}
-                      onChange={(e) => saveAlertSetting('submissionDays', parseInt(e.target.value) || 3)}
+                      onChange={(e) =>
+                        saveAlertSetting('submissionDays', parseInt(e.target.value) || 3)
+                      }
                       className="w-24"
                     />
                     <span className="text-sm text-muted-foreground">天前提醒</span>
@@ -554,7 +581,9 @@ export default function TenderSubscriptionPage() {
                       min={0}
                       max={30}
                       value={alertSetting?.openBidDays ?? 1}
-                      onChange={(e) => saveAlertSetting('openBidDays', parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        saveAlertSetting('openBidDays', parseInt(e.target.value) || 1)
+                      }
                       className="w-24"
                     />
                     <span className="text-sm text-muted-foreground">天前提醒</span>
@@ -582,7 +611,10 @@ export default function TenderSubscriptionPage() {
                     if (checked) {
                       saveAlertSetting('channels', [...channels, 'system']);
                     } else {
-                      saveAlertSetting('channels', channels.filter(c => c !== 'system'));
+                      saveAlertSetting(
+                        'channels',
+                        channels.filter((c) => c !== 'system')
+                      );
                     }
                   }}
                 />
@@ -593,8 +625,14 @@ export default function TenderSubscriptionPage() {
                 <Input
                   placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
                   value={alertSetting?.wechatWorkWebhook || ''}
-                  onChange={(e) => setAlertSetting(prev => prev ? { ...prev, wechatWorkWebhook: e.target.value } : null)}
-                  onBlur={() => saveAlertSetting('wechatWorkWebhook', alertSetting?.wechatWorkWebhook)}
+                  onChange={(e) =>
+                    setAlertSetting((prev) =>
+                      prev ? { ...prev, wechatWorkWebhook: e.target.value } : null
+                    )
+                  }
+                  onBlur={() =>
+                    saveAlertSetting('wechatWorkWebhook', alertSetting?.wechatWorkWebhook)
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   在企业微信群中添加机器人，获取Webhook地址
@@ -606,7 +644,11 @@ export default function TenderSubscriptionPage() {
                 <Input
                   placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxx"
                   value={alertSetting?.dingtalkWebhook || ''}
-                  onChange={(e) => setAlertSetting(prev => prev ? { ...prev, dingtalkWebhook: e.target.value } : null)}
+                  onChange={(e) =>
+                    setAlertSetting((prev) =>
+                      prev ? { ...prev, dingtalkWebhook: e.target.value } : null
+                    )
+                  }
                   onBlur={() => saveAlertSetting('dingtalkWebhook', alertSetting?.dingtalkWebhook)}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -622,12 +664,8 @@ export default function TenderSubscriptionPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingSubscription ? '编辑订阅' : '新建订阅'}
-            </DialogTitle>
-            <DialogDescription>
-              设置订阅条件，系统将自动匹配符合条件的招标信息
-            </DialogDescription>
+            <DialogTitle>{editingSubscription ? '编辑订阅' : '新建订阅'}</DialogTitle>
+            <DialogDescription>设置订阅条件，系统将自动匹配符合条件的招标信息</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -752,9 +790,7 @@ export default function TenderSubscriptionPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleSubmit}>
-              {editingSubscription ? '保存' : '创建'}
-            </Button>
+            <Button onClick={handleSubmit}>{editingSubscription ? '保存' : '创建'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
-import { parseResourceId } from '@/lib/api/validators';
 import { db } from '@/db';
-import { bidRequirementChecklist, bidTechnicalSpecs, bidScoringItems } from '@/db/schema';
-import { resolveInterpretationByProjectAndVersion } from '@/app/api/tender-center/_utils';
 import {
-  getFrameworkRows,
-  getReviewLogs,
-  parseJsonArray,
-  extractTemplateVariables,
-} from '@/app/api/tender-center/_view';
+  bidFrameworkNodes,
+  conflictItems,
+  hubBidTemplates,
+  riskItems,
+  scoringItems,
+  scoringSchemes,
+  submissionMaterials,
+  technicalSpecGroups,
+  technicalSpecItems,
+  templateVariables,
+  tenderRequirements,
+  reviewTasks,
+} from '@/db/schema';
+import { resolveHubProjectAndVersion } from '@/app/api/tender-center/_hub';
 import {
   buildCsvText,
   getTenderCenterExportColumns,
@@ -25,7 +31,6 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   const { projectId, versionId } = await params;
-  const pid = parseResourceId(projectId, '项目');
   const url = new URL(request.url);
   const format = String(url.searchParams.get('format') || 'json').toLowerCase();
   const requestedView = String(url.searchParams.get('view') || 'requirements_export_view');
@@ -48,109 +53,165 @@ export async function GET(
   }
 
   return withAuth(request, async (_req, userId) => {
-    const interpretation = await resolveInterpretationByProjectAndVersion(pid, versionId);
-    if (!interpretation) {
+    const { project, version } = await resolveHubProjectAndVersion({
+      projectId,
+      versionId,
+      userId,
+    });
+    if (!version) {
       return NextResponse.json({ error: '未找到对应版本' }, { status: 404 });
     }
-    if (interpretation.uploaderId !== userId) {
-      return NextResponse.json({ error: '无权访问该版本' }, { status: 403 });
-    }
 
-    const [requirements, technicalItems, scoringItems] = await Promise.all([
+    const verFilter = eq(tenderRequirements.tenderProjectVersionId, version.id);
+    const notDelReq = eq(tenderRequirements.isDeleted, false);
+
+    const [
+      requirements,
+      riskRows,
+      conflictRows,
+      frameworkRows,
+      templateRows,
+      submissionMat,
+      scoringJoined,
+      technicalJoined,
+      reviewTaskRows,
+    ] = await Promise.all([
+      db.query.tenderRequirements.findMany({
+        where: and(verFilter, notDelReq),
+      }),
+      db.query.riskItems.findMany({
+        where: and(
+          eq(riskItems.tenderProjectVersionId, version.id),
+          eq(riskItems.isDeleted, false)
+        ),
+      }),
+      db.query.conflictItems.findMany({
+        where: and(
+          eq(conflictItems.tenderProjectVersionId, version.id),
+          eq(conflictItems.isDeleted, false)
+        ),
+      }),
+      db.query.bidFrameworkNodes.findMany({
+        where: and(
+          eq(bidFrameworkNodes.tenderProjectVersionId, version.id),
+          eq(bidFrameworkNodes.isDeleted, false)
+        ),
+      }),
+      db.query.hubBidTemplates.findMany({
+        where: and(
+          eq(hubBidTemplates.tenderProjectVersionId, version.id),
+          eq(hubBidTemplates.isDeleted, false)
+        ),
+      }),
+      db.query.submissionMaterials.findMany({
+        where: and(
+          eq(submissionMaterials.tenderProjectVersionId, version.id),
+          eq(submissionMaterials.isDeleted, false)
+        ),
+      }),
       db
-        .select()
-        .from(bidRequirementChecklist)
-        .where(eq(bidRequirementChecklist.interpretationId, interpretation.id)),
+        .select({
+          id: scoringItems.id,
+          scoringCategory: scoringItems.categoryName,
+          itemName: scoringItems.itemName,
+          scoringCriteria: scoringItems.criteriaText,
+          maxScore: scoringItems.scoreValue,
+          pageNumber: scoringItems.sourceSegmentId,
+        })
+        .from(scoringItems)
+        .innerJoin(scoringSchemes, eq(scoringSchemes.id, scoringItems.scoringSchemeId))
+        .where(
+          and(
+            eq(scoringSchemes.tenderProjectVersionId, version.id),
+            eq(scoringSchemes.isDeleted, false),
+            eq(scoringItems.isDeleted, false)
+          )
+        ),
       db
-        .select()
-        .from(bidTechnicalSpecs)
-        .where(eq(bidTechnicalSpecs.interpretationId, interpretation.id)),
-      db
-        .select()
-        .from(bidScoringItems)
-        .where(eq(bidScoringItems.interpretationId, interpretation.id)),
+        .select({
+          id: technicalSpecItems.id,
+          specCategory: technicalSpecGroups.groupName,
+          specName: technicalSpecItems.specName,
+          specRequirement: technicalSpecItems.specRequirement,
+          isMandatory: technicalSpecItems.starFlag,
+          pageNumber: technicalSpecItems.sourceSegmentId,
+        })
+        .from(technicalSpecItems)
+        .innerJoin(
+          technicalSpecGroups,
+          eq(technicalSpecGroups.id, technicalSpecItems.technicalSpecGroupId)
+        )
+        .where(
+          and(
+            eq(technicalSpecGroups.tenderProjectVersionId, version.id),
+            eq(technicalSpecGroups.isDeleted, false),
+            eq(technicalSpecItems.isDeleted, false)
+          )
+        ),
+      db.query.reviewTasks.findMany({
+        where: eq(reviewTasks.tenderProjectVersionId, version.id),
+      }),
     ]);
-    const [frameworkRows, reviewLogs] = await Promise.all([
-      getFrameworkRows(interpretation.id),
-      getReviewLogs(interpretation.id),
-    ]);
 
-    const risksExportView = requirements
-      .filter((row) => row.checkStatus && row.checkStatus !== 'compliant')
-      .map((row) => ({
-        riskId: `req-${row.id}`,
-        riskType: row.checklistCategory,
-        riskLevel:
-          row.checkStatus === 'non_compliant'
-            ? 'high'
-            : row.checkStatus === 'partial'
-              ? 'medium'
-              : 'low',
-        riskTitle: row.itemName,
-        sourcePageNo: row.pageNumber,
-      }));
+    const tplIds = templateRows.map((t) => t.id);
+    const templateVarDb =
+      tplIds.length === 0
+        ? []
+        : await db.query.templateVariables.findMany({
+            where: inArray(templateVariables.bidTemplateId, tplIds),
+          });
 
-    const conflictsExportView = requirements
-      .filter((row) => row.checkStatus === 'non_compliant' || row.checkStatus === 'partial')
-      .map((row) => ({
-        conflictId: `conflict-${row.id}`,
-        fieldName: row.itemName,
-        candidateA: row.requiredValue,
-        candidateB: row.actualValue,
-        finalResolution: row.improvementSuggestion,
-        sourcePageNoA: row.pageNumber,
-        sourcePageNoB: row.pageNumber,
-      }));
-
-    const templatesExportView = frameworkRows.map((row) => ({
-      templateId: `template-${row.id}`,
-      templateName: row.chapterTitle,
-      templateType: row.chapterType || 'general',
-      fixedFormatFlag: Boolean(row.formatRequirement),
-      sourcePageNo: row.pageNumber,
+    const risksExportView = riskRows.map((row) => ({
+      riskId: `risk-${row.id}`,
+      riskType: row.riskType,
+      riskLevel: row.riskLevel,
+      riskTitle: row.riskTitle,
+      sourcePageNo: row.sourceSegmentId,
     }));
 
-    const templateVariablesExportView = frameworkRows.flatMap((row) => {
-      const text = [
-        row.chapterTitle,
-        row.contentRequirement,
-        row.formatRequirement,
-        row.originalText,
-      ]
-        .filter(Boolean)
-        .join('\n');
-      return extractTemplateVariables(text).map((name, index) => ({
-        variableId: `var-${row.id}-${index + 1}`,
-        variableName: name,
-        requiredFlag: true,
-        editableFlag: true,
-        sourcePageNo: row.pageNumber,
-      }));
-    });
+    const conflictsExportView = conflictRows.map((row) => ({
+      conflictId: `conflict-${row.id}`,
+      fieldName: row.fieldName,
+      candidateA: row.candidateA,
+      candidateB: row.candidateB,
+      finalResolution: row.finalResolution,
+      sourcePageNoA: row.sourceASegmentId,
+      sourcePageNoB: row.sourceBSegmentId,
+    }));
 
-    const materialsExportView = requirements.flatMap((row) =>
-      parseJsonArray(row.requiredDocuments).map((doc, idx) => ({
-        materialId: `mat-${row.id}-${idx + 1}`,
-        materialName: doc,
-        materialType: row.checklistCategory,
-        sourceRequirementId: row.id,
-        sourcePageNo: row.pageNumber,
-      }))
-    );
+    const templatesExportView = templateRows.map((row) => ({
+      templateId: `template-${row.id}`,
+      templateName: row.templateName,
+      templateType: row.templateType,
+      fixedFormatFlag: row.fixedFormatFlag,
+      sourcePageNo: row.sourcePageNo,
+    }));
 
-    const reviewsExportView = reviewLogs
-      .filter(
-        (log) => log.operationType === 'review_created' || log.operationType === 'review_submitted'
-      )
-      .map((log) => ({
-        reviewTaskId: `review-log-${log.id}`,
-        reviewStatus: log.operationType,
-        reviewReason: log.operationContent,
-        reviewTime: log.operationTime,
-        reviewerId: log.operatorId,
-      }));
+    const templateVariablesExportView = templateVarDb.map((v) => ({
+      variableId: `var-${v.id}`,
+      variableName: v.variableName,
+      requiredFlag: v.requiredFlag,
+      editableFlag: v.editableFlag,
+      sourcePageNo: v.sourceSegmentId,
+    }));
 
-    const scoringExportView = scoringItems.map((item) => ({
+    const materialsExportView = submissionMat.map((m) => ({
+      materialId: `mat-${m.id}`,
+      materialName: m.materialName,
+      materialType: m.materialType,
+      sourceRequirementId: m.relatedRequirementId,
+      sourcePageNo: null,
+    }));
+
+    const reviewsExportView = reviewTaskRows.map((row) => ({
+      reviewTaskId: `review-hub-${row.id}`,
+      reviewStatus: row.reviewStatus,
+      reviewReason: row.reviewReason,
+      reviewTime: row.reviewedAt ?? row.createdAt,
+      reviewerId: row.assignedTo,
+    }));
+
+    const scoringExportView = scoringJoined.map((item) => ({
       scoringItemId: item.id,
       scoringCategory: item.scoringCategory,
       itemName: item.itemName,
@@ -159,7 +220,7 @@ export async function GET(
       sourcePageNo: item.pageNumber,
     }));
 
-    const technicalExportView = technicalItems.map((item) => ({
+    const technicalExportView = technicalJoined.map((item) => ({
       technicalItemId: item.id,
       specCategory: item.specCategory,
       specName: item.specName,
@@ -170,42 +231,40 @@ export async function GET(
 
     const frameworkExportView = frameworkRows.map((item) => ({
       frameworkNodeId: item.id,
-      frameworkNo: item.chapterNumber,
-      frameworkTitle: item.chapterTitle,
-      levelNo: item.level,
-      requiredType: item.contentRequirement ? 'required' : 'optional',
-      generationMode: item.contentRequirement ? 'ai' : 'manual',
-      sourcePageNo: item.pageNumber,
+      frameworkNo: item.frameworkNo,
+      frameworkTitle: item.frameworkTitle,
+      levelNo: item.levelNo,
+      requiredType: item.requiredType,
+      generationMode: item.generationMode,
+      sourcePageNo: item.sourceSegmentId,
     }));
 
     const requirementsSnapshot = requirements.map((row) => ({
       requirementId: row.id,
-      requirementType: row.checklistCategory,
-      title: row.itemName,
-      content: row.requirementDetail || row.itemDescription,
-      sourcePageNo: row.pageNumber,
-      reviewStatus: row.checkStatus,
-      confidenceScore: interpretation.extractAccuracy,
+      requirementType: row.requirementType,
+      title: row.title,
+      content: row.content,
+      sourcePageNo: row.sourcePageNo,
+      reviewStatus: row.reviewStatus,
+      confidenceScore: row.confidenceScore,
     }));
 
     const frameworkSnapshot = frameworkRows.map((row) => ({
       nodeId: row.id,
       parentNodeId: row.parentId,
-      title: row.chapterTitle,
-      nodeType: row.chapterType,
-      generationMode: row.contentRequirement ? 'ai' : 'manual',
-      sourcePageNo: row.pageNumber,
+      title: row.frameworkTitle,
+      nodeType: row.contentType,
+      generationMode: row.generationMode,
+      sourcePageNo: row.sourceSegmentId,
     }));
 
-    const templatesSnapshot = templatesExportView.map((item) => ({
-      templateId: item.templateId,
-      templateName: item.templateName,
-      templateType: item.templateType,
-      fixedFormatFlag: item.fixedFormatFlag,
-      variableCount: templateVariablesExportView.filter((v) =>
-        v.variableId.startsWith(`var-${item.templateId.replace('template-', '')}-`)
-      ).length,
-      sourcePageNo: item.sourcePageNo,
+    const templatesSnapshot = templateRows.map((row) => ({
+      templateId: `template-${row.id}`,
+      templateName: row.templateName,
+      templateType: row.templateType,
+      fixedFormatFlag: row.fixedFormatFlag,
+      variableCount: templateVarDb.filter((v) => v.bidTemplateId === row.id).length,
+      sourcePageNo: row.sourcePageNo,
     }));
 
     const materialsSnapshot = materialsExportView.map((item) => ({
@@ -218,9 +277,9 @@ export async function GET(
 
     const fullSnapshot = {
       context: {
-        projectId: pid,
-        versionId,
-        interpretationId: interpretation.id,
+        projectId: project.id,
+        versionId: version.id,
+        interpretationId: null as number | null,
       },
       requirements: requirementsSnapshot,
       framework: frameworkSnapshot,
@@ -228,31 +287,31 @@ export async function GET(
       materials: materialsSnapshot,
       risks: risksExportView,
       conflicts: conflictsExportView,
-      scoringItems: scoringItems.map((item) => ({
-        scoringItemId: item.id,
+      scoringItems: scoringExportView.map((item) => ({
+        scoringItemId: item.scoringItemId,
         category: item.scoringCategory,
         itemName: item.itemName,
         scoreValue: item.maxScore,
-        sourcePageNo: item.pageNumber,
+        sourcePageNo: item.sourcePageNo,
       })),
-      technicalItems: technicalItems.map((item) => ({
-        technicalItemId: item.id,
+      technicalItems: technicalExportView.map((item) => ({
+        technicalItemId: item.technicalItemId,
         specCategory: item.specCategory,
         specName: item.specName,
         specRequirement: item.specRequirement,
-        sourcePageNo: item.pageNumber,
+        sourcePageNo: item.sourcePageNo,
       })),
     };
 
     const payload = {
-      projectId: pid,
-      versionId,
-      interpretationId: interpretation.id,
+      projectId: project.id,
+      versionId: version.id,
+      interpretationId: null as number | null,
       generatedAt: new Date().toISOString(),
       summary: {
         requirements: requirements.length,
-        technicalItems: technicalItems.length,
-        scoringItems: scoringItems.length,
+        technicalItems: technicalJoined.length,
+        scoringItems: scoringJoined.length,
       },
       views: {
         requirements_export_view: requirementsSnapshot,
@@ -274,8 +333,8 @@ export async function GET(
         full_snapshot: fullSnapshot,
       },
       requirements,
-      technicalItems,
-      scoringItems,
+      technicalItems: technicalJoined,
+      scoringItems: scoringJoined,
     };
 
     if (format === 'csv') {
@@ -285,7 +344,7 @@ export async function GET(
       return new NextResponse(`\uFEFF${csv}`, {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename=${viewCode}-${pid}-${versionId}.csv`,
+          'Content-Disposition': `attachment; filename=${viewCode}-${project.id}-${version.id}.csv`,
         },
       });
     }
@@ -294,9 +353,9 @@ export async function GET(
       return NextResponse.json({
         success: true,
         data: {
-          projectId: pid,
-          versionId,
-          interpretationId: interpretation.id,
+          projectId: project.id,
+          versionId: version.id,
+          interpretationId: null,
           snapshotType,
           snapshot: payload.snapshots[snapshotType],
           generatedAt: payload.generatedAt,

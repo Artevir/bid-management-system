@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -274,7 +275,7 @@ export default function BidPrintingsPage() {
   };
 
   const handleCompanyChange = (companyId: string) => {
-    const company = companies.find(c => c.id.toString() === companyId);
+    const company = companies.find((c) => c.id.toString() === companyId);
     setFormData({
       ...formData,
       partnerCompanyId: companyId,
@@ -292,7 +293,7 @@ export default function BidPrintingsPage() {
   };
 
   const handleContactChange = (contactId: string) => {
-    const contact = contacts.find(c => c.id.toString() === contactId);
+    const contact = contacts.find((c) => c.id.toString() === contactId);
     setFormData({
       ...formData,
       partnerContactId: contactId,
@@ -302,7 +303,7 @@ export default function BidPrintingsPage() {
   };
 
   const handleAssigneeChange = (userId: string) => {
-    const user = users.find(u => u.id.toString() === userId);
+    const user = users.find((u) => u.id.toString() === userId);
     setFormData({
       ...formData,
       assigneeId: userId,
@@ -481,7 +482,7 @@ export default function BidPrintingsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = PRINTING_STATUS.find(s => s.value === status);
+    const statusInfo = PRINTING_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -496,7 +497,7 @@ export default function BidPrintingsPage() {
   };
 
   const getMethodBadge = (method: string) => {
-    const methodInfo = PRINTING_METHODS.find(m => m.value === method);
+    const methodInfo = PRINTING_METHODS.find((m) => m.value === method);
     return (
       <Badge variant="outline" className="gap-1">
         <span>{methodInfo?.icon}</span>
@@ -506,7 +507,7 @@ export default function BidPrintingsPage() {
   };
 
   const getPriorityBadge = (priority: string | null) => {
-    const info = PRIORITIES.find(p => p.value === priority);
+    const info = PRIORITIES.find((p) => p.value === priority);
     if (!info) return null;
     const colorMap: Record<string, string> = {
       red: 'bg-red-100 text-red-800 border-red-200',
@@ -587,7 +588,9 @@ export default function BidPrintingsPage() {
                       id="printingDeadline"
                       type="datetime-local"
                       value={formData.printingDeadline}
-                      onChange={(e) => setFormData({ ...formData, printingDeadline: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, printingDeadline: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -674,13 +677,17 @@ export default function BidPrintingsPage() {
                 <h4 className="font-medium text-sm text-muted-foreground">打印详情</h4>
                 <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="copiesCount">打印份数 <span className="text-muted-foreground text-xs">(默认一正四副)</span></Label>
+                    <Label htmlFor="copiesCount">
+                      打印份数 <span className="text-muted-foreground text-xs">(默认一正四副)</span>
+                    </Label>
                     <Input
                       id="copiesCount"
                       type="number"
                       min={1}
                       value={formData.copiesCount}
-                      onChange={(e) => setFormData({ ...formData, copiesCount: parseInt(e.target.value) || 5 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, copiesCount: parseInt(e.target.value) || 5 })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -743,7 +750,9 @@ export default function BidPrintingsPage() {
                   <Textarea
                     id="specialRequirements"
                     value={formData.specialRequirements}
-                    onChange={(e) => setFormData({ ...formData, specialRequirements: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, specialRequirements: e.target.value })
+                    }
                     placeholder="请输入特殊打印要求"
                     rows={2}
                   />
@@ -756,10 +765,7 @@ export default function BidPrintingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="assignee">负责人</Label>
-                    <Select
-                      value={formData.assigneeId}
-                      onValueChange={handleAssigneeChange}
-                    >
+                    <Select value={formData.assigneeId} onValueChange={handleAssigneeChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="请选择负责人" />
                       </SelectTrigger>
@@ -933,17 +939,16 @@ export default function BidPrintingsPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{String(error)}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={8} />
+            <ListStateBlock state="loading" />
           ) : printings.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Printer className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无打印安排</p>
-              <Button variant="outline" className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无打印安排" />
+              <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 新建打印安排
               </Button>
@@ -969,7 +974,9 @@ export default function BidPrintingsPage() {
                       <div>
                         <div className="font-medium">{printing.projectName}</div>
                         {printing.projectCode && (
-                          <div className="text-sm text-muted-foreground">{printing.projectCode}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {printing.projectCode}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -987,7 +994,8 @@ export default function BidPrintingsPage() {
                       <div className="text-sm">
                         <div>{printing.copiesCount || 1} 份</div>
                         <div className="text-muted-foreground">
-                          {printing.paperSize || 'A4'} / {printing.colorMode === 'color' ? '彩色' : '黑白'}
+                          {printing.paperSize || 'A4'} /{' '}
+                          {printing.colorMode === 'color' ? '彩色' : '黑白'}
                         </div>
                       </div>
                     </TableCell>
@@ -1009,8 +1017,8 @@ export default function BidPrintingsPage() {
                       {printing.printingDeadline
                         ? formatDate(printing.printingDeadline)
                         : printing.plannedDate
-                        ? formatDate(printing.plannedDate)
-                        : '-'}
+                          ? formatDate(printing.plannedDate)
+                          : '-'}
                     </TableCell>
                     <TableCell>
                       {printing.pushedToTask ? (

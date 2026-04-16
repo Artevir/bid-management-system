@@ -11,7 +11,7 @@ import {
   partnerApplications,
   users as _users,
 } from '@/db/schema';
-import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql as _sql } from 'drizzle-orm';
+import { eq, and, desc, asc as _asc, like, or, inArray as _inArray, count, sql } from 'drizzle-orm';
 
 // ============================================
 // 类型定义
@@ -152,10 +152,12 @@ export async function getUnifiedApplications(options: GetUnifiedApplicationsOpti
       limit: type ? pageSize : 100, // 如果只查一种类型，取更多；后面会合并排序
     });
 
-    results.push(...authApps.map(app => ({
-      ...app,
-      type: 'authorization' as const,
-    })));
+    results.push(
+      ...authApps.map((app) => ({
+        ...app,
+        type: 'authorization' as const,
+      }))
+    );
   }
 
   if (!type || type === 'sample') {
@@ -187,10 +189,12 @@ export async function getUnifiedApplications(options: GetUnifiedApplicationsOpti
       limit: type ? pageSize : 100,
     });
 
-    results.push(...sampleApps.map(app => ({
-      ...app,
-      type: 'sample' as const,
-    })));
+    results.push(
+      ...sampleApps.map((app) => ({
+        ...app,
+        type: 'sample' as const,
+      }))
+    );
   }
 
   if (!type || type === 'price') {
@@ -222,10 +226,12 @@ export async function getUnifiedApplications(options: GetUnifiedApplicationsOpti
       limit: type ? pageSize : 100,
     });
 
-    results.push(...priceApps.map(app => ({
-      ...app,
-      type: 'price' as const,
-    })));
+    results.push(
+      ...priceApps.map((app) => ({
+        ...app,
+        type: 'price' as const,
+      }))
+    );
   }
 
   if (!type || type === 'partner') {
@@ -258,10 +264,12 @@ export async function getUnifiedApplications(options: GetUnifiedApplicationsOpti
       limit: type ? pageSize : 100,
     });
 
-    results.push(...partnerApps.map(app => ({
-      ...app,
-      type: 'partner' as const,
-    })));
+    results.push(
+      ...partnerApps.map((app) => ({
+        ...app,
+        type: 'partner' as const,
+      }))
+    );
   }
 
   // 按创建时间倒序排序
@@ -298,43 +306,61 @@ export interface UnifiedApplicationStatistics {
   };
 }
 
-export async function getUnifiedApplicationStatistics(): Promise<UnifiedApplicationStatistics> {
+export async function getUnifiedApplicationStatistics(options?: {
+  /** 仅统计指定经办人的申请（用于 /api/support/applications 与列表口径对齐） */
+  handlerId?: number;
+}): Promise<UnifiedApplicationStatistics> {
+  const handlerId = options?.handlerId;
+  const authScope =
+    handlerId != null ? eq(authorizationApplications.handlerId, handlerId) : sql`true`;
+  const sampleScope = handlerId != null ? eq(sampleApplications.handlerId, handlerId) : sql`true`;
+  const priceScope = handlerId != null ? eq(priceApplications.handlerId, handlerId) : sql`true`;
+  const partnerScope = handlerId != null ? eq(partnerApplications.handlerId, handlerId) : sql`true`;
+
   // 各类型数量
   const [{ count: authCount }] = await db
     .select({ count: count() })
-    .from(authorizationApplications);
+    .from(authorizationApplications)
+    .where(authScope);
 
   const [{ count: sampleCount }] = await db
     .select({ count: count() })
-    .from(sampleApplications);
+    .from(sampleApplications)
+    .where(sampleScope);
 
   const [{ count: priceCount }] = await db
     .select({ count: count() })
-    .from(priceApplications);
+    .from(priceApplications)
+    .where(priceScope);
 
   const [{ count: partnerCount }] = await db
     .select({ count: count() })
-    .from(partnerApplications);
+    .from(partnerApplications)
+    .where(partnerScope);
 
   // 各状态数量（合并所有类型）
   const authStats = await db
     .select({ status: authorizationApplications.status, count: count() })
     .from(authorizationApplications)
+    .where(authScope)
     .groupBy(authorizationApplications.status);
 
   const sampleStats = await db
     .select({ status: sampleApplications.status, count: count() })
     .from(sampleApplications)
+    .where(sampleScope)
     .groupBy(sampleApplications.status);
 
   const priceStats = await db
     .select({ status: priceApplications.status, count: count() })
     .from(priceApplications)
+    .where(priceScope)
     .groupBy(priceApplications.status);
 
   const partnerStats = await db
     .select({ status: partnerApplications.status, count: count() })
     .from(partnerApplications)
+    .where(partnerScope)
     .groupBy(partnerApplications.status);
 
   const statusCount: Record<string, number> = {
@@ -346,13 +372,21 @@ export async function getUnifiedApplicationStatistics(): Promise<UnifiedApplicat
   };
 
   // 汇总状态
-  [...authStats, ...sampleStats, ...priceStats, ...partnerStats].forEach(s => {
+  [...authStats, ...sampleStats, ...priceStats, ...partnerStats].forEach((s) => {
     const status = s.status as string;
     if (status in statusCount) {
       statusCount[status] += s.count;
     }
     // 将 material_received, sample_returned, completed 等也计入 completed
-    if (['completed', 'material_received', 'sample_returned', 'confirmed', 'material_received'].includes(status)) {
+    if (
+      [
+        'completed',
+        'material_received',
+        'sample_returned',
+        'confirmed',
+        'material_received',
+      ].includes(status)
+    ) {
       statusCount.completed += s.count;
     }
   });

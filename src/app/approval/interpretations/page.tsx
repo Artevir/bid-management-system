@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   CheckCircle,
@@ -87,6 +88,7 @@ export default function InterpretationApprovalPage() {
   const [reviews, setReviews] = useState<InterpretationReview[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedReview, setSelectedReview] = useState<InterpretationReview | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -106,6 +108,7 @@ export default function InterpretationApprovalPage() {
 
   const fetchData = useCallback(async (status?: string) => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams();
       if (status && status !== 'all') {
@@ -120,9 +123,12 @@ export default function InterpretationApprovalPage() {
       if (result.success) {
         setReviews(result.data.list || []);
         setStats(result.stats || { total: 0, pending: 0, approved: 0, rejected: 0 });
+      } else {
+        setError(result.message || '获取审核列表失败');
       }
     } catch (error) {
       console.error('获取数据失败:', error);
+      setError(error instanceof Error ? error.message : '获取审核列表失败');
     } finally {
       setLoading(false);
     }
@@ -212,16 +218,14 @@ export default function InterpretationApprovalPage() {
   };
 
   const toggleSelect = (id: number) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredReviews.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredReviews.map(r => r.id));
+      setSelectedIds(filteredReviews.map((r) => r.id));
     }
   };
 
@@ -235,12 +239,29 @@ export default function InterpretationApprovalPage() {
     });
   };
 
-  const pendingReviews = reviews.filter(r => r.reviewStatus === 'pending' || !r.reviewStatus);
-  const approvedReviews = reviews.filter(r => r.reviewStatus === 'approved');
-  const rejectedReviews = reviews.filter(r => r.reviewStatus === 'rejected');
-  const filteredReviews = activeTab === 'pending' ? pendingReviews : activeTab === 'approved' ? approvedReviews : activeTab === 'rejected' ? rejectedReviews : reviews;
+  const pendingReviews = reviews.filter((r) => r.reviewStatus === 'pending' || !r.reviewStatus);
+  const approvedReviews = reviews.filter((r) => r.reviewStatus === 'approved');
+  const rejectedReviews = reviews.filter((r) => r.reviewStatus === 'rejected');
+  const filteredReviews =
+    activeTab === 'pending'
+      ? pendingReviews
+      : activeTab === 'approved'
+        ? approvedReviews
+        : activeTab === 'rejected'
+          ? rejectedReviews
+          : reviews;
 
-  const StatCard = ({ title, value, icon: Icon, color }: { title: string; value: number; icon: React.ElementType; color: string }) => (
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
+    color,
+  }: {
+    title: string;
+    value: number;
+    icon: React.ElementType;
+    color: string;
+  }) => (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
@@ -314,21 +335,22 @@ export default function InterpretationApprovalPage() {
                 {stats.total > 0 && (
                   <div className="pt-2 border-t">
                     <div className="h-2 rounded-full overflow-hidden flex">
-                      <div 
-                        className="h-full bg-yellow-500" 
-                        style={{ width: `${(stats.pending / stats.total) * 100}%` }} 
+                      <div
+                        className="h-full bg-yellow-500"
+                        style={{ width: `${(stats.pending / stats.total) * 100}%` }}
                       />
-                      <div 
-                        className="h-full bg-green-500" 
-                        style={{ width: `${(stats.approved / stats.total) * 100}%` }} 
+                      <div
+                        className="h-full bg-green-500"
+                        style={{ width: `${(stats.approved / stats.total) * 100}%` }}
                       />
-                      <div 
-                        className="h-full bg-red-500" 
-                        style={{ width: `${(stats.rejected / stats.total) * 100}%` }} 
+                      <div
+                        className="h-full bg-red-500"
+                        style={{ width: `${(stats.rejected / stats.total) * 100}%` }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground text-center mt-2">
-                      通过率: {stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}%
+                      通过率:{' '}
+                      {stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}%
                     </p>
                   </div>
                 )}
@@ -341,18 +363,10 @@ export default function InterpretationApprovalPage() {
       {/* 标签页 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="pending">
-            待审核 ({pendingReviews.length})
-          </TabsTrigger>
-          <TabsTrigger value="approved">
-            已通过 ({approvedReviews.length})
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            已驳回 ({rejectedReviews.length})
-          </TabsTrigger>
-          <TabsTrigger value="all">
-            全部 ({reviews.length})
-          </TabsTrigger>
+          <TabsTrigger value="pending">待审核 ({pendingReviews.length})</TabsTrigger>
+          <TabsTrigger value="approved">已通过 ({approvedReviews.length})</TabsTrigger>
+          <TabsTrigger value="rejected">已驳回 ({rejectedReviews.length})</TabsTrigger>
+          <TabsTrigger value="all">全部 ({reviews.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab}>
@@ -363,7 +377,9 @@ export default function InterpretationApprovalPage() {
                 <div className="flex items-center justify-between p-4 border-b">
                   <div className="flex items-center gap-2">
                     <Checkbox
-                      checked={selectedIds.length === filteredReviews.length && filteredReviews.length > 0}
+                      checked={
+                        selectedIds.length === filteredReviews.length && filteredReviews.length > 0
+                      }
                       onCheckedChange={toggleSelectAll}
                     />
                     <span className="text-sm text-muted-foreground">
@@ -399,20 +415,25 @@ export default function InterpretationApprovalPage() {
                 </div>
               )}
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  暂无数据
-                </div>
+                <ListStateBlock state="loading" />
+              ) : error ? (
+                <ListStateBlock
+                  state="error"
+                  error={error}
+                  onRetry={() => fetchData(activeTab === 'all' ? undefined : activeTab)}
+                />
+              ) : filteredReviews.length === 0 ? (
+                <ListStateBlock state="empty" />
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedIds.length === filteredReviews.length && filteredReviews.length > 0}
+                          checked={
+                            selectedIds.length === filteredReviews.length &&
+                            filteredReviews.length > 0
+                          }
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
@@ -429,7 +450,9 @@ export default function InterpretationApprovalPage() {
                   <TableBody>
                     {filteredReviews.map((review) => {
                       const statusInfo = statusConfig[review.status];
-                      const reviewStatusInfo = review.reviewStatus ? reviewStatusConfig[review.reviewStatus] : null;
+                      const reviewStatusInfo = review.reviewStatus
+                        ? reviewStatusConfig[review.reviewStatus]
+                        : null;
                       const isPending = review.reviewStatus === 'pending' || !review.reviewStatus;
 
                       return (
@@ -481,7 +504,11 @@ export default function InterpretationApprovalPage() {
                                 </Link>
                               </Button>
                               {(review.reviewStatus === 'pending' || !review.reviewStatus) && (
-                                <Button variant="outline" size="sm" onClick={() => handleOpenReview(review)}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenReview(review)}
+                                >
                                   <CheckCircle className="w-4 h-4 mr-1" />
                                   审核
                                 </Button>
@@ -504,9 +531,7 @@ export default function InterpretationApprovalPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>审核解读结果</DialogTitle>
-            <DialogDescription>
-              {selectedReview?.documentName}
-            </DialogDescription>
+            <DialogDescription>{selectedReview?.documentName}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -537,7 +562,9 @@ export default function InterpretationApprovalPage() {
                 min="0"
                 max="100"
                 value={reviewForm.accuracy}
-                onChange={(e) => setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })
+                }
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
@@ -572,7 +599,8 @@ export default function InterpretationApprovalPage() {
           <DialogHeader>
             <DialogTitle>批量审核</DialogTitle>
             <DialogDescription>
-              选中 {selectedIds.length} 项进行{reviewForm.action === 'approve' ? '通过' : '驳回'}操作
+              选中 {selectedIds.length} 项进行{reviewForm.action === 'approve' ? '通过' : '驳回'}
+              操作
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -583,7 +611,9 @@ export default function InterpretationApprovalPage() {
                 min="0"
                 max="100"
                 value={reviewForm.accuracy}
-                onChange={(e) => setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setReviewForm({ ...reviewForm, accuracy: parseInt(e.target.value) })
+                }
                 className="w-full"
               />
             </div>
@@ -613,9 +643,7 @@ export default function InterpretationApprovalPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>导出审核结果</DialogTitle>
-            <DialogDescription>
-              将审核结果导出为文件
-            </DialogDescription>
+            <DialogDescription>将审核结果导出为文件</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -652,7 +680,9 @@ export default function InterpretationApprovalPage() {
                 type="checkbox"
                 id="includeReviewInfo"
                 checked={exportForm.includeReviewInfo}
-                onChange={(e) => setExportForm({ ...exportForm, includeReviewInfo: e.target.checked })}
+                onChange={(e) =>
+                  setExportForm({ ...exportForm, includeReviewInfo: e.target.checked })
+                }
                 className="w-4 h-4"
               />
               <Label htmlFor="includeReviewInfo">包含审核信息（审核人、审核时间、审核意见）</Label>

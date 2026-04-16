@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -485,7 +486,7 @@ export default function GuaranteesPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusInfo = GUARANTEE_STATUS.find(s => s.value === status);
+    const statusInfo = GUARANTEE_STATUS.find((s) => s.value === status);
     const colorMap: Record<string, string> = {
       yellow: 'bg-yellow-100 text-yellow-800',
       blue: 'bg-blue-100 text-blue-800',
@@ -501,7 +502,7 @@ export default function GuaranteesPage() {
   };
 
   const getReturnStatusBadge = (returnStatus: string | null) => {
-    const statusInfo = RETURN_STATUS.find(s => s.value === returnStatus);
+    const statusInfo = RETURN_STATUS.find((s) => s.value === returnStatus);
     const colorMap: Record<string, string> = {
       gray: 'bg-gray-100 text-gray-800',
       yellow: 'bg-yellow-100 text-yellow-800',
@@ -517,7 +518,7 @@ export default function GuaranteesPage() {
   };
 
   const getPriorityBadge = (priority: string | null) => {
-    const info = PRIORITIES.find(p => p.value === priority);
+    const info = PRIORITIES.find((p) => p.value === priority);
     if (!info) return null;
     const colorMap: Record<string, string> = {
       red: 'bg-red-100 text-red-800',
@@ -532,16 +533,21 @@ export default function GuaranteesPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    return GUARANTEE_TYPES.find(t => t.value === type)?.label || type;
+    return GUARANTEE_TYPES.find((t) => t.value === type)?.label || type;
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4 text-yellow-600" />;
-      case 'paid': return <CheckCircle className="h-4 w-4 text-blue-600" />;
-      case 'returned': return <ArrowDownLeft className="h-4 w-4 text-green-600" />;
-      case 'forfeited': return <XCircle className="h-4 w-4 text-red-600" />;
-      default: return null;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'paid':
+        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+      case 'returned':
+        return <ArrowDownLeft className="h-4 w-4 text-green-600" />;
+      case 'forfeited':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return null;
     }
   };
 
@@ -649,7 +655,9 @@ export default function GuaranteesPage() {
                     <Input
                       id="guaranteeNumber"
                       value={formData.guaranteeNumber}
-                      onChange={(e) => setFormData({ ...formData, guaranteeNumber: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, guaranteeNumber: e.target.value })
+                      }
                       placeholder="银行保函编号"
                     />
                   </div>
@@ -669,7 +677,9 @@ export default function GuaranteesPage() {
                         id="validFrom"
                         type="date"
                         value={formData.guaranteeValidFrom}
-                        onChange={(e) => setFormData({ ...formData, guaranteeValidFrom: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, guaranteeValidFrom: e.target.value })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -678,7 +688,9 @@ export default function GuaranteesPage() {
                         id="validTo"
                         type="date"
                         value={formData.guaranteeValidTo}
-                        onChange={(e) => setFormData({ ...formData, guaranteeValidTo: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, guaranteeValidTo: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -694,7 +706,7 @@ export default function GuaranteesPage() {
                     <Select
                       value={formData.assigneeId}
                       onValueChange={(value) => {
-                        const user = users.find(u => u.id.toString() === value);
+                        const user = users.find((u) => u.id.toString() === value);
                         setFormData({
                           ...formData,
                           assigneeId: value,
@@ -770,7 +782,7 @@ export default function GuaranteesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {guarantees.filter(g => g.status === 'pending').length}
+              {guarantees.filter((g) => g.status === 'pending').length}
             </div>
           </CardContent>
         </Card>
@@ -781,7 +793,7 @@ export default function GuaranteesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {guarantees.filter(g => g.status === 'paid').length}
+              {guarantees.filter((g) => g.status === 'paid').length}
             </div>
           </CardContent>
         </Card>
@@ -792,7 +804,7 @@ export default function GuaranteesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {guarantees.filter(g => g.status === 'returned').length}
+              {guarantees.filter((g) => g.status === 'returned').length}
             </div>
           </CardContent>
         </Card>
@@ -803,7 +815,7 @@ export default function GuaranteesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {guarantees.filter(g => g.status === 'forfeited').length}
+              {guarantees.filter((g) => g.status === 'forfeited').length}
             </div>
           </CardContent>
         </Card>
@@ -814,7 +826,11 @@ export default function GuaranteesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {guarantees.filter(g => g.returnStatus === 'applied' || g.returnStatus === 'processing').length}
+              {
+                guarantees.filter(
+                  (g) => g.returnStatus === 'applied' || g.returnStatus === 'processing'
+                ).length
+              }
             </div>
           </CardContent>
         </Card>
@@ -877,17 +893,16 @@ export default function GuaranteesPage() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{String(error)}</AlertDescription>
+              <AlertDescription>{String(error)}</AlertDescription>
             </Alert>
           )}
 
           {loading ? (
-            <TableSkeleton rows={5} columns={8} />
+            <ListStateBlock state="loading" />
           ) : guarantees.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>暂无保证金记录</p>
-              <Button variant="outline" className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无保证金记录" />
+              <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 新建保证金
               </Button>
@@ -968,20 +983,23 @@ export default function GuaranteesPage() {
                             缴纳
                           </Button>
                         )}
-                        {guarantee.status === 'paid' && !guarantee.returnStatus?.includes('applied') && !guarantee.returnStatus?.includes('processing') && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedGuarantee(guarantee);
-                              setReturnApplyDialogOpen(true);
-                            }}
-                          >
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                            申请退还
-                          </Button>
-                        )}
-                        {(guarantee.returnStatus === 'applied' || guarantee.returnStatus === 'processing') && (
+                        {guarantee.status === 'paid' &&
+                          !guarantee.returnStatus?.includes('applied') &&
+                          !guarantee.returnStatus?.includes('processing') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedGuarantee(guarantee);
+                                setReturnApplyDialogOpen(true);
+                              }}
+                            >
+                              <RefreshCw className="h-4 w-4 mr-1" />
+                              申请退还
+                            </Button>
+                          )}
+                        {(guarantee.returnStatus === 'applied' ||
+                          guarantee.returnStatus === 'processing') && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -1034,7 +1052,8 @@ export default function GuaranteesPage() {
           {total > pageSize && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
-                第 {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} 条，共 {total} 条
+                第 {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} 条，共 {total}{' '}
+                条
               </div>
               <div className="flex gap-2">
                 <Button
@@ -1152,7 +1171,9 @@ export default function GuaranteesPage() {
                 id="returnAmountApply"
                 type="number"
                 value={returnApplyData.returnAmount}
-                onChange={(e) => setReturnApplyData({ ...returnApplyData, returnAmount: e.target.value })}
+                onChange={(e) =>
+                  setReturnApplyData({ ...returnApplyData, returnAmount: e.target.value })
+                }
                 placeholder="默认全额退还"
               />
             </div>
@@ -1162,7 +1183,9 @@ export default function GuaranteesPage() {
               <Textarea
                 id="returnReasonApply"
                 value={returnApplyData.returnReason}
-                onChange={(e) => setReturnApplyData({ ...returnApplyData, returnReason: e.target.value })}
+                onChange={(e) =>
+                  setReturnApplyData({ ...returnApplyData, returnReason: e.target.value })
+                }
                 placeholder="请输入退还原因"
                 rows={2}
               />
@@ -1205,7 +1228,9 @@ export default function GuaranteesPage() {
                 id="returnDate"
                 type="date"
                 value={returnFormData.returnDate}
-                onChange={(e) => setReturnFormData({ ...returnFormData, returnDate: e.target.value })}
+                onChange={(e) =>
+                  setReturnFormData({ ...returnFormData, returnDate: e.target.value })
+                }
               />
             </div>
 
@@ -1215,7 +1240,9 @@ export default function GuaranteesPage() {
                 id="returnAmount"
                 type="number"
                 value={returnFormData.returnAmount}
-                onChange={(e) => setReturnFormData({ ...returnFormData, returnAmount: e.target.value })}
+                onChange={(e) =>
+                  setReturnFormData({ ...returnFormData, returnAmount: e.target.value })
+                }
                 placeholder="默认全额退还"
               />
             </div>
@@ -1225,7 +1252,9 @@ export default function GuaranteesPage() {
               <Input
                 id="returnVoucher"
                 value={returnFormData.returnVoucher}
-                onChange={(e) => setReturnFormData({ ...returnFormData, returnVoucher: e.target.value })}
+                onChange={(e) =>
+                  setReturnFormData({ ...returnFormData, returnVoucher: e.target.value })
+                }
                 placeholder="凭证编号或链接"
               />
             </div>
@@ -1235,7 +1264,9 @@ export default function GuaranteesPage() {
               <Textarea
                 id="returnReason"
                 value={returnFormData.returnReason}
-                onChange={(e) => setReturnFormData({ ...returnFormData, returnReason: e.target.value })}
+                onChange={(e) =>
+                  setReturnFormData({ ...returnFormData, returnReason: e.target.value })
+                }
                 placeholder="请输入退还原因"
                 rows={2}
               />

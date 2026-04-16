@@ -1,23 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth/middleware';
 import { db } from '@/db';
-import { bidDocumentInterpretations, bidInterpretationLogs } from '@/db/schema';
-import { parseReviewTaskId, toBatchId } from '@/app/api/tender-center/_utils';
+import {
+  conflictItems,
+  reviewTasks,
+  riskItems,
+  tenderProjects,
+  tenderProjectVersions,
+  tenderRequirements,
+} from '@/db/schema';
+import { parseHubReviewTaskId } from '@/app/api/tender-center/_utils';
 import { tenderCenterError } from '@/app/api/tender-center/_response';
 import {
   buildIdempotencyDigest,
   extractIdempotencyKey,
-  lookupIdempotentResponse,
-  recordIdempotentResponse,
 } from '@/app/api/tender-center/_idempotency';
+import {
+  lookupHubIdempotentResponse,
+  recordHubIdempotentResponse,
+} from '@/app/api/tender-center/_hub-idempotency';
 import {
   buildTenderTraceContext,
   getOrCreateTraceId,
   logTenderTraceEvent,
 } from '@/app/api/tender-center/_trace';
 
-const IDEM_OPERATION_TYPE = 'idem_review_submit';
+const IDEM_OPERATION_TYPE_HUB = 'idem_review_submit_hub';
+
+type Decision = 'approved' | 'rejected' | 'needs_revision' | 'deferred';
+
+function normalizeDecision(value: string): Decision {
+  if (value === 'rejected') return 'rejected';
+  if (value === 'needs_revision') return 'needs_revision';
+  if (value === 'deferred') return 'deferred';
+  return 'approved';
+}
+
+async function syncTargetReviewStatus(task: typeof reviewTasks.$inferSelect, decision: Decision) {
+  if (task.targetObjectType === 'tender_requirement') {
+    await db
+      .update(tenderRequirements)
+      .set({
+        reviewStatus:
+          decision === 'approved'
+            ? 'confirmed'
+            : decision === 'rejected'
+              ? 'rejected'
+              : decision === 'needs_revision'
+                ? 'modified'
+                : 'pending_review',
+        updatedAt: new Date(),
+      })
+      .where(eq(tenderRequirements.id, task.targetObjectId));
+    return;
+  }
+
+  if (task.targetObjectType === 'risk_item') {
+    await db
+      .update(riskItems)
+      .set({
+        reviewStatus:
+          decision === 'approved'
+            ? 'confirmed'
+            : decision === 'rejected'
+              ? 'rejected'
+              : decision === 'needs_revision'
+                ? 'modified'
+                : 'pending_review',
+        updatedAt: new Date(),
+      })
+      .where(eq(riskItems.id, task.targetObjectId));
+    return;
+  }
+
+  if (task.targetObjectType === 'conflict_item') {
+    await db
+      .update(conflictItems)
+      .set({
+        reviewStatus:
+          decision === 'approved'
+            ? 'resolved'
+            : decision === 'rejected'
+              ? 'accepted_risk'
+              : 'under_review',
+        updatedAt: new Date(),
+      })
+      .where(eq(conflictItems.id, task.targetObjectId));
+  }
+}
 
 // 040: POST /api/tender-center/reviews/{reviewTaskId}/submit
 export async function POST(
@@ -25,24 +96,47 @@ export async function POST(
   { params }: { params: Promise<{ reviewTaskId: string }> }
 ) {
   const { reviewTaskId } = await params;
-  const interpretationId = parseReviewTaskId(reviewTaskId);
-  if (!interpretationId) {
-    return tenderCenterError('无效的 reviewTaskId', 400);
-  }
 
   return withAuth(request, async (req, userId) => {
     try {
       const body = await req.json();
-      const decision = String(body.decision || 'approved').toLowerCase();
-      const reviewStatus = decision === 'rejected' ? 'rejected' : 'approved';
+      const reviewResult = normalizeDecision(String(body.decision || 'approved').toLowerCase());
       const traceId = getOrCreateTraceId(req.headers);
-      const batchId = toBatchId(interpretationId);
       const idempotencyKey = extractIdempotencyKey(req.headers);
+
+      const hubTaskId = parseHubReviewTaskId(reviewTaskId);
+      if (hubTaskId === null) {
+        return tenderCenterError('无效的 reviewTaskId（仅支持 review-hub-{id}）', 400);
+      }
+
+      const taskRows = await db
+        .select({
+          task: reviewTasks,
+          projectCreatedBy: tenderProjects.createdBy,
+        })
+        .from(reviewTasks)
+        .innerJoin(
+          tenderProjectVersions,
+          eq(tenderProjectVersions.id, reviewTasks.tenderProjectVersionId)
+        )
+        .innerJoin(tenderProjects, eq(tenderProjects.id, tenderProjectVersions.tenderProjectId))
+        .where(eq(reviewTasks.id, hubTaskId))
+        .limit(1);
+      const hit = taskRows[0];
+      if (!hit) {
+        return tenderCenterError('复核任务不存在', 404);
+      }
+      if (hit.projectCreatedBy && hit.projectCreatedBy !== userId) {
+        return tenderCenterError('无权提交该复核任务', 403);
+      }
+
+      const task = hit.task;
+      const batchId = `review-batch-${task.tenderProjectVersionId}`;
       const requestDigest = idempotencyKey
         ? buildIdempotencyDigest({
             reviewTaskId,
-            interpretationId,
-            decision: reviewStatus,
+            hubTaskId,
+            decision: reviewResult,
             comment: String(body.comment || ''),
             reviewAccuracy: body.reviewAccuracy ? Number(body.reviewAccuracy) : null,
             action: 'submit_review',
@@ -50,13 +144,13 @@ export async function POST(
         : null;
 
       if (idempotencyKey && requestDigest) {
-        const lookup = await lookupIdempotentResponse<{
+        const lookup = await lookupHubIdempotentResponse<{
           success: boolean;
-          data: { reviewTaskId: string; interpretationId: number; decision: string };
+          data: { reviewTaskId: string; interpretationId: number | null; decision: string };
           message: string;
         }>({
-          interpretationId,
-          operationType: IDEM_OPERATION_TYPE,
+          tenderProjectVersionId: task.tenderProjectVersionId,
+          idemOp: IDEM_OPERATION_TYPE_HUB,
           idempotencyKey,
           requestDigest,
         });
@@ -78,53 +172,58 @@ export async function POST(
       }
 
       await db
-        .update(bidDocumentInterpretations)
+        .update(reviewTasks)
         .set({
-          reviewStatus,
-          reviewerId: userId,
+          reviewStatus: 'completed',
+          reviewResult,
+          comment: body.comment || '',
+          finalValueJson: body.reviewAccuracy
+            ? { reviewAccuracy: Number(body.reviewAccuracy) }
+            : null,
           reviewedAt: new Date(),
-          reviewComment: body.comment || '',
-          reviewAccuracy: body.reviewAccuracy ? Number(body.reviewAccuracy) : null,
           updatedAt: new Date(),
         })
-        .where(eq(bidDocumentInterpretations.id, interpretationId));
+        .where(
+          and(
+            eq(reviewTasks.id, hubTaskId),
+            eq(reviewTasks.tenderProjectVersionId, task.tenderProjectVersionId)
+          )
+        );
 
-      await db.insert(bidInterpretationLogs).values({
-        interpretationId,
-        operationType: 'review_submitted',
-        operationContent: JSON.stringify({
-          reviewTaskId,
-          decision: reviewStatus,
-          comment: body.comment || '',
-        }),
-        operatorId: userId,
-        operatorName: 'system',
-      });
+      await syncTargetReviewStatus(task, reviewResult);
 
       await logTenderTraceEvent({
-        interpretationId,
+        interpretationId: null,
         userId,
         trace: buildTenderTraceContext({
-          interpretationId,
+          interpretationId: null,
           traceId,
           taskId: reviewTaskId,
           event: 'review_submitted',
+          batchId,
         }),
         detail: {
-          decision: reviewStatus,
+          decision: reviewResult,
+          tenderProjectVersionId: task.tenderProjectVersionId,
         },
       });
 
       const responsePayload = {
         success: true,
-        data: { reviewTaskId, interpretationId, decision: reviewStatus, traceId, batchId },
+        data: {
+          reviewTaskId,
+          interpretationId: null as number | null,
+          decision: reviewResult,
+          traceId,
+          batchId,
+        },
         message: '复核结果已提交',
       };
 
       if (idempotencyKey && requestDigest) {
-        await recordIdempotentResponse({
-          interpretationId,
-          operationType: IDEM_OPERATION_TYPE,
+        await recordHubIdempotentResponse({
+          tenderProjectVersionId: task.tenderProjectVersionId,
+          idemOp: IDEM_OPERATION_TYPE_HUB,
           idempotencyKey,
           requestDigest,
           response: responsePayload,

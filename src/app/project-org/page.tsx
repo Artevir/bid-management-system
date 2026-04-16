@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock, TableListStateRow } from '@/components/ui/list-states';
 import { Input as _Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -98,6 +99,7 @@ function ProjectOrgContent() {
   const [templates, setTemplates] = useState<OrgTemplate[]>([]);
   const [projectOrg, setProjectOrg] = useState<ProjectOrg | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [_showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<OrgTemplate | null>(null);
@@ -153,7 +155,10 @@ function ProjectOrgContent() {
   }
 
   const getPermissionBadge = (level: string) => {
-    const levelMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline'; icon: React.ElementType }> = {
+    const levelMap: Record<
+      string,
+      { label: string; variant: 'default' | 'secondary' | 'outline'; icon: React.ElementType }
+    > = {
       level_1: { label: '一级权限', variant: 'default', icon: Crown },
       level_2: { label: '二级权限', variant: 'secondary', icon: Shield },
       level_3: { label: '三级权限', variant: 'outline', icon: User },
@@ -220,12 +225,17 @@ function ProjectOrgContent() {
               {templates.map((template) => {
                 const positions = JSON.parse(template.positions || '[]');
                 return (
-                  <Card key={template.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <Card
+                    key={template.id}
+                    className="overflow-hidden hover:shadow-md transition-shadow"
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">{template.name}</CardTitle>
                         {template.isSystem && (
-                          <Badge variant="outline" className="text-xs">系统模板</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            系统模板
+                          </Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{template.description}</p>
@@ -247,14 +257,15 @@ function ProjectOrgContent() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          className="flex-1"
-                          onClick={() => createFromTemplate(template.id)}
-                        >
+                        <Button className="flex-1" onClick={() => createFromTemplate(template.id)}>
                           <Copy className="mr-2 h-4 w-4" />
                           选用
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => setSelectedTemplate(template)}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setSelectedTemplate(template)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -302,7 +313,7 @@ function ProjectOrgContent() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Badge variant="outline" className="text-xs">
-                        {projectOrg.members.filter(m => m.positionId === position.id).length}人
+                        {projectOrg.members.filter((m) => m.positionId === position.id).length}人
                       </Badge>
                     </div>
                   </div>
@@ -334,11 +345,11 @@ function ProjectOrgContent() {
                 </TableHeader>
                 <TableBody>
                   {projectOrg.members.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        暂无成员，请添加团队成员
-                      </TableCell>
-                    </TableRow>
+                    <TableListStateRow
+                      state="empty"
+                      colSpan={6}
+                      emptyText="暂无成员，请添加团队成员"
+                    />
                   ) : (
                     projectOrg.members.map((member) => (
                       <TableRow key={member.id}>
@@ -355,10 +366,14 @@ function ProjectOrgContent() {
                             </div>
                             <div>
                               <p className="font-medium">
-                                {member.isExternal ? member.externalName : member.user?.name || '未知'}
+                                {member.isExternal
+                                  ? member.externalName
+                                  : member.user?.name || '未知'}
                               </p>
                               {member.isExternal && (
-                                <Badge variant="outline" className="text-xs">外部成员</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  外部成员
+                                </Badge>
                               )}
                             </div>
                           </div>
@@ -372,9 +387,7 @@ function ProjectOrgContent() {
                           </p>
                         </TableCell>
                         <TableCell>{getPermissionBadge(member.permissionLevel)}</TableCell>
-                        <TableCell>
-                          {new Date(member.joinedAt).toLocaleDateString()}
-                        </TableCell>
+                        <TableCell>{new Date(member.joinedAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm">
@@ -407,22 +420,29 @@ function ProjectOrgContent() {
               <div>
                 <p className="text-sm font-medium mb-2">包含岗位：</p>
                 <div className="space-y-2">
-                  {JSON.parse(selectedTemplate.positions || '[]').map((pos: { name: string; permissionLevel: string }, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded border">
-                      <span className="text-sm">{pos.name}</span>
-                      {getPermissionBadge(pos.permissionLevel)}
-                    </div>
-                  ))}
+                  {JSON.parse(selectedTemplate.positions || '[]').map(
+                    (pos: { name: string; permissionLevel: string }, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2 rounded border"
+                      >
+                        <span className="text-sm">{pos.name}</span>
+                        {getPermissionBadge(pos.permissionLevel)}
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
                   取消
                 </Button>
-                <Button onClick={() => {
-                  createFromTemplate(selectedTemplate.id);
-                  setSelectedTemplate(null);
-                }}>
+                <Button
+                  onClick={() => {
+                    createFromTemplate(selectedTemplate.id);
+                    setSelectedTemplate(null);
+                  }}
+                >
                   选用此模板
                 </Button>
               </div>
@@ -470,9 +490,7 @@ function ProjectOrgContent() {
               <Button variant="outline" onClick={() => setShowAddMemberDialog(false)}>
                 取消
               </Button>
-              <Button onClick={() => setShowAddMemberDialog(false)}>
-                确认添加
-              </Button>
+              <Button onClick={() => setShowAddMemberDialog(false)}>确认添加</Button>
             </div>
           </div>
         </DialogContent>
@@ -483,11 +501,13 @@ function ProjectOrgContent() {
 
 export default function ProjectOrgPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
       <ProjectOrgContent />
     </Suspense>
   );

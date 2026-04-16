@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ListStateBlock } from '@/components/ui/list-states';
 import {
   Table,
   TableBody,
@@ -25,22 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger as _DialogTrigger,
-} from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogTrigger as _DialogTrigger } from '@/components/ui/dialog';
 import { ImageGenerationDialog } from '@/components/image-generation-dialog';
 import { ImagePreview } from '@/components/image-preview';
-import {
-  Sparkles,
-  Search,
-  Filter,
-  Download,
-  Trash2,
-  Eye,
-} from 'lucide-react';
+import { Sparkles, Search, Filter, Download, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/lib/error-message';
 
@@ -92,6 +81,7 @@ const typeConfig: Record<string, { label: string }> = {
 export default function ImageGenerationsPage() {
   const [records, setRecords] = useState<ImageGeneration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedRecord, setSelectedRecord] = useState<ImageGeneration | null>(null);
@@ -186,9 +176,7 @@ export default function ImageGenerationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">AI 图片生成</h1>
-          <p className="text-muted-foreground mt-2">
-            使用 AI 生成投标文档所需的图片
-          </p>
+          <p className="text-muted-foreground mt-2">使用 AI 生成投标文档所需的图片</p>
         </div>
 
         <ImageGenerationDialog
@@ -282,23 +270,9 @@ export default function ImageGenerationsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-20 w-20 rounded" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ListStateBlock state="loading" />
           ) : filteredRecords.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Sparkles className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>暂无图片生成记录</p>
-              <p className="text-sm mt-2">点击上方按钮开始生成图片</p>
-            </div>
+            <ListStateBlock state="empty" emptyText="暂无图片生成记录" />
           ) : (
             <Table>
               <TableHeader>
@@ -343,23 +317,17 @@ export default function ImageGenerationsPage() {
                         {record.prompt}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {typeConfig[record.type]?.label || record.type}
-                    </TableCell>
+                    <TableCell>{typeConfig[record.type]?.label || record.type}</TableCell>
                     <TableCell>{record.size}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {record.usage || '-'}
-                      </Badge>
+                      <Badge variant="outline">{record.usage || '-'}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={statusConfig[record.status]?.color}>
                         {statusConfig[record.status]?.label || record.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {new Date(record.createdAt).toLocaleString('zh-CN')}
-                    </TableCell>
+                    <TableCell>{new Date(record.createdAt).toLocaleString('zh-CN')}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -413,9 +381,7 @@ export default function ImageGenerationsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium mb-1">生成类型</h3>
-                  <p className="text-sm text-gray-600">
-                    {typeConfig[selectedRecord.type]?.label}
-                  </p>
+                  <p className="text-sm text-gray-600">{typeConfig[selectedRecord.type]?.label}</p>
                 </div>
 
                 <div>
@@ -425,9 +391,7 @@ export default function ImageGenerationsPage() {
 
                 <div>
                   <h3 className="text-sm font-medium mb-1">水印</h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedRecord.watermark ? '是' : '否'}
-                  </p>
+                  <p className="text-sm text-gray-600">{selectedRecord.watermark ? '是' : '否'}</p>
                 </div>
 
                 <div>
@@ -455,12 +419,7 @@ export default function ImageGenerationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   {selectedRecord.imageUrls.map((url, index) => (
                     <div key={index}>
-                      <ImagePreview
-                        src={url}
-                        alt={`图片 ${index + 1}`}
-                        width={400}
-                        height={300}
-                      />
+                      <ImagePreview src={url} alt={`图片 ${index + 1}`} width={400} height={300} />
                     </div>
                   ))}
                 </div>

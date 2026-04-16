@@ -8,8 +8,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ListStateBlock } from '@/components/ui/list-states';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle as _CardTitle,
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -137,7 +144,7 @@ export default function ApplicationsPage() {
   const fetchApplications = useCallback(async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const params = new URLSearchParams();
       params.append('page', String(page));
@@ -147,7 +154,7 @@ export default function ApplicationsPage() {
       if (statusFilter !== 'all') params.append('status', statusFilter);
 
       const response = await fetch(`/api/support/applications?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('获取申请列表失败');
       }
@@ -207,11 +214,7 @@ export default function ApplicationsPage() {
   // 获取状态徽章
   const getStatusBadge = (status: string) => {
     const colorClass = STATUS_COLORS[status] || STATUS_COLORS.draft;
-    return (
-      <Badge className={colorClass}>
-        {STATUS_LABELS[status] || status}
-      </Badge>
-    );
+    return <Badge className={colorClass}>{STATUS_LABELS[status] || status}</Badge>;
   };
 
   // 获取详情页路径
@@ -231,12 +234,16 @@ export default function ApplicationsPage() {
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Link href="/support" className="hover:text-foreground">投标支持</Link>
+            <Link href="/support" className="hover:text-foreground">
+              投标支持
+            </Link>
             <span>/</span>
             <span className="text-foreground">全部申请</span>
           </div>
           <h1 className="text-2xl font-bold">全部申请</h1>
-          <p className="text-muted-foreground">统一管理授权申请、样机申请、价格申请、友司支持申请</p>
+          <p className="text-muted-foreground">
+            统一管理授权申请、样机申请、价格申请、友司支持申请
+          </p>
         </div>
       </div>
 
@@ -288,7 +295,9 @@ export default function ApplicationsPage() {
               <CardDescription>待审核</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.byStatus.pending_review}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.byStatus.pending_review}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -350,15 +359,12 @@ export default function ApplicationsPage() {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListStateBlock state="loading" />
           ) : error ? (
             <div className="text-center py-12 text-destructive">{error}</div>
           ) : applications.length === 0 ? (
-            <div className="text-center py-12">
-              <List className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">暂无申请数据</p>
+            <div className="text-center py-12 space-y-4">
+              <ListStateBlock state="empty" emptyText="暂无申请数据" />
               <div className="flex justify-center gap-2 flex-wrap">
                 <Button onClick={() => router.push('/support/authorizations/create')}>
                   <FileCheck className="mr-2 h-4 w-4" />
@@ -393,7 +399,11 @@ export default function ApplicationsPage() {
               </TableHeader>
               <TableBody>
                 {applications.map((application) => (
-                  <TableRow key={`${application.type}-${application.id}`} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(getDetailPath(application))}>
+                  <TableRow
+                    key={`${application.type}-${application.id}`}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(getDetailPath(application))}
+                  >
                     <TableCell>{getTypeBadge(application.type)}</TableCell>
                     <TableCell>
                       <span className="font-mono text-sm">{application.applicationNo}</span>
@@ -407,7 +417,14 @@ export default function ApplicationsPage() {
                       {formatDate(application.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(getDetailPath(application)); }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(getDetailPath(application));
+                        }}
+                      >
                         查看
                       </Button>
                     </TableCell>
@@ -424,7 +441,7 @@ export default function ApplicationsPage() {
                 variant="outline"
                 size="sm"
                 disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
+                onClick={() => setPage((p) => p - 1)}
               >
                 上一页
               </Button>
@@ -435,7 +452,7 @@ export default function ApplicationsPage() {
                 variant="outline"
                 size="sm"
                 disabled={page * pageSize >= total}
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => setPage((p) => p + 1)}
               >
                 下一页
               </Button>
