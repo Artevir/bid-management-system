@@ -78,6 +78,7 @@ export async function POST(
       return tenderCenterError('无效的 sourceType', 400);
     }
 
+    let taskTitle = '';
     let taskType:
       | 'prepare_material'
       | 'write_chapter'
@@ -114,7 +115,7 @@ export async function POST(
         return tenderCenterError('源风险不存在', 404);
       }
       taskTitle = riskRow.title || `风险 #${sourceId}`;
-      taskType = 'risk_mitigation';
+      taskType = 'review_risk';
     } else if (sourceType === 'material') {
       const [matRow] = await db
         .select({ materialName: submissionMaterials.materialName })
@@ -130,7 +131,7 @@ export async function POST(
         return tenderCenterError('源材料不存在', 404);
       }
       taskTitle = matRow.materialName || `材料 #${sourceId}`;
-      taskType = 'submission';
+      taskType = 'prepare_material';
     } else if (sourceType === 'framework') {
       const [fwRow] = await db
         .select({ nodeTitle: hubBidTemplates.templateName })
@@ -146,7 +147,7 @@ export async function POST(
         return tenderCenterError('源框架不存在', 404);
       }
       taskTitle = fwRow.nodeTitle || `框架 #${sourceId}`;
-      taskType = 'framework_response';
+      taskType = 'write_chapter';
     }
 
     const [newTask] = await db
